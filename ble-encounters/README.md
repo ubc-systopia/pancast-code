@@ -19,5 +19,5 @@ Application code is found in the `src` directory. This relies on the Zephyr proj
 ### VSCode Setup
 1. Make sure you have followed the steps under General Setup and Building the App.
 2. Make sure the C/C++ extension is installed in VSCode.
-3. Use VSCode to open the workspace file located in the root of this project.
-4. Wait for things to index.
+3. Edit the workspace file located in the root of this project so that the path for the 'Zephyr' folder is the full path to the root Zephyr directory. 
+4. Use VSCode to open the workspace file and wait for things to index.

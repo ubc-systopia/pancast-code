@@ -1,0 +1,35 @@
+{
+	"folders": [
+        {
+            "name": "App",
+            "path": "."
+        },
+        {
+            "name": "Zephyr",
+            "path": "../../../../_O_/com/github/zephyrproject-rtos/zephyrproject/zephyr"
+        }
+    ],
+    "settings": {
+        "files.associations": {
+            "*.h": "c"
+        },
+        "cSpell.words": [
+            "printk"
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Current workspace folder",
+                "type": "shell",
+                "command": "echo ${workspaceFolder}"
+            },
+            {
+                "label": "Current Zephyr folder",
+                "type": "shell",
+                "command": "echo ${workspaceFolder:Zephyr}"
+            }
+        ]
+    }
+}

@@ -1,0 +1,8 @@
+test:
+  description: An application for testing Zephyr.
+  name: test
+common:
+    tags: test
+tests:
+  sample.basic.test:
+    tags: test

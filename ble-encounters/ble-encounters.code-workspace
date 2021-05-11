@@ -6,7 +6,7 @@
         },
         {
             "name": "Zephyr",
-            "path": "../../../../_O_/com/github/zephyrproject-rtos/zephyrproject/zephyr"
+            "path": "../../../../../_O_/com/github/zephyrproject-rtos/zephyrproject/zephyr"
         }
     ],
     "settings": {

@@ -2,7 +2,7 @@
 An implementation of the beacon to dongle advertisement protocol for encounter tracing.
 
 ## Structure
-Application code is found in the `src` directory. This relies on the Zephyr project stack. See the following section for details.
+Application code is found in the `beacon` directory, under `src`. This relies on the Zephyr project stack. See the following section for details.
 
 ## Development
 ### General Setup
@@ -10,7 +10,7 @@ Application code is found in the `src` directory. This relies on the Zephyr proj
 
 ### Building the App
 1. Navigate to the root Zephyr directory (the one containing the samples directory)
-2. Issue the following command: `west build -p auto -b nrf52dk_nrf52832 <app_path> -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` where `<app_path>` is the full path to the directory containing this README.
+2. Issue the following command: `west build -p auto -b nrf52dk_nrf52832 <app_path> -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` where `<app_path>` is the full path to the `beacon` app directory.
 
 ### Flashing the App
 1. Make sure the development board is plugged in.

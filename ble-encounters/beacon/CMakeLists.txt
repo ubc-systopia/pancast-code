@@ -1,7 +1,7 @@
 # Find Zephyr. This also loads Zephyr's build system.
 cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr)
-project(my_zephyr_app)
+project(pancast_beacon)
 
 
 # Add your source file to the "app" target. This must come after

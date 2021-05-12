@@ -3,7 +3,7 @@
         {
             "name": "PanCast-Mac",
             "includePath": [
-                "${workspaceFolder:App}/**"
+                "${workspaceFolder:App}/**/**"
             ],
             "forcedInclude": [
                 "${workspaceFolder:Zephyr}/firmware/build/zephyr/include/generated/autoconf.h",

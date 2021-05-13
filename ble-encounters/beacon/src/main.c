@@ -7,6 +7,7 @@
 //
 
 #include <zephyr.h>
+#include <stddef.h>
 #include <sys/printk.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
@@ -17,7 +18,13 @@ typedef struct bt_data bt_data_t;
 
 // Scan data
 static const bt_data_t adv_data[] = {
-    BT_DATA_BYTES(BT_DATA_UUID32_ALL,
+// This is the raw payload, containing a total of 31 bytes
+// The first byte is contained in the 'type' field. Next 29
+// are actual data, and the last is in the length field.
+// With the current API, we're forced to set the length byte
+// to the actual length of the data (29) - so may have to use
+// lower level functions to use this for advertisement data
+    BT_DATA(0x21, ((uint8_t []){
         0x01, 0x02, 0x03, 0x04,
         0x05, 0x06, 0x07, 0x08,
         0x09, 0x0a, 0x0b, 0x0c,
@@ -26,7 +33,7 @@ static const bt_data_t adv_data[] = {
         0x15, 0x16, 0x17, 0x18,
         0x19, 0x1a, 0x1b, 0x1c,
         0x1d, // 0x1e
-        ),
+    }), 0x1d),
 };
 
 // Scan Response

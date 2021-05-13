@@ -20,6 +20,19 @@ static void log_device(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
 	printk("Device found: %s (RSSI %d)\n", addr_str, rssi);
+    if (strcmp(addr_str, "D5:AA:E4:57:78:50 (random)")) {
+        return;
+    }
+#define _ad_ (*ad)
+    //printk("Data length: %d\n", _ad_.len);
+    printk("Data: 0x");
+#define _print_(b) printk(" %x", b)
+    for (int i = 0; i < _ad_.len; i++) {
+        _print_(_ad_.data[i]);
+    }
+#undef _print_
+    printk("\n");
+#undef _ad_
 }
 
 static void start_scan(void)

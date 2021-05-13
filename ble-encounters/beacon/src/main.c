@@ -1,3 +1,11 @@
+//
+// Beacon Application for PanCast Encounter logging
+// Early version based on the bluetooth-beacon example from Zephyr
+// Acts as a bluetooth beacon, using a full legacy-advertising
+// payload to broadcast relevant information. See white-paper for
+// details.
+//
+
 #include <zephyr.h>
 #include <sys/printk.h>
 #include <bluetooth/bluetooth.h>

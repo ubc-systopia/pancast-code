@@ -1,3 +1,10 @@
+//
+// Dongle Application for PanCast Beacon logging
+// Early version based on the bluetooth-central example from Zephyr
+// This acts as a passive scanner that makes no connections and
+// instead interprets and logs payload data from PanCast beacons.
+//
+
 #include <zephyr.h>
 #include <sys/printk.h>
 

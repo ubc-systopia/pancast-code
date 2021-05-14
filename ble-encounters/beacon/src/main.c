@@ -11,14 +11,35 @@
 #include <sys/printk.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+#include "../../common/src/pancast.h"
 
 #define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
 
 typedef struct bt_data bt_data_t;
 
+static void make_payload(bt_data_t *bt_data, encounter_broadcast_t *bc_data)
+{
+#define bt (*bt_data)
+    const uint8_t *bc = (uint8_t*) bc_data;
+    bt.type = bc[0];
+    const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
+    printk("%d\n", len);
+    bt.data_len = len;
+    bt.data = bc + 1;
+#undef bt
+    return;
+}
+
+static const encounter_broadcast_t test_broadcast = {
+    {{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d }},
+    72623859790382848,
+    16909060,
+    84281096
+};
+
 // Scan data
-static const bt_data_t adv_data[] = {
-// This is the raw payload, containing a total of 31 bytes
+static bt_data_t adv_data[] = {
+// This is a raw payload, containing a total of 31 bytes
 // The first byte is contained in the 'type' field. Next 29
 // are actual data, and the last is in the length field.
 // With the current API, we're forced to set the length byte
@@ -49,6 +70,9 @@ static void beacon_adv(int err)
 	}
 
 	printk("Bluetooth initialized\n");
+
+// Load actual test broadcast
+    make_payload(adv_data, &test_broadcast);
 
 // Legacy advertising
 // Start

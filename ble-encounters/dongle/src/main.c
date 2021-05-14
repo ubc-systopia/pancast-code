@@ -13,33 +13,36 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
+#include "../../common/src/pancast.h"
 
-static void log_device(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
+static void dongle_decode(uint8_t *data, uint16_t len)
+{
+    if (len != ENCOUNTER_BROADCAST_SIZE + 1) {
+        return;
+    }
+    printk("Data: 0x");
+#define _print_(b) printk(" %x", b)
+    for (int i = 0; i < len; i++) {
+        _print_(data[i]);
+    }
+#undef _print_
+    printk("\n");
+}
+
+static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 			 struct net_buf_simple *ad)
 {
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
 	printk("Device found: %s (RSSI %d)\n", addr_str, rssi);
-    if (strcmp(addr_str, "D5:AA:E4:57:78:50 (random)")) {
-        return;
-    }
-#define _ad_ (*ad)
-    //printk("Data length: %d\n", _ad_.len);
-    printk("Data: 0x");
-#define _print_(b) printk(" %x", b)
-    for (int i = 0; i < _ad_.len; i++) {
-        _print_(_ad_.data[i]);
-    }
-#undef _print_
-    printk("\n");
-#undef _ad_
+    dongle_decode(ad -> data, ad -> len);
 }
 
-static void start_scan(void)
+static void dongle_scan(void)
 {
 	int err;
 
-	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, log_device);
+	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
 	if (err) {
 		printk("Scanning failed to start (err %d)\n", err);
 		return;
@@ -63,5 +66,5 @@ void main(void)
 
 	printk("Bluetooth initialized\n");
 
-	start_scan();
+	dongle_scan();
 }

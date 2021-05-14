@@ -23,7 +23,6 @@ static void make_payload(bt_data_t *bt_data, encounter_broadcast_t *bc_data)
     const uint8_t *bc = (uint8_t*) bc_data;
     bt.type = bc[0];
     const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
-    printk("%d\n", len);
     bt.data_len = len;
     bt.data = bc + 1;
 #undef bt

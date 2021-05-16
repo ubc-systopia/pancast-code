@@ -12,49 +12,62 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include "../../common/src/pancast.h"
+#include "../../common/src/util.h"
 
 #define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
 
 typedef struct bt_data bt_data_t;
 
-static void make_payload(bt_data_t *bt_data, encounter_broadcast_t *bc_data)
+typedef union {
+    encounter_broadcast_raw_t en_data;
+    bt_data_t bt_data[1];
+} bt_wrapper_t;
+
+// pack a raw byte payload by copying from the high-level type
+// order is important here so as to avoid unaligned access on the
+// receiver side
+static int encode_encounter(encounter_broadcast_raw_t *raw, encounter_broadcast_t *dat)
 {
-#define bt (*bt_data)
-    const uint8_t *bc = (uint8_t*) bc_data;
-    bt.type = bc[0];
-    const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
-    bt.data_len = len;
-    bt.data = bc + 1;
-#undef bt
-    return;
+    uint8_t *dst = (uint8_t*) raw;
+    size_t pos = 0;
+#define copy(src, size) memcpy(dst + pos, src, size); pos += size
+    copy(dat->t, sizeof(beacon_timer_t));
+    copy(dat->b, sizeof(beacon_id_t));
+    copy(dat->loc, sizeof(beacon_location_id_t));
+    copy(dat->eph, sizeof(beacon_eph_id_t));
+#undef copy
+    return pos;
 }
 
-static const encounter_broadcast_t test_broadcast = {
-    {{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d }},
-    72623859790382848,
-    16909060,
-    84281096
+// Intermediary transformer to create a well-formed BT data type
+// for using the high-level APIs. Becomes obsolete once advertising
+// routine supports a full raw payload
+static int form_payload(bt_wrapper_t *d)
+{
+    const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
+#define bt (d->bt_data)
+    uint8_t tmp = bt->data_len;
+    bt -> data_len = len;
+    bt -> data = ((uint8_t*) bt) + 2;
+#define en (d->en_data)
+    en.bytes[MAX_BROADCAST_SIZE - 1] = tmp;
+#undef en
+#undef bt
+    return 0;
+}
+
+static beacon_eph_id_t        test_eph = {
+    { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d }
 };
 
-// Scan data
-static bt_data_t adv_data[] = {
-// This is a raw payload, containing a total of 31 bytes
-// The first byte is contained in the 'type' field. Next 29
-// are actual data, and the last is in the length field.
-// With the current API, we're forced to set the length byte
-// to the actual length of the data (29) - so may have to use
-// lower level functions to use this for advertisement data
-    BT_DATA(0x21, ((uint8_t []){
-        0x01, 0x02, 0x03, 0x04,
-        0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0a, 0x0b, 0x0c,
-        0x0d, 0x0e, 0x0f, 0x10,
-        0x11, 0x12, 0x13, 0x14,
-        0x15, 0x16, 0x17, 0x18,
-        0x19, 0x1a, 0x1b, 0x1c,
-        0x1d, // 0x1e
-    }), 0x1d),
+static beacon_location_id_t   test_loc = 0x0e0f101112131415;
+static beacon_id_t            test_bid = 0x16171819;
+static beacon_timer_t         test_tmr = 0x1a1b1c1d;
+
+static encounter_broadcast_t test_broadcast = {
+    &test_eph, &test_loc, &test_bid, &test_tmr
 };
+
 
 // Scan Response
 static const bt_data_t adv_res[] = {
@@ -70,14 +83,24 @@ static void beacon_adv(int err)
 
 	printk("Bluetooth initialized\n");
 
+    bt_wrapper_t payload;
+
 // Load actual test broadcast
-    make_payload(adv_data, &test_broadcast);
+    encode_encounter(&payload.en_data, &test_broadcast);
+    
+	print_bytes(printk, (&payload.en_data), MAX_BROADCAST_SIZE);
+    
+	form_payload(&payload);
+
+    print_bytes(printk, (&payload.en_data), MAX_BROADCAST_SIZE);
 
 // Legacy advertising
 // Start
 // Using wrapper
-	err = bt_le_adv_start(BT_LE_ADV_NCONN_IDENTITY, adv_data, ARRAY_SIZE(adv_data),
-			      adv_res, ARRAY_SIZE(adv_res));
+	err = bt_le_adv_start(
+        BT_LE_ADV_NCONN_IDENTITY,
+        payload.bt_data, ARRAY_SIZE(payload.bt_data),
+	    adv_res, ARRAY_SIZE(adv_res));
 // // Without wrapper (to force legacy)
 // // Not working as the legacy adv function is not exposed
 //     struct bt_le_ext_adv *adv = adv_new_legacy();

@@ -14,19 +14,44 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 #include "../../common/src/pancast.h"
+#include "../../common/src/util.h"
 
-static void dongle_decode(uint8_t *data, uint16_t len)
+static int decode_payload(uint8_t *data)
 {
-    if (len != ENCOUNTER_BROADCAST_SIZE + 1) {
-        return;
-    }
-    printk("Data: 0x");
-#define _print_(b) printk(" %x", b)
-    for (int i = 0; i < len; i++) {
-        _print_(data[i]);
-    }
-#undef _print_
-    printk("\n");
+    data[0] = data[1];
+    data[1] = data[MAX_BROADCAST_SIZE - 1];
+    return 0;
+}
+
+// matches the schema defined by encode
+static int decode_encounter(encounter_broadcast_t *dat, encounter_broadcast_raw_t *raw)
+{
+    uint8_t *src = (uint8_t*) raw;
+    size_t pos = 0;
+#define link(dst, type) (dst = (type*) (src + pos)); pos += sizeof(type)
+    link(dat->t, beacon_timer_t);
+	link(dat->b, beacon_id_t);
+    link(dat->loc, beacon_location_id_t);
+	link(dat->eph, beacon_eph_id_t);
+#undef link
+    return 0;
+}
+
+static int dongle_display(encounter_broadcast_t *bc)
+{
+// Debug: Display fields
+    printk("Encounter broadcast: \n"
+        "   id = %u\n"
+        "   location_id = %llu\n"
+        "   beacon_time = %u\n",
+    *(bc ->b), *(bc ->loc), *(bc ->t));
+    return 0;
+}
+
+static void dongle_print(uint8_t *data, uint16_t len)
+{
+// Debug: Display raw payload
+    print_bytes(printk, data, len);
 }
 
 static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
@@ -35,7 +60,19 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
 	printk("Device found: %s (RSSI %d)\n", addr_str, rssi);
-    dongle_decode(ad -> data, ad -> len);
+// Filter mis-sized packets up front
+    if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
+        return;
+    }
+    dongle_print(ad -> data, ad -> len);
+    decode_payload(ad -> data);
+    dongle_print(ad -> data, ad -> len);
+    encounter_broadcast_t en;
+	print_bytes(printk, ad->data, sizeof(beacon_eph_id_t));
+    decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
+	print_bytes(printk, en.eph, sizeof(beacon_eph_id_t));
+	print_bytes(printk, en.b, sizeof(beacon_id_t));
+    dongle_display(&en);
 }
 
 static void dongle_scan(void)

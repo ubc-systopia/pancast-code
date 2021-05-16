@@ -48,10 +48,12 @@ static int form_payload(bt_wrapper_t *d)
 #define bt (d->bt_data)
     uint8_t tmp = bt->data_len;
     bt -> data_len = len;
-    bt -> data = ((uint8_t*) bt) + 2;
 #define en (d->en_data)
     en.bytes[MAX_BROADCAST_SIZE - 1] = tmp;
 #undef en
+	static uint8_t of[MAX_BROADCAST_SIZE - 2];
+	memcpy(of, ((uint8_t*) bt) + 2, MAX_BROADCAST_SIZE - 2);
+    bt -> data = &of;
 #undef bt
     return 0;
 }

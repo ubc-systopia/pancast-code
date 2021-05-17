@@ -14,6 +14,10 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 
+#define LOG_LEVEL__DEBUG
+#include "../../common/src/log.h"
+
+
 #define BEACON_ID		0xffffffff
 #define BEACON_LOC_ID	0xffffffffffffffff
 
@@ -70,11 +74,11 @@ static const bt_data_t adv_res[] = {
 static void beacon_broadcast(int err)
 {
 	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
+		log_errorf("Bluetooth init failed (err %d)\n", err);
 		return;
 	}
 
-	printk("Bluetooth initialized\n");
+	log_info("Bluetooth initialized\n");
 
 	encounter_broadcast_t bc;
 
@@ -101,7 +105,7 @@ static void beacon_broadcast(int err)
         payload.bt_data, ARRAY_SIZE(payload.bt_data),
 	    adv_res, ARRAY_SIZE(adv_res));
     if (err) {
-		printk("Advertising failed to start (err %d)\n", err);
+		log_errorf("Advertising failed to start (err %d)\n", err);
 		return;
 	}
 // obtain and report adverisement address
@@ -112,14 +116,14 @@ static void beacon_broadcast(int err)
 	bt_id_get(&addr, &count);
 	bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
-    printk("Beacon started, advertising as %s\n", addr_s);
+    log_infof("Beacon started, advertising as %s\n", addr_s);
 }
 
 void main(void)
 {
-	printk("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
     int err = bt_enable(beacon_broadcast);
     if (err) {
-        printk("Bluetooth Enable Failure: error code = %d\n", err);
+        log_errorf("Bluetooth Enable Failure: error code = %d\n", err);
     }
 }

@@ -90,29 +90,13 @@ static void beacon_adv(int err)
 // Load actual test broadcast
     encode_encounter(&payload.en_data, &test_broadcast);
     
-	print_bytes(printk, (&payload.en_data), MAX_BROADCAST_SIZE);
-    
 	form_payload(&payload);
 
-    print_bytes(printk, (&payload.en_data), MAX_BROADCAST_SIZE);
-
-// Legacy advertising
-// Start
-// Using wrapper
+// Legacy advertising Start
 	err = bt_le_adv_start(
         BT_LE_ADV_NCONN_IDENTITY,
         payload.bt_data, ARRAY_SIZE(payload.bt_data),
 	    adv_res, ARRAY_SIZE(adv_res));
-// // Without wrapper (to force legacy)
-// // Not working as the legacy adv function is not exposed
-//     struct bt_le_ext_adv *adv = adv_new_legacy();
-// 	if (!adv) {
-// 		err = -ENOMEM;
-// 	} else {
-//         printk("Starting legacy advertising\n");
-// 	    err = bt_le_adv_start_legacy(adv, BT_LE_ADV_NCONN_IDENTITY, 
-//             adv_data, ARRAY_SIZE(adv_data), adv_res, ARRAY_SIZE(adv_res));
-//     }
     if (err) {
 		printk("Advertising failed to start (err %d)\n", err);
 		return;

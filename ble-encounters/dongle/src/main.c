@@ -48,12 +48,6 @@ static int dongle_display(encounter_broadcast_t *bc)
     return 0;
 }
 
-static void dongle_print(uint8_t *data, uint16_t len)
-{
-// Debug: Display raw payload
-    print_bytes(printk, data, len);
-}
-
 static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 			 struct net_buf_simple *ad)
 {
@@ -64,14 +58,9 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
         return;
     }
-    dongle_print(ad -> data, ad -> len);
     decode_payload(ad -> data);
-    dongle_print(ad -> data, ad -> len);
     encounter_broadcast_t en;
-	print_bytes(printk, ad->data, sizeof(beacon_eph_id_t));
     decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
-	print_bytes(printk, en.eph, sizeof(beacon_eph_id_t));
-	print_bytes(printk, en.b, sizeof(beacon_id_t));
     dongle_display(&en);
 }
 

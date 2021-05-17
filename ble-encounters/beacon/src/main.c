@@ -14,7 +14,8 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 
-#define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
+#define BEACON_ID		0xffffffff
+#define BEACON_LOC_ID	0xffffffffffffffff
 
 typedef struct bt_data bt_data_t;
 
@@ -58,25 +59,15 @@ static int form_payload(bt_wrapper_t *d)
     return 0;
 }
 
-static beacon_eph_id_t        test_eph = {
-    { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d }
-};
-
-static beacon_location_id_t   test_loc = 0x0e0f101112131415;
-static beacon_id_t            test_bid = 0x16171819;
-static beacon_timer_t         test_tmr = 0x1a1b1c1d;
-
-static encounter_broadcast_t test_broadcast = {
-    &test_eph, &test_loc, &test_bid, &test_tmr
-};
-
 
 // Scan Response
 static const bt_data_t adv_res[] = {
 	BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME, sizeof(CONFIG_BT_DEVICE_NAME) - 1),
 };
 
-static void beacon_adv(int err)
+// Primary broadcasting routine
+// Non-zero argument indicates an error setting up the procedure for BT advertising
+static void beacon_broadcast(int err)
 {
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
@@ -85,11 +76,23 @@ static void beacon_adv(int err)
 
 	printk("Bluetooth initialized\n");
 
+	encounter_broadcast_t bc;
+
+	beacon_id_t beacon_id = BEACON_ID;
+	beacon_location_id_t beacon_location_id = BEACON_LOC_ID;
+	beacon_timer_t beacon_time = 0;
+	beacon_eph_id_t beacon_eph_id;
+
+	bc.b = &beacon_id;
+	bc.loc = &beacon_location_id;
+	bc.t = &beacon_time;
+	bc.eph = &beacon_eph_id;
+
     bt_wrapper_t payload;
 
 // Load actual test broadcast
-    encode_encounter(&payload.en_data, &test_broadcast);
-    
+    encode_encounter(&payload.en_data, &bc);
+
 	form_payload(&payload);
 
 // Legacy advertising Start
@@ -115,9 +118,8 @@ static void beacon_adv(int err)
 void main(void)
 {
 	printk("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
-
-    int err = bt_enable(beacon_adv);
+    int err = bt_enable(beacon_broadcast);
     if (err) {
-        printk("Failure: error code = %d\n", err);
+        printk("Bluetooth Enable Failure: error code = %d\n", err);
     }
 }

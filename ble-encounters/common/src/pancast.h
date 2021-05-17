@@ -1,3 +1,5 @@
+#define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
+
 #define BEACON_EPH_ID_HASH_LEN 14
 
 typedef struct {

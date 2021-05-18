@@ -9,8 +9,10 @@
 #include <zephyr.h>
 #include <stddef.h>
 #include <sys/printk.h>
+#include <sys/util.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 
@@ -18,8 +20,10 @@
 #include "../../common/src/log.h"
 
 
-#define BEACON_ID		0xffffffff
-#define BEACON_LOC_ID	0xffffffffffffffff
+#define BEACON_BROADCAST_INTERVAL 5000 // ms
+
+
+
 
 typedef struct bt_data bt_data_t;
 
@@ -94,29 +98,44 @@ static void beacon_broadcast(int err)
 
     bt_wrapper_t payload;
 
-// Load actual test broadcast
-    encode_encounter(&payload.en_data, &bc);
+	unsigned long long iters = 0;
+	while (!err) {
+		log_debugf("broadcast update; iters=%llu\n", iters);
 
-	form_payload(&payload);
+		beacon_time++;
+
+// Load broadcast
+		encode_encounter(&payload.en_data, &bc);
+
+		form_payload(&payload);
 
 // Legacy advertising Start
-	err = bt_le_adv_start(
-        BT_LE_ADV_NCONN_IDENTITY,
-        payload.bt_data, ARRAY_SIZE(payload.bt_data),
-	    adv_res, ARRAY_SIZE(adv_res));
-    if (err) {
-		log_errorf("Advertising failed to start (err %d)\n", err);
-		return;
-	}
+		err = bt_le_adv_start(
+						BT_LE_ADV_NCONN_IDENTITY,
+						payload.bt_data, ARRAY_SIZE(payload.bt_data),
+						adv_res, ARRAY_SIZE(adv_res));
+		if (err) {
+			log_errorf("Advertising failed to start (err %d)\n", err);
+		} else {
 // obtain and report adverisement address
-	char addr_s[BT_ADDR_LE_STR_LEN];
-	bt_addr_le_t addr = {0};
-	size_t count = 1;
+			char addr_s[BT_ADDR_LE_STR_LEN];
+			bt_addr_le_t addr = {0};
+			size_t count = 1;
 
-	bt_id_get(&addr, &count);
-	bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
+			bt_id_get(&addr, &count);
+			bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
-    log_infof("Beacon started, advertising as %s\n", addr_s);
+			if (iters == 0)  {
+				log_infof("Beacon started, advertising as %s\n", addr_s);
+			}
+			k_sleep(K_MSEC(BEACON_BROADCAST_INTERVAL));
+			err = bt_le_adv_stop();
+			if (err) {
+				log_errorf("Advertising failed to stop (err %d)\n", err);
+			}
+			iters++;
+		}
+	}
 }
 
 void main(void)

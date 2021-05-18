@@ -73,6 +73,7 @@ static const bt_data_t adv_res[] = {
 // Non-zero argument indicates an error setting up the procedure for BT advertising
 static void beacon_broadcast(int err)
 {
+// check initialization
 	if (err) {
 		log_errorf("Bluetooth init failed (err %d)\n", err);
 		return;
@@ -80,18 +81,26 @@ static void beacon_broadcast(int err)
 
 	log_info("Bluetooth initialized\n");
 
-	encounter_broadcast_t bc;
+// Load data
+// this is a placeholder for flash load
+	beacon_id_t beacon_id = BEACON_ID;							// ID
+	beacon_location_id_t beacon_location_id = BEACON_LOC_ID;	// Location
+	beacon_timer_t t_init = 0; 									// Initial time
 
-	beacon_id_t beacon_id = BEACON_ID;
-	beacon_location_id_t beacon_location_id = BEACON_LOC_ID;
-	beacon_timer_t beacon_time = 0;
+// ephemeral id container
 	beacon_eph_id_t beacon_eph_id;
+// beacon timer
+	beacon_timer_t beacon_time = t_init;
+
+// store references in a single struct
+	encounter_broadcast_t bc;
 
 	bc.b = &beacon_id;
 	bc.loc = &beacon_location_id;
 	bc.t = &beacon_time;
 	bc.eph = &beacon_eph_id;
 
+// container for actual blutooth payload
     bt_wrapper_t payload;
 
 // track the current time epoch
@@ -124,7 +133,7 @@ static void beacon_broadcast(int err)
 		beacon_time += timer_status;
 		static beacon_epoch_counter_t old_epoch;
 		old_epoch = epoch;
-		epoch = beacon_time / BEACON_EPOCH_LENGTH;
+		epoch = epoch_i(beacon_time, t_init);
 		if (epoch != old_epoch) {
 			log_debugf("EPOCH %u\n", epoch);
 		}

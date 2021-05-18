@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
 
 // hard-coded beacon information for development purposes
@@ -40,5 +42,9 @@ typedef struct {
     uint8_t bytes[MAX_BROADCAST_SIZE];
 } encounter_broadcast_raw_t;
 
+// epoch calculation
+#define epoch_i(t, C) (beacon_epoch_counter_t)((t - C)/BEACON_EPOCH_LENGTH)
+
 static int encode_encounter(encounter_broadcast_raw_t*, encounter_broadcast_t*);
 static int decode_encounter(encounter_broadcast_t*, encounter_broadcast_raw_t*);
+

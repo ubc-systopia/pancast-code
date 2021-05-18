@@ -1,5 +1,9 @@
 #define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
 
+// hard-coded beacon information for development purposes
+#define BEACON_ID		0x012345678
+#define BEACON_LOC_ID	0x0123456789abcdef
+
 #define BEACON_EPH_ID_HASH_LEN 14
 
 typedef struct {

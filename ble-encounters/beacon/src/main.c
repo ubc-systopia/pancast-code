@@ -20,9 +20,6 @@
 #include "../../common/src/log.h"
 
 
-// time-constants, in ms
-#define BEACON_TIMER_RESOLUTION		5000 // TODO: should be 1 min in prod.
-
 
 typedef struct bt_data bt_data_t;
 
@@ -97,8 +94,8 @@ static void beacon_broadcast(int err)
 
     bt_wrapper_t payload;
 
-// track the number of broadcast cycles
-	unsigned long long iters = 0;
+// track the current time epoch
+	beacon_epoch_counter_t epoch = 0;
 
 // beacon kernel timer
 	struct k_timer kernel_time;
@@ -107,11 +104,12 @@ static void beacon_broadcast(int err)
 
 // BEACON BROADCASTING
 
+	log_info("starting broadcast\n");
+
 // 1. Timer zero point
 #define DUR K_MSEC(BEACON_TIMER_RESOLUTION)
 	k_timer_start(&kernel_time, DUR, DUR);
 #undef DUR
-
 	uint32_t timer_status = 0;
 
 // 2. Main loop, this is primarily controlled by timing functions
@@ -124,6 +122,13 @@ static void beacon_broadcast(int err)
 // update beacon clock using kernel. The addition is the number of
 // periods elapsed in the internal timer
 		beacon_time += timer_status;
+		static beacon_epoch_counter_t old_epoch;
+		old_epoch = epoch;
+		epoch = beacon_time / BEACON_EPOCH_LENGTH;
+		if (epoch != old_epoch) {
+			log_debugf("EPOCH %u\n", epoch);
+		}
+		log_debugf("beacon timer: %u\n", beacon_time);
 
 // Load broadcast into bluetooth payload
 		encode_encounter(&payload.en_data, &bc);
@@ -146,9 +151,7 @@ static void beacon_broadcast(int err)
 			bt_id_get(&addr, &count);
 			bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
-			if (iters == 0)  {
-				log_infof("Beacon started, advertising as %s\n", addr_s);
-			}
+			log_debugf("advertising started with address %s\n", addr_s);
 		}
 
 // Wait for a clock update, this blocks until the internal timer
@@ -161,7 +164,7 @@ static void beacon_broadcast(int err)
 		if (err) {
 			log_errorf("Advertising failed to stop (err %d)\n", err);
 		}
-		iters++;
+		log_debug("advertising stopped\n");
 	}
 }
 

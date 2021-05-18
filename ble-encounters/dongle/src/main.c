@@ -7,6 +7,7 @@
 
 #include <zephyr.h>
 #include <sys/printk.h>
+#include <sys/util.h>
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
@@ -15,6 +16,11 @@
 #include <bluetooth/gatt.h>
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
+
+#define LOG_LEVEL__DEBUG
+#include "../../common/src/log.h"
+
+#define DONGLE_SCAN_INTERVAL 5000 // ms
 
 static int decode_payload(uint8_t *data)
 {
@@ -40,11 +46,18 @@ static int decode_encounter(encounter_broadcast_t *dat, encounter_broadcast_raw_
 static int dongle_display(encounter_broadcast_t *bc)
 {
 // Debug: Display fields
+#define data (*bc)
+// Filter out by known id
+	if (*data.b != (beacon_id_t) BEACON_ID) {
+		log_debug("broadcast discarded\n");
+		return 1;
+	}
     printk("Encounter broadcast: \n"
         "   id = %u\n"
         "   location_id = %llu\n"
         "   beacon_time = %u\n",
-    *(bc ->b), *(bc ->loc), *(bc ->t));
+    *data.b, *data.loc, *data.t);
+#undef data
     return 0;
 }
 
@@ -66,15 +79,18 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 
 static void dongle_scan(void)
 {
-	int err;
+	int err = 0;
 
-	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
-	if (err) {
-		printk("Scanning failed to start (err %d)\n", err);
-		return;
+	while (!err) {
+		err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
+		if (err) {
+			printk("Scanning failed to start (err %d)\n", err);
+		} else {
+			printk("Scanning successfully started\n");
+			k_sleep(K_MSEC(DONGLE_SCAN_INTERVAL));
+			bt_le_scan_stop();
+		}
 	}
-
-	printk("Scanning successfully started\n");
 }
 
 

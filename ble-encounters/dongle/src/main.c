@@ -66,7 +66,7 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 {
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-	printk("Device found: %s (RSSI %d)\n", addr_str, rssi);
+	log_debugf("Device found: %s (RSSI %d)\n", addr_str, rssi);
 // Filter mis-sized packets up front
     if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
         return;
@@ -84,9 +84,9 @@ static void dongle_scan(void)
 	while (!err) {
 		err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
 		if (err) {
-			printk("Scanning failed to start (err %d)\n", err);
+			log_errorf("Scanning failed to start (err %d)\n", err);
 		} else {
-			printk("Scanning successfully started\n");
+			log_debug("Scanning successfully started\n");
 			k_sleep(K_MSEC(DONGLE_SCAN_INTERVAL));
 			bt_le_scan_stop();
 		}
@@ -96,17 +96,17 @@ static void dongle_scan(void)
 
 void main(void)
 {
-	printk("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
 
 	int err;
 
 	err = bt_enable(NULL);
 	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
+		log_errorf("Bluetooth init failed (err %d)\n", err);
 		return;
 	}
 
-	printk("Bluetooth initialized\n");
+	log_info("Bluetooth initialized\n");
 
 	dongle_scan();
 }

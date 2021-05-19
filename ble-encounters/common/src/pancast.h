@@ -66,8 +66,8 @@ static beacon_sk_t BEACON_SK = {{
 0x7c , 0x7a
 }};
 
-#define BEACON_EPOCH_LENGTH			15	 // number of timer cycles in one epoch should correspond to 15 min in prod.
-#define BEACON_TIMER_RESOLUTION		1000 // in ms TODO: should be 1 min in prod.
+#define BEACON_EPOCH_LENGTH			1	 // number of timer cycles in one epoch should correspond to 15 min in prod.
+#define BEACON_TIMER_RESOLUTION		5000 // in ms TODO: should be 1 min in prod.
 
 typedef uint32_t beacon_epoch_counter_t;
 

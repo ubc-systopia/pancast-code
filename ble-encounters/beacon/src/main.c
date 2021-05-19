@@ -173,9 +173,10 @@ static void beacon_broadcast(int err)
 		old_epoch = epoch;
 		epoch = epoch_i(beacon_time, t_init);
 		if (!cycles || epoch != old_epoch) {
-			log_debugf("EPOCH %u\n", epoch);
+			log_infof("EPOCH STARTED: %u\n", epoch);
 // When a new epoch has started, generate a new ephemeral id
 			beacon_gen_id(&beacon_eph_id, &BEACON_SK, bc.loc, &epoch);
+			print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 		}
 		log_debugf("beacon timer: %u\n", beacon_time);
 

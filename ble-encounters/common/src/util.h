@@ -1,8 +1,14 @@
 #include <stdint.h>
 
-#define print_bytes(prf, data, len) \
-    prf("Data: 0x"); \
+#define print_bytes(data, len, name) \
+	if (name == NULL) \
+		log_debug("data: 0x"); \
+	else \
+		log_debugf("%s: 0x", name); \
     for (int i = 0; i < len; i++) { \
-        prf(" %x", ((uint8_t*)data)[i]);        \
+		if (!(i % 16)) { \
+			log_debug("\n"); \
+		} \
+        log_debugf(" %.2x", ((uint8_t*)data)[i]);        \
     }                               \
-    printk("\n")
+    log_debug("\n")

@@ -12,6 +12,7 @@
 #include <sys/util.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+#include <tinycrypt/sha256.h>
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
@@ -19,6 +20,40 @@
 #define LOG_LEVEL__DEBUG
 #include "../../common/src/log.h"
 
+// static secret key for development
+extern beacon_sk_t BEACON_SK;
+
+// sha256-hashing
+
+typedef struct tc_sha256_state_struct hash_t;
+
+typedef struct {
+	uint8_t bytes[TC_SHA256_DIGEST_SIZE];
+} digest_t;
+
+
+static int beacon_gen_id(beacon_eph_id_t *id,
+				beacon_sk_t *sk, beacon_location_id_t *loc, beacon_epoch_counter_t *i)
+{
+	hash_t h;
+#define init() 			tc_sha256_init(&h)
+#define add(data,size) 	tc_sha256_update(&h, (uint8_t*)data, size)
+#define complete(d)		tc_sha256_final(d.bytes, &h)
+// Initialize hash
+	init();
+// Add relevant data
+	add(sk, 	BEACON_SK_SIZE);
+	add(loc, 	sizeof(beacon_location_id_t));
+	add(i, 		sizeof(beacon_epoch_counter_t));
+// finalize and copy to id
+	digest_t d;
+	complete(d);
+	memcpy(id, &d, BEACON_EPH_ID_HASH_LEN); // Little endian so these are the least significant
+#undef complete
+#undef add
+#undef init
+	return 0;
+}
 
 
 typedef struct bt_data bt_data_t;
@@ -110,6 +145,9 @@ static void beacon_broadcast(int err)
 	struct k_timer kernel_time;
 	k_timer_init(&kernel_time, NULL, NULL);
 
+// total number of updates. This is guaranteed to not exceed the
+// scale of the beacon timer
+	beacon_timer_t cycles = 0;
 
 // BEACON BROADCASTING
 
@@ -134,8 +172,10 @@ static void beacon_broadcast(int err)
 		static beacon_epoch_counter_t old_epoch;
 		old_epoch = epoch;
 		epoch = epoch_i(beacon_time, t_init);
-		if (epoch != old_epoch) {
+		if (!cycles || epoch != old_epoch) {
 			log_debugf("EPOCH %u\n", epoch);
+// When a new epoch has started, generate a new ephemeral id
+			beacon_gen_id(&beacon_eph_id, &BEACON_SK, bc.loc, &epoch);
 		}
 		log_debugf("beacon timer: %u\n", beacon_time);
 
@@ -172,7 +212,9 @@ static void beacon_broadcast(int err)
 		err = bt_le_adv_stop();
 		if (err) {
 			log_errorf("Advertising failed to stop (err %d)\n", err);
+			return;
 		}
+		cycles++;
 		log_debug("advertising stopped\n");
 	}
 }
@@ -185,3 +227,5 @@ void main(void)
         log_errorf("Bluetooth Enable Failure: error code = %d\n", err);
     }
 }
+
+#undef LOG_LEVEL__DEBUG

@@ -230,6 +230,7 @@ static void beacon_broadcast(int err)
 // When a new epoch has started, generate a new ephemeral id
 			beacon_gen_id(&beacon_eph_id, &BEACON_SK, bc.loc, &epoch);
 			print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
+			// TODO: log time to flash
 		}
 		log_debugf("beacon timer: %u\n", beacon_time);
 

@@ -12,10 +12,12 @@ typedef struct {
 #define BEACON_ID		0x012345678
 #define BEACON_LOC_ID	0x0123456789abcdef
 
-#define BEACON_EPOCH_LENGTH			1	 // number of timer cycles in one epoch should correspond to 15 min in prod.
+#define BEACON_EPOCH_LENGTH			15	 // number of timer cycles in one epoch should correspond to 15 min in prod.
 #define BEACON_TIMER_RESOLUTION		5000 // in ms TODO: should be 1 min in prod.
+#define DONGLE_TIMER_RESOLUTION		5000 // in ms TODO: should be 1 min in prod.
 
 typedef uint32_t beacon_epoch_counter_t;
+typedef uint32_t dongle_epoch_counter_t;
 
 #define BEACON_EPH_ID_HASH_LEN 14		// number of trailing bytes used
 
@@ -26,6 +28,7 @@ typedef struct {
 typedef uint64_t beacon_location_id_t;
 
 typedef uint32_t beacon_timer_t;
+typedef uint32_t dongle_timer_t;
 
 typedef uint32_t beacon_id_t;
 

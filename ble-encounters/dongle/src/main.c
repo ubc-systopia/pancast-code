@@ -79,17 +79,52 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 
 static void dongle_scan(void)
 {
-	int err = 0;
+// Initialization
+// TODO: flash load
+
+	beacon_timer_t t_init = 0; 									// Initial time
+
+// Scan Start
+	int err = err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
+	if (err) {
+		log_errorf("Scanning failed to start (err %d)\n", err);
+		return;
+	} else {
+		log_debug("Scanning successfully started\n");
+	}
+
+// Dongle Loop
+// timing and control logic is largely the same as the beacon
+// application. The main difference is that scanning does not
+// require restart for a new epoch.
+
+	dongle_timer_t dongle_time = t_init;
+	beacon_epoch_counter_t epoch = 0;
+
+	struct k_timer kernel_time;
+	k_timer_init(&kernel_time, NULL, NULL);
+
+// Timer zero point
+#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
+	k_timer_start(&kernel_time, DUR, DUR);
+#undef DUR
+	uint32_t timer_status = 0;
 
 	while (!err) {
-		err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
-		if (err) {
-			log_errorf("Scanning failed to start (err %d)\n", err);
-		} else {
-			log_debug("Scanning successfully started\n");
-			k_sleep(K_MSEC(DONGLE_SCAN_INTERVAL));
-			bt_le_scan_stop();
+// get most updated time
+		timer_status = k_timer_status_sync(&kernel_time);
+		timer_status += k_timer_status_get(&kernel_time);
+		dongle_time += timer_status;
+// update epoch
+		static dongle_epoch_counter_t old_epoch;
+		old_epoch = epoch;
+		epoch = epoch_i(dongle_time, t_init);
+		if (epoch != old_epoch) {
+			log_infof("EPOCH STARTED: %u\n", epoch);
+			// TODO: log time to flash
 		}
+		log_debugf("dongle timer: %u\n", dongle_time);
+
 	}
 }
 

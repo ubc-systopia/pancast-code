@@ -43,13 +43,37 @@ static int decode_encounter(encounter_broadcast_t *dat, encounter_broadcast_raw_
     return 0;
 }
 
+// GLOBAL DATA
+struct k_mutex dongle_mu;
+
+#define safely(e) k_mutex_lock(&dongle_mu, K_FOREVER); e; k_mutex_unlock(&dongle_mu)
+
+dongle_timer_t dongle_time;
+
+void dongle_time_set(dongle_timer_t *t)
+{
+	safely(dongle_time = *t);
+}
+
+void dongle_time_add(uint32_t *a)
+{
+	safely(dongle_time += *a);
+}
+
+void dongle_time_print()
+{
+	dongle_timer_t tmp;
+	safely(tmp = dongle_time);
+	log_debugf("dongle_time = %u\n", tmp);
+}
+
+
 static int dongle_display(encounter_broadcast_t *bc)
 {
 // Debug: Display fields
 #define data (*bc)
 // Filter out by known id
 	if (*data.b != (beacon_id_t) BEACON_ID) {
-		log_debug("broadcast discarded\n");
 		return 1;
 	}
     printk("Encounter broadcast: \n"
@@ -57,6 +81,7 @@ static int dongle_display(encounter_broadcast_t *bc)
         "   location_id = %llu\n"
         "   beacon_time = %u\n",
     *data.b, *data.loc, *data.t);
+	dongle_time_print();
 #undef data
     return 0;
 }
@@ -66,11 +91,11 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 {
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-	log_debugf("Device found: %s (RSSI %d)\n", addr_str, rssi);
 // Filter mis-sized packets up front
     if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
         return;
     }
+	log_debugf("Broadcast received from %s (RSSI %d)\n", addr_str, rssi);
     decode_payload(ad -> data);
     encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
@@ -82,7 +107,9 @@ static void dongle_scan(void)
 // Initialization
 // TODO: flash load
 
-	beacon_timer_t t_init = 0; 									// Initial time
+	dongle_timer_t t_init = 0; 									// Initial time
+
+	k_mutex_init(&dongle_mu);
 
 // Scan Start
 	int err = err = bt_le_scan_start(BT_LE_SCAN_PARAM(
@@ -103,8 +130,8 @@ static void dongle_scan(void)
 // application. The main difference is that scanning does not
 // require restart for a new epoch.
 
-	dongle_timer_t dongle_time = t_init;
-	beacon_epoch_counter_t epoch = 0;
+	dongle_time_set(&t_init);
+	dongle_epoch_counter_t epoch = 0;
 
 	struct k_timer kernel_time;
 	k_timer_init(&kernel_time, NULL, NULL);
@@ -119,7 +146,7 @@ static void dongle_scan(void)
 // get most updated time
 		timer_status = k_timer_status_sync(&kernel_time);
 		timer_status += k_timer_status_get(&kernel_time);
-		dongle_time += timer_status;
+		dongle_time_add(&timer_status);
 // update epoch
 		static dongle_epoch_counter_t old_epoch;
 		old_epoch = epoch;

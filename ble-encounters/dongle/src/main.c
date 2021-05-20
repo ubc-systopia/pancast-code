@@ -17,10 +17,11 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 
-#define LOG_LEVEL__DEBUG
+#define LOG_LEVEL__INFO
 #include "../../common/src/log.h"
 
-#define DONGLE_SCAN_INTERVAL 5000 // ms
+// number of distinct broadcast ids to keep track of at one time
+#define DONGLE_MAX_BC_TRACKED 4
 
 static int decode_payload(uint8_t *data)
 {
@@ -59,11 +60,16 @@ static int ephcmp(beacon_eph_id_t *a, beacon_eph_id_t *b)
 // GLOBAL DATA
 struct k_mutex dongle_mu;
 
-#define safely(e) k_mutex_lock(&dongle_mu, K_FOREVER); e; k_mutex_unlock(&dongle_mu)
+#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
+#define UNLOCK k_mutex_unlock(&dongle_mu);
+#define safely(e) LOCK e; UNLOCK
 
-dongle_timer_t dongle_time;		// main dongle timer
-beacon_eph_id_t cur_id;			// currently observed ephemeral id
-dongle_timer_t obs_time;		// time of last new id observation
+dongle_timer_t dongle_time;								// main dongle timer
+beacon_eph_id_t cur_id[DONGLE_MAX_BC_TRACKED];			// currently observed ephemeral id
+dongle_timer_t obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
+
+typedef size_t id_idx_t;
+id_idx_t cur_id_idx = 0;
 
 void dongle_time_set(dongle_timer_t *t)
 {
@@ -89,30 +95,6 @@ void dongle_time_cpy(dongle_timer_t *t)
 	*t = tmp;
 }
 
-// computes the difference of the two times, returning a
-// pointer to the result
-dongle_timer_t* dongle_time_cmp(
-				dongle_timer_t *t0, dongle_timer_t *t1)
-{
-		static dongle_timer_t tmp;
-		safely(tmp = *t1 - *t0);
-		return &tmp;
-}
-
-static int dongle_display(encounter_broadcast_t *bc)
-{
-// Debug: Display fields
-#define data (*bc)
-    printk("Encounter broadcast: \n"
-        "   id = %u\n"
-        "   location_id = %llu\n"
-        "   beacon_time = %u\n",
-    *data.b, *data.loc, *data.t);
-	dongle_time_print();
-#undef data
-    return 0;
-}
-
 static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 			 struct net_buf_simple *ad)
 {
@@ -126,30 +108,37 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     decode_payload(ad -> data);
     encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
-// Filter by known id
-	if (*en.b != (beacon_id_t) BEACON_ID) {
-		return;
-	}
-    dongle_display(&en);
-	if (ephcmp(en.eph, &cur_id)) {
-// when a new ephemeral id is observed
-// update the observation time and the currently observed id
-		log_debug("new epoch\n");
-		print_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph id");
-		dongle_time_cpy(&obs_time);
-		safely(memcpy(&cur_id, en.eph -> bytes, BEACON_EPH_ID_HASH_LEN));
-	} else {
-// when the same ephemeral id is observed
-// check conditions for a valid encounter
-		dongle_timer_t* diff = dongle_time_cmp(&obs_time, &dongle_time);
-		if (*diff > DONGLE_ENCOUNTER_MIN_TIME) {
-// when a valid encounter is detected
-// log the encounter
-			log_info("BEACON ENCOUNTER!\n");
-// reset the observation time
-			dongle_time_cpy(&obs_time);
+// the following alters dongle state, so the lock is obtained
+	LOCK
+// determine which tracked id, if any, is a match
+	id_idx_t i = DONGLE_MAX_BC_TRACKED;
+	for (id_idx_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
+		if (!ephcmp(en.eph, &cur_id[j])) {
+			i = j;
 		}
 	}
+	if (i == DONGLE_MAX_BC_TRACKED) {
+// if no match was found, start tracking the new id, replacing the oldest one
+// currently tracked
+		log_debug("new ephemeral id\n");
+		print_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph id");
+		i = cur_id_idx;
+		cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
+		memcpy(&cur_id[i], en.eph -> bytes, BEACON_EPH_ID_HASH_LEN);
+		obs_time[i] = dongle_time;
+	} else {
+		log_debugf("id match at index %d\n", i);
+// when a matching ephemeral id is observed
+// check conditions for a valid encounter
+		if (dongle_time - obs_time[i] >= DONGLE_ENCOUNTER_MIN_TIME) {
+// when a valid encounter is detected
+// log the encounter
+			log_infof("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);
+// reset the observation time
+			obs_time[i] = dongle_time;
+		}
+	}
+	UNLOCK
 }
 
 static void dongle_scan(void)

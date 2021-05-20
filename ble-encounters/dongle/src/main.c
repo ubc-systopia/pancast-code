@@ -43,12 +43,27 @@ static int decode_encounter(encounter_broadcast_t *dat, encounter_broadcast_raw_
     return 0;
 }
 
+// compares two ephemeral ids
+static int ephcmp(beacon_eph_id_t *a, beacon_eph_id_t *b)
+{
+#define A (a -> bytes)
+#define B (b -> bytes)
+	for (int i = 0; i < BEACON_EPH_ID_HASH_LEN; i++)
+		if (A[i] != B[i])
+				return 1;
+#undef B
+#undef A
+	return 0;
+}
+
 // GLOBAL DATA
 struct k_mutex dongle_mu;
 
 #define safely(e) k_mutex_lock(&dongle_mu, K_FOREVER); e; k_mutex_unlock(&dongle_mu)
 
-dongle_timer_t dongle_time;
+dongle_timer_t dongle_time;		// main dongle timer
+beacon_eph_id_t cur_id;			// currently observed ephemeral id
+dongle_timer_t obs_time;		// time of last new id observation
 
 void dongle_time_set(dongle_timer_t *t)
 {
@@ -67,15 +82,27 @@ void dongle_time_print()
 	log_debugf("dongle_time = %u\n", tmp);
 }
 
+void dongle_time_cpy(dongle_timer_t *t)
+{
+	dongle_timer_t tmp;
+	safely(tmp = dongle_time);
+	*t = tmp;
+}
+
+// computes the difference of the two times, returning a
+// pointer to the result
+dongle_timer_t* dongle_time_cmp(
+				dongle_timer_t *t0, dongle_timer_t *t1)
+{
+		static dongle_timer_t tmp;
+		safely(tmp = *t1 - *t0);
+		return &tmp;
+}
 
 static int dongle_display(encounter_broadcast_t *bc)
 {
 // Debug: Display fields
 #define data (*bc)
-// Filter out by known id
-	if (*data.b != (beacon_id_t) BEACON_ID) {
-		return 1;
-	}
     printk("Encounter broadcast: \n"
         "   id = %u\n"
         "   location_id = %llu\n"
@@ -91,7 +118,7 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 {
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-// Filter mis-sized packets up front
+// Filter mis-sized packets
     if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
         return;
     }
@@ -99,7 +126,30 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     decode_payload(ad -> data);
     encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
+// Filter by known id
+	if (*en.b != (beacon_id_t) BEACON_ID) {
+		return;
+	}
     dongle_display(&en);
+	if (ephcmp(en.eph, &cur_id)) {
+// when a new ephemeral id is observed
+// update the observation time and the currently observed id
+		log_debug("new epoch\n");
+		print_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph id");
+		dongle_time_cpy(&obs_time);
+		safely(memcpy(&cur_id, en.eph -> bytes, BEACON_EPH_ID_HASH_LEN));
+	} else {
+// when the same ephemeral id is observed
+// check conditions for a valid encounter
+		dongle_timer_t* diff = dongle_time_cmp(&obs_time, &dongle_time);
+		if (*diff > DONGLE_ENCOUNTER_MIN_TIME) {
+// when a valid encounter is detected
+// log the encounter
+			log_info("BEACON ENCOUNTER!\n");
+// reset the observation time
+			dongle_time_cpy(&obs_time);
+		}
+	}
 }
 
 static void dongle_scan(void)

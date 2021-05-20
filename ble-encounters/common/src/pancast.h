@@ -54,3 +54,4 @@ typedef struct {
 // epoch calculation
 #define epoch_i(t, C) (beacon_epoch_counter_t)((t - C)/BEACON_EPOCH_LENGTH)
 
+#define DONGLE_ENCOUNTER_MIN_TIME 1 // number of time units eph. id must be observed

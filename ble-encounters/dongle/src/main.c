@@ -85,7 +85,12 @@ static void dongle_scan(void)
 	beacon_timer_t t_init = 0; 									// Initial time
 
 // Scan Start
-	int err = err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, dongle_log);
+	int err = err = bt_le_scan_start(BT_LE_SCAN_PARAM(
+		BT_LE_SCAN_TYPE_PASSIVE,    // passive scan
+		BT_LE_SCAN_OPT_NONE,        // no options; in particular, allow duplicates
+		BT_GAP_SCAN_FAST_INTERVAL,  // interval
+		BT_GAP_SCAN_FAST_WINDOW     // window
+	), dongle_log);
 	if (err) {
 		log_errorf("Scanning failed to start (err %d)\n", err);
 		return;

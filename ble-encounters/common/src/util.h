@@ -1,14 +1,18 @@
 #include <stdint.h>
 
-#define print_bytes(data, len, name) \
+#define log_bytes(log, logf, data, len, name) \
 	if (name == NULL) \
-		log_debug("data: 0x"); \
+		log("data: 0x"); \
 	else \
-		log_debugf("%s: 0x", name); \
+		logf("%s: 0x", name); \
     for (int i = 0; i < len; i++) { \
 		if (!(i % 16)) { \
-			log_debug("\n"); \
+			log("\n"); \
 		} \
-        log_debugf(" %.2x", ((uint8_t*)data)[i]);        \
+        logf(" %.2x", ((uint8_t*)data)[i]);        \
     }                               \
-    log_debug("\n")
+    log("\n")
+
+#define print_bytes(data, len, name) log_bytes(log_debug, log_debugf data, len, name)
+
+#define info_bytes(data, len, name) log_bytes(log_info, log_infof, data, len, name)

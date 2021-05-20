@@ -21,7 +21,7 @@
 #include "../../common/src/log.h"
 
 // number of distinct broadcast ids to keep track of at one time
-#define DONGLE_MAX_BC_TRACKED 4
+#define DONGLE_MAX_BC_TRACKED 16
 
 static int decode_payload(uint8_t *data)
 {
@@ -104,7 +104,6 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
         return;
     }
-	log_debugf("Broadcast received from %s (RSSI %d)\n", addr_str, rssi);
     decode_payload(ad -> data);
     encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
@@ -120,9 +119,9 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	if (i == DONGLE_MAX_BC_TRACKED) {
 // if no match was found, start tracking the new id, replacing the oldest one
 // currently tracked
-		log_debug("new ephemeral id\n");
-		print_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph id");
 		i = cur_id_idx;
+		log_infof("new ephemeral id observed (beacon=%u), tracking at index %d\n", *en.b, i);
+		info_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
 		cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
 		memcpy(&cur_id[i], en.eph -> bytes, BEACON_EPH_ID_HASH_LEN);
 		obs_time[i] = dongle_time;
@@ -130,7 +129,9 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 		log_debugf("id match at index %d\n", i);
 // when a matching ephemeral id is observed
 // check conditions for a valid encounter
-		if (dongle_time - obs_time[i] >= DONGLE_ENCOUNTER_MIN_TIME) {
+		dongle_timer_t dur = dongle_time - obs_time[i];
+		log_debugf("observed for %u time units\n", dur);
+		if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
 // when a valid encounter is detected
 // log the encounter
 			log_infof("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);

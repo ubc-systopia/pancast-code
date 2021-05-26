@@ -22,6 +22,11 @@
 
 #define BEACON_STAT_DURATION 30000 // ms
 
+// Advertising interval settings
+// Zephyr-recommended values are used
+#define BEACON_ADV_MIN_INTERVAL BT_GAP_ADV_FAST_INT_MIN_1
+#define BEACON_ADV_MAX_INTERVAL BT_GAP_ADV_FAST_INT_MAX_1
+
 // secret key for development
 static beacon_sk_t BEACON_SK = {{
 0xcb , 0x43 , 0xf7 , 0x56 , 0x16 , 0x25 , 0xb3 , 0xd0 , 0xd0 , 0xbe ,
@@ -227,6 +232,18 @@ static void beacon_broadcast(int err)
 	beacon_timer_t stat_cycles;
 	beacon_timer_t stat_epochs = 0;
 
+#define BEACON_INFO \
+    log_info("Info: \n");                                                                                           \
+    log_infof("    Board:                           %s\n", CONFIG_BOARD);                                           \
+    log_infof("    Beacon ID:                       %u\n", beacon_id);                                              \
+    log_infof("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);                             \
+    log_infof("    Epoch Length:                    %u\n", BEACON_EPOCH_LENGTH);                                    \
+    log_infof("    Advertising Interval: \n"                                                                        \
+              "        Min:                         %u ms\n"                                                        \
+              "        Max:                         %u ms\n", BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
+
+
+    BEACON_INFO;
 
 // 2. Main loop, this is primarily controlled by timing functions
 // and terminates only in the event of an error
@@ -261,7 +278,12 @@ static void beacon_broadcast(int err)
 
 // Start advertising
 		err = bt_le_adv_start(
-						BT_LE_ADV_NCONN_IDENTITY,
+						BT_LE_ADV_PARAM(
+                            BT_LE_ADV_OPT_USE_IDENTITY,     // use random identity address
+                            BEACON_ADV_MIN_INTERVAL,
+                            BEACON_ADV_MAX_INTERVAL,
+                            NULL                            // undirected advertising
+                        ),
 						payload.bt_data, ARRAY_SIZE(payload.bt_data),
 						adv_res, ARRAY_SIZE(adv_res));
 		if (err) {
@@ -291,11 +313,7 @@ static void beacon_broadcast(int err)
         stat_timer += hp_timer_status;
         if (stat_timer >= BEACON_STAT_DURATION) {
 			log_statf("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
-            log_stat("Info: \n");
-			log_statf("    Board:                           %s\n", CONFIG_BOARD);
-			log_statf("    Beacon ID:                       %u\n", beacon_id);
-			log_statf("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);
-			log_statf("    Epoch Length:                    %u\n", BEACON_EPOCH_LENGTH);
+            BEACON_INFO
             log_stat("Statistics: \n");
             log_statf("     Time since last report:         %d ms\n", stat_timer);
             log_statf("     Timer:\n"

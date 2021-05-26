@@ -10,6 +10,8 @@
 #define log_infof(_...)		LOG_NA
 #define log_debug(_)		LOG_NA
 #define log_debugf(_...)	LOG_NA
+#define log_stat(_)         LOG_NA
+#define log_statf(_...)     LOG_NA
 #define LOG_LEVEL
 #endif
 
@@ -20,6 +22,8 @@
 #define log_infof			logf
 #define log_debug(_)		LOG_NA
 #define log_debugf(_...)	LOG_NA
+#define log_stat(_)         LOG_NA
+#define log_statf(_...)     LOG_NA
 #define LOG_LEVEL
 #endif
 
@@ -30,6 +34,20 @@
 #define log_infof			logf
 #define log_debug			log
 #define log_debugf			logf
+#define log_stat(_)         LOG_NA
+#define log_statf(_...)     LOG_NA
+#define LOG_LEVEL
+#endif
+
+#ifdef LOG_LEVEL__STAT
+#define log_error 			log
+#define log_errorf 			logf
+#define log_info 			log
+#define log_infof			logf
+#define log_debug(_)		LOG_NA
+#define log_debugf(_...)	LOG_NA
+#define log_stat            log
+#define log_statf           logf
 #define LOG_LEVEL
 #endif
 

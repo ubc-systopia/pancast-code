@@ -17,8 +17,10 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__STAT
 #include "../../common/src/log.h"
+
+#define BEACON_STAT_DURATION 30000 // ms
 
 // secret key for development
 static beacon_sk_t BEACON_SK = {{
@@ -195,8 +197,10 @@ static void beacon_broadcast(int err)
 	beacon_epoch_counter_t epoch = 0;
 
 // beacon kernel timer
-	struct k_timer kernel_time;
-	k_timer_init(&kernel_time, NULL, NULL);
+	struct k_timer kernel_time_lp;
+	k_timer_init(&kernel_time_lp, NULL, NULL);
+	struct k_timer kernel_time_hp;
+	k_timer_init(&kernel_time_hp, NULL, NULL);
 
 // total number of updates. This is guaranteed to not exceed the
 // scale of the beacon timer
@@ -207,21 +211,34 @@ static void beacon_broadcast(int err)
 	log_info("starting broadcast\n");
 
 // 1. Timer zero point
-#define DUR K_MSEC(BEACON_TIMER_RESOLUTION)
-	k_timer_start(&kernel_time, DUR, DUR);
-#undef DUR
-	uint32_t timer_status = 0;
+#define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
+#define DUR_HP K_MSEC(1)
+	k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
+	k_timer_start(&kernel_time_hp, DUR_HP, DUR_HP);
+#undef DUR_HP
+#undef DUR_LP
+
+	uint32_t lp_timer_status = 0;
+	uint32_t hp_timer_status = 0;
+
+// Statistics data
+    uint32_t stat_timer = 0;
+    beacon_timer_t stat_start;
+	beacon_timer_t stat_cycles;
+	beacon_timer_t stat_epochs = 0;
+
 
 // 2. Main loop, this is primarily controlled by timing functions
 // and terminates only in the event of an error
 	while (!err) {
 
 // get most updated time
-		timer_status += k_timer_status_get(&kernel_time);
+// Low-precision timer is synced, so accumulate status here
+		lp_timer_status += k_timer_status_get(&kernel_time_lp);
 
 // update beacon clock using kernel. The addition is the number of
 // periods elapsed in the internal timer
-		beacon_time += timer_status;
+		beacon_time += lp_timer_status;
 		static beacon_epoch_counter_t old_epoch;
 		old_epoch = epoch;
 		epoch = epoch_i(beacon_time, t_init);
@@ -230,6 +247,9 @@ static void beacon_broadcast(int err)
 // When a new epoch has started, generate a new ephemeral id
 			beacon_gen_id(&beacon_eph_id, &BEACON_SK, bc.loc, &epoch);
 			info_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
+			if (epoch != old_epoch) {
+				stat_epochs ++;
+			}
 			// TODO: log time to flash
 		}
 		log_debugf("beacon timer: %u\n", beacon_time);
@@ -258,10 +278,40 @@ static void beacon_broadcast(int err)
 			log_debugf("advertising started with address %s\n", addr_s);
 		}
 
+// high-precision collects the raw number of expirations
+		hp_timer_status = k_timer_status_get(&kernel_time_hp);
+
+#ifdef LOG_LEVEL__STAT
+// STATISTICS
+        if (!stat_timer) {
+			stat_start = beacon_time;
+			stat_cycles = 0;
+			stat_epochs = 0;
+        }
+        stat_timer += hp_timer_status;
+        if (stat_timer >= BEACON_STAT_DURATION) {
+			log_statf("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
+            log_stat("Info: \n");
+			log_statf("    Board:                           %s\n", CONFIG_BOARD);
+			log_statf("    Beacon ID:                       %u\n", beacon_id);
+			log_statf("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);
+			log_statf("    Epoch Length:                    %u\n", BEACON_EPOCH_LENGTH);
+            log_stat("Statistics: \n");
+            log_statf("     Time since last report:         %d ms\n", stat_timer);
+            log_statf("     Timer:\n"
+					  "         Start:                      %u\n"
+					  "         End:                        %u\n", stat_start, beacon_time);
+            log_statf("     Cycles:                         %u\n", stat_cycles);
+            log_statf("     Completed Epochs:               %u\n", stat_epochs);
+			log_stat("*** End Report ***\n");
+            stat_timer = 0;
+        }
+#endif
+
 // Wait for a clock update, this blocks until the internal timer
 // period expires, indicating that at least one unit of relevant beacon
 // time has elapsed. timer status is reset here
-		timer_status = k_timer_status_sync(&kernel_time);
+		lp_timer_status = k_timer_status_sync(&kernel_time_lp);
 
 // stop current advertising cycle
 		err = bt_le_adv_stop();
@@ -270,6 +320,7 @@ static void beacon_broadcast(int err)
 			return;
 		}
 		cycles++;
+		stat_cycles++;
 		log_debug("advertising stopped\n");
 	}
 }
@@ -277,10 +328,9 @@ static void beacon_broadcast(int err)
 void main(void)
 {
 	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+    log_statf("Displaying statistics (roughly) every %d ms\n", BEACON_STAT_DURATION);
     int err = bt_enable(beacon_broadcast);
     if (err) {
         log_errorf("Bluetooth Enable Failure: error code = %d\n", err);
     }
 }
-
-#undef LOG_LEVEL__DEBUG

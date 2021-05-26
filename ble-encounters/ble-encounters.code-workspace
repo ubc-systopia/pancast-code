@@ -15,8 +15,12 @@
         },
         "cSpell.words": [
             "RSSI",
+            "debugf",
+            "errorf",
+            "infof",
             "pancast",
-            "printk"
+            "printk",
+            "statf"
         ]
     },
     "tasks": {

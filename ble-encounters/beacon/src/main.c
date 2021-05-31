@@ -6,6 +6,9 @@
 // details.
 //
 
+#define LOG_LEVEL__INFO
+#define MODE__STAT
+
 #include <zephyr.h>
 #include <stddef.h>
 #include <sys/printk.h>
@@ -16,8 +19,6 @@
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
-
-#define LOG_LEVEL__STAT
 #include "../../common/src/log.h"
 
 #define BEACON_STAT_DURATION 30000 // ms
@@ -226,11 +227,23 @@ static void beacon_broadcast(int err)
 	uint32_t lp_timer_status = 0;
 	uint32_t hp_timer_status = 0;
 
+#ifdef MODE__STAT
 // Statistics data
     uint32_t stat_timer = 0;
     beacon_timer_t stat_start;
 	beacon_timer_t stat_cycles;
 	beacon_timer_t stat_epochs = 0;
+#endif
+
+#define BEACON_STATS \
+    log_info(   "Statistics: \n");                                                                                  \
+    log_infof(  "     Time since last report:         %d ms\n", stat_timer);                            \
+    log_infof(  "     Timer:\n"         \
+                "         Start:                      %u\n" \
+                "         End:                        %u\n", stat_start, beacon_time); \
+    log_infof(  "     Cycles:                         %u\n", stat_cycles); \
+    log_infof(  "     Completed Epochs:               %u\n", stat_epochs); \
+    log_info(   "*** End Report ***\n");
 
 #define BEACON_INFO \
     log_info("Info: \n");                                                                                           \
@@ -243,7 +256,7 @@ static void beacon_broadcast(int err)
               "        Max:                         %u ms\n", BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
 
 
-    BEACON_INFO;
+    BEACON_INFO
 
 // 2. Main loop, this is primarily controlled by timing functions
 // and terminates only in the event of an error
@@ -260,12 +273,14 @@ static void beacon_broadcast(int err)
 		old_epoch = epoch;
 		epoch = epoch_i(beacon_time, t_init);
 		if (!cycles || epoch != old_epoch) {
-			log_infof("EPOCH STARTED: %u\n", epoch);
+			log_debugf("EPOCH STARTED: %u\n", epoch);
 // When a new epoch has started, generate a new ephemeral id
 			beacon_gen_id(&beacon_eph_id, &BEACON_SK, bc.loc, &epoch);
-			info_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
+			print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 			if (epoch != old_epoch) {
+#ifdef MODE__STAT
 				stat_epochs ++;
+#endif
 			}
 			// TODO: log time to flash
 		}
@@ -303,28 +318,6 @@ static void beacon_broadcast(int err)
 // high-precision collects the raw number of expirations
 		hp_timer_status = k_timer_status_get(&kernel_time_hp);
 
-#ifdef LOG_LEVEL__STAT
-// STATISTICS
-        if (!stat_timer) {
-			stat_start = beacon_time;
-			stat_cycles = 0;
-			stat_epochs = 0;
-        }
-        stat_timer += hp_timer_status;
-        if (stat_timer >= BEACON_STAT_DURATION) {
-			log_statf("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
-            BEACON_INFO
-            log_stat("Statistics: \n");
-            log_statf("     Time since last report:         %d ms\n", stat_timer);
-            log_statf("     Timer:\n"
-					  "         Start:                      %u\n"
-					  "         End:                        %u\n", stat_start, beacon_time);
-            log_statf("     Cycles:                         %u\n", stat_cycles);
-            log_statf("     Completed Epochs:               %u\n", stat_epochs);
-			log_stat("*** End Report ***\n");
-            stat_timer = 0;
-        }
-#endif
 
 // Wait for a clock update, this blocks until the internal timer
 // period expires, indicating that at least one unit of relevant beacon
@@ -338,7 +331,22 @@ static void beacon_broadcast(int err)
 			return;
 		}
 		cycles++;
+#ifdef MODE__STAT
 		stat_cycles++;
+// STATISTICS
+        if (!stat_timer) {
+			stat_start = beacon_time;
+			stat_cycles = 0;
+			stat_epochs = 0;
+        }
+        stat_timer += hp_timer_status;
+        if (stat_timer >= BEACON_STAT_DURATION) {
+			log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
+            BEACON_INFO
+            BEACON_STATS
+            stat_timer = 0;
+        }
+#endif
 		log_debug("advertising stopped\n");
 	}
 }
@@ -346,7 +354,10 @@ static void beacon_broadcast(int err)
 void main(void)
 {
 	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
-    log_statf("Displaying statistics (roughly) every %d ms\n", BEACON_STAT_DURATION);
+#ifdef MODE__STAT
+    log_info("Statistics mode enabled\n");
+    log_infof("Displaying statistics (roughly) every %d ms\n", BEACON_STAT_DURATION);
+#endif
     int err = bt_enable(beacon_broadcast);
     if (err) {
         log_errorf("Bluetooth Enable Failure: error code = %d\n", err);

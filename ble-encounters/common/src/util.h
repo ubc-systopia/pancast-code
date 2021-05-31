@@ -13,6 +13,6 @@
     }                               \
     log("\n")
 
-#define print_bytes(data, len, name) log_bytes(log_debug, log_debugf data, len, name)
+#define print_bytes(data, len, name) log_bytes(log_debug, log_debugf, data, len, name)
 
 #define info_bytes(data, len, name) log_bytes(log_info, log_infof, data, len, name)

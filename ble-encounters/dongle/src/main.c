@@ -5,6 +5,9 @@
 // instead interprets and logs payload data from PanCast beacons.
 //
 
+#define LOG_LEVEL__INFO
+#define MODE__TEST
+
 #include <zephyr.h>
 #include <sys/printk.h>
 #include <sys/util.h>
@@ -16,9 +19,10 @@
 #include <bluetooth/gatt.h>
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
-
-#define LOG_LEVEL__INFO
+#include "../../common/src/test.h"
 #include "../../common/src/log.h"
+
+#define DONGLE_REPORT_INTERVAL 30
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
@@ -65,8 +69,13 @@ struct k_mutex dongle_mu;
 #define safely(e) LOCK e; UNLOCK
 
 dongle_timer_t dongle_time;								// main dongle timer
+dongle_timer_t report_time;
 beacon_eph_id_t cur_id[DONGLE_MAX_BC_TRACKED];			// currently observed ephemeral id
 dongle_timer_t obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
+
+#ifdef MODE__TEST
+int test_encounters = 0;
+#endif
 
 typedef size_t id_idx_t;
 id_idx_t cur_id_idx = 0;
@@ -120,8 +129,8 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 // if no match was found, start tracking the new id, replacing the oldest one
 // currently tracked
 		i = cur_id_idx;
-		log_infof("new ephemeral id observed (beacon=%u), tracking at index %d\n", *en.b, i);
-		info_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
+		log_debugf("new ephemeral id observed (beacon=%u), tracking at index %d\n", *en.b, i);
+		print_bytes(en.eph -> bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
 		cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
 		memcpy(&cur_id[i], en.eph -> bytes, BEACON_EPH_ID_HASH_LEN);
 		obs_time[i] = dongle_time;
@@ -134,7 +143,12 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 		if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
 // when a valid encounter is detected
 // log the encounter
-			log_infof("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);
+			log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);
+#ifdef MODE__TEST
+        if (*en.b == TEST_BEACON_ID) {
+            test_encounters++;
+        }
+#endif
 // reset the observation time
 			obs_time[i] = dongle_time;
 		}
@@ -170,7 +184,11 @@ static void dongle_scan(void)
 // application. The main difference is that scanning does not
 // require restart for a new epoch.
 
-	dongle_time_set(&t_init);
+    LOCK
+    dongle_time = t_init;
+	report_time = dongle_time;
+    UNLOCK
+
 	dongle_epoch_counter_t epoch = 0;
 
 	struct k_timer kernel_time;
@@ -195,8 +213,25 @@ static void dongle_scan(void)
 			log_infof("EPOCH STARTED: %u\n", epoch);
 			// TODO: log time to flash
 		}
-		log_debugf("dongle timer: %u\n", dongle_time);
-
+// do report
+        LOCK
+        if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
+            report_time = dongle_time;
+			log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
+		    log_infof("dongle timer: %u\n", dongle_time);
+#ifdef MODE__TEST
+            int err = 0;
+            if (test_encounters < 1) {
+                log_infof("FAILED: Encounter test. encounters logged in window: %d\n", 
+                            test_encounters);
+                err++;
+            }
+            log_infof("Tests completed: status = %d\n", err);
+            test_encounters = 0;
+#endif
+            log_info(   "*** End Report ***\n");
+        }
+        UNLOCK
 	}
 }
 

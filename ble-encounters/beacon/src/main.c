@@ -348,8 +348,8 @@ static void beacon_broadcast(int err)
 			log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
             BEACON_INFO
 #ifdef MODE__STAT
-            stat_timer = 0;
             BEACON_STATS
+            stat_timer = 0;
 #endif
             log_info(   "*** End Report ***\n");
         }

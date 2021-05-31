@@ -21,7 +21,7 @@
 #include "../../common/src/util.h"
 #include "../../common/src/log.h"
 
-#define BEACON_STAT_DURATION 30000 // ms
+#define BEACON_REPORT_INTERVAL 30
 
 // Advertising interval settings
 // Zephyr-recommended values are used
@@ -188,6 +188,8 @@ static void beacon_broadcast(int err)
 // beacon timer
 	beacon_timer_t beacon_time = t_init;
 
+	beacon_timer_t report_time = beacon_time;
+
 // store references in a single struct
 	encounter_broadcast_t bc;
 
@@ -242,15 +244,15 @@ static void beacon_broadcast(int err)
                 "         Start:                      %u\n" \
                 "         End:                        %u\n", stat_start, beacon_time); \
     log_infof(  "     Cycles:                         %u\n", stat_cycles); \
-    log_infof(  "     Completed Epochs:               %u\n", stat_epochs); \
-    log_info(   "*** End Report ***\n");
+    log_infof(  "     Completed Epochs:               %u\n", stat_epochs);
 
 #define BEACON_INFO \
     log_info("Info: \n");                                                                                           \
     log_infof("    Board:                           %s\n", CONFIG_BOARD);                                           \
     log_infof("    Beacon ID:                       %u\n", beacon_id);                                              \
     log_infof("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);                             \
-    log_infof("    Epoch Length:                    %u\n", BEACON_EPOCH_LENGTH);                                    \
+    log_infof("    Epoch Length:                    %u ms\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);                                    \
+    log_infof("    Report Interval:                 %u ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);                                    \
     log_infof("    Advertising Interval: \n"                                                                        \
               "        Min:                         %u ms\n"                                                        \
               "        Max:                         %u ms\n", BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
@@ -340,13 +342,17 @@ static void beacon_broadcast(int err)
 			stat_epochs = 0;
         }
         stat_timer += hp_timer_status;
-        if (stat_timer >= BEACON_STAT_DURATION) {
+#endif
+        if (beacon_time - report_time >= BEACON_REPORT_INTERVAL) {
+            report_time = beacon_time;
 			log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
             BEACON_INFO
-            BEACON_STATS
+#ifdef MODE__STAT
             stat_timer = 0;
-        }
+            BEACON_STATS
 #endif
+            log_info(   "*** End Report ***\n");
+        }
 		log_debug("advertising stopped\n");
 	}
 }
@@ -356,8 +362,8 @@ void main(void)
 	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
 #ifdef MODE__STAT
     log_info("Statistics mode enabled\n");
-    log_infof("Displaying statistics (roughly) every %d ms\n", BEACON_STAT_DURATION);
 #endif
+    log_infof("Reporting every %d ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
     int err = bt_enable(beacon_broadcast);
     if (err) {
         log_errorf("Bluetooth Enable Failure: error code = %d\n", err);

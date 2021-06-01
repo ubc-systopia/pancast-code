@@ -30,12 +30,12 @@ typedef union {
 } bt_wrapper_t;
 
 
-#ifdef APPL_BEACON
-void                main(void)
+#ifdef APPL__BEACON
+void                main(void);
 #else
 void                _beacon_main_();
 #endif
 static void         _beacon_broadcast_(int);
-void                _beacon_info_();
+static void         _beacon_info_();
 
 #endif

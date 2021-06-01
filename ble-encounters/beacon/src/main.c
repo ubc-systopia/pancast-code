@@ -7,6 +7,7 @@
 //
 
 #define LOG_LEVEL__INFO
+#define APPL__BEACON
 #define MODE__STAT
 
 #include <zephyr.h>
@@ -15,104 +16,188 @@
 #include <sys/util.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
-#include <tinycrypt/sha256.h>
+
+#include "./beacon.h"
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 #include "../../common/src/log.h"
 #include "../../common/src/test.h"
 
-#define BEACON_REPORT_INTERVAL 30
+//
+// ENTRY POINT
+//
 
-// Advertising interval settings
-// Zephyr-recommended values are used
-#define BEACON_ADV_MIN_INTERVAL BT_GAP_ADV_FAST_INT_MIN_1
-#define BEACON_ADV_MAX_INTERVAL BT_GAP_ADV_FAST_INT_MAX_1
-
-// sha256-hashing
-
-typedef struct tc_sha256_state_struct hash_t;
-
-typedef struct {
-	uint8_t bytes[TC_SHA256_DIGEST_SIZE];
-} digest_t;
-
-
-static int beacon_gen_id(beacon_eph_id_t *id,
-				beacon_sk_t *sk, beacon_location_id_t *loc, beacon_epoch_counter_t *i)
+#ifdef APPL_BEACON
+void main(void)
+#else
+void _beacon_main_()
+#endif
 {
-	hash_t h;
-#define init() 			tc_sha256_init(&h)
-#define add(data,size) 	tc_sha256_update(&h, (uint8_t*)data, size)
-#define complete(d)		tc_sha256_final(d.bytes, &h)
-// Initialize hash
-	init();
-// Add relevant data
-	add(sk, 	BEACON_SK_SIZE);
-	add(loc, 	sizeof(beacon_location_id_t));
-	add(i, 		sizeof(beacon_epoch_counter_t));
-// finalize and copy to id
-	digest_t d;
-	complete(d);
-	memcpy(id, &d, BEACON_EPH_ID_HASH_LEN); // Little endian so these are the least significant
-#undef complete
-#undef add
-#undef init
-	return 0;
+	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+    _beacon_info_();
+#ifdef MODE__STAT
+    log_info("Statistics mode enabled\n");
+#endif
+    log_infof("Reporting every %d ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+    int err = bt_enable(_beacon_broadcast_);
+    if (err) {
+        log_errorf("Bluetooth Enable Failure: error code = %d\n", err);
+    }
 }
 
+//
+// GLOBAL MEMORY
+//
+// Default Operation
+beacon_id_t             beacon_id;              // Beacon ID
+beacon_location_id_t    beacon_location_id;     // Location ID
+beacon_timer_t          t_init;                 // Beacon Clock Start
+beacon_timer_t          beacon_time;            // Beacon Clock
+beacon_sk_t             *beacon_sk;             // Secret Key
+beacon_eph_id_t         beacon_eph_id;          // Ephemeral ID
+encounter_broadcast_t   bc;                     // store references to data
+beacon_epoch_counter_t  epoch;                  // track the current time epoch
+beacon_timer_t          cycles;                 // total number of updates.
+//
+// Bluetooth
+bt_wrapper_t            payload;                // container for actual blutooth payload
+bt_data_t               adv_res[] = {
+    BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME,
+    sizeof(CONFIG_BT_DEVICE_NAME) - 1)
+};                                              // Advertising response
+//
+// Reporting
+beacon_timer_t          report_time;            // Report tracking clock
+//
+// Statistics
+#ifdef MODE__STAT
+uint32_t                stat_timer;
+beacon_timer_t          stat_start;
+beacon_timer_t          stat_cycles;
+beacon_timer_t          stat_epochs;
+#endif
 
-typedef struct bt_data bt_data_t;
+//
+// ROUTINES
+//
 
-typedef union {
-    encounter_broadcast_raw_t en_data;
-    bt_data_t bt_data[1];
-} bt_wrapper_t;
-
-// pack a raw byte payload by copying from the high-level type
-// order is important here so as to avoid unaligned access on the
-// receiver side
-static int encode_encounter(encounter_broadcast_raw_t *raw, encounter_broadcast_t *dat)
+void _beacon_load_()
 {
-    uint8_t *dst = (uint8_t*) raw;
-    size_t pos = 0;
-#define copy(src, size) memcpy(dst + pos, src, size); pos += size
-    copy(dat->t, sizeof(beacon_timer_t));
-    copy(dat->b, sizeof(beacon_id_t));
-    copy(dat->loc, sizeof(beacon_location_id_t));
-    copy(dat->eph, sizeof(beacon_eph_id_t));
-#undef copy
-    return pos;
+// Load data
+// this is a placeholder for flash load
+    beacon_id = TEST_BEACON_ID;
+    beacon_location_id = TEST_BEACON_LOC_ID;
+    t_init = TEST_BEACON_INIT_TIME;
+    beacon_sk = &TEST_BEACON_SK;
+}
+
+void _beacon_info_()
+{
+    log_info("Info: \n");
+    log_infof("    Board:                           %s\n",      CONFIG_BOARD);
+    log_infof("    Beacon ID:                       %u\n",      beacon_id);
+    log_infof("    Timer Resolution:                %u ms\n",   BEACON_TIMER_RESOLUTION);
+    log_infof("    Epoch Length:                    %u ms\n",   BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
+    log_infof("    Report Interval:                 %u ms\n",   BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+    log_infof("    Advertising Interval: \n"
+              "        Min:                         %u ms\n"
+              "        Max:                         %u ms\n",   BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
+}
+
+#ifdef MODE__STAT
+void _beacon_stats_()
+{
+    log_info(   "Statistics: \n");
+    log_infof(  "     Time since last report:         %d ms\n", stat_timer);
+    log_infof(  "     Timer:\n"
+                "         Start:                      %u\n"
+                "         End:                        %u\n",    stat_start, beacon_time);
+    log_infof(  "     Cycles:                         %u\n",    stat_cycles);
+    log_infof(  "     Completed Epochs:               %u\n",    stat_epochs);
+}
+#endif
+
+void _beacon_report_()
+{
+    if (beacon_time - report_time < BEACON_REPORT_INTERVAL) {
+        return;
+    } else {
+        report_time = beacon_time;
+        log_infof(  "*** Begin Report for %s    ***\n", CONFIG_BT_DEVICE_NAME);
+        _beacon_info_();
+#ifdef MODE__STAT
+        _beacon_stats_();
+        stat_timer = 0;
+#endif
+        log_info(   "***      End Report        ***\n");
+    }
 }
 
 // Intermediary transformer to create a well-formed BT data type
 // for using the high-level APIs. Becomes obsolete once advertising
 // routine supports a full raw payload
-static int form_payload(bt_wrapper_t *d)
+void _form_payload_()
 {
     const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
-#define bt (d->bt_data)
+#define bt (payload.bt_data)
     uint8_t tmp = bt->data_len;
     bt -> data_len = len;
-#define en (d->en_data)
+#define en (payload.en_data)
     en.bytes[MAX_BROADCAST_SIZE - 1] = tmp;
 #undef en
 	static uint8_t of[MAX_BROADCAST_SIZE - 2];
 	memcpy(of, ((uint8_t*) bt) + 2, MAX_BROADCAST_SIZE - 2);
     bt -> data = (uint8_t*) &of;
 #undef bt
-    return 0;
 }
 
+// pack a raw byte payload by copying from the high-level type
+// order is important here so as to avoid unaligned access on the
+// receiver side
+void _encode_encounter_()
+{
+    uint8_t *dst = (uint8_t*) &payload.en_data;
+    size_t pos = 0;
+#define copy(src, size) memcpy(dst + pos, src, size); pos += size
+    copy(bc.t, sizeof(beacon_timer_t));
+    copy(bc.b, sizeof(beacon_id_t));
+    copy(bc.loc, sizeof(beacon_location_id_t));
+    copy(bc.eph, sizeof(beacon_eph_id_t));
+#undef copy
+}
 
-// Scan Response
-static const bt_data_t adv_res[] = {
-	BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME, sizeof(CONFIG_BT_DEVICE_NAME) - 1),
-};
+void _beacon_encode_()
+{
+    // Load broadcast into bluetooth payload
+	_encode_encounter_(), _form_payload_();
+}
+
+void _gen_ephid_()
+{
+    	hash_t h;
+#define init() 			tc_sha256_init(&h)
+#define add(data,size) 	tc_sha256_update(&h, (uint8_t*)data, size)
+#define complete(d)		tc_sha256_final(d.bytes, &h)
+// Initialize hash
+	init();
+// Add relevant data
+	add(beacon_sk, 	            BEACON_SK_SIZE);
+	add(&beacon_location_id, 	sizeof(beacon_location_id_t));
+	add(&epoch, 		        sizeof(beacon_epoch_counter_t));
+// finalize and copy to id
+	digest_t d;
+	complete(d);
+	memcpy(&beacon_id, &d, BEACON_EPH_ID_HASH_LEN); // Little endian so these are the least significant
+#undef complete
+#undef add
+#undef init
+    print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
+}
 
 // Primary broadcasting routine
 // Non-zero argument indicates an error setting up the procedure for BT advertising
-static void beacon_broadcast(int err)
+static void _beacon_broadcast_(int err)
 {
 // check initialization
 	if (err) {
@@ -122,43 +207,23 @@ static void beacon_broadcast(int err)
 
 	log_info("Bluetooth initialized\n");
 
-// Load data
-// this is a placeholder for flash load
-	beacon_id_t beacon_id = TEST_BEACON_ID;							// ID
-	beacon_location_id_t beacon_location_id = TEST_BEACON_LOC_ID;	// Location
-	beacon_timer_t t_init = TEST_BEACON_INIT_TIME; 					// Initial time
-    beacon_sk_t beacon_sk = TEST_BEACON_SK;                         // secret key
-
-// ephemeral id container
-	beacon_eph_id_t beacon_eph_id;
-// beacon timer
-	beacon_timer_t beacon_time = t_init;
-
-	beacon_timer_t report_time = beacon_time;
-
-// store references in a single struct
-	encounter_broadcast_t bc;
+    beacon_time = t_init;
+	report_time = beacon_time;
 
 	bc.b = &beacon_id;
 	bc.loc = &beacon_location_id;
 	bc.t = &beacon_time;
 	bc.eph = &beacon_eph_id;
 
-// container for actual blutooth payload
-    bt_wrapper_t payload;
+	epoch = 0;
 
-// track the current time epoch
-	beacon_epoch_counter_t epoch = 0;
+    struct k_timer          kernel_time_lp;         // low-precision kernel timer
+    struct k_timer          kernel_time_hp;         // high-precision kernel timer
 
-// beacon kernel timer
-	struct k_timer kernel_time_lp;
 	k_timer_init(&kernel_time_lp, NULL, NULL);
-	struct k_timer kernel_time_hp;
 	k_timer_init(&kernel_time_hp, NULL, NULL);
 
-// total number of updates. This is guaranteed to not exceed the
-// scale of the beacon timer
-	beacon_timer_t cycles = 0;
+	cycles = 0;
 
 // BEACON BROADCASTING
 
@@ -176,35 +241,9 @@ static void beacon_broadcast(int err)
 	uint32_t hp_timer_status = 0;
 
 #ifdef MODE__STAT
-// Statistics data
-    uint32_t stat_timer = 0;
-    beacon_timer_t stat_start;
-	beacon_timer_t stat_cycles;
-	beacon_timer_t stat_epochs = 0;
+    stat_timer = 0;
+	stat_epochs = 0;
 #endif
-
-#define BEACON_STATS \
-    log_info(   "Statistics: \n");                                                                                  \
-    log_infof(  "     Time since last report:         %d ms\n", stat_timer);                            \
-    log_infof(  "     Timer:\n"         \
-                "         Start:                      %u\n" \
-                "         End:                        %u\n", stat_start, beacon_time); \
-    log_infof(  "     Cycles:                         %u\n", stat_cycles); \
-    log_infof(  "     Completed Epochs:               %u\n", stat_epochs);
-
-#define BEACON_INFO \
-    log_info("Info: \n");                                                                                           \
-    log_infof("    Board:                           %s\n", CONFIG_BOARD);                                           \
-    log_infof("    Beacon ID:                       %u\n", beacon_id);                                              \
-    log_infof("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);                             \
-    log_infof("    Epoch Length:                    %u ms\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);                                    \
-    log_infof("    Report Interval:                 %u ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);                                    \
-    log_infof("    Advertising Interval: \n"                                                                        \
-              "        Min:                         %u ms\n"                                                        \
-              "        Max:                         %u ms\n", BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
-
-
-    BEACON_INFO
 
 // 2. Main loop, this is primarily controlled by timing functions
 // and terminates only in the event of an error
@@ -223,8 +262,7 @@ static void beacon_broadcast(int err)
 		if (!cycles || epoch != old_epoch) {
 			log_debugf("EPOCH STARTED: %u\n", epoch);
 // When a new epoch has started, generate a new ephemeral id
-			beacon_gen_id(&beacon_eph_id, &beacon_sk, bc.loc, &epoch);
-			print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
+			_gen_ephid_();
 			if (epoch != old_epoch) {
 #ifdef MODE__STAT
 				stat_epochs ++;
@@ -234,10 +272,7 @@ static void beacon_broadcast(int err)
 		}
 		log_debugf("beacon timer: %u\n", beacon_time);
 
-// Load broadcast into bluetooth payload
-		encode_encounter(&payload.en_data, &bc);
-
-		form_payload(&payload);
+        _beacon_encode_();
 
 // Start advertising
 		err = bt_le_adv_start(
@@ -289,29 +324,12 @@ static void beacon_broadcast(int err)
         }
         stat_timer += hp_timer_status;
 #endif
-        if (beacon_time - report_time >= BEACON_REPORT_INTERVAL) {
-            report_time = beacon_time;
-			log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
-            BEACON_INFO
-#ifdef MODE__STAT
-            BEACON_STATS
-            stat_timer = 0;
-#endif
-            log_info(   "*** End Report ***\n");
-        }
+        _beacon_report_();
 		log_debug("advertising stopped\n");
 	}
 }
 
-void main(void)
-{
-	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
-#ifdef MODE__STAT
-    log_info("Statistics mode enabled\n");
-#endif
-    log_infof("Reporting every %d ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-    int err = bt_enable(beacon_broadcast);
-    if (err) {
-        log_errorf("Bluetooth Enable Failure: error code = %d\n", err);
-    }
-}
+
+#undef MODE__STAT
+#undef APPL__BEACON
+#undef LOG_LEVEL__INFO

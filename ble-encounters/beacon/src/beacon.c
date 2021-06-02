@@ -58,6 +58,8 @@ static beacon_eph_id_t         beacon_eph_id;          // Ephemeral ID
 static encounter_broadcast_t   bc;                     // store references to data
 static beacon_epoch_counter_t  epoch;                  // track the current time epoch
 static beacon_timer_t          cycles;                 // total number of updates.
+static struct k_timer          kernel_time_lp;         // low-precision kernel timer
+static struct k_timer          kernel_time_hp;         // high-precision kernel timer
 //
 // Bluetooth
 static bt_wrapper_t            payload;                // container for actual blutooth payload
@@ -198,8 +200,9 @@ log_debug("hi0\n");
 
 static void _beacon_init_()
 {
-    beacon_time = t_init;
-	report_time = beacon_time;
+
+    k_timer_init(&kernel_time_lp, NULL, NULL);
+	k_timer_init(&kernel_time_hp, NULL, NULL);
 
 	bc.b = &beacon_id;
 	bc.loc = &beacon_location_id;
@@ -209,10 +212,21 @@ static void _beacon_init_()
 	epoch = 0;
 	cycles = 0;
 
+    beacon_time = t_init;
+	report_time = beacon_time;
+
 #ifdef MODE__STAT
     stat_timer = 0;
 	stat_epochs = 0;
 #endif
+
+// Timer Start
+#define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
+#define DUR_HP K_MSEC(1)
+	k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
+	k_timer_start(&kernel_time_hp, DUR_HP, DUR_HP);
+#undef DUR_HP
+#undef DUR_LP
 }
 
 static void _beacon_epoch_()
@@ -293,40 +307,16 @@ static void _beacon_broadcast_(int err)
 // check initialization
 	if (err) {
 		log_errorf("Bluetooth init failed (err %d)\n", err);
-		return;
+        return;
 	}
 
-	log_info("Bluetooth initialized\n");
+	log_info("Bluetooth initialized - starting broadcast\n");
 
-    _beacon_load_();
-    _beacon_init_();
+    _beacon_load_(), _beacon_init_();
 
-    struct k_timer          kernel_time_lp;         // low-precision kernel timer
-    struct k_timer          kernel_time_hp;         // high-precision kernel timer
+	uint32_t lp_timer_status = 0, hp_timer_status = 0;
 
-	k_timer_init(&kernel_time_lp, NULL, NULL);
-	k_timer_init(&kernel_time_hp, NULL, NULL);
-
-// BEACON BROADCASTING
-
-	log_info("starting broadcast\n");
-
-// 1. Timer zero point
-#define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
-#define DUR_HP K_MSEC(1)
-	k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
-	k_timer_start(&kernel_time_hp, DUR_HP, DUR_HP);
-#undef DUR_HP
-#undef DUR_LP
-
-	uint32_t lp_timer_status = 0;
-	uint32_t hp_timer_status = 0;
-
-
-// 2. Main loop, this is primarily controlled by timing functions
-// and terminates only in the event of an error
 	while (!err) {
-
 // get most updated time
 // Low-precision timer is synced, so accumulate status here
 		lp_timer_status += k_timer_status_get(&kernel_time_lp);

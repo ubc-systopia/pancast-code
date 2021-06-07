@@ -17,6 +17,9 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
+
+#include "./dongle.h"
+
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 #include "../../common/src/test.h"
@@ -26,6 +29,51 @@
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
+
+
+void main(void)
+{
+	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+
+	int err;
+
+	err = bt_enable(NULL);
+	if (err) {
+		log_errorf("Bluetooth init failed (err %d)\n", err);
+		return;
+	}
+
+	log_info("Bluetooth initialized\n");
+
+	dongle_scan();
+}
+
+//
+// GLOBAL MEMORY
+//
+
+// Mutual exclusion
+struct k_mutex dongle_mu;
+#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
+#define UNLOCK k_mutex_unlock(&dongle_mu);
+#define safely(e) LOCK e; UNLOCK
+
+// Config
+dongle_timer_t              t_init;
+
+// Op
+dongle_epoch_counter_t      epoch;
+struct k_timer              kernel_time;
+dongle_timer_t              dongle_time;								// main dongle timer
+dongle_timer_t              report_time;
+beacon_eph_id_t             cur_id[DONGLE_MAX_BC_TRACKED];			    // currently observed ephemeral id
+dongle_timer_t              obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
+size_t                      cur_id_idx = 0;
+
+#ifdef MODE__TEST
+int                         test_encounters = 0;
+#endif
+
 
 static int decode_payload(uint8_t *data)
 {
@@ -60,25 +108,6 @@ static int ephcmp(beacon_eph_id_t *a, beacon_eph_id_t *b)
 #undef A
 	return 0;
 }
-
-// GLOBAL DATA
-struct k_mutex dongle_mu;
-
-#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
-#define UNLOCK k_mutex_unlock(&dongle_mu);
-#define safely(e) LOCK e; UNLOCK
-
-dongle_timer_t dongle_time;								// main dongle timer
-dongle_timer_t report_time;
-beacon_eph_id_t cur_id[DONGLE_MAX_BC_TRACKED];			// currently observed ephemeral id
-dongle_timer_t obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
-
-#ifdef MODE__TEST
-int test_encounters = 0;
-#endif
-
-typedef size_t id_idx_t;
-id_idx_t cur_id_idx = 0;
 
 void dongle_time_set(dongle_timer_t *t)
 {
@@ -119,8 +148,8 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 // the following alters dongle state, so the lock is obtained
 	LOCK
 // determine which tracked id, if any, is a match
-	id_idx_t i = DONGLE_MAX_BC_TRACKED;
-	for (id_idx_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
+	size_t i = DONGLE_MAX_BC_TRACKED;
+	for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
 		if (!ephcmp(en.eph, &cur_id[j])) {
 			i = j;
 		}
@@ -161,7 +190,7 @@ static void dongle_scan(void)
 // Initialization
 // TODO: flash load
 
-	dongle_timer_t t_init = 0; 									// Initial time
+	t_init = 0; 									// Initial time
 
 	k_mutex_init(&dongle_mu);
 
@@ -189,9 +218,8 @@ static void dongle_scan(void)
 	report_time = dongle_time;
     UNLOCK
 
-	dongle_epoch_counter_t epoch = 0;
+	epoch = 0;
 
-	struct k_timer kernel_time;
 	k_timer_init(&kernel_time, NULL, NULL);
 
 // Timer zero point
@@ -233,22 +261,4 @@ static void dongle_scan(void)
         }
         UNLOCK
 	}
-}
-
-
-void main(void)
-{
-	log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
-
-	int err;
-
-	err = bt_enable(NULL);
-	if (err) {
-		log_errorf("Bluetooth init failed (err %d)\n", err);
-		return;
-	}
-
-	log_info("Bluetooth initialized\n");
-
-	dongle_scan();
 }

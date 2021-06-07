@@ -6,7 +6,7 @@
 //
 
 #define LOG_LEVEL__INFO
-#define MODE__TEST
+//#define MODE__TEST
 
 #include <zephyr.h>
 #include <sys/printk.h>
@@ -17,6 +17,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
+#include <drivers/flash.h>
 
 #include "./dongle.h"
 
@@ -198,12 +199,20 @@ static void _dongle_report_()
     }
 }
 
+#define FLASH_OFFSET 0x20000
+
 static void _dongle_load_()
 {
 #ifdef MODE__TEST
     dongle_id = TEST_DONGLE_ID;
     t_init = TEST_DONGLE_INIT_TIME;
 #else
+    struct device *flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+    off_t off = 0;
+#define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
+    read(sizeof(dongle_id_t), &dongle_id);
+    read(sizeof(dongle_timer_t), &t_init);
+#undef read
 #endif
 }
 

@@ -133,20 +133,26 @@ void dongle_time_cpy(dongle_timer_t *t)
 	*t = tmp;
 }
 
-static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
-			 struct net_buf_simple *ad)
+static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
-	char addr_str[BT_ADDR_LE_STR_LEN];
-	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-// Filter mis-sized packets
-    if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
-        return;
+#define en (*enc)
+// when a valid encounter is detected
+// log the encounter
+    log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);
+#ifdef MODE__TEST
+    if (*en.b == TEST_BEACON_ID) {
+        test_encounters++;
     }
-    decode_payload(ad -> data);
-    encounter_broadcast_t en;
-    decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
-// the following alters dongle state, so the lock is obtained
-	LOCK
+#endif
+// reset the observation time
+    obs_time[i] = dongle_time;
+#undef en
+}
+
+static void _dongle_track_(encounter_broadcast_t *enc)
+{
+#define en (*enc)
+    LOCK
 // determine which tracked id, if any, is a match
 	size_t i = DONGLE_MAX_BC_TRACKED;
 	for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
@@ -170,19 +176,26 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 		dongle_timer_t dur = dongle_time - obs_time[i];
 		log_debugf("observed for %u time units\n", dur);
 		if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
-// when a valid encounter is detected
-// log the encounter
-			log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);
-#ifdef MODE__TEST
-        if (*en.b == TEST_BEACON_ID) {
-            test_encounters++;
-        }
-#endif
-// reset the observation time
-			obs_time[i] = dongle_time;
+            _dongle_encounter_(&en, i);
 		}
 	}
 	UNLOCK
+#undef en
+}
+
+static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
+			 struct net_buf_simple *ad)
+{
+	char addr_str[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+// Filter mis-sized packets
+    if (ad -> len != ENCOUNTER_BROADCAST_SIZE + 1) {
+        return;
+    }
+    decode_payload(ad -> data);
+    encounter_broadcast_t en;
+    decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
+    _dongle_track_(&en);
 }
 
 static void _dongle_report_()

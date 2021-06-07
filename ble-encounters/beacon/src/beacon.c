@@ -6,9 +6,10 @@
 // details.
 //
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__DEBUG
 #define APPL__BEACON
 #define MODE__STAT
+//#define MODE__TEST
 
 #include <zephyr.h>
 #include <stddef.h>
@@ -16,6 +17,7 @@
 #include <sys/util.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+#include <drivers/flash.h>
 
 #include "./beacon.h"
 
@@ -27,6 +29,11 @@
 //
 // ENTRY POINT
 //
+
+// Offset determines a safe point of read/write beyond the pages used by application
+// binaries. For now, determined empirically by doing a compilation pass then adjusting
+// the value
+#define FLASH_OFFSET 0x12000
 
 #ifdef APPL__BEACON
 void main(void)
@@ -48,12 +55,18 @@ void _beacon_main_()
 //
 // GLOBAL MEMORY
 //
+
+// Config
+static beacon_timer_t          t_init;                 // Beacon Clock Start
+static key_size_t              backend_pk_size;        // size of backend public key
+static pubkey_t                backend_pk;             // Backend public key
+static key_size_t              beacon_sk_size;         // size of secret key
+static beacon_sk_t             beacon_sk;              // Secret Key
+
 // Default Operation
 static beacon_id_t             beacon_id;              // Beacon ID
 static beacon_location_id_t    beacon_location_id;     // Location ID
-static beacon_timer_t          t_init;                 // Beacon Clock Start
 static beacon_timer_t          beacon_time;            // Beacon Clock
-static beacon_sk_t             *beacon_sk;             // Secret Key
 static beacon_eph_id_t         beacon_eph_id;          // Ephemeral ID
 static encounter_broadcast_t   bc;                     // store references to data
 static beacon_epoch_counter_t  epoch;                  // track the current time epoch
@@ -86,11 +99,46 @@ static beacon_timer_t          stat_epochs;
 static void _beacon_load_()
 {
 // Load data
-// this is a placeholder for flash load
+#ifdef MODE__TEST
     beacon_id = TEST_BEACON_ID;
     beacon_location_id = TEST_BEACON_LOC_ID;
     t_init = TEST_BEACON_INIT_TIME;
-    beacon_sk = &TEST_BEACON_SK;
+    backend_pk_size = TEST_BEACON_BACKEND_KEY_SIZE;
+    memcpy(&backend_pk, &TEST_BACKEND_PK, backend_pk_size);
+    beacon_sk_size = TEST_BEACON_SK_SIZE;
+    memcpy(&beacon_sk, &TEST_BEACON_SK, beacon_sk_size);
+#else
+// Read data from flashed storage
+// Format matches the fixed structure which is also used as a protocol when appending non-app
+// data to the device image.
+	struct device *flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+    off_t off = 0;
+#define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
+    flash_read(flash, FLASH_OFFSET, &beacon_id, sizeof(beacon_id_t));
+    read(sizeof(beacon_id_t), &beacon_id);
+    read(sizeof(beacon_location_id_t), &beacon_location_id);
+    read(sizeof(beacon_timer_t), &t_init);
+    read(sizeof(key_size_t), &backend_pk_size);
+    if (backend_pk_size > PK_MAX_SIZE) {
+        log_errorf("Key size read for public key (%u bytes) is larger than max (%u)\n",
+            backend_pk_size, PK_MAX_SIZE);
+    }
+    read(backend_pk_size, &backend_pk);
+    read(sizeof(key_size_t), &beacon_sk_size);
+    if (beacon_sk_size > SK_MAX_SIZE) {
+        log_errorf("Key size read for secret key (%u bytes) is larger than max (%u)\n",
+            beacon_sk_size, SK_MAX_SIZE);
+    }
+    read(beacon_sk_size, &beacon_sk);
+#undef read
+#endif
+    log_info("*** Configuration ***:\n");
+    log_infof("ID: %u\n", beacon_id);
+    log_infof("Location ID: %llu\n", beacon_location_id);
+    log_infof("Initial clock: %u\n", t_init);
+    log_infof("Backend public key (%u bytes)\n", backend_pk_size);
+    log_infof("Secret key (%u bytes)\n", beacon_sk_size);
+    log_info("*** End Configuration ***\n");
 }
 
 static void _beacon_info_()
@@ -183,9 +231,7 @@ static void _gen_ephid_()
 // Initialize hash
 	init();
 // Add relevant data
-log_debug("hi0\n");
-	add(beacon_sk, 	            BEACON_SK_SIZE);
-    log_debug("hi\n");
+	add(&beacon_sk, 	        beacon_sk_size);
 	add(&beacon_location_id, 	sizeof(beacon_location_id_t));
 	add(&epoch, 		        sizeof(beacon_epoch_counter_t));
 // finalize and copy to id

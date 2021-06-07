@@ -5,11 +5,19 @@
 
 #define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
 
-#define BEACON_SK_SIZE 16 // bytes
+#define SK_MAX_SIZE 360 // bytes
 
 typedef struct {
-	uint8_t bytes[BEACON_SK_SIZE];
+	uint8_t bytes[SK_MAX_SIZE];
 } beacon_sk_t;
+
+#define PK_MAX_SIZE 96
+
+typedef struct {
+	uint8_t bytes[PK_MAX_SIZE];
+} pubkey_t;
+
+typedef uint16_t key_size_t;
 
 // hard-coded beacon information for development purposes
 

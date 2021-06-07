@@ -6,4 +6,4 @@ project(pancase_dongle)
 
 # Add your source file to the "app" target. This must come after
 # find_package(Zephyr) which defines the target.
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/dongle.c)

@@ -60,6 +60,7 @@ struct k_mutex dongle_mu;
 #define UNLOCK k_mutex_unlock(&dongle_mu);
 
 // Config
+dongle_id_t                 dongle_id;
 dongle_timer_t              t_init;
 
 // Op
@@ -69,10 +70,10 @@ dongle_timer_t              dongle_time;								// main dongle timer
 dongle_timer_t              report_time;
 beacon_eph_id_t             cur_id[DONGLE_MAX_BC_TRACKED];			    // currently observed ephemeral id
 dongle_timer_t              obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
-size_t                      cur_id_idx = 0;
+size_t                      cur_id_idx;
 
 #ifdef MODE__TEST
-int                         test_encounters = 0;
+int                         test_encounters;
 #endif
 
 
@@ -181,6 +182,7 @@ static void _dongle_report_()
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
         report_time = dongle_time;
         log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
+        log_infof("ID: %u\n", dongle_id);
         log_infof("dongle timer: %u\n", dongle_time);
 #ifdef MODE__TEST
         int err = 0;
@@ -196,13 +198,30 @@ static void _dongle_report_()
     }
 }
 
+static void _dongle_load_()
+{
+#ifdef MODE__TEST
+    dongle_id = TEST_DONGLE_ID;
+    t_init = TEST_DONGLE_INIT_TIME;
+#else
+#endif
+}
+
 static void _dongle_init_()
 {
     k_mutex_init(&dongle_mu);
-    t_init = 0;
+
+    _dongle_load_();
+
     dongle_time = t_init;
 	report_time = dongle_time;
+    cur_id_idx = 0;
 	epoch = 0;
+
+#ifdef MODE__TEST
+    test_encounters = 0;
+#endif
+
 	k_timer_init(&kernel_time, NULL, NULL);
 
 // Timer zero point

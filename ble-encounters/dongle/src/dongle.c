@@ -185,14 +185,50 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	UNLOCK
 }
 
+static void _dongle_report_()
+{
+    // do report
+    LOCK
+    if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
+        report_time = dongle_time;
+        log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
+        log_infof("dongle timer: %u\n", dongle_time);
+#ifdef MODE__TEST
+        int err = 0;
+        if (test_encounters < 1) {
+            log_infof("FAILED: Encounter test. encounters logged in window: %d\n", 
+                        test_encounters);
+            err++;
+        }
+        log_infof("Tests completed: status = %d\n", err);
+        test_encounters = 0;
+#endif
+        log_info(   "*** End Report ***\n");
+    }
+    UNLOCK
+}
+
+static void _dongle_init_()
+{
+    k_mutex_init(&dongle_mu);
+    t_init = 0;
+    LOCK
+    dongle_time = t_init;
+	report_time = dongle_time;
+    UNLOCK
+	epoch = 0;
+	k_timer_init(&kernel_time, NULL, NULL);
+
+// Timer zero point
+#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
+	k_timer_start(&kernel_time, DUR, DUR);
+#undef DUR									// Initial time
+}
+
 static void dongle_scan(void)
 {
-// Initialization
-// TODO: flash load
 
-	t_init = 0; 									// Initial time
-
-	k_mutex_init(&dongle_mu);
+    _dongle_init_();
 
 // Scan Start
 	int err = err = bt_le_scan_start(BT_LE_SCAN_PARAM(
@@ -213,19 +249,6 @@ static void dongle_scan(void)
 // application. The main difference is that scanning does not
 // require restart for a new epoch.
 
-    LOCK
-    dongle_time = t_init;
-	report_time = dongle_time;
-    UNLOCK
-
-	epoch = 0;
-
-	k_timer_init(&kernel_time, NULL, NULL);
-
-// Timer zero point
-#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
-	k_timer_start(&kernel_time, DUR, DUR);
-#undef DUR
 	uint32_t timer_status = 0;
 
 	while (!err) {
@@ -241,24 +264,6 @@ static void dongle_scan(void)
 			log_infof("EPOCH STARTED: %u\n", epoch);
 			// TODO: log time to flash
 		}
-// do report
-        LOCK
-        if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
-            report_time = dongle_time;
-			log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
-		    log_infof("dongle timer: %u\n", dongle_time);
-#ifdef MODE__TEST
-            int err = 0;
-            if (test_encounters < 1) {
-                log_infof("FAILED: Encounter test. encounters logged in window: %d\n", 
-                            test_encounters);
-                err++;
-            }
-            log_infof("Tests completed: status = %d\n", err);
-            test_encounters = 0;
-#endif
-            log_info(   "*** End Report ***\n");
-        }
-        UNLOCK
+        _dongle_report_();
 	}
 }

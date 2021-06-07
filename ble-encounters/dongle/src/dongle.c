@@ -53,10 +53,11 @@ void main(void)
 //
 
 // Mutual exclusion
+// Access for both central updates and scan interupts
+// is given on a FIFO basis
 struct k_mutex dongle_mu;
 #define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
 #define UNLOCK k_mutex_unlock(&dongle_mu);
-#define safely(e) LOCK e; UNLOCK
 
 // Config
 dongle_timer_t              t_init;
@@ -109,30 +110,6 @@ static int ephcmp(beacon_eph_id_t *a, beacon_eph_id_t *b)
 	return 0;
 }
 
-void dongle_time_set(dongle_timer_t *t)
-{
-	safely(dongle_time = *t);
-}
-
-void dongle_time_add(uint32_t *a)
-{
-	safely(dongle_time += *a);
-}
-
-void dongle_time_print()
-{
-	dongle_timer_t tmp;
-	safely(tmp = dongle_time);
-	log_debugf("dongle_time = %u\n", tmp);
-}
-
-void dongle_time_cpy(dongle_timer_t *t)
-{
-	dongle_timer_t tmp;
-	safely(tmp = dongle_time);
-	*t = tmp;
-}
-
 static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
 #define en (*enc)
@@ -152,7 +129,6 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 static void _dongle_track_(encounter_broadcast_t *enc)
 {
 #define en (*enc)
-    LOCK
 // determine which tracked id, if any, is a match
 	size_t i = DONGLE_MAX_BC_TRACKED;
 	for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
@@ -179,7 +155,6 @@ static void _dongle_track_(encounter_broadcast_t *enc)
             _dongle_encounter_(&en, i);
 		}
 	}
-	UNLOCK
 #undef en
 }
 
@@ -193,15 +168,16 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
         return;
     }
     decode_payload(ad -> data);
+    LOCK
     encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t*) ad -> data);
     _dongle_track_(&en);
+    UNLOCK
 }
 
 static void _dongle_report_()
 {
     // do report
-    LOCK
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
         report_time = dongle_time;
         log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
@@ -218,17 +194,14 @@ static void _dongle_report_()
 #endif
         log_info(   "*** End Report ***\n");
     }
-    UNLOCK
 }
 
 static void _dongle_init_()
 {
     k_mutex_init(&dongle_mu);
     t_init = 0;
-    LOCK
     dongle_time = t_init;
 	report_time = dongle_time;
-    UNLOCK
 	epoch = 0;
 	k_timer_init(&kernel_time, NULL, NULL);
 
@@ -268,7 +241,8 @@ static void dongle_scan(void)
 // get most updated time
 		timer_status = k_timer_status_sync(&kernel_time);
 		timer_status += k_timer_status_get(&kernel_time);
-		dongle_time_add(&timer_status);
+        LOCK
+        dongle_time += timer_status;
 // update epoch
 		static dongle_epoch_counter_t old_epoch;
 		old_epoch = epoch;
@@ -278,5 +252,6 @@ static void dongle_scan(void)
 			// TODO: log time to flash
 		}
         _dongle_report_();
+        UNLOCK
 	}
 }

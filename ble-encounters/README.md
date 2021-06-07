@@ -24,3 +24,18 @@ See the following section for details.
 2. Make sure the [C/C++ extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) is installed in VSCode.
 3. Edit the workspace file located in the root of this project so that the path for the 'Zephyr' folder is the full path to the root Zephyr directory. 
 4. Use VSCode to open the workspace file and wait for things to index.
+
+### Advanced Flashing (Device-Specific Data)
+The applications support loading application configs from on-device non-volatile flash memory. The data
+is expected to follow a particular format - most notably, it's expected to exist at the first page
+in flash that contains no application data (if such a page exists). The prototype key-generation tool
+found [here](https://github.com/ubc-systopia/pancast-keys) is set up to prepare hex files that conform
+to this spec. A little work must be done to combine application and configuration data into a single,
+flashable program:
+1. First, compile the application (without configs) as desired. Make sure the application FLASH_OFFSET
+parameters are set correctly. We will assume the output lives in `zephyr.hex`.
+2. Generate the desired config hex file for the device, call this something like `config.hex`. This can be done easily using the key-generation program. (NOTE: make sure the generated config device type matches the application being used).
+3. Finally, use something like the following command to combine the data:
+```
+mergehex -m zephyr.hex config.hex -o pancast.hex
+```

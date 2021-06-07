@@ -63,6 +63,10 @@ struct k_mutex dongle_mu;
 // Config
 dongle_id_t                 dongle_id;
 dongle_timer_t              t_init;
+key_size_t                  backend_pk_size;        // size of backend public key
+pubkey_t                    backend_pk;             // Backend public key
+key_size_t                  dongle_sk_size;         // size of secret key
+seckey_t                    dongle_sk;              // Secret Key
 
 // Op
 dongle_epoch_counter_t      epoch;
@@ -184,6 +188,9 @@ static void _dongle_report_()
         report_time = dongle_time;
         log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
         log_infof("ID: %u\n", dongle_id);
+        log_infof("Initial clock: %u\n", t_init);
+        log_infof("Backend public key (%u bytes)\n", backend_pk_size);
+        log_infof("Secret key (%u bytes)\n", dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
 #ifdef MODE__TEST
         int err = 0;
@@ -199,7 +206,7 @@ static void _dongle_report_()
     }
 }
 
-#define FLASH_OFFSET 0x20000
+#define FLASH_OFFSET 0x21000
 
 static void _dongle_load_()
 {
@@ -212,6 +219,10 @@ static void _dongle_load_()
 #define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
     read(sizeof(dongle_id_t), &dongle_id);
     read(sizeof(dongle_timer_t), &t_init);
+    read(sizeof(key_size_t), &backend_pk_size);
+    read(backend_pk_size, &backend_pk);
+    read(sizeof(key_size_t), &dongle_sk_size);
+    read(dongle_sk_size, &dongle_sk);
 #undef read
 #endif
 }

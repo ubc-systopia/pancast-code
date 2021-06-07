@@ -9,7 +9,9 @@
 
 typedef struct {
 	uint8_t bytes[SK_MAX_SIZE];
-} beacon_sk_t;
+} seckey_t;
+
+typedef seckey_t beacon_sk_t;
 
 #define PK_MAX_SIZE 96
 

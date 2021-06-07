@@ -10,13 +10,14 @@ See the following section for details.
 ### General Setup
 1. Make sure you have the Zephyr project cloned to a location on the development machine, and have followed the setup documentation [here](https://docs.zephyrproject.org/latest/getting_started/index.html) (in particular, you should have the `west` command available).
 
-### Building the App
+### Building the Apps
 1. Navigate to the root Zephyr directory (the one containing the samples directory)
-2. Issue the following command: `west build -p auto -b nrf52dk_nrf52832 <app_path> -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` where `<app_path>` is the full path to the application to be built (For example: '$HOME/projects/ble-encounters/beacon').
+2. Issue the following command: `west build -p auto -b nrf52dk_nrf52832 <app_path> -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` where `<app_path>` is the full path to the application to be built (For example: '$HOME/projects/pancast-code/ble-encounters/beacon').
 
 ### Flashing the App
 1. Make sure the development board is plugged in.
 2. In the root Zephyr directory, run:   `west flash`, to flash the currently built application.
+3. Alternatively, copy the hex file found in the Zephyr output directory (/build/zephyr).
 
 ### VSCode Setup (Optional)
 1. Make sure you have followed the steps under General Setup and Building the App.

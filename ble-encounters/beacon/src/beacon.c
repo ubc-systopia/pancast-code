@@ -68,7 +68,6 @@ static beacon_id_t             beacon_id;              // Beacon ID
 static beacon_location_id_t    beacon_location_id;     // Location ID
 static beacon_timer_t          beacon_time;            // Beacon Clock
 static beacon_eph_id_t         beacon_eph_id;          // Ephemeral ID
-static encounter_broadcast_t   bc;                     // store references to data
 static beacon_epoch_counter_t  epoch;                  // track the current time epoch
 static beacon_timer_t          cycles;                 // total number of updates.
 static struct k_timer          kernel_time_lp;         // low-precision kernel timer
@@ -209,10 +208,10 @@ static void _encode_encounter_()
     uint8_t *dst = (uint8_t*) &payload.en_data;
     size_t pos = 0;
 #define copy(src, size) memcpy(dst + pos, src, size); pos += size
-    copy(bc.t, sizeof(beacon_timer_t));
-    copy(bc.b, sizeof(beacon_id_t));
-    copy(bc.loc, sizeof(beacon_location_id_t));
-    copy(bc.eph, sizeof(beacon_eph_id_t));
+    copy(&beacon_time, sizeof(beacon_timer_t));
+    copy(&beacon_id, sizeof(beacon_id_t));
+    copy(&beacon_location_id, sizeof(beacon_location_id_t));
+    copy(&beacon_eph_id, sizeof(beacon_eph_id_t));
 #undef copy
 }
 
@@ -249,11 +248,6 @@ static void _beacon_init_()
 
     k_timer_init(&kernel_time_lp, NULL, NULL);
 	k_timer_init(&kernel_time_hp, NULL, NULL);
-
-	bc.b = &beacon_id;
-	bc.loc = &beacon_location_id;
-	bc.t = &beacon_time;
-	bc.eph = &beacon_eph_id;
 
 	epoch = 0;
 	cycles = 0;

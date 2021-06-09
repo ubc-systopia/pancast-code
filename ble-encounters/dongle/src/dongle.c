@@ -62,6 +62,9 @@ struct k_mutex dongle_mu;
 
 // System Config
 size_t                      flash_min_block_size;
+int                         flash_num_pages;
+size_t                      flash_page_size;
+#define NV_STATE (FLASH_OFFSET + flash_page_size)   // offset for flash state
 
 // Config
 dongle_id_t                 dongle_id;
@@ -274,14 +277,37 @@ static void _dongle_load_()
 #endif
 }
 
+static bool _flash_page_info_(const struct flash_pages_info *info, void*data)
+{
+    if (!flash_num_pages) {
+        flash_page_size = info->size;
+    } else if (info->size != flash_page_size) {
+        log_errorf("differing page sizes! (%u and %u)\n", info->size, flash_page_size);
+    }
+    flash_num_pages++;
+    return true;
+}
+
+static void _dongle_init_flash_()
+{
+    flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+    log_info("Getting flash information.\n");
+    flash_min_block_size = flash_get_write_block_size(flash);
+    flash_num_pages = 0;
+    flash_page_foreach(flash, _flash_page_info_, NULL);
+    log_infof("Pages: %d, size=%u\n", flash_num_pages, flash_page_size);
+    for (off_t off = NV_STATE; 
+            off < flash_num_pages * flash_page_size;
+            off += flash_page_size) {
+        flash_erase(flash, off, flash_page_size);
+    }
+}
+
 static void _dongle_init_()
 {
     k_mutex_init(&dongle_mu);
 
-    flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-    flash_min_block_size = flash_get_write_block_size(flash);
-    flash_erase(flash, NV_STATE, FLASH_PAGE_SIZE);
-
+    _dongle_init_flash_();
     _dongle_load_();
 
     dongle_time = t_init;

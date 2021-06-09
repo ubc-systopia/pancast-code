@@ -4,9 +4,6 @@
 #include "../../common/src/pancast.h"
 
 #define FLASH_OFFSET        0x21000
-#define FLASH_PAGE_SIZE     0x01000
-
-#define NV_STATE (FLASH_OFFSET + FLASH_PAGE_SIZE)
 
 typedef struct {
     beacon_eph_id_t *eph;

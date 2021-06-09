@@ -5,7 +5,7 @@
 // instead interprets and logs payload data from PanCast beacons.
 //
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__DEBUG
 //#define MODE__TEST
 
 #include <zephyr.h>
@@ -60,6 +60,9 @@ struct k_mutex dongle_mu;
 #define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
 #define UNLOCK k_mutex_unlock(&dongle_mu);
 
+// System Config
+size_t                      flash_min_block_size;
+
 // Config
 dongle_id_t                 dongle_id;
 dongle_timer_t              t_init;
@@ -69,6 +72,7 @@ key_size_t                  dongle_sk_size;         // size of secret key
 seckey_t                    dongle_sk;              // Secret Key
 
 // Op
+struct device              *flash;
 dongle_epoch_counter_t      epoch;
 struct k_timer              kernel_time;
 dongle_timer_t              dongle_time;								// main dongle timer
@@ -76,6 +80,10 @@ dongle_timer_t              report_time;
 beacon_eph_id_t             cur_id[DONGLE_MAX_BC_TRACKED];			    // currently observed ephemeral id
 dongle_timer_t              obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
 size_t                      cur_id_idx;
+enctr_entry_counter_t       enctr_entries;
+
+// Reporting
+enctr_entry_counter_t       enctr_entries_offset;
 
 #ifdef MODE__TEST
 int                         test_encounters;
@@ -121,7 +129,24 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #define en (*enc)
 // when a valid encounter is detected
 // log the encounter
-    log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u, dev=%s)\n", *en.b, *en.t, dongle_time, addr_str);
+    log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u)\n", *en.b, *en.t, dongle_time);
+// Write to storage
+// Starting point is determined statically
+    off_t off = 0;
+#define base ENCOUNTER_LOG_OFFSET(enctr_entries)
+#define align off += (flash_min_block_size - (off % flash_min_block_size))
+#define write(data, size) (flash_write(flash, base + off, data, size) ? \
+                                log_error("Error writing flash\n") : NULL), \
+                                off += size, align
+    write(en.b, sizeof(beacon_id_t));
+    write(en.loc, sizeof(beacon_location_id_t));
+    write(en.t, sizeof(beacon_timer_t));
+    write(&dongle_time, sizeof(dongle_timer_t));
+    write(en.eph, BEACON_EPH_ID_SIZE);
+#undef write
+#undef align
+#undef base
+    enctr_entries++;
 #ifdef MODE__TEST
     if (*en.b == TEST_BEACON_ID) {
         test_encounters++;
@@ -152,11 +177,9 @@ static void _dongle_track_(encounter_broadcast_t *enc)
 		memcpy(&cur_id[i], en.eph -> bytes, BEACON_EPH_ID_HASH_LEN);
 		obs_time[i] = dongle_time;
 	} else {
-		log_debugf("id match at index %d\n", i);
 // when a matching ephemeral id is observed
 // check conditions for a valid encounter
 		dongle_timer_t dur = dongle_time - obs_time[i];
-		log_debugf("observed for %u time units\n", dur);
 		if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
             _dongle_encounter_(&en, i);
 		}
@@ -192,6 +215,33 @@ static void _dongle_report_()
         log_infof("Backend public key (%u bytes)\n", backend_pk_size);
         log_infof("Secret key (%u bytes)\n", dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
+// Report logged encounters
+        log_info("Encounters logged:\n");
+            log_info("----------------------------------------------\n");
+            log_info("< Time (dongle), Beacon ID, Time (beacon) >   \n");
+            log_info("----------------------------------------------\n");
+        dongle_timer_t enctr_time;
+        beacon_id_t    enctr_beacon;
+        beacon_timer_t enctr_beacon_time;
+        for (int i = enctr_entries_offset; i < enctr_entries; i++) {
+            off_t off = 0;
+#define align off += (flash_min_block_size - (off % flash_min_block_size))
+#define seek(size) off += size, align
+#define base ENCOUNTER_LOG_OFFSET(i)
+#define read(size, dst) flash_read(flash, base + off, dst, size), off += size, align
+            read(sizeof(beacon_id_t), &enctr_beacon);
+            seek(sizeof(beacon_location_id_t));
+            read(sizeof(beacon_timer_t), &enctr_beacon_time);
+            read(sizeof(dongle_timer_t), &enctr_time);
+            seek(BEACON_EPH_ID_SIZE);
+#undef read
+#undef base
+#undef seek
+#undef align
+            log_infof("< %u, %u, %u >\n",
+                enctr_time, enctr_beacon, enctr_beacon_time);
+        }
+        enctr_entries_offset = enctr_entries;
 #ifdef MODE__TEST
         int err = 0;
         if (test_encounters < 1) {
@@ -206,15 +256,12 @@ static void _dongle_report_()
     }
 }
 
-#define FLASH_OFFSET 0x21000
-
 static void _dongle_load_()
 {
 #ifdef MODE__TEST
     dongle_id = TEST_DONGLE_ID;
     t_init = TEST_DONGLE_INIT_TIME;
 #else
-    struct device *flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
     off_t off = 0;
 #define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
     read(sizeof(dongle_id_t), &dongle_id);
@@ -231,12 +278,18 @@ static void _dongle_init_()
 {
     k_mutex_init(&dongle_mu);
 
+    flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+    flash_min_block_size = flash_get_write_block_size(flash);
+    flash_erase(flash, NV_STATE, FLASH_PAGE_SIZE);
+
     _dongle_load_();
 
     dongle_time = t_init;
 	report_time = dongle_time;
     cur_id_idx = 0;
 	epoch = 0;
+    enctr_entries = 0;
+    enctr_entries_offset = 0;
 
 #ifdef MODE__TEST
     test_encounters = 0;

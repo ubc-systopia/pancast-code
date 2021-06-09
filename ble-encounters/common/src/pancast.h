@@ -31,9 +31,10 @@ typedef uint32_t beacon_epoch_counter_t;
 typedef uint32_t dongle_epoch_counter_t;
 
 #define BEACON_EPH_ID_HASH_LEN 14		// number of trailing bytes used
+#define BEACON_EPH_ID_SIZE     16
 
 typedef struct {
-    uint8_t bytes[BEACON_EPH_ID_HASH_LEN];
+    uint8_t bytes[BEACON_EPH_ID_SIZE];
 } beacon_eph_id_t;
 
 typedef uint64_t beacon_location_id_t;

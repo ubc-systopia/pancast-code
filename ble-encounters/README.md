@@ -7,7 +7,7 @@ An implementation of the beacon to dongle advertisement protocol for encounter t
 |------|------------|-------|
 | Bluetooth LE Broadcast/Recieve | 90 % | Still working on modifying API to use 31 bytes for payload|
 | Ephemeral ID Generation | 100 % ||
-|Encounter Logging| 75 %| Still some bugs in flash storage code. Algorithm and ID tracking works well |
+|Encounter Logging| 85 %| Still some bugs in flash storage code. Algorithm and ID tracking works well |
 | Device Configuration Load from Flash | 100 % | |
 | OTP Storage | 0 % |  |
 | Terminal Connection - Delayed Release Upload | 10 % ||

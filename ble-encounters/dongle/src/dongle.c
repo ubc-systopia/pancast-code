@@ -65,6 +65,8 @@ size_t                      flash_min_block_size;
 int                         flash_num_pages;
 size_t                      flash_page_size;
 #define NV_STATE (FLASH_OFFSET + flash_page_size)   // offset for flash state
+#define NV_LOG (NV_STATE + flash_page_size)
+#define ENCOUNTER_LOG_OFFSET(i) (NV_LOG + (i * ENCOUNTER_ENTRY_SIZE))
 
 // Config
 dongle_id_t                 dongle_id;
@@ -296,11 +298,25 @@ static void _dongle_init_flash_()
     flash_num_pages = 0;
     flash_page_foreach(flash, _flash_page_info_, NULL);
     log_infof("Pages: %d, size=%u\n", flash_num_pages, flash_page_size);
-    for (off_t off = NV_STATE; 
-            off < flash_num_pages * flash_page_size;
-            off += flash_page_size) {
-        flash_erase(flash, off, flash_page_size);
+// Check if the state area of memory has been written (i.e. whether this
+// is a non-first boot)
+#define flash_check_t uint64_t
+#define FLASH_CHECK 0x0011002200330044
+    flash_check_t check;
+    flash_read(flash, NV_STATE, &check, sizeof(flash_check_t));
+    log_debugf("check: %llx\n", check);
+    if (check != FLASH_CHECK) {
+        log_info("State flash check failed, erasing since this is first use\n");
+        for (off_t off = NV_STATE; 
+                off < flash_num_pages * flash_page_size;
+                off += flash_page_size) {
+            flash_erase(flash, off, flash_page_size);
+        }
+        check = FLASH_CHECK;
+        flash_write(flash, NV_STATE, &check, sizeof(flash_check_t));
     }
+#undef FLASH_CHECK
+#undef flash_check_t
 }
 
 static void _dongle_init_()

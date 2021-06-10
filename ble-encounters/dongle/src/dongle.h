@@ -23,7 +23,6 @@ typedef struct {
 
 typedef uint64_t enctr_entry_counter_t;
 
-#define ENCOUNTER_LOG_OFFSET(i) (NV_STATE + (i * ENCOUNTER_ENTRY_SIZE))
 
 static void dongle_scan(void);
 

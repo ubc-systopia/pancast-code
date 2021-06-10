@@ -242,7 +242,7 @@ static void _dongle_report_()
         dongle_otp_t otp;
         for (int i = 0; i < NUM_OTP; i++) {
             flash_read(flash, OTP_OFFSET(i), &otp, sizeof(dongle_otp_t));
-            bool used = otp.flags & 0x0000000000000001 >> 0;
+            bool used = !((otp.flags & 0x0000000000000001) >> 0);
             log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val, used ? "yes" : "no");
         }
 // Report logged encounters

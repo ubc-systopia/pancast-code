@@ -64,9 +64,6 @@ struct k_mutex dongle_mu;
 size_t                      flash_min_block_size;
 int                         flash_num_pages;
 size_t                      flash_page_size;
-#define NV_STATE (FLASH_OFFSET + flash_page_size)   // offset for flash state
-#define NV_LOG (NV_STATE + flash_page_size)
-#define ENCOUNTER_LOG_OFFSET(i) (NV_LOG + (i * ENCOUNTER_ENTRY_SIZE))
 
 // Config
 dongle_id_t                 dongle_id;
@@ -75,6 +72,12 @@ key_size_t                  backend_pk_size;        // size of backend public ke
 pubkey_t                    backend_pk;             // Backend public key
 key_size_t                  dongle_sk_size;         // size of secret key
 seckey_t                    dongle_sk;              // Secret Key
+off_t                       otp_offset;
+#define OTP_OFFSET(i) (otp_offset + (i * sizeof(dongle_otp_t)))
+#define ENCOUNTER_LOG_BASE next_multiple(flash_page_size, \
+	otp_offset + (NUM_OTP * sizeof(dongle_otp_t)))
+//#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
+#define ENCOUNTER_LOG_OFFSET(i) (ENCOUNTER_LOG_BASE + (i * ENCOUNTER_ENTRY_SIZE))
 
 // Op
 struct device              *flash;
@@ -86,6 +89,10 @@ beacon_eph_id_t             cur_id[DONGLE_MAX_BC_TRACKED];			    // currently ob
 dongle_timer_t              obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
 size_t                      cur_id_idx;
 enctr_entry_counter_t       enctr_entries;
+off_t                       off;                                        // flash offset
+#define align(size) off = next_multiple(size, off)
+
+#define block_align align(flash_min_block_size)
 
 // Reporting
 enctr_entry_counter_t       enctr_entries_offset;
@@ -93,6 +100,9 @@ enctr_entry_counter_t       enctr_entries_offset;
 #ifdef MODE__TEST
 int                         test_encounters;
 #endif
+
+#define erase(offset) log_infof("erasing page at 0x%llx\n", (offset)), \
+			flash_erase(flash, (offset), flash_page_size);
 
 
 static int decode_payload(uint8_t *data)
@@ -139,17 +149,24 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 // Starting point is determined statically
     off_t off = 0;
 #define base ENCOUNTER_LOG_OFFSET(enctr_entries)
-#define align off += (flash_min_block_size - (off % flash_min_block_size))
+// Erase before write
+#define page_num(off) ((off)/flash_page_size)
+    if ((base % flash_page_size) == 0) {
+	erase(base);
+    } else if (page_num(base + ENCOUNTER_ENTRY_SIZE) > page_num(base)) {
+#undef page_num
+    	erase(next_multiple(flash_page_size, base));
+    }
 #define write(data, size) (flash_write(flash, base + off, data, size) ? \
                                 log_error("Error writing flash\n") : NULL), \
-                                off += size, align
+                                off += size, block_align
     write(en.b, sizeof(beacon_id_t));
     write(en.loc, sizeof(beacon_location_id_t));
     write(en.t, sizeof(beacon_timer_t));
     write(&dongle_time, sizeof(dongle_timer_t));
     write(en.eph, BEACON_EPH_ID_SIZE);
+    align(FLASH_WORD_SIZE);
 #undef write
-#undef align
 #undef base
     enctr_entries++;
 #ifdef MODE__TEST
@@ -220,6 +237,14 @@ static void _dongle_report_()
         log_infof("Backend public key (%u bytes)\n", backend_pk_size);
         log_infof("Secret key (%u bytes)\n", dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
+// Report OTPs
+        log_info("One-Time Passcodes:\n");
+        dongle_otp_t otp;
+        for (int i = 0; i < NUM_OTP; i++) {
+            flash_read(flash, OTP_OFFSET(i), &otp, sizeof(dongle_otp_t));
+            bool used = otp.flags & 0x0000000000000001 >> 0;
+            log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val, used ? "yes" : "no");
+        }
 // Report logged encounters
         log_info("Encounters logged:\n");
             log_info("----------------------------------------------\n");
@@ -229,20 +254,19 @@ static void _dongle_report_()
         beacon_id_t    enctr_beacon;
         beacon_timer_t enctr_beacon_time;
         for (int i = enctr_entries_offset; i < enctr_entries; i++) {
-            off_t off = 0;
-#define align off += (flash_min_block_size - (off % flash_min_block_size))
-#define seek(size) off += size, align
+            off = 0;
+#define seek(size) off += size, block_align
 #define base ENCOUNTER_LOG_OFFSET(i)
-#define read(size, dst) flash_read(flash, base + off, dst, size), off += size, align
+#define read(size, dst) flash_read(flash, base + off, dst, size), off += size, block_align
             read(sizeof(beacon_id_t), &enctr_beacon);
             seek(sizeof(beacon_location_id_t));
             read(sizeof(beacon_timer_t), &enctr_beacon_time);
             read(sizeof(dongle_timer_t), &enctr_time);
             seek(BEACON_EPH_ID_SIZE);
+	    align(FLASH_WORD_SIZE);
 #undef read
 #undef base
 #undef seek
-#undef align
             log_infof("< %u, %u, %u >\n",
                 enctr_time, enctr_beacon, enctr_beacon_time);
         }
@@ -267,7 +291,7 @@ static void _dongle_load_()
     dongle_id = TEST_DONGLE_ID;
     t_init = TEST_DONGLE_INIT_TIME;
 #else
-    off_t off = 0;
+    off = 0;
 #define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
     read(sizeof(dongle_id_t), &dongle_id);
     read(sizeof(dongle_timer_t), &t_init);
@@ -275,6 +299,8 @@ static void _dongle_load_()
     read(backend_pk_size, &backend_pk);
     read(sizeof(key_size_t), &dongle_sk_size);
     read(dongle_sk_size, &dongle_sk);
+    align(FLASH_WORD_SIZE);
+    otp_offset = FLASH_OFFSET + off;
 #undef read
 #endif
 }
@@ -298,25 +324,6 @@ static void _dongle_init_flash_()
     flash_num_pages = 0;
     flash_page_foreach(flash, _flash_page_info_, NULL);
     log_infof("Pages: %d, size=%u\n", flash_num_pages, flash_page_size);
-// Check if the state area of memory has been written (i.e. whether this
-// is a non-first boot)
-#define flash_check_t uint64_t
-#define FLASH_CHECK 0x0011002200330044
-    flash_check_t check;
-    flash_read(flash, NV_STATE, &check, sizeof(flash_check_t));
-    log_debugf("check: %llx\n", check);
-    if (check != FLASH_CHECK) {
-        log_info("State flash check failed, erasing since this is first use\n");
-        for (off_t off = NV_STATE; 
-                off < flash_num_pages * flash_page_size;
-                off += flash_page_size) {
-            flash_erase(flash, off, flash_page_size);
-        }
-        check = FLASH_CHECK;
-        flash_write(flash, NV_STATE, &check, sizeof(flash_check_t));
-    }
-#undef FLASH_CHECK
-#undef flash_check_t
 }
 
 static void _dongle_init_()

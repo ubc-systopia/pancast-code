@@ -62,4 +62,6 @@ typedef struct {
 
 #define DONGLE_ENCOUNTER_MIN_TIME 5 // number of time units eph. id must be observed
 
+#define NUM_OTP 16                  // number of OTPs given to user and present in the dongle
+
 #endif

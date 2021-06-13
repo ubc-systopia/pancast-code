@@ -1,5 +1,5 @@
 {
-	"folders": [
+    "folders": [
         {
             "name": "App",
             "path": "."
@@ -21,7 +21,11 @@
             "pancast",
             "printk",
             "statf"
-        ]
+        ],
+        "editor.formatOnSave": true,
+        "[c,cpp]": {
+            "editor.defaultFormatter": "ms-vscode.cpptools"
+        }
     },
     "tasks": {
         "version": "2.0.0",

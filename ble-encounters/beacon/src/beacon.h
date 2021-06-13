@@ -6,7 +6,6 @@
 #include <tinycrypt/sha256.h>
 #include <bluetooth/bluetooth.h>
 
-
 #define BEACON_REPORT_INTERVAL 30
 
 // Advertising interval settings
@@ -18,24 +17,25 @@
 
 typedef struct tc_sha256_state_struct hash_t;
 
-typedef struct {
-	uint8_t bytes[TC_SHA256_DIGEST_SIZE];
+typedef struct
+{
+    uint8_t bytes[TC_SHA256_DIGEST_SIZE];
 } digest_t;
 
 typedef struct bt_data bt_data_t;
 
-typedef union {
+typedef union
+{
     encounter_broadcast_raw_t en_data;
     bt_data_t bt_data[1];
 } bt_wrapper_t;
 
-
 #ifdef APPL__BEACON
-void                main(void);
+void main(void);
 #else
-void                _beacon_main_();
+void _beacon_main_();
 #endif
-static void         _beacon_broadcast_(int);
-static void         _beacon_info_();
+static void _beacon_broadcast_(int);
+static void _beacon_info_();
 
 #endif

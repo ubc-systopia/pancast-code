@@ -108,7 +108,7 @@ static int decode_encounter(encounter_broadcast_t *dat,
 }
 
 // compares two ephemeral ids
-static int ephcmp(beacon_eph_id_t *a, beacon_eph_id_t *b)
+static int compare_eph_id(beacon_eph_id_t *a, beacon_eph_id_t *b)
 {
 #define A (a->bytes)
 #define B (b->bytes)
@@ -148,7 +148,7 @@ static void _dongle_track_(encounter_broadcast_t *enc)
     size_t i = DONGLE_MAX_BC_TRACKED;
     for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++)
     {
-        if (!ephcmp(en.eph, &cur_id[j]))
+        if (!compare_eph_id(en.eph, &cur_id[j]))
         {
             i = j;
         }

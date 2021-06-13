@@ -20,6 +20,7 @@
 #include <drivers/flash.h>
 
 #include "./dongle.h"
+#include "./storage.h"
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
@@ -60,27 +61,11 @@ struct k_mutex dongle_mu;
 #define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
 #define UNLOCK k_mutex_unlock(&dongle_mu);
 
-// System Config
-size_t                      flash_min_block_size;
-int                         flash_num_pages;
-size_t                      flash_page_size;
-
 // Config
-dongle_id_t                 dongle_id;
-dongle_timer_t              t_init;
-key_size_t                  backend_pk_size;        // size of backend public key
-pubkey_t                    backend_pk;             // Backend public key
-key_size_t                  dongle_sk_size;         // size of secret key
-seckey_t                    dongle_sk;              // Secret Key
-off_t                       otp_offset;
-#define OTP_OFFSET(i) (otp_offset + (i * sizeof(dongle_otp_t)))
-#define ENCOUNTER_LOG_BASE next_multiple(flash_page_size, \
-	otp_offset + (NUM_OTP * sizeof(dongle_otp_t)))
-//#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
-#define ENCOUNTER_LOG_OFFSET(i) (ENCOUNTER_LOG_BASE + (i * ENCOUNTER_ENTRY_SIZE))
+dongle_config_t			config;
 
 // Op
-struct device              *flash;
+dongle_storage			storage;
 dongle_epoch_counter_t      epoch;
 struct k_timer              kernel_time;
 dongle_timer_t              dongle_time;								// main dongle timer
@@ -88,11 +73,6 @@ dongle_timer_t              report_time;
 beacon_eph_id_t             cur_id[DONGLE_MAX_BC_TRACKED];			    // currently observed ephemeral id
 dongle_timer_t              obs_time[DONGLE_MAX_BC_TRACKED];			// time of last new id observation
 size_t                      cur_id_idx;
-enctr_entry_counter_t       enctr_entries;
-off_t                       off;                                        // flash offset
-#define align(size) off = next_multiple(size, off)
-
-#define block_align align(flash_min_block_size)
 
 // Reporting
 enctr_entry_counter_t       enctr_entries_offset;
@@ -101,8 +81,6 @@ enctr_entry_counter_t       enctr_entries_offset;
 int                         test_encounters;
 #endif
 
-#define erase(offset) log_infof("erasing page at 0x%llx\n", (offset)), \
-			flash_erase(flash, (offset), flash_page_size);
 
 
 static int decode_payload(uint8_t *data)
@@ -146,29 +124,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 // log the encounter
     log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u)\n", *en.b, *en.t, dongle_time);
 // Write to storage
-// Starting point is determined statically
-    off_t off = 0;
-#define base ENCOUNTER_LOG_OFFSET(enctr_entries)
-// Erase before write
-#define page_num(off) ((off)/flash_page_size)
-    if ((base % flash_page_size) == 0) {
-	erase(base);
-    } else if (page_num(base + ENCOUNTER_ENTRY_SIZE) > page_num(base)) {
-#undef page_num
-    	erase(next_multiple(flash_page_size, base));
-    }
-#define write(data, size) (flash_write(flash, base + off, data, size) ? \
-                                log_error("Error writing flash\n") : NULL), \
-                                off += size, block_align
-    write(en.b, sizeof(beacon_id_t));
-    write(en.loc, sizeof(beacon_location_id_t));
-    write(en.t, sizeof(beacon_timer_t));
-    write(&dongle_time, sizeof(dongle_timer_t));
-    write(en.eph, BEACON_EPH_ID_SIZE);
-    align(FLASH_WORD_SIZE);
-#undef write
-#undef base
-    enctr_entries++;
+	dongle_storage_log_encounter(&storage,
+		enc->loc, enc->b, enc->t, &dongle_time, enc->eph);
 #ifdef MODE__TEST
     if (*en.b == TEST_BEACON_ID) {
         test_encounters++;
@@ -226,22 +183,31 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     UNLOCK
 }
 
+int _display_encounter_(int i, dongle_encounter_entry *entry)
+{
+	log_infof("< %u, %u, %u >\n", 
+		entry->dongle_time,
+		entry->beacon_id,
+		entry->beacon_time);
+	return 1;
+}
+
 static void _dongle_report_()
 {
     // do report
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
         report_time = dongle_time;
         log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
-        log_infof("ID: %u\n", dongle_id);
-        log_infof("Initial clock: %u\n", t_init);
-        log_infof("Backend public key (%u bytes)\n", backend_pk_size);
-        log_infof("Secret key (%u bytes)\n", dongle_sk_size);
+        log_infof("ID: %u\n", config.id);
+        log_infof("Initial clock: %u\n", config.t_init);
+        log_infof("Backend public key (%u bytes)\n", config.backend_pk_size);
+        log_infof("Secret key (%u bytes)\n", config.dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
 // Report OTPs
         log_info("One-Time Passcodes:\n");
         dongle_otp_t otp;
         for (int i = 0; i < NUM_OTP; i++) {
-            flash_read(flash, OTP_OFFSET(i), &otp, sizeof(dongle_otp_t));
+		dongle_storage_load_otp(&storage, i, &otp);
             bool used = !((otp.flags & 0x0000000000000001) >> 0);
             log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val, used ? "yes" : "no");
         }
@@ -250,27 +216,8 @@ static void _dongle_report_()
             log_info("----------------------------------------------\n");
             log_info("< Time (dongle), Beacon ID, Time (beacon) >   \n");
             log_info("----------------------------------------------\n");
-        dongle_timer_t enctr_time;
-        beacon_id_t    enctr_beacon;
-        beacon_timer_t enctr_beacon_time;
-        for (int i = enctr_entries_offset; i < enctr_entries; i++) {
-            off = 0;
-#define seek(size) off += size, block_align
-#define base ENCOUNTER_LOG_OFFSET(i)
-#define read(size, dst) flash_read(flash, base + off, dst, size), off += size, block_align
-            read(sizeof(beacon_id_t), &enctr_beacon);
-            seek(sizeof(beacon_location_id_t));
-            read(sizeof(beacon_timer_t), &enctr_beacon_time);
-            read(sizeof(dongle_timer_t), &enctr_time);
-            seek(BEACON_EPH_ID_SIZE);
-	    align(FLASH_WORD_SIZE);
-#undef read
-#undef base
-#undef seek
-            log_infof("< %u, %u, %u >\n",
-                enctr_time, enctr_beacon, enctr_beacon_time);
-        }
-        enctr_entries_offset = enctr_entries;
+	dongle_storage_load_encounter(&storage, _display_encounter_);
+        enctr_entries_offset = dongle_storage_num_encounters(&storage);
 #ifdef MODE__TEST
         int err = 0;
         if (test_encounters < 1) {
@@ -287,57 +234,25 @@ static void _dongle_report_()
 
 static void _dongle_load_()
 {
+	dongle_storage_init(&storage);
 #ifdef MODE__TEST
-    dongle_id = TEST_DONGLE_ID;
-    t_init = TEST_DONGLE_INIT_TIME;
+    config.id = TEST_DONGLE_ID;
+    config.t_init = TEST_DONGLE_INIT_TIME;
 #else
-    off = 0;
-#define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
-    read(sizeof(dongle_id_t), &dongle_id);
-    read(sizeof(dongle_timer_t), &t_init);
-    read(sizeof(key_size_t), &backend_pk_size);
-    read(backend_pk_size, &backend_pk);
-    read(sizeof(key_size_t), &dongle_sk_size);
-    read(dongle_sk_size, &dongle_sk);
-    align(FLASH_WORD_SIZE);
-    otp_offset = FLASH_OFFSET + off;
-#undef read
+	dongle_storage_load_config(&storage, &config);
 #endif
-}
-
-static bool _flash_page_info_(const struct flash_pages_info *info, void*data)
-{
-    if (!flash_num_pages) {
-        flash_page_size = info->size;
-    } else if (info->size != flash_page_size) {
-        log_errorf("differing page sizes! (%u and %u)\n", info->size, flash_page_size);
-    }
-    flash_num_pages++;
-    return true;
-}
-
-static void _dongle_init_flash_()
-{
-    flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-    log_info("Getting flash information.\n");
-    flash_min_block_size = flash_get_write_block_size(flash);
-    flash_num_pages = 0;
-    flash_page_foreach(flash, _flash_page_info_, NULL);
-    log_infof("Pages: %d, size=%u\n", flash_num_pages, flash_page_size);
 }
 
 static void _dongle_init_()
 {
     k_mutex_init(&dongle_mu);
 
-    _dongle_init_flash_();
     _dongle_load_();
 
-    dongle_time = t_init;
+    dongle_time = config.t_init;
 	report_time = dongle_time;
     cur_id_idx = 0;
 	epoch = 0;
-    enctr_entries = 0;
     enctr_entries_offset = 0;
 
 #ifdef MODE__TEST
@@ -387,7 +302,9 @@ static void dongle_scan(void)
 // update epoch
 		static dongle_epoch_counter_t old_epoch;
 		old_epoch = epoch;
+#define t_init config.t_init
 		epoch = epoch_i(dongle_time, t_init);
+#undef t_init
 		if (epoch != old_epoch) {
 			log_infof("EPOCH STARTED: %u\n", epoch);
 			// TODO: log time to flash

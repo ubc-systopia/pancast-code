@@ -109,10 +109,13 @@ enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
 #define ENCOUNTER_LOG_OFFSET(i) (st.map.log + (i * ENCOUNTER_ENTRY_SIZE))
 
 void dongle_storage_load_encounter(dongle_storage *sto,
-                                   dongle_encounter_cb cb)
+                                   int i, dongle_encounter_cb cb)
 {
     dongle_encounter_entry en;
-    int i = 0;
+    if (i >= enctr_entries)
+    {
+        log_errorf("Starting index for encounter log (%d) is too large\n", i);
+    }
     do
     {
         if (i < enctr_entries)

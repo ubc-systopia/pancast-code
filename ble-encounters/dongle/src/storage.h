@@ -49,7 +49,8 @@ typedef int (*dongle_encounter_cb)(int i, dongle_encounter_entry *entry);
 
 // load function iterates through the records, and calls cb for each
 // variable i is provided as the index into the log
-void dongle_storage_load_encounter(dongle_storage *sto, dongle_encounter_cb cb);
+void dongle_storage_load_encounter(dongle_storage *sto,
+                                   int i, dongle_encounter_cb cb);
 
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto,

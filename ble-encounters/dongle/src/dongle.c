@@ -229,7 +229,8 @@ static void _dongle_report_()
         log_info("----------------------------------------------\n");
         log_info("< Time (dongle), Beacon ID, Time (beacon) >   \n");
         log_info("----------------------------------------------\n");
-        dongle_storage_load_encounter(&storage, _display_encounter_);
+        dongle_storage_load_encounter(&storage, enctr_entries_offset,
+                                      _display_encounter_);
         enctr_entries_offset = dongle_storage_num_encounters(&storage);
 #ifdef MODE__TEST
         int err = 0;

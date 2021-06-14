@@ -6,7 +6,7 @@
 // details.
 //
 
-#define LOG_LEVEL__DEBUG
+#define LOG_LEVEL__INFO
 #define APPL__BEACON
 #define MODE__STAT
 #define MODE__TEST

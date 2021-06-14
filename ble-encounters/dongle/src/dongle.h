@@ -38,6 +38,6 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
-static void dongle_scan(void);
+void dongle_scan(void);
 
 #endif

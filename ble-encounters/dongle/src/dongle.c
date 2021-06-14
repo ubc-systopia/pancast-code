@@ -5,12 +5,15 @@
 // instead interprets and logs payload data from PanCast beacons.
 //
 
+#include "./dongle.h"
+
 #define LOG_LEVEL__INFO
 #define MODE__TEST
 
 #include <sys/printk.h>
 #include <sys/util.h>
 #include <zephyr.h>
+#include <stdio.h>
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
@@ -19,7 +22,6 @@
 #include <bluetooth/uuid.h>
 #include <drivers/flash.h>
 
-#include "./dongle.h"
 #include "./storage.h"
 
 #include "../../common/src/log.h"
@@ -84,10 +86,15 @@ size_t cur_id_idx;
 enctr_entry_counter_t enctr_entries_offset;
 
 #ifdef MODE__TEST
-int test_encounters;
+int test_errors = 0;
+#define TEST_MAX_ENCOUNTERS 64
+int test_encounters = 0;
+int total_test_encounters = 0;
+dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
 
-static int decode_payload(uint8_t *data)
+static int
+decode_payload(uint8_t *data)
 {
     data[0] = data[1];
     data[1] = data[MAX_BROADCAST_SIZE - 1];
@@ -112,13 +119,15 @@ static int decode_encounter(encounter_broadcast_t *dat,
 }
 
 // compares two ephemeral ids
-static int compare_eph_id(beacon_eph_id_t *a, beacon_eph_id_t *b)
+int compare_eph_id(beacon_eph_id_t *a, beacon_eph_id_t *b)
 {
 #define A (a->bytes)
 #define B (b->bytes)
     for (int i = 0; i < BEACON_EPH_ID_HASH_LEN; i++)
+    {
         if (A[i] != B[i])
             return 1;
+    }
 #undef B
 #undef A
     return 0;
@@ -132,13 +141,23 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u)\n", *en.b, *en.t,
                dongle_time);
     // Write to storage
+    dongle_storage_print(&storage, 0x22000, 32);
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);
+    dongle_storage_print(&storage, 0x22000, 32);
 #ifdef MODE__TEST
     if (*en.b == TEST_BEACON_ID)
     {
         test_encounters++;
     }
+#define test_en (test_encounter_list[total_test_encounters])
+    test_en.location_id = *enc->loc;
+    test_en.beacon_id = *enc->b;
+    test_en.beacon_time = *enc->t;
+    test_en.dongle_time = dongle_time;
+    test_en.eph_id = *enc->eph;
+#undef test_en
+    total_test_encounters++;
 #endif
     // reset the observation time
     obs_time[i] = dongle_time;
@@ -199,10 +218,65 @@ static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     UNLOCK
 }
 
-int _display_encounter_(int i, dongle_encounter_entry *entry)
+uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
 {
-    log_infof("< %u, %u, %u >\n", entry->dongle_time, entry->beacon_id,
-              entry->beacon_time);
+    uint8_t res = 0;
+    log_debug("comparing ids\n");
+#define check(val, idx) res |= (val << idx)
+    check(!(a.beacon_id == b.beacon_id), 0);
+    log_debug("comparing beacon time\n");
+    check(!(a.beacon_time == b.beacon_time), 1);
+    log_debug("comparing dongle time\n");
+    check(!(a.dongle_time == b.dongle_time), 2);
+    log_debug("comparing location ids\n");
+    check(!(a.location_id == b.location_id), 3);
+    log_debug("comparing eph. ids\n");
+    check(compare_eph_id(&a.eph_id, &b.eph_id), 4);
+#undef check
+    return res;
+}
+
+#define ENCOUNTER_STR_MAX_LEN 128
+
+int _display_encounter_(dongle_encounter_entry *entry, char *buf)
+{
+    log_debug("creating encounter string representation\n");
+    int wrote = 0;
+    uint64_t eph_rep = 0;
+    //print_ptr(entry->eph_id.bytes, "eph_id address");
+    memcpy(&eph_rep, entry->eph_id.bytes, BEACON_EPH_ID_HASH_LEN);
+    wrote += sprintf(buf, "< %u, %u, %u, %llu, %llu >", entry->dongle_time, entry->beacon_id,
+                     entry->beacon_time, entry->location_id, eph_rep);
+    log_debugf("generated %d bytes\n", wrote);
+    if (wrote > ENCOUNTER_STR_MAX_LEN)
+    {
+        log_errorf("Length of string representation (%d) exceeds buffer size!\n", wrote);
+    }
+    return wrote;
+}
+
+int _log_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
+{
+    char en_str[ENCOUNTER_STR_MAX_LEN];
+    _display_encounter_(entry, en_str);
+    log_infof("%s\n", en_str);
+#ifdef MODE__TEST
+    log_debug("comparing logged encounter against test record\n");
+    uint8_t comp = compare_encounter_entry(*entry, test_encounter_list[i]);
+    if (comp)
+    {
+        log_info("FAILED: entry mismatch\n");
+        log_infof("Comp=%u\n", comp);
+        test_errors++;
+        log_infof("Entry from log: %s\n", en_str);
+        _display_encounter_(&test_encounter_list[i], en_str);
+        log_infof("Test: %s\n", en_str);
+    }
+    else
+    {
+        log_debug("Entries MATCH\n");
+    }
+#endif
     return 1;
 }
 
@@ -231,21 +305,21 @@ static void _dongle_report_()
         // Report logged encounters
         log_info("Encounters logged:\n");
         log_info("----------------------------------------------\n");
-        log_info("< Time (dongle), Beacon ID, Time (beacon) >   \n");
+        log_info("< Time (dongle), Beacon ID, Time (beacon), Loc. Id, Eph. Id >   \n");
         log_info("----------------------------------------------\n");
         dongle_storage_load_encounter(&storage, enctr_entries_offset,
-                                      _display_encounter_);
+                                      _log_encounter_);
         enctr_entries_offset = dongle_storage_num_encounters(&storage);
 #ifdef MODE__TEST
-        int err = 0;
         if (test_encounters < 1)
         {
             log_infof("FAILED: Encounter test. encounters logged in window: %d\n",
                       test_encounters);
-            err++;
+            test_errors++;
         }
-        log_infof("Tests completed: status = %d\n", err);
+        log_infof("Tests completed: status = %d\n", test_errors);
         test_encounters = 0;
+        total_test_encounters = 0;
 #endif
         log_info("*** End Report ***\n");
     }
@@ -277,10 +351,6 @@ static void _dongle_init_()
     epoch = 0;
     enctr_entries_offset = 0;
 
-#ifdef MODE__TEST
-    test_encounters = 0;
-#endif
-
     k_timer_init(&kernel_time, NULL, NULL);
 
 // Timer zero point
@@ -289,7 +359,7 @@ static void _dongle_init_()
 #undef DUR // Initial time
 }
 
-static void dongle_scan(void)
+void dongle_scan(void)
 {
 
     _dongle_init_();

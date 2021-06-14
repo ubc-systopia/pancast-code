@@ -1,5 +1,5 @@
-#ifndef TEST__H
-#define TEST__H
+#ifndef COMMON_TEST__H
+#define COMMON_TEST__H
 
 // TEST DATA
 

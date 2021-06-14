@@ -20,3 +20,5 @@
 
 #define info_bytes(data, len, name) \
     log_bytes(log_info, log_infof, data, len, name)
+
+#define print_ptr(p, name) log_debugf("%s: %p\n", name, (void *)p)

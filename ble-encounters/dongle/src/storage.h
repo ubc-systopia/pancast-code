@@ -8,11 +8,14 @@
 #define FLASH_WORD_SIZE 8
 #define FLASH_OFFSET 0x21000
 
+typedef off_t storage_addr_t;
+
 typedef struct
 {
-    off_t config;
-    off_t otp;
-    off_t log;
+    storage_addr_t config;
+    storage_addr_t otp;
+    storage_addr_t log;
+    enctr_entry_counter_t enctr_entries; // number of entries
 } _dongle_storage_map_;
 
 typedef struct
@@ -45,12 +48,12 @@ enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto);
 
 // LOAD ENCOUNTER
 // API is defined using a callback structure
-typedef int (*dongle_encounter_cb)(int i, dongle_encounter_entry *entry);
+typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i, dongle_encounter_entry *entry);
 
 // load function iterates through the records, and calls cb for each
 // variable i is provided as the index into the log
 void dongle_storage_load_encounter(dongle_storage *sto,
-                                   int i, dongle_encounter_cb cb);
+                                   enctr_entry_counter_t i, dongle_encounter_cb cb);
 
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto,
@@ -59,5 +62,9 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                                   beacon_timer_t *beacon_time,
                                   dongle_timer_t *dongle_time,
                                   beacon_eph_id_t *eph_id);
+
+#define DONGLE_STORAGE_MAX_PRINT_LEN 64
+
+int dongle_storage_print(dongle_storage *, storage_addr_t, size_t);
 
 #endif

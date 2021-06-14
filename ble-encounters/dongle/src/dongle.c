@@ -236,41 +236,34 @@ uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry
     return res;
 }
 
-#define ENCOUNTER_STR_MAX_LEN 128
-
-int _display_encounter_(dongle_encounter_entry *entry, char *buf)
+void _display_encounter_(dongle_encounter_entry *entry)
 {
-    log_debug("creating encounter string representation\n");
-    int wrote = 0;
+    log_infof(" t_d: %u,", entry->dongle_time);
+    log_infof(" b: %u,", entry->beacon_id);
+    log_infof(" t_b: %u,", entry->beacon_time);
+    log_infof(" loc: %llu,", entry->location_id);
     uint64_t eph_rep = 0;
-    //print_ptr(entry->eph_id.bytes, "eph_id address");
     memcpy(&eph_rep, entry->eph_id.bytes, BEACON_EPH_ID_HASH_LEN);
-    wrote += sprintf(buf, "< %u, %u, %u, %llu, %llu >", entry->dongle_time, entry->beacon_id,
-                     entry->beacon_time, entry->location_id, eph_rep);
-    log_debugf("generated %d bytes\n", wrote);
-    if (wrote > ENCOUNTER_STR_MAX_LEN)
-    {
-        log_errorf("Length of string representation (%d) exceeds buffer size!\n", wrote);
-    }
-    return wrote;
+    log_infof(" e: %llu\n", eph_rep);
 }
 
-int _log_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
+int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
 {
-    char en_str[ENCOUNTER_STR_MAX_LEN];
-    _display_encounter_(entry, en_str);
-    log_infof("%s\n", en_str);
+    //log_infof("%.4llu.", i);
+    //_display_encounter_(entry);
 #ifdef MODE__TEST
     log_debug("comparing logged encounter against test record\n");
-    uint8_t comp = compare_encounter_entry(*entry, test_encounter_list[i]);
+    dongle_encounter_entry test_en = test_encounter_list[i - enctr_entries_offset];
+    uint8_t comp = compare_encounter_entry(*entry, test_en);
     if (comp)
     {
         log_info("FAILED: entry mismatch\n");
         log_infof("Comp=%u\n", comp);
         test_errors++;
-        log_infof("Entry from log: %s\n", en_str);
-        _display_encounter_(&test_encounter_list[i], en_str);
-        log_infof("Test: %s\n", en_str);
+        log_info("Entry from log:\n");
+        _display_encounter_(entry);
+        log_info("Test:\n");
+        _display_encounter_(&test_en);
     }
     else
     {
@@ -302,25 +295,40 @@ static void _dongle_report_()
             log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val,
                       used ? "yes" : "no");
         }
-        // Report logged encounters
-        log_info("Encounters logged:\n");
-        log_info("----------------------------------------------\n");
-        log_info("< Time (dongle), Beacon ID, Time (beacon), Loc. Id, Eph. Id >   \n");
-        log_info("----------------------------------------------\n");
-        dongle_storage_load_encounter(&storage, enctr_entries_offset,
-                                      _log_encounter_);
-        enctr_entries_offset = dongle_storage_num_encounters(&storage);
+        // // Report logged encounters
+        // log_info("Encounters logged:\n");
+        // log_info("----------------------------------------------\n");
+        // log_info("< Time (dongle), Beacon ID, Time (beacon), Loc. Id, Eph. Id >   \n");
+        // log_info("----------------------------------------------\n");
 #ifdef MODE__TEST
+        log_info("\nRunning Tests:\n");
+        test_errors = 0;
+        log_info("? Testing that logged encounters are correct\n");
+        dongle_storage_load_encounter(&storage, enctr_entries_offset,
+                                      _report_encounter_);
+        log_info("? Testing that beacon broadcast was received\n");
         if (test_encounters < 1)
         {
             log_infof("FAILED: Encounter test. encounters logged in window: %d\n",
                       test_encounters);
             test_errors++;
         }
-        log_infof("Tests completed: status = %d\n", test_errors);
+        if (test_errors)
+        {
+            log_infof("\n   x Tests Failed: status = %d\n\n", test_errors);
+        }
+        else
+        {
+
+            log_info("\n    ✔ Tests Passed\n\n");
+        }
         test_encounters = 0;
         total_test_encounters = 0;
 #endif
+        enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+        log_infof("Encounters logged since last report: %llu\n", num - enctr_entries_offset);
+        log_infof("Total Encounters logged: %llu\n", num);
+        enctr_entries_offset = num;
         log_info("*** End Report ***\n");
     }
 }

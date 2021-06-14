@@ -5,8 +5,8 @@
 // instead interprets and logs payload data from PanCast beacons.
 //
 
-#define LOG_LEVEL__DEBUG
-//#define MODE__TEST
+#define LOG_LEVEL__INFO
+#define MODE__TEST
 
 #include <sys/printk.h>
 #include <sys/util.h>
@@ -35,6 +35,10 @@
 void main(void)
 {
     log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+
+#ifdef MODE__TEST
+    log_info("RUNNING IN TEST MODE\n");
+#endif
 
     int err;
 
@@ -250,11 +254,14 @@ static void _dongle_report_()
 static void _dongle_load_()
 {
     dongle_storage_init(&storage);
+    dongle_storage_load_config(&storage, &config);
 #ifdef MODE__TEST
     config.id = TEST_DONGLE_ID;
     config.t_init = TEST_DONGLE_INIT_TIME;
-#else
-    dongle_storage_load_config(&storage, &config);
+    config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
+    config.backend_pk = TEST_BACKEND_PK;
+    config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
+    config.dongle_sk = TEST_DONGLE_SK;
 #endif
 }
 

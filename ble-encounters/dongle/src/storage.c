@@ -33,6 +33,8 @@ static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 #define st (*sto)
 
 #define block_align align(st.min_block_size);
+#define block_pad(size) next_multiple(st.min_block_size, size)
+#define padded_sizeof(t) block_pad(sizeof(t))
 
 #define erase(offset)                              \
     log_infof("erasing page at 0x%x\n", (offset)), \
@@ -101,11 +103,11 @@ enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
 
 // Reflects the total size of the entry in storage while taking
 // minimum alignment into account.
-#define ENCOUNTER_ENTRY_SIZE                                            \
-    next_multiple(FLASH_WORD_SIZE,                                      \
-                  sizeof(beacon_location_id_t) + sizeof(beacon_id_t) +  \
-                      sizeof(beacon_timer_t) + sizeof(dongle_timer_t) + \
-                      BEACON_EPH_ID_SIZE)
+#define ENCOUNTER_ENTRY_SIZE                                                          \
+    next_multiple(FLASH_WORD_SIZE,                                                    \
+                  padded_sizeof(beacon_location_id_t) + padded_sizeof(beacon_id_t) +  \
+                      padded_sizeof(beacon_timer_t) + padded_sizeof(dongle_timer_t) + \
+                      block_pad(BEACON_EPH_ID_SIZE))
 
 //#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
 #define ENCOUNTER_LOG_OFFSET(i) (st.map.log + (i * ENCOUNTER_ENTRY_SIZE))
@@ -148,7 +150,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                                   dongle_timer_t *dongle_time,
                                   beacon_eph_id_t *eph_id)
 {
-    off = ENCOUNTER_LOG_OFFSET(st.map.enctr_entries);
+    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.map.enctr_entries);
+    off = start;
     log_debugf("write log; existing entries: %llu, offset: 0x%x\n", st.map.enctr_entries, off);
 // Erase before write
 #define page_num(o) ((o) / st.page_size)
@@ -171,6 +174,7 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     log_debugf("offset after log write: 0x%x\n", off);
     align(FLASH_WORD_SIZE);
     log_debugf("offset after alignment: 0x%x\n", off);
+    log_debugf("total size: %u (entry size=%d)\n", off - start, ENCOUNTER_ENTRY_SIZE);
 #undef write
     st.map.enctr_entries++;
     log_debugf("log now contains %llu entries\n", st.map.enctr_entries);

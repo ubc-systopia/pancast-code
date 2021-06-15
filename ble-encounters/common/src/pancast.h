@@ -68,4 +68,7 @@ typedef struct
 
 #define NUM_OTP 16 // number of OTPs given to user and present in the dongle
 
+#define BROADCAST_SERVICE_ID 0x2222
+static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
+
 #endif

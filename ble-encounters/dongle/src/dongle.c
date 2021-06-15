@@ -168,6 +168,15 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 static void _dongle_track_(encounter_broadcast_t *enc)
 {
 #define en (*enc)
+
+    // Check the broadcast UUID
+    beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
+    if (service_id != BROADCAST_SERVICE_ID)
+    {
+        log_debugf("Broadcast skipped; service id 0x%x does not match\n", service_id);
+        return;
+    }
+
     // determine which tracked id, if any, is a match
     size_t i = DONGLE_MAX_BC_TRACKED;
     for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++)

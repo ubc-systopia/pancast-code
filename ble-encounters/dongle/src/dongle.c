@@ -292,7 +292,8 @@ static void _dongle_report_()
         for (int i = 0; i < NUM_OTP; i++)
         {
             dongle_storage_load_otp(&storage, i, &otp);
-            bool used = !((otp.flags & 0x0000000000000001) >> 0);
+            log_debugf("flags: 0x%llx\n", otp.flags);
+            bool used = otp_is_used(&otp);
             log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val,
                       used ? "yes" : "no");
         }

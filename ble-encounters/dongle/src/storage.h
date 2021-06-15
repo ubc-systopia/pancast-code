@@ -50,6 +50,9 @@ void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp);
 // Save a pre-determined list of OTPs
 void dongle_storage_save_otp(dongle_storage *sto, otp_set otps);
 
+// Determine if a given otp is used
+int otp_is_used(dongle_otp_t *otp);
+
 // If an unused OTP exists with the given value, returns its index
 // and marks the code as used. Otherwise returns a negative value
 int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);

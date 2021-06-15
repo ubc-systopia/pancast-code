@@ -138,15 +138,20 @@ void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
     }
 }
 
+int otp_is_used(dongle_otp_t *otp)
+{
+    return !((otp->flags & 0x0000000000000001) >> 0);
+}
+
 int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 {
     dongle_otp_t otp;
     for (int i = 0; i < NUM_OTP; i++)
     {
         dongle_storage_load_otp(sto, i, &otp);
-        if (otp.val == val)
+        if (otp.val == val && !otp_is_used(&otp))
         {
-            otp.flags |= 0x0000000000000001;
+            otp.flags &= 0xfffffffffffffffe;
             off = OTP(i),
             _flash_write_(sto, &otp, sizeof(dongle_otp_t));
             return i;

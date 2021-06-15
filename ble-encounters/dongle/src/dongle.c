@@ -280,28 +280,32 @@ static void _dongle_report_()
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
     {
         report_time = dongle_time;
-        log_infof("*** Begin Report for %s ***\n", CONFIG_BT_DEVICE_NAME);
+        log_infof("\n*** Begin Report for %s ***\n\n", CONFIG_BT_DEVICE_NAME);
         log_infof("ID: %u\n", config.id);
         log_infof("Initial clock: %u\n", config.t_init);
         log_infof("Backend public key (%u bytes)\n", config.backend_pk_size);
         log_infof("Secret key (%u bytes)\n", config.dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
-        // Report OTPs
-        log_info("One-Time Passcodes:\n");
-        dongle_otp_t otp;
-        for (int i = 0; i < NUM_OTP; i++)
-        {
-            dongle_storage_load_otp(&storage, i, &otp);
-            log_debugf("flags: 0x%llx\n", otp.flags);
-            bool used = otp_is_used(&otp);
-            log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val,
-                      used ? "yes" : "no");
-        }
+
+        // // Report OTPs
+        // log_info("One-Time Passcodes:\n");
+        // dongle_otp_t otp;
+        // for (int i = 0; i < NUM_OTP; i++)
+        // {
+        //     dongle_storage_load_otp(&storage, i, &otp);
+        //     log_debugf("flags: 0x%llx\n", otp.flags);
+        //     bool used = otp_is_used(&otp);
+        //     log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val,
+        //               used ? "yes" : "no");
+        // }
+
         // // Report logged encounters
         // log_info("Encounters logged:\n");
         // log_info("----------------------------------------------\n");
         // log_info("< Time (dongle), Beacon ID, Time (beacon), Loc. Id, Eph. Id >   \n");
         // log_info("----------------------------------------------\n");
+
+        // Run Tests
 #ifdef MODE__TEST
         log_info("\nTests:\n");
         test_errors = 0;
@@ -356,7 +360,7 @@ static void _dongle_report_()
         log_infof("Encounters logged since last report: %llu\n", num - enctr_entries_offset);
         log_infof("Total Encounters logged: %llu\n", num);
         enctr_entries_offset = num;
-        log_info("*** End Report ***\n");
+        log_info("\n*** End Report ***\n\n");
     }
 }
 
@@ -441,7 +445,7 @@ void dongle_scan(void)
 #undef t_init
         if (epoch != old_epoch)
         {
-            log_infof("EPOCH STARTED: %u\n", epoch);
+            log_debugf("EPOCH STARTED: %u\n", epoch);
             // TODO: log time to flash
         }
         _dongle_report_();

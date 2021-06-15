@@ -36,9 +36,13 @@ static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 #define block_pad(size) next_multiple(st.min_block_size, size)
 #define padded_sizeof(t) block_pad(sizeof(t))
 
-#define erase(offset)                              \
-    log_infof("erasing page at 0x%x\n", (offset)), \
-        flash_erase(st.dev, (offset), st.page_size);
+void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
+{
+    log_debugf("erasing page at 0x%x\n", (offset));
+    flash_erase(st.dev, (offset), st.page_size);
+}
+
+#define erase(addr) dongle_storage_erase(sto, addr)
 
 void pre_erase(dongle_storage *sto, size_t write_size)
 {
@@ -79,7 +83,7 @@ void dongle_storage_init(dongle_storage *sto)
     st.min_block_size = flash_get_write_block_size(st.dev);
     st.num_pages = 0;
     flash_page_foreach(st.dev, _flash_page_info_, sto);
-    log_infof("Pages: %d, size=%u\n", st.num_pages, st.page_size);
+    log_infof("Pages: %d, Page Size: %u\n", st.num_pages, st.page_size);
     st.map.config = FLASH_OFFSET;
 }
 
@@ -184,7 +188,7 @@ void dongle_storage_load_encounter(dongle_storage *sto,
     {
         log_errorf("Starting index for encounter log (%llu) is too large\n", i);
     }
-    log_infof("loading log entries starting at index %llu\n", i);
+    log_debugf("loading log entries starting at index %llu\n", i);
     do
     {
         if (i < st.map.enctr_entries)

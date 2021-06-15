@@ -6,7 +6,7 @@
 #include <drivers/flash.h>
 
 #define FLASH_WORD_SIZE 8
-#define FLASH_OFFSET 0x21000
+#define FLASH_OFFSET 0x22000
 
 typedef off_t storage_addr_t;
 
@@ -39,11 +39,22 @@ void dongle_storage_init(dongle_storage *sto);
 // container, and set the map to allow load_otp to be used.
 void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg);
 
+// Write an existing config to storage
+void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg);
+
 // LOAD OTP
 // Should read the data associated with the ith OTP code into
 // the container.
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp);
 
+// Save a pre-determined list of OTPs
+void dongle_storage_save_otp(dongle_storage *sto, otp_set otps);
+
+// If an unused OTP exists with the given value, returns its index
+// and marks the code as used. Otherwise returns a negative value
+int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);
+
+// Determine the number of encounters currently logged
 enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto);
 
 // LOAD ENCOUNTER

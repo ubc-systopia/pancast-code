@@ -23,6 +23,7 @@
 #include <drivers/flash.h>
 
 #include "./storage.h"
+#include "./test.h"
 
 #include "../../common/src/log.h"
 #include "../../common/src/pancast.h"
@@ -301,17 +302,35 @@ static void _dongle_report_()
         // log_info("< Time (dongle), Beacon ID, Time (beacon), Loc. Id, Eph. Id >   \n");
         // log_info("----------------------------------------------\n");
 #ifdef MODE__TEST
-        log_info("\nRunning Tests:\n");
+        log_info("\nTests:\n");
         test_errors = 0;
+#define FAIL(msg) (log_infof("FAILURE: %s\n", msg), test_errors++)
+        log_info("? Testing that OTPs are loaded\n");
+        int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
+        if (otp_idx != 7)
+        {
+            FAIL("Index 7 Not loaded correctly");
+        }
+        otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[0].val);
+        if (otp_idx != 0)
+        {
+            FAIL("Index 0 Not loaded correctly");
+        }
+        log_info("? Testing that OTP cannot be re-used\n");
+        otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
+        if (otp_idx >= 0)
+        {
+            FAIL("Index 7 was found again");
+        }
         log_info("? Testing that logged encounters are correct\n");
         dongle_storage_load_encounter(&storage, enctr_entries_offset,
                                       _report_encounter_);
         log_info("? Testing that beacon broadcast was received\n");
         if (test_encounters < 1)
         {
-            log_infof("FAILED: Encounter test. encounters logged in window: %d\n",
+            FAIL("Not enough encounters.");
+            log_infof("Encounters logged in window: %d\n",
                       test_encounters);
-            test_errors++;
         }
         if (test_errors)
         {
@@ -322,6 +341,7 @@ static void _dongle_report_()
 
             log_info("\n    ✔ Tests Passed\n\n");
         }
+#undef FAIL
         test_encounters = 0;
         total_test_encounters = 0;
 #endif
@@ -344,6 +364,8 @@ static void _dongle_load_()
     config.backend_pk = TEST_BACKEND_PK;
     config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
     config.dongle_sk = TEST_DONGLE_SK;
+    dongle_storage_save_config(&storage, &config);
+    dongle_storage_save_otp(&storage, TEST_OTPS);
 #endif
 }
 

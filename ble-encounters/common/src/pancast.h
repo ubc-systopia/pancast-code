@@ -21,7 +21,7 @@ typedef struct
     uint8_t bytes[PK_MAX_SIZE];
 } pubkey_t;
 
-typedef uint16_t key_size_t;
+typedef uint32_t key_size_t;
 
 // hard-coded beacon information for development purposes
 

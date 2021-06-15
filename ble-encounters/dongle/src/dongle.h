@@ -19,6 +19,8 @@ typedef struct
     uint64_t val;
 } dongle_otp_t;
 
+typedef dongle_otp_t otp_set[NUM_OTP];
+
 typedef struct
 {
     dongle_id_t id;

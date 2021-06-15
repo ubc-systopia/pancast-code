@@ -8,7 +8,7 @@
 #include "../../common/src/util.h"
 
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
-#define next_multiple(k, n) ((n) + ((k) - ((n) % (k))))
+#define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 #define align(size) off = next_multiple(size, off)
 
 off_t off; // flash offset
@@ -32,13 +32,28 @@ static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 
 #define st (*sto)
 
-#define block_align align(st.min_block_size);
+#define block_align align(st.min_block_size)
 #define block_pad(size) next_multiple(st.min_block_size, size)
 #define padded_sizeof(t) block_pad(sizeof(t))
 
 #define erase(offset)                              \
     log_infof("erasing page at 0x%x\n", (offset)), \
         flash_erase(st.dev, (offset), st.page_size);
+
+void pre_erase(dongle_storage *sto, size_t write_size)
+{
+// Erase before write
+#define page_num(o) ((o) / st.page_size)
+    if ((off % st.page_size) == 0)
+    {
+        erase(off);
+    }
+    else if (page_num(off + write_size) > page_num(off))
+    {
+#undef page_num
+        erase(next_multiple(st.page_size, off));
+    }
+}
 
 int _flash_read_(dongle_storage *sto, void *data, size_t size)
 {
@@ -56,6 +71,7 @@ int _flash_write_(dongle_storage *sto, void *data, size_t size)
 
 void dongle_storage_init(dongle_storage *sto)
 {
+    log_info("Initializing storage\n");
     off = 0;
     st.map.enctr_entries = 0;
     st.dev = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
@@ -67,33 +83,76 @@ void dongle_storage_init(dongle_storage *sto)
     st.map.config = FLASH_OFFSET;
 }
 
-void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
-{
 #define cf (*cfg)
 
+void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
+{
+    log_info("Loading config\n");
     off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), off += size)
     read(sizeof(dongle_id_t), &cf.id);
     read(sizeof(dongle_timer_t), &cf.t_init);
     read(sizeof(key_size_t), &cf.backend_pk_size);
-    read(cf.backend_pk_size, &cf.backend_pk);
+    read(PK_MAX_SIZE, &cf.backend_pk);
     read(sizeof(key_size_t), &cf.dongle_sk_size);
-    read(cf.dongle_sk_size, &cf.dongle_sk);
+    read(SK_MAX_SIZE, &cf.dongle_sk);
     align(FLASH_WORD_SIZE);
     st.map.otp = off;
     // log start is pushed onto the next blank page
     st.map.log = next_multiple(st.page_size,
                                st.map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
 #undef read
+}
+
+void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
+{
+    log_debug("Saving config\n");
+    off = st.map.config;
+#define write(data, size) (pre_erase(sto, size), _flash_write_(sto, data, size), off += size)
+    write(&cf.id, sizeof(dongle_id_t));
+    write(&cf.t_init, sizeof(dongle_timer_t));
+    write(&cf.backend_pk_size, sizeof(key_size_t));
+    write(&cf.backend_pk, PK_MAX_SIZE);
+    write(&cf.dongle_sk_size, sizeof(key_size_t));
+    write(&cf.dongle_sk, SK_MAX_SIZE);
+#undef write
+}
 
 #undef cf
-}
 
 #define OTP(i) (st.map.otp + (i * sizeof(dongle_otp_t)))
 
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 {
     off = OTP(i), _flash_read_(sto, otp, sizeof(dongle_otp_t));
+}
+
+void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
+{
+    log_debug("Saving OTPs\n");
+    for (int i = 0; i < NUM_OTP; i++)
+    {
+        off = OTP(i);
+        pre_erase(sto, sizeof(dongle_otp_t));
+        _flash_write_(sto, &otps[i], sizeof(dongle_otp_t));
+    }
+}
+
+int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
+{
+    dongle_otp_t otp;
+    for (int i = 0; i < NUM_OTP; i++)
+    {
+        dongle_storage_load_otp(sto, i, &otp);
+        if (otp.val == val)
+        {
+            otp.flags |= 0x0000000000000001;
+            off = OTP(i),
+            _flash_write_(sto, &otp, sizeof(dongle_otp_t));
+            return i;
+        }
+    }
+    return -1;
 }
 
 enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
@@ -153,17 +212,7 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.map.enctr_entries);
     off = start;
     log_debugf("write log; existing entries: %llu, offset: 0x%x\n", st.map.enctr_entries, off);
-// Erase before write
-#define page_num(o) ((o) / st.page_size)
-    if ((off % st.page_size) == 0)
-    {
-        erase(off);
-    }
-    else if (page_num(off + ENCOUNTER_ENTRY_SIZE) > page_num(off))
-    {
-#undef page_num
-        erase(next_multiple(st.page_size, off));
-    }
+    pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), off += size, block_align
     write(beacon_id, sizeof(beacon_id_t));

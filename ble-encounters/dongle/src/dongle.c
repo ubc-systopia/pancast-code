@@ -306,6 +306,7 @@ static void _dongle_report_()
         log_info("\nTests:\n");
         test_errors = 0;
 #define FAIL(msg) (log_infof("FAILURE: %s\n", msg), test_errors++)
+
         log_info("? Testing that OTPs are loaded\n");
         int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
         if (otp_idx != 7)
@@ -323,6 +324,11 @@ static void _dongle_report_()
         {
             FAIL("Index 7 was found again");
         }
+        // Restore OTP data
+        // Need to re-save config as the shared page must be erased
+        dongle_storage_save_config(&storage, &config);
+        dongle_storage_save_otp(&storage, TEST_OTPS);
+
         log_info("? Testing that logged encounters are correct\n");
         dongle_storage_load_encounter(&storage, enctr_entries_offset,
                                       _report_encounter_);

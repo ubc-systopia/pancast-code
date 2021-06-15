@@ -9,7 +9,6 @@
 
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
-#define align(size) off = next_multiple(size, off)
 
 off_t off; // flash offset
 
@@ -31,10 +30,6 @@ static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 }
 
 #define st (*sto)
-
-#define block_align align(st.min_block_size)
-#define block_pad(size) next_multiple(st.min_block_size, size)
-#define padded_sizeof(t) block_pad(sizeof(t))
 
 void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 {
@@ -100,7 +95,6 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
     read(PK_MAX_SIZE, &cf.backend_pk);
     read(sizeof(key_size_t), &cf.dongle_sk_size);
     read(SK_MAX_SIZE, &cf.dongle_sk);
-    align(FLASH_WORD_SIZE);
     st.map.otp = off;
     // log start is pushed onto the next blank page
     st.map.log = next_multiple(st.page_size,
@@ -171,14 +165,12 @@ enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
 
 // Reflects the total size of the entry in storage while taking
 // minimum alignment into account.
-#define ENCOUNTER_ENTRY_SIZE                                                          \
-    next_multiple(FLASH_WORD_SIZE,                                                    \
-                  padded_sizeof(beacon_location_id_t) + padded_sizeof(beacon_id_t) +  \
-                      padded_sizeof(beacon_timer_t) + padded_sizeof(dongle_timer_t) + \
-                      block_pad(BEACON_EPH_ID_SIZE))
+#define ENCOUNTER_ENTRY_SIZE (sizeof(beacon_location_id_t) + sizeof(beacon_id_t) + \
+                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
+                              BEACON_EPH_ID_SIZE)
 
 //#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
-#define ENCOUNTER_LOG_OFFSET(i) (st.map.log + (i * ENCOUNTER_ENTRY_SIZE))
+#define ENCOUNTER_LOG_OFFSET(j) (st.map.log + (j * ENCOUNTER_ENTRY_SIZE))
 
 void dongle_storage_load_encounter(dongle_storage *sto,
                                    enctr_entry_counter_t i, dongle_encounter_cb cb)
@@ -194,13 +186,12 @@ void dongle_storage_load_encounter(dongle_storage *sto,
         if (i < st.map.enctr_entries)
         {
             off = ENCOUNTER_LOG_OFFSET(i);
-#define read(size, dst) _flash_read_(sto, dst, size), off += size, block_align
+#define read(size, dst) _flash_read_(sto, dst, size), off += size
             read(sizeof(beacon_id_t), &en.beacon_id);
             read(sizeof(beacon_location_id_t), &en.location_id);
             read(sizeof(beacon_timer_t), &en.beacon_time);
             read(sizeof(dongle_timer_t), &en.dongle_time);
             read(BEACON_EPH_ID_SIZE, &en.eph_id);
-            align(FLASH_WORD_SIZE);
 #undef read
         }
         else
@@ -223,15 +214,12 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     log_debugf("write log; existing entries: %llu, offset: 0x%x\n", st.map.enctr_entries, off);
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
-    _flash_write_(sto, data, size), off += size, block_align
+    _flash_write_(sto, data, size), off += size
     write(beacon_id, sizeof(beacon_id_t));
     write(location_id, sizeof(beacon_location_id_t));
     write(beacon_time, sizeof(beacon_timer_t));
     write(dongle_time, sizeof(dongle_timer_t));
     write(eph_id, BEACON_EPH_ID_SIZE);
-    log_debugf("offset after log write: 0x%x\n", off);
-    align(FLASH_WORD_SIZE);
-    log_debugf("offset after alignment: 0x%x\n", off);
     log_debugf("total size: %u (entry size=%d)\n", off - start, ENCOUNTER_ENTRY_SIZE);
 #undef write
     st.map.enctr_entries++;

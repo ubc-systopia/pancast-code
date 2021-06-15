@@ -5,7 +5,6 @@
 
 #include <drivers/flash.h>
 
-#define FLASH_WORD_SIZE 8
 #define FLASH_OFFSET 0x22000
 
 typedef off_t storage_addr_t;

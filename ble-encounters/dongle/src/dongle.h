@@ -68,20 +68,10 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
-// typedef union
-// {
-//     uint8_t flags;
-//     uint8_t data[20];
-// } interact_state;
-
-typedef struct
+typedef union
 {
     uint8_t flags;
-    // union
-    // {
-    //     dongle_otp_t otp;
-    //     dongle_encounter_entry rec;
-    // } data;
+    uint8_t data[20];
 } interact_state;
 
 void dongle_scan(void);

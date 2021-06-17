@@ -24,6 +24,13 @@
     DONGLE_INTERACT_SERVICE_ID_3,                      \
     DONGLE_INTERACT_SERVICE_ID_4 + 1)
 
+#define DONGLE_CHARACTERISTIC2_UUID BT_UUID_128_ENCODE( \
+    DONGLE_INTERACT_SERVICE_ID_0,                       \
+    DONGLE_INTERACT_SERVICE_ID_1,                       \
+    DONGLE_INTERACT_SERVICE_ID_2,                       \
+    DONGLE_INTERACT_SERVICE_ID_3,                       \
+    DONGLE_INTERACT_SERVICE_ID_4 + 2)
+
 typedef struct
 {
     beacon_eph_id_t *eph;
@@ -60,6 +67,22 @@ typedef struct
     dongle_timer_t dongle_time;
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
+
+// typedef union
+// {
+//     uint8_t flags;
+//     uint8_t data[20];
+// } interact_state;
+
+typedef struct
+{
+    uint8_t flags;
+    // union
+    // {
+    //     dongle_otp_t otp;
+    //     dongle_encounter_entry rec;
+    // } data;
+} interact_state;
 
 void dongle_scan(void);
 int dongle_advertise();

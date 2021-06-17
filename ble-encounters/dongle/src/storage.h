@@ -5,7 +5,7 @@
 
 #include <drivers/flash.h>
 
-#define FLASH_OFFSET 0x2B000
+#define FLASH_OFFSET 0x2D000
 
 typedef off_t storage_addr_t;
 

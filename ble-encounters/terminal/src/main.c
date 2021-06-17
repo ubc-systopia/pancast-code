@@ -26,6 +26,19 @@ static struct bt_uuid_128 uuid = BT_UUID_INIT_128(0);
 static struct bt_gatt_discover_params discover_params;
 static struct bt_gatt_subscribe_params subscribe_params;
 
+struct k_mutex state_mu;
+interact_state state;
+
+BT_GATT_SERVICE_DEFINE(service,
+                       // 0. Primary Service Attribute
+                       BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_128(DONGLE_SERVICE_UUID)),
+                       // 1. Interaction Data
+                       BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(DONGLE_CHARACTERISTIC_UUID), BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE, (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE), NULL, NULL, &state),
+                       // 2. CCC
+                       BT_GATT_CCC(NULL, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+                       //
+);
+
 static uint8_t notify_func(struct bt_conn *conn,
                            struct bt_gatt_subscribe_params *params,
                            const void *data, uint16_t length)
@@ -39,6 +52,27 @@ static uint8_t notify_func(struct bt_conn *conn,
 
     printk("[NOTIFICATION] data length %u\n", length);
     info_bytes(data, length, "Data");
+
+    k_mutex_lock(&state_mu, K_FOREVER);
+
+    memcpy(&state, data, sizeof(interact_state));
+
+    int locked = state.flags & 0b00000001 >> 0;
+
+    printk("Dongle is %s\n", locked ? "locked" : "unlocked");
+
+    if (locked)
+    {
+        state.flags = 0b00000000;
+    }
+    else
+    {
+        state.flags = 0b00000001;
+    }
+
+    bt_gatt_notify(NULL, &service.attrs[1], &state, sizeof(interact_state));
+
+    k_mutex_unlock(&state_mu);
 
     return BT_GATT_ITER_CONTINUE;
 }

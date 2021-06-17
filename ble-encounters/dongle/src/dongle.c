@@ -486,15 +486,120 @@ static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL,
                   DONGLE_SERVICE_UUID)};
 
-uint8_t data = 0;
+struct k_mutex state_mu;
+interact_state state;
+struct bt_conn *terminal_conn = NULL;
+static struct bt_uuid_128 SERVICE_UUID = BT_UUID_INIT_128(DONGLE_SERVICE_UUID);
+static struct bt_uuid_128 CHARACTERISTIC_UUID = BT_UUID_INIT_128(DONGLE_CHARACTERISTIC_UUID);
+static struct bt_uuid_128 uuid = BT_UUID_INIT_128(0);
+static struct bt_gatt_discover_params discover_params;
+static struct bt_gatt_subscribe_params subscribe_params;
 
-BT_GATT_SERVICE_DEFINE(dongle_service, BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_128(DONGLE_SERVICE_UUID)), BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(DONGLE_CHARACTERISTIC_UUID), BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_READ, NULL, NULL, &data), BT_GATT_CCC(NULL, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE), );
+BT_GATT_SERVICE_DEFINE(dongle_service,
+                       // 0. Primary Service Attribute
+                       BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_128(DONGLE_SERVICE_UUID)),
+                       // 1. Interaction Data
+                       BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(DONGLE_CHARACTERISTIC_UUID), BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE, (BT_GATT_PERM_READ | BT_GATT_PERM_WRITE), NULL, NULL, &state),
+                       // 2. CCC
+                       BT_GATT_CCC(NULL, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+                       //
+);
 
 void _peer_update_()
 {
-    data++;
-    // index 1 is the first characteristc, 0 is primary service
-    bt_gatt_notify(NULL, &dongle_service.attrs[1], &data, sizeof(uint8_t));
+    bt_gatt_notify(NULL, &dongle_service.attrs[1], &state, sizeof(interact_state));
+}
+
+static uint8_t _notify_(struct bt_conn *conn,
+                        struct bt_gatt_subscribe_params *params,
+                        const void *data, uint16_t length)
+{
+    if (!data)
+    {
+        printk("[UNSUBSCRIBED]\n");
+        params->value_handle = 0U;
+        return BT_GATT_ITER_STOP;
+    }
+
+    printk("[NOTIFICATION] data length %u\n", length);
+    info_bytes(data, length, "Data");
+
+    k_mutex_lock(&state_mu, K_FOREVER);
+
+    memcpy(&state, data, sizeof(interact_state));
+
+    int locked = state.flags & 0b00000001 >> 0;
+
+    printk("Dongle is %s\n", locked ? "locked" : "unlocked");
+
+    k_mutex_unlock(&state_mu);
+
+    return BT_GATT_ITER_CONTINUE;
+}
+
+static uint8_t _discover_(struct bt_conn *conn,
+                          const struct bt_gatt_attr *attr,
+                          struct bt_gatt_discover_params *params)
+{
+    int err;
+
+    if (!attr)
+    {
+        printk("Discover complete\n");
+        (void)memset(params, 0, sizeof(*params));
+        return BT_GATT_ITER_STOP;
+    }
+
+    printk("[ATTRIBUTE] handle %u\n", attr->handle);
+
+    if (!bt_uuid_cmp(discover_params.uuid, BT_UUID_DECLARE_128(DONGLE_SERVICE_UUID)))
+    {
+        uuid = CHARACTERISTIC_UUID;
+        discover_params.uuid = &uuid.uuid;
+        discover_params.start_handle = attr->handle + 1;
+        discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+
+        err = bt_gatt_discover(conn, &discover_params);
+        if (err)
+        {
+            printk("Characteristic Discover failed (err %d)\n", err);
+        }
+    }
+    else if (!bt_uuid_cmp(discover_params.uuid,
+                          BT_UUID_DECLARE_128(DONGLE_CHARACTERISTIC_UUID)))
+    {
+        memcpy(&uuid, BT_UUID_GATT_CCC, sizeof(uuid));
+        discover_params.uuid = &uuid.uuid;
+        discover_params.start_handle = attr->handle + 2;
+        discover_params.type = BT_GATT_DISCOVER_DESCRIPTOR;
+        subscribe_params.value_handle = bt_gatt_attr_value_handle(attr);
+
+        err = bt_gatt_discover(conn, &discover_params);
+        if (err)
+        {
+            printk("CCC Discover failed (err %d)\n", err);
+        }
+    }
+    else
+    {
+        subscribe_params.notify = _notify_;
+        subscribe_params.value = BT_GATT_CCC_NOTIFY;
+        subscribe_params.ccc_handle = attr->handle;
+
+        err = bt_gatt_subscribe(conn, &subscribe_params);
+        if (err && err != -EALREADY)
+        {
+            printk("Subscribe failed (err %d)\n", err);
+        }
+        else
+        {
+            printk("[SUBSCRIBED]\n");
+        }
+
+        return BT_GATT_ITER_STOP;
+    }
+
+    return BT_GATT_ITER_STOP;
 }
 
 static void _peer_connected_(struct bt_conn *conn, uint8_t err)
@@ -506,12 +611,30 @@ static void _peer_connected_(struct bt_conn *conn, uint8_t err)
     else
     {
         log_info("Peer connected\n");
+        if (terminal_conn == NULL)
+        {
+            terminal_conn = conn;
+            uuid = SERVICE_UUID;
+            discover_params.uuid = &uuid.uuid;
+            discover_params.func = &_discover_;
+            discover_params.start_handle = BT_ATT_FIRST_ATTTRIBUTE_HANDLE;
+            discover_params.end_handle = BT_ATT_LAST_ATTTRIBUTE_HANDLE;
+            discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+
+            err = bt_gatt_discover(terminal_conn, &discover_params);
+            if (err)
+            {
+                printk("Discover failed(err %d)\n", err);
+                return;
+            }
+        }
     }
 }
 
 static void _peer_disconnected_(struct bt_conn *conn, uint8_t reason)
 {
     log_infof("Peer disconnected (reason 0x%02x)\n", reason);
+    terminal_conn = NULL;
 }
 
 static struct bt_conn_cb conn_callbacks = {
@@ -534,6 +657,8 @@ static struct bt_conn_auth_cb auth_cb_display = {
 
 int dongle_advertise()
 {
+
+    state.flags = 0b00000001;
 
     info_bytes(ad[0].data, ad[0].data_len, "ad data");
     int err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);

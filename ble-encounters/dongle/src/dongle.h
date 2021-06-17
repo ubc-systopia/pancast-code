@@ -3,6 +3,27 @@
 
 #include "../../common/src/pancast.h"
 
+// SERVICE UUID: e7f72a03-803b-410a-98d4-4be5fad8e217
+#define DONGLE_INTERACT_SERVICE_ID_0 0xe7f72a03
+#define DONGLE_INTERACT_SERVICE_ID_1 0x803b
+#define DONGLE_INTERACT_SERVICE_ID_2 0x410a
+#define DONGLE_INTERACT_SERVICE_ID_3 0x98d4
+#define DONGLE_INTERACT_SERVICE_ID_4 0x4be5fad8e217
+
+#define DONGLE_SERVICE_UUID BT_UUID_128_ENCODE( \
+    DONGLE_INTERACT_SERVICE_ID_0,               \
+    DONGLE_INTERACT_SERVICE_ID_1,               \
+    DONGLE_INTERACT_SERVICE_ID_2,               \
+    DONGLE_INTERACT_SERVICE_ID_3,               \
+    DONGLE_INTERACT_SERVICE_ID_4)
+
+#define DONGLE_CHARACTERISTIC_UUID BT_UUID_128_ENCODE( \
+    DONGLE_INTERACT_SERVICE_ID_0,                      \
+    DONGLE_INTERACT_SERVICE_ID_1,                      \
+    DONGLE_INTERACT_SERVICE_ID_2,                      \
+    DONGLE_INTERACT_SERVICE_ID_3,                      \
+    DONGLE_INTERACT_SERVICE_ID_4 + 1)
+
 typedef struct
 {
     beacon_eph_id_t *eph;
@@ -41,5 +62,8 @@ typedef struct
 } dongle_encounter_entry;
 
 void dongle_scan(void);
+int dongle_advertise();
+void _bas_notify_();
+void _peer_update_();
 
 #endif

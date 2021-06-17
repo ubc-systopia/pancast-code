@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#define CONFIG_BT_EXT_ADV 0 // set to 1 to allow extended advertising
-
 #define SK_MAX_SIZE 360 // bytes
 
 typedef struct

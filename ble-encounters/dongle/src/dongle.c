@@ -20,7 +20,9 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/uuid.h>
+#include <bluetooth/conn.h>
 #include <drivers/flash.h>
+#include <bluetooth/services/bas.h>
 
 #include "./storage.h"
 #include "./test.h"
@@ -53,6 +55,11 @@ void main(void)
     }
 
     log_info("Bluetooth initialized\n");
+
+    if (dongle_advertise())
+    {
+        return;
+    }
 
     dongle_scan();
 }
@@ -446,6 +453,10 @@ void dongle_scan(void)
         timer_status = k_timer_status_sync(&kernel_time);
         timer_status += k_timer_status_get(&kernel_time);
         LOCK dongle_time += timer_status;
+
+        // update connected peers
+        _peer_update_();
+
         // update epoch
         static dongle_epoch_counter_t old_epoch;
         old_epoch = epoch;
@@ -460,4 +471,92 @@ void dongle_scan(void)
         _dongle_report_();
         UNLOCK
     }
+}
+
+// TERMINAL INTERACTION
+// This is a connection-oriented protocol for external upload
+// through a user-interface device. Dongle acts as the peripheral
+// and accepts connections while proceeding with normal operation.
+
+static const struct bt_data ad[] = {
+    // BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+    // BT_DATA_BYTES(BT_DATA_UUID16_ALL,
+    //               BT_UUID_16_ENCODE(BT_UUID_DIS_VAL),
+    //               BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
+    BT_DATA_BYTES(BT_DATA_UUID128_ALL,
+                  DONGLE_SERVICE_UUID)};
+
+uint8_t data = 0;
+
+BT_GATT_SERVICE_DEFINE(dongle_service, BT_GATT_PRIMARY_SERVICE(BT_UUID_DECLARE_128(DONGLE_SERVICE_UUID)), BT_GATT_CHARACTERISTIC(BT_UUID_DECLARE_128(DONGLE_CHARACTERISTIC_UUID), BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_READ, NULL, NULL, &data), BT_GATT_CCC(NULL, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE), );
+
+void _peer_update_()
+{
+    data++;
+    // index 1 is the first characteristc, 0 is primary service
+    bt_gatt_notify(NULL, &dongle_service.attrs[1], &data, sizeof(uint8_t));
+}
+
+static void _peer_connected_(struct bt_conn *conn, uint8_t err)
+{
+    if (err)
+    {
+        log_infof("Peer connection failed (err 0x%02x)\n", err);
+    }
+    else
+    {
+        log_info("Peer connected\n");
+    }
+}
+
+static void _peer_disconnected_(struct bt_conn *conn, uint8_t reason)
+{
+    log_infof("Peer disconnected (reason 0x%02x)\n", reason);
+}
+
+static struct bt_conn_cb conn_callbacks = {
+    .connected = _peer_connected_,
+    .disconnected = _peer_disconnected_,
+};
+
+static void _peer_auth_cancel_(struct bt_conn *conn)
+{
+    char addr[BT_ADDR_LE_STR_LEN];
+
+    bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+    log_infof("Peer pairing cancelled: %s\n", addr);
+}
+
+static struct bt_conn_auth_cb auth_cb_display = {
+    .cancel = _peer_auth_cancel_,
+};
+
+int dongle_advertise()
+{
+
+    info_bytes(ad[0].data, ad[0].data_len, "ad data");
+    int err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
+    if (err)
+    {
+        log_infof("Advertising failed to start (err %d)\n", err);
+        return err;
+    }
+
+    log_info("Advertising successfully started\n");
+
+    bt_conn_cb_register(&conn_callbacks);
+    bt_conn_auth_cb_register(&auth_cb_display);
+
+    // obtain and report adverisement address
+    char addr_s[BT_ADDR_LE_STR_LEN];
+    bt_addr_le_t addr = {0};
+    size_t count = 1;
+
+    bt_id_get(&addr, &count);
+    bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
+
+    log_infof("advertising started with address %s\n", addr_s);
+
+    return 0;
 }

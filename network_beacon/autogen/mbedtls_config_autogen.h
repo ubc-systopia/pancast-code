@@ -3,10 +3,6 @@
 #ifndef MBEDTLS_CONFIG_AUTOGEN_H
 #define MBEDTLS_CONFIG_AUTOGEN_H
 
-
-
-
-
 #define MBEDTLS_AES_C
 #define MBEDTLS_CIPHER_C
 #define MBEDTLS_ENTROPY_HARDWARE_ALT
@@ -20,7 +16,6 @@
 #define MBEDTLS_PSA_CRYPTO_CONFIG
 #define MBEDTLS_PSA_CRYPTO_DRIVERS
 #define MBEDTLS_PSA_CRYPTO_STORAGE_C
-
 
 #include "config-device-acceleration.h"
 

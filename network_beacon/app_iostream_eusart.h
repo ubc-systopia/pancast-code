@@ -18,20 +18,22 @@
 #ifndef APP_IOSTREAM_EUSART_H
 #define APP_IOSTREAM_EUSART_H
 
-
 /* Data array */
 extern uint8_t risk_data_buffer[1000];
 
 /***************************************************************************//**
  * Initialize iostream usart
  ******************************************************************************/
-void app_iostream_eusart_init(void);
+void
+app_iostream_eusart_init (void);
 
 /***************************************************************************//**
  * iostream usart ticking function
  ******************************************************************************/
-void app_iostream_eusart_process_action(void);
+void
+app_iostream_eusart_process_action (void);
 
-int ready_for_update(void);
+int
+ready_for_update (void);
 
 #endif  // APP_IOSTREAM_EUSART_H

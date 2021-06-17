@@ -29,7 +29,6 @@
  ******************************************************************************/
 
 // <<< Use Configuration Wizard in Context Menu >>>
-
 #ifndef SL_POWER_MANAGER_CONFIG_H
 #define SL_POWER_MANAGER_CONFIG_H
 

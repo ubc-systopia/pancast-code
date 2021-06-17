@@ -29,7 +29,6 @@
  ******************************************************************************/
 
 // <<< Use Configuration Wizard in Context Menu >>>
-
 #ifndef SL_SLEEPTIMER_CONFIG_H
 #define SL_SLEEPTIMER_CONFIG_H
 

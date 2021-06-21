@@ -17,7 +17,7 @@
 #include "../../dongle/src/dongle.h"
 #include "../../common/src/util.h"
 #include "../../dongle/src/test.h"
-#include "../../dongle/src/upload.h"
+#include "../../dongle/src/access.h"
 #include "../../dongle/src/encounter.h"
 
 static void start_scan(void);

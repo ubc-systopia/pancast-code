@@ -71,30 +71,8 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
-typedef union
-{
-    uint8_t flags;
-    struct
-    {
-        uint8_t _;
-        uint8_t val[sizeof(dongle_otp_val)];
-    } otp;
-    struct
-    {
-        uint8_t _;
-        uint8_t val[sizeof(enctr_entry_counter_t)];
-    } num_recs;
-    struct
-    {
-        uint8_t _;
-        uint8_t bytes[19];
-    } data;
-} interact_state;
-
 void dongle_scan(void);
-int dongle_advertise();
-void _bas_notify_();
-void peer_update();
-void interact_update();
+void dongle_lock();
+void dongle_unlock();
 
 #endif

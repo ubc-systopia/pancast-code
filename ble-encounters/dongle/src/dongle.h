@@ -1,6 +1,11 @@
 #ifndef DONGLE__H
 #define DONGLE__H
 
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/hci.h>
+#include <bluetooth/uuid.h>
+#include <bluetooth/conn.h>
+
 #include "../../common/src/pancast.h"
 
 // SERVICE UUID: e7f72a03-803b-410a-98d4-4be5fad8e217
@@ -72,6 +77,13 @@ typedef struct
 } dongle_encounter_entry;
 
 void dongle_scan(void);
+void dongle_init();
+void dongle_load();
+void dongle_loop();
+void dongle_report();
+void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
+                struct net_buf_simple *ad);
+
 void dongle_lock();
 void dongle_unlock();
 

@@ -20,7 +20,6 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
 #include <drivers/flash.h>
-#include <bluetooth/services/bas.h>
 
 #include "./storage.h"
 #include "./test.h"
@@ -32,11 +31,71 @@
 #include "../../common/src/test.h"
 #include "../../common/src/util.h"
 
+// STATIC PARAMETERS
+// (Approx) number of time units between each report written to output
 #define DONGLE_REPORT_INTERVAL 30
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
 
+//
+// GLOBAL MEMORY
+// All of the variables used throughout the main program are allocated here
+
+// 1. Mutual exclusion
+// Access for both central updates and scan interupts
+// is given on a FIFO basis
+struct k_mutex dongle_mu;
+#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
+#define UNLOCK k_mutex_unlock(&dongle_mu);
+
+void dongle_lock()
+{
+    LOCK
+}
+
+void dongle_unlock(){
+    UNLOCK}
+
+// 2. Config
+dongle_config_t config;
+
+// 3. Operation
+dongle_storage storage;
+dongle_storage *get_dongle_storage()
+{
+    return &storage;
+}
+dongle_epoch_counter_t epoch;
+struct k_timer kernel_time;
+dongle_timer_t dongle_time; // main dongle timer
+dongle_timer_t report_time;
+beacon_eph_id_t
+    cur_id[DONGLE_MAX_BC_TRACKED]; // currently observed ephemeral id
+dongle_timer_t
+    obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
+size_t cur_id_idx;
+
+// 3. Reporting
+enctr_entry_counter_t enctr_entries_offset;
+
+// 4. Testing
+// Allocation is conditioned on the compile setting
+#ifdef MODE__TEST
+int test_errors = 0;
+#define TEST_MAX_ENCOUNTERS 64
+int test_encounters = 0;
+int total_test_encounters = 0;
+dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
+#endif
+
+//
+// ROUTINES
+//
+
+// MAIN
+// Entrypoint of the application
+// Initialize bluetooth, then call advertising and scan routines
 void main(void)
 {
     log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
@@ -64,55 +123,107 @@ void main(void)
     dongle_scan();
 }
 
-//
-// GLOBAL MEMORY
-//
-
-// Mutual exclusion
-// Access for both central updates and scan interupts
-// is given on a FIFO basis
-struct k_mutex dongle_mu;
-#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
-#define UNLOCK k_mutex_unlock(&dongle_mu);
-
-void dongle_lock()
+// SCAN
+// Call init routine, begin advertising with fixed parameters,
+// and enter the main loop.
+void dongle_scan(void)
 {
-    LOCK
+
+    dongle_init();
+
+    // Scan Start
+    int err = err = bt_le_scan_start(
+        BT_LE_SCAN_PARAM(
+            BT_LE_SCAN_TYPE_PASSIVE,   // passive scan
+            BT_LE_SCAN_OPT_NONE,       // no options; in particular, allow duplicates
+            BT_GAP_SCAN_FAST_INTERVAL, // interval
+            BT_GAP_SCAN_FAST_WINDOW    // window
+            ),
+        dongle_log);
+    if (err)
+    {
+        log_errorf("Scanning failed to start (err %d)\n", err);
+        return;
+    }
+    else
+    {
+        log_debug("Scanning successfully started\n");
+        dongle_loop();
+    }
 }
 
-void dongle_unlock(){
-    UNLOCK}
-
-// Config
-dongle_config_t config;
-
-// Op
-dongle_storage storage;
-dongle_storage *get_dongle_storage()
+// INIT
+// Call load routine, and set variables to their
+// initial value. Also initialize timing structs
+void dongle_init()
 {
-    return &storage;
+    k_mutex_init(&dongle_mu);
+
+    dongle_load();
+
+    dongle_time = config.t_init;
+    report_time = dongle_time;
+    cur_id_idx = 0;
+    epoch = 0;
+    enctr_entries_offset = 0;
+
+    k_timer_init(&kernel_time, NULL, NULL);
+
+// Timer zero point
+#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
+    k_timer_start(&kernel_time, DUR, DUR);
+#undef DUR // Initial time
 }
-dongle_epoch_counter_t epoch;
-struct k_timer kernel_time;
-dongle_timer_t dongle_time; // main dongle timer
-dongle_timer_t report_time;
-beacon_eph_id_t
-    cur_id[DONGLE_MAX_BC_TRACKED]; // currently observed ephemeral id
-dongle_timer_t
-    obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
-size_t cur_id_idx;
 
-// Reporting
-enctr_entry_counter_t enctr_entries_offset;
-
-// Testing
+// LOAD
+// Load state and configuration into memory
+void dongle_load()
+{
+    dongle_storage_init(&storage);
+    dongle_storage_load_config(&storage, &config);
 #ifdef MODE__TEST
-int test_errors = 0;
-#define TEST_MAX_ENCOUNTERS 64
-int test_encounters = 0;
-int total_test_encounters = 0;
-dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
+    config.id = TEST_DONGLE_ID;
+    config.t_init = TEST_DONGLE_INIT_TIME;
+    config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
+    config.backend_pk = TEST_BACKEND_PK;
+    config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
+    config.dongle_sk = TEST_DONGLE_SK;
+    dongle_storage_save_config(&storage, &config);
+    dongle_storage_save_otp(&storage, TEST_OTPS);
 #endif
+}
+
+// MAIN LOOP
+// timing and control logic is largely the same as the beacon
+// application. The main difference is that scanning does not
+// require restart for a new epoch.
+void dongle_loop()
+{
+    uint32_t timer_status = 0;
+
+    int err = 0;
+    while (!err)
+    {
+        // get most updated time
+        timer_status = k_timer_status_sync(&kernel_time);
+        timer_status += k_timer_status_get(&kernel_time);
+        LOCK dongle_time += timer_status;
+
+        // update epoch
+        static dongle_epoch_counter_t old_epoch;
+        old_epoch = epoch;
+#define t_init config.t_init
+        epoch = epoch_i(dongle_time, t_init);
+#undef t_init
+        if (epoch != old_epoch)
+        {
+            log_debugf("EPOCH STARTED: %u\n", epoch);
+            // TODO: log time to flash
+        }
+        dongle_report();
+        UNLOCK
+    }
+}
 
 static int
 decode_payload(uint8_t *data)
@@ -231,8 +342,8 @@ static void _dongle_track_(encounter_broadcast_t *enc)
 #undef en
 }
 
-static void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
-                       struct net_buf_simple *ad)
+void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
+                struct net_buf_simple *ad)
 {
     char addr_str[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
@@ -292,7 +403,7 @@ int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
     return 1;
 }
 
-static void _dongle_report_()
+void dongle_report()
 {
     // do report
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
@@ -379,95 +490,5 @@ static void _dongle_report_()
         log_infof("Total Encounters logged: %llu\n", num);
         enctr_entries_offset = num;
         log_info("\n*** End Report ***\n\n");
-    }
-}
-
-static void _dongle_load_()
-{
-    dongle_storage_init(&storage);
-    dongle_storage_load_config(&storage, &config);
-#ifdef MODE__TEST
-    config.id = TEST_DONGLE_ID;
-    config.t_init = TEST_DONGLE_INIT_TIME;
-    config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-    config.backend_pk = TEST_BACKEND_PK;
-    config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
-    config.dongle_sk = TEST_DONGLE_SK;
-    dongle_storage_save_config(&storage, &config);
-    dongle_storage_save_otp(&storage, TEST_OTPS);
-#endif
-}
-
-static void _dongle_init_()
-{
-    k_mutex_init(&dongle_mu);
-
-    _dongle_load_();
-
-    dongle_time = config.t_init;
-    report_time = dongle_time;
-    cur_id_idx = 0;
-    epoch = 0;
-    enctr_entries_offset = 0;
-
-    k_timer_init(&kernel_time, NULL, NULL);
-
-// Timer zero point
-#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
-    k_timer_start(&kernel_time, DUR, DUR);
-#undef DUR // Initial time
-}
-
-void dongle_scan(void)
-{
-
-    _dongle_init_();
-
-    // Scan Start
-    int err = err = bt_le_scan_start(
-        BT_LE_SCAN_PARAM(
-            BT_LE_SCAN_TYPE_PASSIVE,   // passive scan
-            BT_LE_SCAN_OPT_NONE,       // no options; in particular, allow duplicates
-            BT_GAP_SCAN_FAST_INTERVAL, // interval
-            BT_GAP_SCAN_FAST_WINDOW    // window
-            ),
-        dongle_log);
-    if (err)
-    {
-        log_errorf("Scanning failed to start (err %d)\n", err);
-        return;
-    }
-    else
-    {
-        log_debug("Scanning successfully started\n");
-    }
-
-    // Dongle Loop
-    // timing and control logic is largely the same as the beacon
-    // application. The main difference is that scanning does not
-    // require restart for a new epoch.
-
-    uint32_t timer_status = 0;
-
-    while (!err)
-    {
-        // get most updated time
-        timer_status = k_timer_status_sync(&kernel_time);
-        timer_status += k_timer_status_get(&kernel_time);
-        LOCK dongle_time += timer_status;
-
-        // update epoch
-        static dongle_epoch_counter_t old_epoch;
-        old_epoch = epoch;
-#define t_init config.t_init
-        epoch = epoch_i(dongle_time, t_init);
-#undef t_init
-        if (epoch != old_epoch)
-        {
-            log_debugf("EPOCH STARTED: %u\n", epoch);
-            // TODO: log time to flash
-        }
-        _dongle_report_();
-        UNLOCK
     }
 }

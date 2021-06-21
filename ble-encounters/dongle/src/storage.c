@@ -185,14 +185,7 @@ void dongle_storage_load_encounter(dongle_storage *sto,
     {
         if (i < st.map.enctr_entries)
         {
-            off = ENCOUNTER_LOG_OFFSET(i);
-#define read(size, dst) _flash_read_(sto, dst, size), off += size
-            read(sizeof(beacon_id_t), &en.beacon_id);
-            read(sizeof(beacon_location_id_t), &en.location_id);
-            read(sizeof(beacon_timer_t), &en.beacon_time);
-            read(sizeof(dongle_timer_t), &en.dongle_time);
-            read(BEACON_EPH_ID_SIZE, &en.eph_id);
-#undef read
+            dongle_storage_load_single_encounter(sto, i, &en);
         }
         else
         {
@@ -200,6 +193,19 @@ void dongle_storage_load_encounter(dongle_storage *sto,
         }
         i++;
     } while (cb(i - 1, &en));
+}
+
+void dongle_storage_load_single_encounter(dongle_storage *sto,
+                                          enctr_entry_counter_t i, dongle_encounter_entry *en)
+{
+    off = ENCOUNTER_LOG_OFFSET(i);
+#define read(size, dst) _flash_read_(sto, dst, size), off += size
+    read(sizeof(beacon_id_t), &en->beacon_id);
+    read(sizeof(beacon_location_id_t), &en->location_id);
+    read(sizeof(beacon_timer_t), &en->beacon_time);
+    read(sizeof(dongle_timer_t), &en->dongle_time);
+    read(BEACON_EPH_ID_SIZE, &en->eph_id);
+#undef read
 }
 
 void dongle_storage_log_encounter(dongle_storage *sto,

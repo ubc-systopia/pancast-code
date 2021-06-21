@@ -26,6 +26,8 @@
 
 #include "./storage.h"
 #include "./test.h"
+#include "./upload.h"
+#include "./encounter.h"
 
 #include "../../common/src/log.h"
 #include "../../common/src/pancast.h"
@@ -93,6 +95,7 @@ size_t cur_id_idx;
 // Reporting
 enctr_entry_counter_t enctr_entries_offset;
 
+// Testing
 #ifdef MODE__TEST
 int test_errors = 0;
 #define TEST_MAX_ENCOUNTERS 64
@@ -100,6 +103,14 @@ int test_encounters = 0;
 int total_test_encounters = 0;
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
+
+// Terminal Upload
+struct k_mutex state_mu;
+interact_state state;
+uint8_t dongle_state;
+enctr_entry_counter_t num_recs;
+enctr_entry_counter_t next_rec;
+dongle_encounter_entry send_en;
 
 static int
 decode_payload(uint8_t *data)
@@ -253,17 +264,6 @@ uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry
     return res;
 }
 
-void _display_encounter_(dongle_encounter_entry *entry)
-{
-    log_infof(" t_d: %u,", entry->dongle_time);
-    log_infof(" b: %u,", entry->beacon_id);
-    log_infof(" t_b: %u,", entry->beacon_time);
-    log_infof(" loc: %llu,", entry->location_id);
-    uint64_t eph_rep = 0;
-    memcpy(&eph_rep, entry->eph_id.bytes, BEACON_EPH_ID_HASH_LEN);
-    log_infof(" e: %llu\n", eph_rep);
-}
-
 int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
 {
     //log_infof("%.4llu.", i);
@@ -410,6 +410,8 @@ static void _dongle_init_()
 
     k_timer_init(&kernel_time, NULL, NULL);
 
+    next_rec = 0;
+
 // Timer zero point
 #define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
     k_timer_start(&kernel_time, DUR, DUR);
@@ -454,9 +456,6 @@ void dongle_scan(void)
         timer_status += k_timer_status_get(&kernel_time);
         LOCK dongle_time += timer_status;
 
-        // update connected peers
-        _peer_update_();
-
         // update epoch
         static dongle_epoch_counter_t old_epoch;
         old_epoch = epoch;
@@ -486,8 +485,15 @@ static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL,
                   DONGLE_SERVICE_UUID)};
 
-struct k_mutex state_mu;
-interact_state state;
+// STATES
+#define DONGLE_UPLOAD_STATE_LOCKED 0x01
+#define DONGLE_UPLOAD_STATE_UNLOCKED 0x02
+#define DONGLE_UPLOAD_STATE_SEND_DATA_0 0x03
+#define DONGLE_UPLOAD_STATE_SEND_DATA_1 0x04
+#define DONGLE_UPLOAD_STATE_SEND_DATA_2 0x05
+#define DONGLE_UPLOAD_STATE_SEND_DATA_3 0x06
+#define DONGLE_UPLOAD_STATE_SEND_DATA_4 0x07
+
 struct bt_conn *terminal_conn = NULL;
 static struct bt_uuid_128 SERVICE_UUID = BT_UUID_INIT_128(DONGLE_SERVICE_UUID);
 static struct bt_uuid_128 CHARACTERISTIC_UUID = BT_UUID_INIT_128(DONGLE_CHARACTERISTIC_UUID);
@@ -505,34 +511,25 @@ BT_GATT_SERVICE_DEFINE(dongle_service,
                        //
 );
 
-void _peer_update_()
-{
-    bt_gatt_notify(NULL, &dongle_service.attrs[1], &state, sizeof(interact_state));
-}
-
 static uint8_t _notify_(struct bt_conn *conn,
                         struct bt_gatt_subscribe_params *params,
                         const void *data, uint16_t length)
 {
     if (!data)
     {
-        printk("[UNSUBSCRIBED]\n");
+        log_info("[UNSUBSCRIBED]\n");
         params->value_handle = 0U;
         return BT_GATT_ITER_STOP;
     }
 
-    printk("[NOTIFICATION] data length %u\n", length);
-    info_bytes(data, length, "Data");
+    log_debugf("[NOTIFICATION] data length %u\n", length);
+    print_bytes(data, length, "Data");
 
     k_mutex_lock(&state_mu, K_FOREVER);
-
     memcpy(&state, data, sizeof(interact_state));
-
-    int locked = state.flags & 0b00000001 >> 0;
-
-    printk("Dongle is %s\n", locked ? "locked" : "unlocked");
-
     k_mutex_unlock(&state_mu);
+
+    interact_update();
 
     return BT_GATT_ITER_CONTINUE;
 }
@@ -550,7 +547,7 @@ static uint8_t _discover_(struct bt_conn *conn,
         return BT_GATT_ITER_STOP;
     }
 
-    printk("[ATTRIBUTE] handle %u\n", attr->handle);
+    log_debugf("[ATTRIBUTE] handle %u\n", attr->handle);
 
     if (!bt_uuid_cmp(discover_params.uuid, BT_UUID_DECLARE_128(DONGLE_SERVICE_UUID)))
     {
@@ -562,7 +559,7 @@ static uint8_t _discover_(struct bt_conn *conn,
         err = bt_gatt_discover(conn, &discover_params);
         if (err)
         {
-            printk("Characteristic Discover failed (err %d)\n", err);
+            log_errorf("Characteristic Discover failed (err %d)\n", err);
         }
     }
     else if (!bt_uuid_cmp(discover_params.uuid,
@@ -577,7 +574,7 @@ static uint8_t _discover_(struct bt_conn *conn,
         err = bt_gatt_discover(conn, &discover_params);
         if (err)
         {
-            printk("CCC Discover failed (err %d)\n", err);
+            log_errorf("CCC Discover failed (err %d)\n", err);
         }
     }
     else
@@ -589,17 +586,143 @@ static uint8_t _discover_(struct bt_conn *conn,
         err = bt_gatt_subscribe(conn, &subscribe_params);
         if (err && err != -EALREADY)
         {
-            printk("Subscribe failed (err %d)\n", err);
+            log_errorf("Subscribe failed (err %d)\n", err);
         }
         else
         {
-            printk("[SUBSCRIBED]\n");
+            log_info("[SUBSCRIBED]\n");
         }
 
         return BT_GATT_ITER_STOP;
     }
 
     return BT_GATT_ITER_STOP;
+}
+
+void interact_update()
+{
+    k_mutex_lock(&state_mu, K_FOREVER);
+    switch (dongle_state)
+    {
+    case DONGLE_UPLOAD_STATE_LOCKED:
+        log_debug("Dongle is locked\n");
+        if (state.flags != DONGLE_UPLOAD_DATA_TYPE_OTP)
+        {
+            break;
+        }
+        log_debug("Checking code\n");
+        LOCK int otp_idx = dongle_storage_match_otp(&storage, *((dongle_otp_val *)state.otp.val));
+        UNLOCK
+        if (otp_idx > 0)
+        {
+            log_debug("Code checks out\n");
+            dongle_state = DONGLE_UPLOAD_STATE_UNLOCKED;
+            state.flags = DONGLE_UPLOAD_DATA_TYPE_NUM_RECS;
+            LOCK
+                num_recs = dongle_storage_num_encounters(&storage);
+            memcpy(state.num_recs.val, &num_recs, sizeof(enctr_entry_counter_t));
+            UNLOCK
+            peer_update();
+        }
+        else
+        {
+            log_debug("bad code\n");
+        }
+        break;
+    case DONGLE_UPLOAD_STATE_UNLOCKED:
+    case DONGLE_UPLOAD_STATE_SEND_DATA_4:
+        if (state.flags != DONGLE_UPLOAD_DATA_TYPE_ACK_NUM_RECS && state.flags != DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_4)
+        {
+            break;
+        }
+        else if (state.flags == DONGLE_UPLOAD_DATA_TYPE_ACK_NUM_RECS)
+        {
+            log_debug("Ack for num recs received\n");
+            log_info("Sending records...\n");
+        }
+        if (state.flags == DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_4)
+        {
+            log_debug("Ack for d4 received\n");
+            next_rec++;
+        }
+
+        if (next_rec >= num_recs)
+        {
+            log_info("All records sent\n");
+            dongle_state = DONGLE_UPLOAD_STATE_LOCKED;
+            next_rec = 0;
+            break;
+        }
+
+        dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_0;
+
+        // load next encounter
+        dongle_storage_load_single_encounter(&storage, next_rec, &send_en);
+        //_display_encounter_(&send_en);
+
+        state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_0;
+        memcpy(state.data.bytes, &send_en.beacon_id, sizeof(beacon_id_t));
+        peer_update();
+        break;
+    case DONGLE_UPLOAD_STATE_SEND_DATA_0:
+        if (state.flags != DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_0)
+        {
+            break;
+        }
+        log_debug("Ack for d0 received\n");
+        dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_1;
+
+        state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_1;
+        memcpy(state.data.bytes, &send_en.beacon_time, sizeof(beacon_timer_t));
+        peer_update();
+        break;
+    case DONGLE_UPLOAD_STATE_SEND_DATA_1:
+        if (state.flags != DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_1)
+        {
+            break;
+        }
+        log_debug("Ack for d1 received\n");
+        dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_2;
+
+        state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_2;
+        memcpy(state.data.bytes, &send_en.dongle_time, sizeof(dongle_timer_t));
+        peer_update();
+        break;
+    case DONGLE_UPLOAD_STATE_SEND_DATA_2:
+        if (state.flags != DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_2)
+        {
+            break;
+        }
+        log_debug("Ack for d2 received\n");
+        dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_3;
+
+        state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_3;
+        memcpy(state.data.bytes, send_en.eph_id.bytes, BEACON_EPH_ID_SIZE);
+        peer_update();
+        break;
+    case DONGLE_UPLOAD_STATE_SEND_DATA_3:
+        if (state.flags != DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_3)
+        {
+            break;
+        }
+        log_debug("Ack for d3 received\n");
+        dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_4;
+
+        state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_4;
+        memcpy(state.data.bytes, &send_en.location_id, sizeof(beacon_location_id_t));
+        peer_update();
+        break;
+    default:
+        log_errorf("No match for state! (%d)\n", dongle_state);
+    }
+    k_mutex_unlock(&state_mu);
+}
+
+void peer_update()
+{
+    k_mutex_lock(&state_mu, K_FOREVER);
+    bt_gatt_notify(NULL, &dongle_service.attrs[1], &state, sizeof(interact_state));
+    k_mutex_unlock(&state_mu);
 }
 
 static void _peer_connected_(struct bt_conn *conn, uint8_t err)
@@ -624,7 +747,7 @@ static void _peer_connected_(struct bt_conn *conn, uint8_t err)
             err = bt_gatt_discover(terminal_conn, &discover_params);
             if (err)
             {
-                printk("Discover failed(err %d)\n", err);
+                log_errorf("Discover failed(err %d)\n", err);
                 return;
             }
         }
@@ -635,6 +758,9 @@ static void _peer_disconnected_(struct bt_conn *conn, uint8_t reason)
 {
     log_infof("Peer disconnected (reason 0x%02x)\n", reason);
     terminal_conn = NULL;
+    k_mutex_lock(&state_mu, K_FOREVER);
+    dongle_state = DONGLE_UPLOAD_STATE_LOCKED;
+    k_mutex_unlock(&state_mu);
 }
 
 static struct bt_conn_cb conn_callbacks = {
@@ -658,7 +784,7 @@ static struct bt_conn_auth_cb auth_cb_display = {
 int dongle_advertise()
 {
 
-    state.flags = 0b00000001;
+    dongle_state = DONGLE_UPLOAD_STATE_LOCKED;
 
     info_bytes(ad[0].data, ad[0].data_len, "ad data");
     int err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);

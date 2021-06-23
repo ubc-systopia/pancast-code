@@ -154,6 +154,7 @@ void interact_update()
         log_debug("Receiving data 4\n");
         memcpy(&entry.location_id, state.data.bytes, sizeof(beacon_location_id_t));
         num_received++;
+        log_infof("%llu/%llu\n", num_received, num_recs);
         if (num_received == num_recs)
         {
             log_info("All records received\n");

@@ -40,7 +40,7 @@ int adv_index;
 void app_init (void)
 {
   app_iostream_eusart_init();
-  risk_data_len = 1000;
+  risk_data_len = 4096;
   adv_index = 0;
   memset(&risk_data, 0, risk_data_len);
 }

@@ -15,51 +15,51 @@
  *
  ******************************************************************************/
 
-#include <stdio.h>
+#include "app.h"
 #include "app_iostream_eusart.h"
+#include "legacy.h"
 #include "app_assert.h"
 #include "sl_bluetooth.h"
 #include "sl_iostream.h"
-
-#define PER_ADV_INTERVAL 6
-#define PER_ADV_SIZE 240
+#include <stdio.h>
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
-uint8_t risk_data[1000] = {};
-int adv_index;
+// Risk Broadcast Data
+uint8_t risk_data[4096] = {};
 int risk_data_len;
 
-void
-app_init (void)
+// Current index of periodic data broadcast
+// Periodic advertising data to transmit is
+// risk_data[index]:risk_data[index+PER_ADV_SIZE]
+int adv_index;
+
+
+/* Initialize application */
+void app_init (void)
 {
-  app_iostream_eusart_init ();
+  app_iostream_eusart_init();
   risk_data_len = 1000;
   adv_index = 0;
-  for (int i = 0; i < risk_data_len; i++) {
-      risk_data[i] = 0;
-  }
+  memset(&risk_data, 0, risk_data_len);
 }
 
-void
-update_risk_data (void *new_risk_data, int len)
+
+/* Update risk data after receive from backend server */
+void update_risk_data (int len)
 {
-  // check length of new risk data
   if (len > risk_data_len)
     {
-      // handle reallocating array
+      // TODO: handle reallocating array
       printf ("larger than current risk size\r\n");
     }
 
-  memcpy (&risk_data, &risk_data_buffer, len);
+  memcpy(&risk_data, &risk_data_buffer, len);
   risk_data_len = len;
 
-//  printf ("\r\nrisk_data: %s\r\n> ", risk_data);
-//  printf ("\r\nnew_risk_data: %s\r\n> ", new_risk_data);
-
   printf ("Setting advertising data...\r\n");
-  sl_status_t sc = sl_bt_advertiser_set_data (advertising_set_handle, 8,
+  sl_status_t sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
                                               PER_ADV_SIZE, &risk_data[0]);
   if (sc != 0)
     {
@@ -67,20 +67,17 @@ update_risk_data (void *new_risk_data, int len)
     }
 }
 
-void
-app_process_action (void)
+/* Process action related to VCOM */
+void app_process_action (void)
 {
-  app_iostream_eusart_process_action ();
+  app_iostream_eusart_process_action();
 }
 
-/**************************************************************************//**
- * Bluetooth stack event handler.
- * This overrides the dummy weak implementation.
- *
- * @param[in] evt Event coming from the Bluetooth stack.
- *****************************************************************************/
-void
-sl_bt_on_event (sl_bt_msg_t *evt)
+/* Bluetooth stack event handler.
+  This overrides the dummy weak implementation.
+  @param[in] evt Event coming from the Bluetooth stack.
+*/
+void sl_bt_on_event (sl_bt_msg_t *evt)
 {
   sl_status_t sc;
   bd_addr address;
@@ -97,17 +94,18 @@ sl_bt_on_event (sl_bt_msg_t *evt)
       sc = sl_bt_system_get_identity_address (&address, &address_type);
       app_assert_status(sc);
 
+
       // Create an advertising set.
-      printf ("Creating advertising set\r\n");
+      printf("Creating advertising set\r\n");
       sc = sl_bt_advertiser_create_set (&advertising_set_handle);
       app_assert_status(sc);
 
       // Set PHY
-      sc = sl_bt_advertiser_set_phy (advertising_set_handle, 1, 2);
+      sc = sl_bt_advertiser_set_phy(advertising_set_handle, 1, 2);
       app_assert_status(sc);
 
       // Set advertising interval to 100ms.
-      sc = sl_bt_advertiser_set_timing (advertising_set_handle, 75, // min. adv. interval (milliseconds * 1.6) orig. 160
+      sc = sl_bt_advertiser_set_timing(advertising_set_handle, 75, // min. adv. interval (milliseconds * 1.6) orig. 160
                                         100, // max. adv. interval (milliseconds * 1.6)
                                         0,   // adv. duration
                                         0);  // max. num. adv. events
@@ -115,69 +113,67 @@ sl_bt_on_event (sl_bt_msg_t *evt)
 
       printf ("Starting periodic advertising...\r\n");
       sc = sl_bt_advertiser_start_periodic_advertising (advertising_set_handle,
-      PER_ADV_INTERVAL,
-                                                        PER_ADV_INTERVAL, 0);
+      PER_ADV_INTERVAL, PER_ADV_INTERVAL, 0);
       app_assert_status(sc);
 
       printf ("Setting advertising data...\r\n");
       sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
                                       &risk_data[adv_index * PER_ADV_SIZE]);
-
       app_assert_status(sc);
       printf ("Success!\r\n");
+
+      // Start advertising location ephemeral ID
+      start_legacy_advertising();
 
       printf ("Setting timer\r\n");
       sc = sl_bt_system_set_soft_timer (32768, 0, 0);
       if (sc != 0)
         {
-          printf ("Error setting timer, sc: 0x%lx", sc);
+          printf ("Error setting timer, sc: 0x%lx\r\n", sc);
         }
       sc = sl_bt_system_set_soft_timer(32768*2, 1, 0);
       if (sc != 0)
          {
-           printf ("Error setting timer, sc: 0x%lx", sc);
+           printf ("Error setting timer, sc: 0x%lx\r\n", sc);
          }
 
       break;
 
     case sl_bt_evt_system_soft_timer_id:
 
+      // handle periodic set advertising data
       if (evt->data.handle == 0) {
-      printf ("Setting advertising data...\r\n");
-//      printf ("index: %u\r\n", adv_index);
-//      printf ("data: %u\r\n", risk_data[0]);
-//      printf ("risk_data: %s\r\n", risk_data);
-      sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
+    	  printf ("Setting advertising data...\r\n");
+    	  sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
                                       &risk_data[adv_index * PER_ADV_SIZE]);
-      if (sc != 0)
-        {
-          printf ("sc: %lx \n", sc);
-        }
-      app_assert_status(sc);
+    	  if (sc != 0)
+    	  {
+    		  printf ("sc: %lx \r\n", sc);
+    	  }
+    	  app_assert_status(sc);
 
-      adv_index++;
-      if (adv_index * PER_ADV_SIZE > risk_data_len)
-        {
-          adv_index = 0;
-        }
-      printf ("Success!\r\n");
+    	  adv_index++;
+    	  if (adv_index * PER_ADV_SIZE > risk_data_len)
+    	  {
+    		  adv_index = 0;
+    	  }
+    	  printf ("Success!\r\n");
       }
 
       // handle data updates
       if (evt->data.handle == 1) {
-       if (ready_for_update () != 0)
+    	  int update_len = ready_for_update();
+       if (update_len != 0)
         {
          printf ("updating risk data\r\n");
          printf ("\r\nrisk_data_buffer[0]: %u\r\n> ", risk_data_buffer[0]);
-                    update_risk_data (risk_data_buffer, 80);
+         update_risk_data(update_len);
         }
        }
       break;
 
-      // -------------------------------
-      // Default event handler.
+    // Default event handler.
     default:
-      printf ("event default\r\n");
       break;
     }
 }

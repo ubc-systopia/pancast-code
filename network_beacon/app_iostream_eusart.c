@@ -26,7 +26,7 @@
  ******************************************************************************/
 
 #ifndef BUFSIZE
-#define BUFSIZE    80
+#define BUFSIZE    4096
 #endif
 
 /*******************************************************************************
@@ -37,8 +37,9 @@
 static char buffer[BUFSIZE];
 
 /* Data array */
-uint8_t risk_data_buffer[1000];
+uint8_t risk_data_buffer[4096];
 int data_ready = 0;
+int data_len = 0;
 
 /*******************************************************************************
  **************************   GLOBAL FUNCTIONS   *******************************
@@ -56,18 +57,6 @@ void app_iostream_eusart_init(void)
   setvbuf(stdin, NULL, _IONBF, 0);   /*Set unbuffered mode for stdin (newlib)*/
 #endif
 
-  /* Output on vcom usart instance */
-  const char str1[] = "IOstream EUSART example\r\n\r\n";
-  sl_iostream_write(sl_iostream_vcom_handle, str1, strlen(str1));
-
-  /* Setting default stream */
-  sl_iostream_set_default(sl_iostream_vcom_handle);
-  const char str2[] = "This is output on the default stream\r\n";
-  sl_iostream_write(SL_IOSTREAM_STDOUT, str2, strlen(str2));
-
-  /* Using printf */
-  /* Writing ASCII art to the VCOM iostream */
-  printf("Printf uses the default stream, as long as iostream_retarget_stdio is included.\r\n");
 }
 
 /***************************************************************************//**
@@ -76,23 +65,16 @@ void app_iostream_eusart_init(void)
 void app_iostream_eusart_process_action(void)
 {
   int8_t c = 0;
-  static uint8_t index = 0;
-//  static bool print_welcome = true;
-//
-//  if (print_welcome) {
-//    printf("> ");
-//    print_welcome = false;
-//  }
+  static uint32_t index = 0;
 
-  /* Retrieve characters, print local echo and full line back */
   c = getchar();
   if (c > 0) {
-    if (c == '\r' || c == '\n') {
-      buffer[index] = '\0';
-      printf("\r\nYou wrote: %s\r\n> ", buffer);
+    if (c == '\r' || c == '\n' || index == 4096) {
+    //  buffer[index] = '\0';
       printf("\r\nrisk buffer: %s\r\n> ",risk_data_buffer);
       // add buffer to risk data
       data_ready = 1;
+      data_len = index;
       index = 0;
     } else {
       if (index < BUFSIZE - 1) {
@@ -101,15 +83,15 @@ void app_iostream_eusart_process_action(void)
         index++;
       }
       /* Local echo */
-      putchar(c);
+      // putchar(c);
     }
   }
 }
 
 int ready_for_update() {
-  int val = data_ready;
   if (data_ready == 1) {
       data_ready = 0;
+      return data_len;
   }
-  return val;
+  return 0;
 }

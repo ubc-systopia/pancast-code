@@ -18,6 +18,8 @@
 #ifndef APP_IOSTREAM_EUSART_H
 #define APP_IOSTREAM_EUSART_H
 
+#include "stdint.h"
+
 /* Data array */
 extern uint8_t risk_data_buffer[1000];
 

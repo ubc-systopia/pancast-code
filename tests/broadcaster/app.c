@@ -116,6 +116,10 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       sc = sl_bt_advertiser_create_set(&advertising_set_handle);
       app_assert_status(sc);
 
+      app_log_info("Setting phy\n");
+      sc = sl_bt_advertiser_set_phy(advertising_set_handle, 1, 2);
+      app_assert_status(sc);
+
       // Set advertising interval to 100ms.
       sc = sl_bt_advertiser_set_timing(
         advertising_set_handle,
@@ -127,30 +131,30 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
       app_log_info("Starting periodic advertising...\n");
       sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
-                                                       0x06, 0x06, 0);
+                                                       0x10, 0x10, 0);
       app_assert_status(sc);
 
-//      // Set long periodic data (chained)
-//      for (int i = 0; i < 6; i++) {
-//          app_log_info("Writing to buffer...\n");
-//          sc = sl_bt_system_data_buffer_write(255, &periodic_adv_data_l[i*255]);
-//          if (sc != 0) {
-//              app_log_info("sc: %d \n", sc);
-//          }
-//              app_assert_status(sc);
-//
-//       }
-//
-//      // should be total 1650
-//      sc = sl_bt_system_data_buffer_write(120, &periodic_adv_data_l[1530]);
-//
-//      app_log_info("Setting long advertising data...\n");
-//      sc = sl_bt_advertiser_set_long_data(advertising_set_handle, 8);
+      // Set long periodic data (chained)
+      for (int i = 0; i < 6; i++) {
+          app_log_info("Writing to buffer...\n");
+          sc = sl_bt_system_data_buffer_write(255, &periodic_adv_data_l[i*255]);
+          if (sc != 0) {
+              app_log_info("sc: %d \n", sc);
+          }
+              app_assert_status(sc);
 
-      // Set periodic data
-      app_log_info("Setting advertising data...\n");
-      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, 253,
-                                           &periodic_adv_data[0]);
+       }
+
+      // should be total 1650
+      sc = sl_bt_system_data_buffer_write(120, &periodic_adv_data_l[1530]);
+
+      app_log_info("Setting long advertising data...\n");
+      sc = sl_bt_advertiser_set_long_data(advertising_set_handle, 8);
+
+//      // Set periodic data, comment out if testing chained advertising
+//      app_log_info("Setting advertising data...\n");
+//      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, 253,
+//                                           &periodic_adv_data[0]);
 
       if (sc != 0) {
           app_log_info("sc: %d \n", sc);
@@ -159,11 +163,11 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       app_log_info("Success!\n");
 
 
-      app_log_info("Setting soft timer...");
-      sc = sl_bt_system_set_soft_timer(32768, 0, 0);
-      if (sc != 0) {
-        app_log_info("sc: %d \n", sc);
-      }
+//      app_log_info("Setting soft timer...");
+//      sc = sl_bt_system_set_soft_timer(32768, 0, 0);
+//      if (sc != 0) {
+//        app_log_info("sc: %d \n", sc);
+//      }
       break;
 
     // -------------------------------
@@ -183,19 +187,19 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_system_soft_timer_id:
-      sl_bt_system_get_counters(0, &tx_packets, 0, 0, &failures);
-      app_log_info("tx_packets %d/n", tx_packets);
+//      sl_bt_system_get_counters(0, &tx_packets, 0, 0, &failures);
+//      app_log_info("tx_packets %d/n", tx_packets);
     //  periodic_adv_data[0]++;
       // add data to buffer
-      app_log_info("Setting advertising data...\n");
-      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, 253,
-                                                 &periodic_adv_data[0]);
-
-      if (sc != 0) {
-         app_log_info("sc: %d \n", sc);
-      }
-      app_assert_status(sc);
-      app_log_info("Success!\n");
+//      app_log_info("Setting advertising data...\n");
+//      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, 253,
+//                                                 &periodic_adv_data[0]);
+//
+//      if (sc != 0) {
+//         app_log_info("sc: %d \n", sc);
+//      }
+//      app_assert_status(sc);
+//      app_log_info("Success!\n");
       break;
 
 

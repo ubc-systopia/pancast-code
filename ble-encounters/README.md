@@ -1,5 +1,5 @@
-# Bluetooth LE Encounters
-An implementation of the beacon to dongle advertisement protocol for encounter tracing.
+# PanCast Code
+Embedded-device code for some components of the PanCast system, including an implementation of the beacon to dongle advertisement protocol for encounter tracing.
 
 ## Features
 ### Critical Functionality
@@ -7,10 +7,10 @@ An implementation of the beacon to dongle advertisement protocol for encounter t
 |------|------------|-------|
 | Bluetooth LE Broadcast/Recieve | 90 % | Still working on modifying API to use 31 bytes for payload|
 | Ephemeral ID Generation | 100 % ||
-|Encounter Logging| 85 %| Still some bugs in flash storage code. Algorithm and ID tracking works well |
+|Encounter Logging| 100 % |  |
 | Device Configuration Load from Flash | 100 % | |
-| OTP Storage | 0 % |  |
-| Terminal Connection - Delayed Release Upload | 10 % ||
+| OTP Storage | 100 % |  |
+| Terminal Connection - Delayed Release Upload | 100 % ||
 
 ## Structure
 Application code is found in the `common`, `beacon`, and `dongle` directories, under `src`. 

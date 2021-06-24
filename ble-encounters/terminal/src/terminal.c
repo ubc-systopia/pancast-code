@@ -1,3 +1,10 @@
+// Terminal Application to emulate interaction with a user-
+// interface terminal. Assumes dongle running in test mode
+// and issues OTPs which are known to be either correct
+// or incorrect.
+// Essentially describes the terminal side of the upload
+// data-transfer protocol.
+
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <errno.h>

@@ -5,6 +5,8 @@
 // This is a connection-oriented protocol for external upload
 // through a user-interface device. Dongle acts as the peripheral
 // and accepts connections while proceeding with normal operation.
+// Only the 'delayed-release' mechanism is supported right now.
+// Data is currently unencrypted when sent to the terminal.
 
 #include <stdint.h>
 

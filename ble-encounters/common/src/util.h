@@ -1,4 +1,11 @@
+#ifndef COMMON_UTIL__H
+#define COMMON_UTIL__H
+
+// Some utility macros
+
 #include <stdint.h>
+
+#include "./log.h"
 
 #define log_bytes(log, logf, data, len, name) \
     if (name == NULL)                         \
@@ -22,3 +29,5 @@
     log_bytes(log_info, log_infof, data, len, name)
 
 #define print_ptr(p, name) log_debugf("%s: %p\n", name, (void *)p)
+
+#endif

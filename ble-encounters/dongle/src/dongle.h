@@ -15,26 +15,20 @@
 #define DONGLE_INTERACT_SERVICE_ID_3 0x98d4
 #define DONGLE_INTERACT_SERVICE_ID_4 0x4be5fad8e217
 
-#define DONGLE_SERVICE_UUID BT_UUID_128_ENCODE( \
-    DONGLE_INTERACT_SERVICE_ID_0,               \
-    DONGLE_INTERACT_SERVICE_ID_1,               \
-    DONGLE_INTERACT_SERVICE_ID_2,               \
-    DONGLE_INTERACT_SERVICE_ID_3,               \
-    DONGLE_INTERACT_SERVICE_ID_4)
+// Macro for expressing indexed UUIDS for use in the access protocol
+// These are based on the primary service ID (index 0) and support
+// a large number of IDs - assuming that the 6-byte part of the base
+// UUID is well below the max val.
+#define DONGLE_INTERACT_UUID(i) BT_UUID_128_ENCODE( \
+    DONGLE_INTERACT_SERVICE_ID_0,                   \
+    DONGLE_INTERACT_SERVICE_ID_1,                   \
+    DONGLE_INTERACT_SERVICE_ID_2,                   \
+    DONGLE_INTERACT_SERVICE_ID_3,                   \
+    DONGLE_INTERACT_SERVICE_ID_4 + i)
 
-#define DONGLE_CHARACTERISTIC_UUID BT_UUID_128_ENCODE( \
-    DONGLE_INTERACT_SERVICE_ID_0,                      \
-    DONGLE_INTERACT_SERVICE_ID_1,                      \
-    DONGLE_INTERACT_SERVICE_ID_2,                      \
-    DONGLE_INTERACT_SERVICE_ID_3,                      \
-    DONGLE_INTERACT_SERVICE_ID_4 + 1)
+#define DONGLE_SERVICE_UUID DONGLE_INTERACT_UUID(0)
 
-#define DONGLE_CHARACTERISTIC2_UUID BT_UUID_128_ENCODE( \
-    DONGLE_INTERACT_SERVICE_ID_0,                       \
-    DONGLE_INTERACT_SERVICE_ID_1,                       \
-    DONGLE_INTERACT_SERVICE_ID_2,                       \
-    DONGLE_INTERACT_SERVICE_ID_3,                       \
-    DONGLE_INTERACT_SERVICE_ID_4 + 2)
+#define DONGLE_CHARACTERISTIC_UUID DONGLE_INTERACT_UUID(1)
 
 typedef struct
 {

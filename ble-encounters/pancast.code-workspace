@@ -1,14 +1,14 @@
 {
     "folders": [
-        {
-            "name": "App",
-            "path": "."
-        },
-        {
-            "name": "Zephyr",
-            "path": "/Users/rowan/Work/pancast/zephyrproject/zephyr"
-        }
-    ],
+		{
+			"name": "App",
+			"path": "."
+		},
+		{
+			"name": "Zephyr",
+			"path": "/Users/rowan/Work/pancast/zephyrproject/zephyr"
+		}
+	],
     "settings": {
         "cSpell.words": [
             "OTPs",

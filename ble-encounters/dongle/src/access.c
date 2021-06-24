@@ -151,6 +151,11 @@ void interact_update()
     {
     case DONGLE_UPLOAD_STATE_LOCKED:
         log_debug("Dongle is locked\n");
+        if (state.flags == DONGLE_UPLOAD_DATA_TYPE_ACK_NUM_RECS)
+        {
+            log_debug("Ack for num recs received\n");
+            break;
+        }
         if (state.flags != DONGLE_UPLOAD_DATA_TYPE_OTP)
         {
             break;
@@ -164,10 +169,17 @@ void interact_update()
         if (otp_idx > 0)
         {
             log_debug("Code checks out\n");
-            dongle_state = DONGLE_UPLOAD_STATE_UNLOCKED;
-            state.flags = DONGLE_UPLOAD_DATA_TYPE_NUM_RECS;
             dongle_lock();
             num_recs = dongle_storage_num_encounters(storage);
+            if (num_recs == 0)
+            {
+                log_debug("No records, re-locking\n");
+            }
+            else
+            {
+                dongle_state = DONGLE_UPLOAD_STATE_UNLOCKED;
+            }
+            state.flags = DONGLE_UPLOAD_DATA_TYPE_NUM_RECS;
             memcpy(state.num_recs.val, &num_recs, sizeof(enctr_entry_counter_t));
             dongle_unlock();
             peer_update();

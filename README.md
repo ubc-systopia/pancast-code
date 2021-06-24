@@ -1,5 +1,5 @@
 # PanCast Code
-Embedded-device code for some components of the PanCast system, including an implementation of the beacon to dongle advertisement protocol for encounter tracing.
+Code for some components of the PanCast system, including an implementation of the beacon to dongle advertisement protocol for encounter tracing.
 
 ## Features
 ### Critical Functionality

@@ -33,7 +33,7 @@
 
 // STATIC PARAMETERS
 // (Approx) number of time units between each report written to output
-#define DONGLE_REPORT_INTERVAL 10
+#define DONGLE_REPORT_INTERVAL 12
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
@@ -453,12 +453,18 @@ void dongle_report()
             dongle_storage_load_encounter(&storage, enctr_entries_offset,
                                           _report_encounter_);
         }
-        log_info("? Testing that beacon broadcast was received\n");
+        log_info("? Testing that a beacon broadcast was received\n");
         if (test_encounters < 1)
         {
+            FAIL("No encounters.");
+        }
+        log_info("? Testing that correct number of encounters were logged\n");
+        int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
+        if (test_encounters < numExpected)
+        {
             FAIL("Not enough encounters.");
-            log_infof("Encounters logged in window: %d\n",
-                      test_encounters);
+            log_infof("Encounters logged in window: %d; Expected at least %d\n",
+                      test_encounters, numExpected);
         }
         if (test_errors)
         {

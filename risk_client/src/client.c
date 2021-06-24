@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
     char *portname = TERMINAL;
     int fd;
     int wlen;
-    char *xstr = "test write\r\n";
+    char *xstr = "test write\n";
     int xlen = strlen(xstr);
 
     char* request_data;
@@ -164,11 +164,10 @@ int main(int argc, char *argv[]) {
 
             /*baudrate 115200, 8 bits, no parity, 1 stop bit */
             set_interface_attribs(fd, B115200);
-            // set_blocking(fd, 0);                // set no blocking
 
             /* simple output */
-            wlen = write(fd, chunk.response, chunk.size);
-            if (wlen != chunk.size) {
+            wlen = write(fd, xstr, xlen);
+            if (wlen != xlen) {
                 printf("Error from write: %d, %d\n", wlen, errno);
             }
             tcdrain(fd);    /* delay for output */

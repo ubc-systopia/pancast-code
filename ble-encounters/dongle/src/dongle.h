@@ -1,6 +1,8 @@
 #ifndef DONGLE__H
 #define DONGLE__H
 
+// Dongle Application
+
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/uuid.h>
@@ -8,27 +10,11 @@
 
 #include "../../common/src/pancast.h"
 
-typedef struct
-{
-    beacon_eph_id_t *eph;
-    beacon_location_id_t *loc;
-    beacon_id_t *b;
-    beacon_timer_t *t;
-} encounter_broadcast_t;
+// Data Structures
 
-typedef uint64_t enctr_entry_counter_t;
-
-typedef uint64_t dongle_otp_flags;
-typedef uint64_t dongle_otp_val;
-
-typedef struct
-{
-    dongle_otp_flags flags;
-    dongle_otp_val val;
-} dongle_otp_t;
-
-typedef dongle_otp_t otp_set[NUM_OTP];
-
+// Fixed configuration info.
+// This is typically loaded from non-volatile storage at app
+// start and held constant during operation.
 typedef struct
 {
     dongle_id_t id;
@@ -39,6 +25,32 @@ typedef struct
     seckey_t dongle_sk;         // Secret Key
 } dongle_config_t;
 
+// One-Time-Passcode (OTP) representation
+// The flags contain metadata such as a 'used' bit
+typedef uint64_t dongle_otp_flags;
+typedef uint64_t dongle_otp_val;
+typedef struct
+{
+    dongle_otp_flags flags;
+    dongle_otp_val val;
+} dongle_otp_t;
+
+// Count for number of encounters
+typedef uint64_t enctr_entry_counter_t;
+
+// Management data structure for referring to locations in the
+// raw bluetooth data by name. Pointers are linked when a new
+// packet is received.
+typedef struct
+{
+    beacon_eph_id_t *eph;
+    beacon_location_id_t *loc;
+    beacon_id_t *b;
+    beacon_timer_t *t;
+} encounter_broadcast_t;
+
+// Structure to consolidate all fields contained in an encounter
+// Used only during testing as copies to this format are expensive
 typedef struct
 {
     beacon_location_id_t location_id;
@@ -48,6 +60,7 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
+// High-level routine structure
 void dongle_scan(void);
 void dongle_init();
 void dongle_load();

@@ -1,6 +1,11 @@
 #ifndef DONGLE_ACCESS__H
 #define DONGLE_ACCESS__H
 
+// TERMINAL INTERACTION
+// This is a connection-oriented protocol for external upload
+// through a user-interface device. Dongle acts as the peripheral
+// and accepts connections while proceeding with normal operation.
+
 #include <stdint.h>
 
 #include "./dongle.h"

@@ -8,7 +8,7 @@
 #include "./dongle.h"
 
 #define LOG_LEVEL__INFO
-#define MODE__TEST
+//#define MODE__TEST
 
 #include <sys/printk.h>
 #include <sys/util.h>
@@ -33,7 +33,7 @@
 
 // STATIC PARAMETERS
 // (Approx) number of time units between each report written to output
-#define DONGLE_REPORT_INTERVAL 30
+#define DONGLE_REPORT_INTERVAL 10
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16

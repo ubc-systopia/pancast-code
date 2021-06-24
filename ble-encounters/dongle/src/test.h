@@ -3,6 +3,7 @@
 
 #include "../../common/src/pancast.h"
 #include "./dongle.h"
+#include "./storage.h"
 
 static otp_set TEST_OTPS = {
     {0xffffffffffffffff,

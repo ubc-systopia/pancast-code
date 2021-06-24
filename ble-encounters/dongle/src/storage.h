@@ -1,6 +1,10 @@
 #ifndef STORAGE__H
 #define STORAGE__H
 
+// Non-Volatile storage
+// Defines a simple API to read and write specific data structures
+// with minimal coupling the underlying drivers.
+
 #include "./dongle.h"
 
 #include <drivers/flash.h>
@@ -45,6 +49,9 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg);
 // Should read the data associated with the ith OTP code into
 // the container.
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp);
+
+// Container for OTPs loaded during testing
+typedef dongle_otp_t otp_set[NUM_OTP];
 
 // Save a pre-determined list of OTPs
 void dongle_storage_save_otp(dongle_storage *sto, otp_set otps);

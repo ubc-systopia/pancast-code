@@ -8,7 +8,7 @@
 #include "./dongle.h"
 
 #define LOG_LEVEL__INFO
-//#define MODE__TEST
+#define MODE__TEST
 
 #include <sys/printk.h>
 #include <sys/util.h>

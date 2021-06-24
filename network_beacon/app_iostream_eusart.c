@@ -16,6 +16,7 @@
  ******************************************************************************/
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "em_chip.h"
 #include "sl_iostream.h"
 #include "sl_iostream_init_instances.h"
@@ -57,6 +58,8 @@ void app_iostream_eusart_init(void)
   setvbuf(stdin, NULL, _IONBF, 0);   /*Set unbuffered mode for stdin (newlib)*/
 #endif
 
+  sl_iostream_set_default(sl_iostream_vcom_handle);
+
 }
 
 /***************************************************************************//**
@@ -69,21 +72,18 @@ void app_iostream_eusart_process_action(void)
 
   c = getchar();
   if (c > 0) {
-    if (c == '\r' || c == '\n' || index == 4096) {
-    //  buffer[index] = '\0';
-      printf("\r\nrisk buffer: %s\r\n> ",risk_data_buffer);
-      // add buffer to risk data
-      data_ready = 1;
+    if (c == '\n' || c == '\r') {
+      printf("\r\nrisk buffer: %s\r\n",risk_data_buffer);
       data_len = index;
+      data_ready = 1;
       index = 0;
     } else {
       if (index < BUFSIZE - 1) {
-        buffer[index] = c;
         risk_data_buffer[index] = (uint8_t)c;
         index++;
       }
       /* Local echo */
-      // putchar(c);
+      putchar(c);
     }
   }
 }

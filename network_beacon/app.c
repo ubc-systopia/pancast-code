@@ -47,20 +47,30 @@ void app_init (void)
 
 
 /* Update risk data after receive from backend server */
-void update_risk_data (int len)
+void update_risk_data(int len)
 {
-  if (len > risk_data_len)
+  sl_status_t sc;
+
+  if (len > 4096)
     {
       // TODO: handle reallocating array
-      printf ("larger than current risk size\r\n");
+      printf ("len: %d larger than current risk size\r\n", len);
     }
 
+  // reset data
+  memset(&risk_data, 0, risk_data_len);
+
+  // copy data from risk buffer
+  printf("risk_data_len: %d", risk_data_len);
   memcpy(&risk_data, &risk_data_buffer, len);
   risk_data_len = len;
 
+  printf("risk_data_len: %d", risk_data_len);
+
   printf ("Setting advertising data...\r\n");
-  sl_status_t sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                              PER_ADV_SIZE, &risk_data[0]);
+  sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
+                                         PER_ADV_SIZE, &risk_data[0]);
+
   if (sc != 0)
     {
       printf ("Error setting advertising data, sc: 0x%lx", sc);
@@ -105,7 +115,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       app_assert_status(sc);
 
       // Set advertising interval to 100ms.
-      sc = sl_bt_advertiser_set_timing(advertising_set_handle, 75, // min. adv. interval (milliseconds * 1.6) orig. 160
+      sc = sl_bt_advertiser_set_timing(advertising_set_handle,
+    		  	  	  	  	  	  	    75, // min. adv. interval (milliseconds * 1.6)
                                         100, // max. adv. interval (milliseconds * 1.6)
                                         0,   // adv. duration
                                         0);  // max. num. adv. events
@@ -143,7 +154,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
       // handle periodic set advertising data
       if (evt->data.handle == 0) {
-    	  printf ("Setting advertising data...\r\n");
+    	//  printf ("Setting advertising data...\r\n");
     	  sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
                                       &risk_data[adv_index * PER_ADV_SIZE]);
     	  if (sc != 0)
@@ -157,7 +168,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
     	  {
     		  adv_index = 0;
     	  }
-    	  printf ("Success!\r\n");
+    	//  printf ("Success!\r\n");
       }
 
       // handle data updates
@@ -166,7 +177,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
        if (update_len != 0)
         {
          printf ("updating risk data\r\n");
-         printf ("\r\nrisk_data_buffer[0]: %u\r\n> ", risk_data_buffer[0]);
+         printf ("\r\nrisk_data_buffer[0]: %u", risk_data_buffer[0]);
          update_risk_data(update_len);
         }
        }

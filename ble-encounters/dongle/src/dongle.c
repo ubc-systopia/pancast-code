@@ -416,24 +416,6 @@ void dongle_report()
         log_infof("Secret key (%u bytes)\n", config.dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
 
-        // // Report OTPs
-        // log_info("One-Time Passcodes:\n");
-        // dongle_otp_t otp;
-        // for (int i = 0; i < NUM_OTP; i++)
-        // {
-        //     dongle_storage_load_otp(&storage, i, &otp);
-        //     log_debugf("flags: 0x%llx\n", otp.flags);
-        //     bool used = otp_is_used(&otp);
-        //     log_infof("%.2d. Code: %llu; Used? %s\n", i, otp.val,
-        //               used ? "yes" : "no");
-        // }
-
-        // // Report logged encounters
-        // log_info("Encounters logged:\n");
-        // log_info("----------------------------------------------\n");
-        // log_info("< Time (dongle), Beacon ID, Time (beacon), Loc. Id, Eph. Id >   \n");
-        // log_info("----------------------------------------------\n");
-
         // Run Tests
 #ifdef MODE__TEST
         log_info("\nTests:\n");

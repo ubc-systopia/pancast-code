@@ -21,15 +21,11 @@ There are dongle, beacon, and terminal implementations written for Zephyr OS (pl
 
 The latter three are the applications and rely on the Zephyr project stack. See the following section for details. The terminal application is not a full implementation of the PanCast terminal but is rather a demo/testing tool.
 
-### Network Beacon
+### Network Beacon and Risk Client
 
 Silicon Labs Set-up: https://docs.google.com/document/d/1BJARla0MJZo6spp_89Fs_hWgHd7yTF0c25zpfyrGhVA/edit?usp=sharing
 
 Raspberry Pi Set-up: https://docs.google.com/document/d/1yTDDE8dWmT4W_3zhqdPPBc3t0FCl_lEvqI6VNVbjvZs/edit?usp=sharing
-
-### Risk Client
-
-Silicon Labs Set-up: https://docs.google.com/document/d/1BJARla0MJZo6spp_89Fs_hWgHd7yTF0c25zpfyrGhVA/edit?usp=sharing
 
 ## Development for Zephyr Applications
 ### General Setup

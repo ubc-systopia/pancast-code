@@ -1,0 +1,45 @@
+{
+    "folders": [
+		{
+			"name": "Apps",
+			"path": "."
+		},
+		{
+			"name": "Zephyr",
+			"path": "/Users/rowan/Work/pancast/zephyrproject/zephyr"
+		}
+	],
+    "settings": {
+        "cSpell.words": [
+            "OTPs",
+            "RSSI",
+            "debugf",
+            "enctr",
+            "ephid",
+            "errorf",
+            "infof",
+            "pancast",
+            "printk",
+            "statf"
+        ],
+        "editor.formatOnSave": true,
+        "[c,cpp]": {
+            "editor.defaultFormatter": "ms-vscode.cpptools"
+        }
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Current workspace folder",
+                "type": "shell",
+                "command": "echo ${workspaceFolder}"
+            },
+            {
+                "label": "Current Zephyr folder",
+                "type": "shell",
+                "command": "echo ${workspaceFolder:Zephyr}"
+            }
+        ]
+    }
+}

@@ -416,6 +416,8 @@ void dongle_report()
         log_infof("Secret key (%u bytes)\n", config.dongle_sk_size);
         log_infof("dongle timer: %u\n", dongle_time);
 
+        enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+
         // Run Tests
 #ifdef MODE__TEST
         log_info("\nTests:\n");
@@ -445,8 +447,12 @@ void dongle_report()
         dongle_storage_save_otp(&storage, TEST_OTPS);
 
         log_info("? Testing that logged encounters are correct\n");
-        dongle_storage_load_encounter(&storage, enctr_entries_offset,
-                                      _report_encounter_);
+        if (num > enctr_entries_offset)
+        {
+            // There are new entries logged
+            dongle_storage_load_encounter(&storage, enctr_entries_offset,
+                                          _report_encounter_);
+        }
         log_info("? Testing that beacon broadcast was received\n");
         if (test_encounters < 1)
         {
@@ -467,7 +473,6 @@ void dongle_report()
         test_encounters = 0;
         total_test_encounters = 0;
 #endif
-        enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
         log_infof("Encounters logged since last report: %llu\n", num - enctr_entries_offset);
         log_infof("Total Encounters logged: %llu\n", num);
         enctr_entries_offset = num;

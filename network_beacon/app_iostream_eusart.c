@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include "em_chip.h"
 #include "sl_iostream.h"
 #include "sl_iostream_init_instances.h"
@@ -35,12 +36,14 @@
  ******************************************************************************/
 
 /* Input buffer */
-static char buffer[BUFSIZE];
+//static char buffer[BUFSIZE];
 
 /* Data array */
 uint8_t risk_data_buffer[4096];
 int data_ready = 0;
 int data_len = 0;
+
+
 
 /*******************************************************************************
  **************************   GLOBAL FUNCTIONS   *******************************
@@ -67,7 +70,7 @@ void app_iostream_eusart_init(void)
  ******************************************************************************/
 void app_iostream_eusart_process_action(void)
 {
-  int8_t c = 0;
+  int c = 0;
   static uint32_t index = 0;
 
   c = getchar();
@@ -86,12 +89,4 @@ void app_iostream_eusart_process_action(void)
       putchar(c);
     }
   }
-}
-
-int ready_for_update() {
-  if (data_ready == 1) {
-      data_ready = 0;
-      return data_len;
-  }
-  return 0;
 }

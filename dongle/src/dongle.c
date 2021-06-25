@@ -31,13 +31,6 @@
 #include "../../common/src/test.h"
 #include "../../common/src/util.h"
 
-// STATIC PARAMETERS
-// (Approx) number of time units between each report written to output
-#define DONGLE_REPORT_INTERVAL 12
-
-// number of distinct broadcast ids to keep track of at one time
-#define DONGLE_MAX_BC_TRACKED 16
-
 //
 // GLOBAL MEMORY
 // All of the variables used throughout the main program are allocated here

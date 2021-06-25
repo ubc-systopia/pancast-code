@@ -1,4 +1,4 @@
-/***************************************************************************//**
+/***************************************************************************/ /**
  * @file
  * @brief main() function.
  *******************************************************************************
@@ -28,42 +28,38 @@
 
 #include "../../common/src/pancast.h"
 
-int
-main (void)
+int main(void)
 {
-  // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
-  // Note that if the kernel is present, processing task(s) will be created by
-  // this call.
-  sl_system_init ();
+    // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
+    // Note that if the kernel is present, processing task(s) will be created by
+    // this call.
+    sl_system_init();
 
-  // Initialize the application. For example, create periodic timer(s) or
-  // task(s) if the kernel is present.
-  app_init ();
+    // Initialize the application. For example, create periodic timer(s) or
+    // task(s) if the kernel is present.
+    app_init();
 
 #if defined(SL_CATALOG_KERNEL_PRESENT)
-  // Start the kernel. Task(s) created in app_init() will start running.
-  sl_system_kernel_start();
+    // Start the kernel. Task(s) created in app_init() will start running.
+    sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
-  // Initialize the main timer
-  sl_sleeptimer_timer_handle_t timer;
-  sl_status_t sc = sl_sleeptimer_init();
-  sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-                       1000,                  // 1s timer
-                       sl_timer_on_expire,
-                       (void*) NULL,
-                       0, 0);
-  while (1)
+    // Initialize the main timer
+    sl_sleeptimer_timer_handle_t timer;
+    sl_status_t sc = sl_sleeptimer_init();
+    sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
+                                               TIMER_1S, // 1s timer
+                                               sl_timer_on_expire,
+                                               (void *)NULL,
+                                               0, 0);
+    while (1)
     {
-      // Do not remove this call: Silicon Labs components process action routine
-      // must be called from the super loop.
-      sl_system_process_action ();
-
-      // Application process.
-      app_process_action ();
+        // Do not remove this call: Silicon Labs components process action routine
+        // must be called from the super loop.
+        sl_system_process_action();
 
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-      // Let the CPU go to sleep if the system allows it.
-      sl_power_manager_sleep ();
+        // Let the CPU go to sleep if the system allows it.
+        sl_power_manager_sleep();
 #endif
     }
 #endif // SL_CATALOG_KERNEL_PRESENT

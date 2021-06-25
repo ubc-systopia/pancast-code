@@ -1,4 +1,4 @@
-/***************************************************************************//**
+/***************************************************************************/ /**
  * @file
  * @brief Top level application functions
  *******************************************************************************
@@ -14,13 +14,14 @@
  * sections of the MSLA applicable to Source Code.
  *
  ******************************************************************************/
+#include <stdio.h>
+#include <unistd.h>
 
 #include "app.h"
 #include "app_iostream_eusart.h"
 #include "app_assert.h"
 #include "sl_bluetooth.h"
 #include "sl_iostream.h"
-#include <stdio.h>
 
 #include "src/beacon.h"
 
@@ -29,10 +30,10 @@
 uint64_t sec_clock = 0;
 
 // The advertising set handle allocated from Bluetooth stack.
-static uint8_t advertising_set_handle = 0xff;
+static uint8_t advertising_set_handle = PER_ADV_HANDLE;
 
 // Risk Broadcast Data
-uint8_t risk_data[4096] = {};
+uint8_t risk_data[RISK_DATA_SIZE] = {};
 int risk_data_len;
 
 // Current index of periodic data broadcast
@@ -40,151 +41,159 @@ int risk_data_len;
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
 int adv_index;
 
-
 /* Initialize application */
-void app_init (void)
+void app_init(void)
 {
-  app_iostream_eusart_init();
-  risk_data_len = 4096;
-  adv_index = 0;
-  memset(&risk_data, 0, risk_data_len);
+    app_iostream_eusart_init();
+    risk_data_len = RISK_DATA_SIZE;
+    adv_index = 0;
+    memset(&risk_data, 0, risk_data_len);
 }
 
-
-/* Update risk data after receive from backend server */
-void update_risk_data(int len)
+/* Update risk data after receive from raspberry pi client */
+void update_risk_data(int len, char *data)
 {
-  sl_status_t sc;
+    sl_status_t sc;
 
-  if (len > 4096)
+    if (len > RISK_DATA_SIZE)
     {
-      // TODO: handle reallocating array
-      printf ("len: %d larger than current risk size\r\n", len);
+        printf("len: %d larger than current risk size\r\n", len);
+        return;
     }
 
-  // reset data
-  memset(&risk_data, 0, risk_data_len);
+    // reset data
+    memset(&risk_data, 0, risk_data_len);
 
-  // copy data from risk buffer
-  printf("risk_data_len: %d", risk_data_len);
-  memcpy(&risk_data, &risk_data_buffer, len);
-  risk_data_len = len;
+    // copy data from risk buffer
+    memcpy(&risk_data, data, len);
+    risk_data_len = len;
 
-  printf("risk_data_len: %d", risk_data_len);
+    printf("Setting advertising data...\r\n");
+    sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
+                                   PER_ADV_SIZE, &risk_data[0]);
 
-  printf ("Setting advertising data...\r\n");
-  sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                         PER_ADV_SIZE, &risk_data[0]);
-
-  if (sc != 0)
+    if (sc != 0)
     {
-      printf ("Error setting advertising data, sc: 0x%lx", sc);
+        printf("Error setting advertising data, sc: 0x%lx", sc);
     }
 }
 
-/* Process action related to VCOM */
-void app_process_action (void)
+/* Get risk data from rapsberry pi client */
+void get_risk_data()
 {
-  app_iostream_eusart_process_action();
+
+    // Read length (integer)
+    uint64_t data_len = 0;
+
+    read(SL_IOSTREAM_STDIN, &data_len, sizeof(uint64_t));
+    if (data_len == 0)
+    {
+        printf("No data ready to read\r\n");
+        return;
+    }
+
+    printf("data_len: %lu\r\n", (long unsigned int)data_len);
+
+    char buf[data_len];
+
+    // Read length bytes from stdin
+    read(SL_IOSTREAM_STDIN, &buf, data_len);
+    printf("Read: %s\r\n", buf);
+
+    // Update broadcassts data
+    update_risk_data(data_len, buf);
 }
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
-  sec_clock++;
-  if (sec_clock == (BEACON_TIMER_RESOLUTION/1000))
-  {
-      beacon_clock_increment(1);
-      sec_clock = 0;
-  }
-
-  sl_status_t sc;
-  // handle periodic set advertising data
-  printf ("Setting periodic advertising data...\r\n");
-  sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
-                                &risk_data[adv_index * PER_ADV_SIZE]);
-  if (sc != 0)
-  {
-    printf ("sc: %lx \r\n", sc);
-  }
-  app_assert_status(sc);
-
-  adv_index++;
-  if (adv_index * PER_ADV_SIZE > risk_data_len)
-  {
-    adv_index = 0;
-  }
-  printf ("Success!\r\n");
-
-  // handle data updates
-  // do this half of the time
-  if (sec_clock % 2 == 0) {
-   int update_len = ready_for_update();
-   if (update_len != 0)
+    sec_clock++;
+    if (sec_clock == (BEACON_TIMER_RESOLUTION / 1000))
     {
-     printf ("updating risk data\r\n");
-     printf ("\r\nrisk_data_buffer[0]: %u", risk_data_buffer[0]);
-     update_risk_data(update_len);
+        beacon_clock_increment(1);
+        sec_clock = 0;
     }
-   }
+
+    sl_status_t sc;
+
+    // handle periodic set advertising data
+    if (sec_clock % PER_UPDATE_FREQ == 0)
+    {
+        sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
+                                       &risk_data[adv_index * PER_ADV_SIZE]);
+        if (sc != 0)
+        {
+            printf("sc: %lx \r\n", sc);
+        }
+        app_assert_status(sc);
+
+        adv_index++;
+        if (adv_index * PER_ADV_SIZE > risk_data_len)
+        {
+            adv_index = 0;
+        }
+    }
+
+    // handle data updates
+    if (sec_clock % RISK_UPDATE_FREQ == 0)
+    {
+        get_risk_data();
+    }
 }
 
 /* Bluetooth stack event handler.
   This overrides the dummy weak implementation.
   @param[in] evt Event coming from the Bluetooth stack.
 */
-void sl_bt_on_event (sl_bt_msg_t *evt)
+void sl_bt_on_event(sl_bt_msg_t *evt)
 {
-  sl_status_t sc;
-  bd_addr address;
-  uint8_t address_type;
+    sl_status_t sc;
+    bd_addr address;
+    uint8_t address_type;
 
-  switch (SL_BT_MSG_ID(evt->header))
+    switch (SL_BT_MSG_ID(evt->header))
     {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
     // Do not call any stack command before receiving this boot event!
     case sl_bt_evt_system_boot_id:
 
-      // Extract unique ID from BT Address.
-      sc = sl_bt_system_get_identity_address (&address, &address_type);
-      app_assert_status(sc);
+        // Extract unique ID from BT Address.
+        sc = sl_bt_system_get_identity_address(&address, &address_type);
+        app_assert_status(sc);
 
+        // Create an advertising set.
+        printf("Creating advertising set...\r\n");
+        sc = sl_bt_advertiser_create_set(&advertising_set_handle);
+        app_assert_status(sc);
 
-      // Create an advertising set.
-      printf("Creating advertising set\r\n");
-      sc = sl_bt_advertiser_create_set (&advertising_set_handle);
-      app_assert_status(sc);
+        // Set PHY
+        sc = sl_bt_advertiser_set_phy(advertising_set_handle, sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
+        app_assert_status(sc);
 
-      // Set PHY
-      sc = sl_bt_advertiser_set_phy(advertising_set_handle, 1, 2);
-      app_assert_status(sc);
+        // Set advertising interval to 100ms.
+        sc = sl_bt_advertiser_set_timing(advertising_set_handle,
+                                         MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
+                                         MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
+                                         NO_MAX_DUR,       // adv. duration
+                                         NO_MAX_EVT);      // max. num. adv. events
+        app_assert_status(sc);
 
-      // Set advertising interval to 100ms.
-      sc = sl_bt_advertiser_set_timing(advertising_set_handle,
-    		  	  	  	  	  	  	    75, // min. adv. interval (milliseconds * 1.6)
-                                        100, // max. adv. interval (milliseconds * 1.6)
-                                        0,   // adv. duration
-                                        0);  // max. num. adv. events
-      app_assert_status(sc);
+        printf("Starting periodic advertising...\r\n");
+        sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
+                                                         PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
+        app_assert_status(sc);
 
-      printf ("Starting periodic advertising...\r\n");
-      sc = sl_bt_advertiser_start_periodic_advertising (advertising_set_handle,
-      PER_ADV_INTERVAL, PER_ADV_INTERVAL, 0);
-      app_assert_status(sc);
+        printf("Setting advertising data...\r\n");
+        sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
+                                       &risk_data[adv_index * PER_ADV_SIZE]);
+        app_assert_status(sc);
 
-      printf ("Setting advertising data...\r\n");
-      sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
-                                      &risk_data[adv_index * PER_ADV_SIZE]);
-      app_assert_status(sc);
-      printf ("Success!\r\n");
-
-      beacon_start();
-      break;
+        beacon_start();
+        break;
 
     case sl_bt_evt_system_soft_timer_id:
     // Default event handler.
     default:
-      break;
+        break;
     }
 }
-

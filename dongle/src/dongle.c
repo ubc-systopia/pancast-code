@@ -12,6 +12,7 @@
 
 #define LOG_LEVEL__INFO
 #define MODE__TEST
+//#define MODE__TELEM
 
 #include <sys/printk.h>
 #include <sys/util.h>
@@ -102,6 +103,9 @@ void dongle_main()
 
 #ifdef MODE__TEST
     log_info("Test mode enabled\n");
+#endif
+#ifdef MODE__TELEM
+    log_info("Telemetry enabled\n");
 #endif
 
     int err;
@@ -443,12 +447,14 @@ void dongle_report()
 void dongle_telem()
 {
     enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+#ifdef MODE__TELEM
 
     log_info("\nTelemetry:\n");
     log_infof("    Dongle timer: %u\n", dongle_time);
     log_infof("    Encounters logged since last report: %llu\n", num - enctr_entries_offset);
     log_infof("    Total Encounters logged: %llu\n", num);
 
+#endif
     enctr_entries_offset = num;
 }
 
@@ -490,17 +496,12 @@ void dongle_test()
         dongle_storage_load_encounter(&storage, enctr_entries_offset,
                                       _report_encounter_);
     }
-    log_info("    ? Testing that a beacon broadcast was received\n");
-    if (test_encounters < 1)
-    {
-        FAIL("No encounters.");
-    }
     log_info("    ? Testing that correct number of encounters were logged\n");
     int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
-    if (test_encounters < numExpected)
+    if (test_encounters != numExpected)
     {
-        FAIL("Not enough encounters.");
-        log_infof("Encounters logged in window: %d; Expected at least %d\n",
+        FAIL("Wrong number of encounters.");
+        log_infof("Encounters logged in window: %d; Expected: %d\n",
                   test_encounters, numExpected);
     }
     if (test_errors)
@@ -522,3 +523,4 @@ void dongle_test()
 #undef APPL_VERSION
 #undef LOG_LEVEL__INFO
 #undef MODE__TEST
+#undef MODE__TELEM

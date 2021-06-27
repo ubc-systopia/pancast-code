@@ -12,7 +12,7 @@
 
 #define LOG_LEVEL__INFO
 #define MODE__TEST
-//#define MODE__TELEM
+#define MODE__TELEM
 
 #include <sys/printk.h>
 #include <sys/util.h>
@@ -86,6 +86,12 @@ int total_test_encounters = 0;
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
 
+#ifdef MODE__TELEM
+int8_t num_obs_ids = 0;
+int8_t avg_rssi = 0;
+int8_t avg_encounter_rssi = 0;
+#endif
+
 //
 // ROUTINES
 //
@@ -106,6 +112,8 @@ void dongle_main()
 #endif
 #ifdef MODE__TELEM
     log_info("Telemetry enabled\n");
+#define α 0.1
+#define exp_avg(a, x) !a ? x : (α * x) + ((1 - α) * a);
 #endif
 
     int err;
@@ -304,7 +312,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #undef en
 }
 
-static void _dongle_track_(encounter_broadcast_t *enc)
+static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
 {
 #define en (*enc)
 
@@ -336,6 +344,11 @@ static void _dongle_track_(encounter_broadcast_t *enc)
         cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
         memcpy(&cur_id[i], en.eph->bytes, BEACON_EPH_ID_HASH_LEN);
         obs_time[i] = dongle_time;
+
+#ifdef MODE__TELEM
+        num_obs_ids++;
+        avg_rssi = exp_avg(avg_rssi, rssi);
+#endif
     }
     else
     {
@@ -345,6 +358,9 @@ static void _dongle_track_(encounter_broadcast_t *enc)
         if (dur >= DONGLE_ENCOUNTER_MIN_TIME)
         {
             _dongle_encounter_(&en, i);
+#ifdef MODE__TELEM
+            avg_encounter_rssi = exp_avg(avg_encounter_rssi, rssi);
+#endif
         }
     }
 #undef en
@@ -363,7 +379,7 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     decode_payload(ad->data);
     LOCK encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t *)ad->data);
-    _dongle_track_(&en);
+    _dongle_track_(&en, rssi);
     UNLOCK
 }
 
@@ -450,13 +466,17 @@ void dongle_telem()
 #ifdef MODE__TELEM
 
     log_info("\nTelemetry:\n");
-    log_infof("    Dongle timer: %u\n", dongle_time);
+    log_infof("    Dongle timer:                        %u\n", dongle_time);
     log_infof("    Encounters logged since last report: %llu\n", num - enctr_entries_offset);
-    log_infof("    Total Encounters logged: %llu\n", num);
-
+    log_infof("    Total Encounters logged:             %llu\n", num);
+    log_infof("    Distinct Eph. IDs observed:          %d\n", num_obs_ids);
+    log_infof("    Avg. Broadcast RSSI:                 %d\n", avg_rssi);
+    log_infof("    Avg. Encounter RSSI (logged):        %d\n", avg_encounter_rssi);
 #endif
     enctr_entries_offset = num;
 }
+
+#undef α
 
 void dongle_test()
 {

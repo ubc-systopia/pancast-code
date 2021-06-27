@@ -70,11 +70,11 @@ int _flash_write_(dongle_storage *sto, void *data, size_t size)
 
 void dongle_storage_init(dongle_storage *sto)
 {
-    log_info("Initializing storage\n");
+    log_info("Initializing storage...\n");
     off = 0;
     st.map.enctr_entries = 0;
     st.dev = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-    log_info("Getting flash information.\n");
+    log_info("Getting flash information...\n");
     st.min_block_size = flash_get_write_block_size(st.dev);
     st.num_pages = 0;
     flash_page_foreach(st.dev, _flash_page_info_, sto);
@@ -86,7 +86,7 @@ void dongle_storage_init(dongle_storage *sto)
 
 void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-    log_info("Loading config\n");
+    log_info("Loading config...\n");
     off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), off += size)
     read(sizeof(dongle_id_t), &cf.id);

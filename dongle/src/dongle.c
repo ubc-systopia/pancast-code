@@ -7,6 +7,9 @@
 
 #include "./dongle.h"
 
+#define APPL__DONGLE
+#define APPL_VERSION "0.1.0"
+
 #define LOG_LEVEL__INFO
 #define MODE__TEST
 
@@ -89,12 +92,16 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 // MAIN
 // Entrypoint of the application
 // Initialize bluetooth, then call advertising and scan routines
+#ifdef APPL__DONGLE
 void main(void)
+#else
+void dongle_main()
+#endif
 {
-    log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+    log_info("\nStarting Dongle...\n");
 
 #ifdef MODE__TEST
-    log_info("RUNNING IN TEST MODE\n");
+    log_info("Test mode enabled\n");
 #endif
 
     int err;
@@ -159,6 +166,10 @@ void dongle_init()
     cur_id_idx = 0;
     epoch = 0;
     enctr_entries_offset = 0;
+
+    log_info("Dongle initialized\n");
+
+    dongle_info();
 
     k_timer_init(&kernel_time, NULL, NULL);
 
@@ -396,85 +407,118 @@ int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
     return 1;
 }
 
+void dongle_info()
+{
+    log_info("\nInfo:\n");
+    log_infof("    Platform:                        %s\n", "Zephyr OS");
+    log_infof("    Board:                           %s\n", CONFIG_BOARD);
+    log_infof("    Application Version:             %s\n", APPL_VERSION);
+    log_infof("    Bluetooth device name:           %s\n", CONFIG_BT_DEVICE_NAME);
+    log_infof("    Dongle ID:                       %u\n", config.id);
+    log_infof("    Initial clock:                   %u\n", config.t_init);
+    log_infof("    Backend public key size:         %u bytes\n", config.backend_pk_size);
+    log_infof("    Secret key size:                 %u bytes\n", config.dongle_sk_size);
+    log_infof("    Timer Resolution:                %u ms\n", DONGLE_TIMER_RESOLUTION);
+    log_infof("    Epoch Length:                    %u ms\n", BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
+    log_infof("    Report Interval:                 %u ms\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
+}
+
 void dongle_report()
 {
     // do report
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
     {
         report_time = dongle_time;
-        log_infof("\n*** Begin Report for %s ***\n\n", CONFIG_BT_DEVICE_NAME);
-        log_infof("ID: %u\n", config.id);
-        log_infof("Initial clock: %u\n", config.t_init);
-        log_infof("Backend public key (%u bytes)\n", config.backend_pk_size);
-        log_infof("Secret key (%u bytes)\n", config.dongle_sk_size);
-        log_infof("dongle timer: %u\n", dongle_time);
 
-        enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+        log_info("\n***          Begin Report          ***\n");
 
-        // Run Tests
-#ifdef MODE__TEST
-        log_info("\nTests:\n");
-        test_errors = 0;
-#define FAIL(msg) (log_infof("FAILURE: %s\n", msg), test_errors++)
+        dongle_info();
+        dongle_telem();
+        dongle_test();
 
-        log_info("? Testing that OTPs are loaded\n");
-        int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
-        if (otp_idx != 7)
-        {
-            FAIL("Index 7 Not loaded correctly");
-        }
-        otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[0].val);
-        if (otp_idx != 0)
-        {
-            FAIL("Index 0 Not loaded correctly");
-        }
-        log_info("? Testing that OTP cannot be re-used\n");
-        otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
-        if (otp_idx >= 0)
-        {
-            FAIL("Index 7 was found again");
-        }
-        // Restore OTP data
-        // Need to re-save config as the shared page must be erased
-        dongle_storage_save_config(&storage, &config);
-        dongle_storage_save_otp(&storage, TEST_OTPS);
-
-        log_info("? Testing that logged encounters are correct\n");
-        if (num > enctr_entries_offset)
-        {
-            // There are new entries logged
-            dongle_storage_load_encounter(&storage, enctr_entries_offset,
-                                          _report_encounter_);
-        }
-        log_info("? Testing that a beacon broadcast was received\n");
-        if (test_encounters < 1)
-        {
-            FAIL("No encounters.");
-        }
-        log_info("? Testing that correct number of encounters were logged\n");
-        int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
-        if (test_encounters < numExpected)
-        {
-            FAIL("Not enough encounters.");
-            log_infof("Encounters logged in window: %d; Expected at least %d\n",
-                      test_encounters, numExpected);
-        }
-        if (test_errors)
-        {
-            log_infof("\n   x Tests Failed: status = %d\n\n", test_errors);
-        }
-        else
-        {
-
-            log_info("\n    ✔ Tests Passed\n\n");
-        }
-#undef FAIL
-        test_encounters = 0;
-        total_test_encounters = 0;
-#endif
-        log_infof("Encounters logged since last report: %llu\n", num - enctr_entries_offset);
-        log_infof("Total Encounters logged: %llu\n", num);
-        enctr_entries_offset = num;
-        log_info("\n*** End Report ***\n\n");
+        log_info("\n***          End Report            ***\n");
     }
 }
+
+void dongle_telem()
+{
+    enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+
+    log_info("\nTelemetry:\n");
+    log_infof("    Dongle timer: %u\n", dongle_time);
+    log_infof("    Encounters logged since last report: %llu\n", num - enctr_entries_offset);
+    log_infof("    Total Encounters logged: %llu\n", num);
+
+    enctr_entries_offset = num;
+}
+
+void dongle_test()
+{
+    // Run Tests
+#ifdef MODE__TEST
+    log_info("\nTests:\n");
+    test_errors = 0;
+#define FAIL(msg) (log_infof("    FAILURE: %s\n", msg), test_errors++)
+
+    log_info("    ? Testing that OTPs are loaded\n");
+    int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
+    if (otp_idx != 7)
+    {
+        FAIL("Index 7 Not loaded correctly");
+    }
+    otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[0].val);
+    if (otp_idx != 0)
+    {
+        FAIL("Index 0 Not loaded correctly");
+    }
+    log_info("    ? Testing that OTP cannot be re-used\n");
+    otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
+    if (otp_idx >= 0)
+    {
+        FAIL("Index 7 was found again");
+    }
+    // Restore OTP data
+    // Need to re-save config as the shared page must be erased
+    dongle_storage_save_config(&storage, &config);
+    dongle_storage_save_otp(&storage, TEST_OTPS);
+
+    log_info("    ? Testing that logged encounters are correct\n");
+    enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+    if (num > enctr_entries_offset)
+    {
+        // There are new entries logged
+        dongle_storage_load_encounter(&storage, enctr_entries_offset,
+                                      _report_encounter_);
+    }
+    log_info("    ? Testing that a beacon broadcast was received\n");
+    if (test_encounters < 1)
+    {
+        FAIL("No encounters.");
+    }
+    log_info("    ? Testing that correct number of encounters were logged\n");
+    int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
+    if (test_encounters < numExpected)
+    {
+        FAIL("Not enough encounters.");
+        log_infof("Encounters logged in window: %d; Expected at least %d\n",
+                  test_encounters, numExpected);
+    }
+    if (test_errors)
+    {
+        log_infof("\n    x Tests Failed: status = %d\n", test_errors);
+    }
+    else
+    {
+
+        log_info("\n    ✔ Tests Passed\n");
+    }
+#undef FAIL
+    test_encounters = 0;
+    total_test_encounters = 0;
+#endif
+}
+
+#undef APPL__DONGLE
+#undef APPL_VERSION
+#undef LOG_LEVEL__INFO
+#undef MODE__TEST

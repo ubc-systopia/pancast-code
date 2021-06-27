@@ -6,6 +6,8 @@
 // details.
 //
 
+#define APPL_VERSION "0.1.0"
+
 #define LOG_LEVEL__INFO
 #define APPL__BEACON
 #define MODE__STAT
@@ -41,7 +43,7 @@ void main(void)
 void _beacon_main_()
 #endif
 {
-    log_infof("Starting %s on %s\n", CONFIG_BT_DEVICE_NAME, CONFIG_BOARD);
+    log_info("\nStarting Beacon...\n");
 #ifdef MODE__STAT
     log_info("Statistics mode enabled\n");
 #endif
@@ -133,33 +135,33 @@ static void _beacon_load_()
     read(beacon_sk_size, &beacon_sk);
 #undef read
 #endif
-    log_info("*** Configuration ***:\n");
-    log_infof("ID: %u\n", beacon_id);
-    log_infof("Location ID: %llu\n", beacon_location_id);
-    log_infof("Initial clock: %u\n", t_init);
-    log_infof("Backend public key (%u bytes)\n", backend_pk_size);
-    log_infof("Secret key (%u bytes)\n", beacon_sk_size);
-    log_info("*** End Configuration ***\n");
 }
 
 static void _beacon_info_()
 {
-    log_info("Info: \n");
+    log_info("\nInfo: \n");
+    log_infof("    Platform:                        %s\n", "Zephyr OS");
     log_infof("    Board:                           %s\n", CONFIG_BOARD);
+    log_infof("    Application Version:             %s\n", APPL_VERSION);
+    log_infof("    Bluetooth device name:           %s\n", CONFIG_BT_DEVICE_NAME);
     log_infof("    Beacon ID:                       %u\n", beacon_id);
+    log_infof("    Location ID:                     %llu\n", beacon_location_id);
+    log_infof("    Initial clock:                   %u\n", t_init);
+    log_infof("    Backend public key size:         %u bytes\n", backend_pk_size);
+    log_infof("    Secret key size:                 %u bytes\n", beacon_sk_size);
     log_infof("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
     log_infof("    Advertising Interval: \n"
-              "        Min:                         %u ms\n"
-              "        Max:                         %u ms\n",
+              "        Min:                         %x ms\n"
+              "        Max:                         %x ms\n",
               BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
 }
 
 #ifdef MODE__STAT
 static void _beacon_stats_()
 {
-    log_info("Statistics: \n");
+    log_info("\nStatistics: \n");
     log_infof("     Time since last report:         %d ms\n", stat_timer);
     log_infof("     Timer:\n"
               "         Start:                      %u\n"
@@ -179,13 +181,13 @@ static void _beacon_report_()
     else
     {
         report_time = beacon_time;
-        log_infof("*** Begin Report for %s    ***\n", CONFIG_BT_DEVICE_NAME);
+        log_info("\n***          Begin Report          ***\n");
         _beacon_info_();
 #ifdef MODE__STAT
         _beacon_stats_();
         stat_timer = 0;
 #endif
-        log_info("***      End Report        ***\n");
+        log_info("\n***          End Report            ***\n");
     }
 }
 
@@ -268,6 +270,8 @@ static void _beacon_init_()
     stat_timer = 0;
     stat_epochs = 0;
 #endif
+
+    _beacon_info_();
 
 // Timer Start
 #define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
@@ -404,3 +408,5 @@ static void _beacon_broadcast_(int err)
 #undef MODE__STAT
 #undef APPL__BEACON
 #undef LOG_LEVEL__INFO
+#undef APPL_VERSION
+#undef MODE__TEST

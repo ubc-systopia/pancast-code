@@ -6,7 +6,7 @@
 #include <tinycrypt/sha256.h>
 #include <bluetooth/bluetooth.h>
 
-#define BEACON_REPORT_INTERVAL 30
+#define BEACON_REPORT_INTERVAL 2
 
 // Advertising interval settings
 // Zephyr-recommended values are used

@@ -12,7 +12,7 @@
 
 // STATIC PARAMETERS
 // (Approx) number of time units between each report written to output
-#define DONGLE_REPORT_INTERVAL 12
+#define DONGLE_REPORT_INTERVAL 2
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
@@ -78,5 +78,8 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 
 void dongle_lock();
 void dongle_unlock();
+void dongle_info();
+void dongle_telem();
+void dongle_test();
 
 #endif

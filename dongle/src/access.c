@@ -338,15 +338,13 @@ int access_advertise()
 
     dongle_state = DONGLE_UPLOAD_STATE_LOCKED;
 
-    info_bytes(ad[0].data, ad[0].data_len, "ad data");
+    print_bytes(ad[0].data, ad[0].data_len, "ad data");
     int err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
     if (err)
     {
         log_infof("Advertising failed to start (err %d)\n", err);
         return err;
     }
-
-    log_info("Advertising successfully started\n");
 
     bt_conn_cb_register(&conn_callbacks);
     bt_conn_auth_cb_register(&auth_cb_display);
@@ -359,7 +357,7 @@ int access_advertise()
     bt_id_get(&addr, &count);
     bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
-    log_infof("advertising started with address %s\n", addr_s);
+    log_infof("ACCESS: Bluetooth advertising started with address %s\n", addr_s);
 
     return 0;
 }

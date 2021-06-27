@@ -21,9 +21,9 @@
 // number of timer cycles in one epoch - should correspond to 15 min in prod.
 #define BEACON_EPOCH_LENGTH 15
 // Beacon clock resolution in ms - should be 1 min in prod.
-#define BEACON_TIMER_RESOLUTION 1000
+#define BEACON_TIMER_RESOLUTION 60000
 // Dongle clock resolution in ms - should be 1 min in prod.
-#define DONGLE_TIMER_RESOLUTION 1000
+#define DONGLE_TIMER_RESOLUTION 60000
 
 // Simple Data Types
 typedef uint32_t beacon_id_t;

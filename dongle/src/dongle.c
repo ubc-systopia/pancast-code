@@ -230,7 +230,6 @@ void dongle_loop()
         timer_status = k_timer_status_sync(&kernel_time);
         timer_status += k_timer_status_get(&kernel_time);
         LOCK dongle_time += timer_status;
-
         // update epoch
 #define t_init config.t_init
         dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
@@ -392,14 +391,6 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signa
 void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
                 struct net_buf_simple *ad)
 {
-#define add addr->a.val
-    log_telemf("%02x,%u,%u,%llu,%02x%02x%02x%02x%02x%02x,%d,%d\n",
-               TELEM_TYPE_SCAN_RESULT,
-               dongle_time, epoch,
-               signal_id,
-               add[0], add[1], add[2], add[3], add[4], add[5],
-               rssi, ad->len);
-#undef add
     char addr_str[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
     // Filter mis-sized packets
@@ -407,8 +398,16 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     {
         return;
     }
+    LOCK
+#define add addr->a.val
+        log_telemf("%02x,%u,%u,%llu,%02x%02x%02x%02x%02x%02x,%d\n",
+                   TELEM_TYPE_SCAN_RESULT,
+                   dongle_time, epoch,
+                   signal_id,
+                   add[0], add[1], add[2], add[3], add[4], add[5], rssi);
+#undef add
     decode_payload(ad->data);
-    LOCK encounter_broadcast_t en;
+    encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t *)ad->data);
     dongle_track(&en, rssi, signal_id);
     signal_id++;

@@ -33,14 +33,16 @@
 #define LOG_NA NULL
 
 // // If telemetry is enabled, show tags always
-// #ifdef LOG_LEVEL__TELEM
-// #define LOG_SHOW_TAGS
-// #endif
-//#ifdef LOG_SHOW_TAGS
+#ifdef LOG_LEVEL__TELEM
+#ifndef LOG_SHOW_TAGS
+#define LOG_SHOW_TAGS
+#endif
+#endif
+#ifdef LOG_SHOW_TAGS
 #define logf(tag, fmtstr, args...) (printk("[%s] ", tag), printk(fmtstr, args))
-// #else
-// #define logf(tag, fmtstr, args...) printk(fmtstr, args)
-// #endif
+#else
+#define logf(tag, fmtstr, args...) printk(fmtstr, args)
+#endif
 
 #define log(tag, str) logf(tag, "%s", str)
 

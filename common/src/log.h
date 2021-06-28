@@ -28,7 +28,7 @@
 #define TAG_ERROR "ERROR"
 #define TAG_TELEM "TELEM"
 
-//#define LOG_SHOW_TAGS
+#define LOG_SHOW_TAGS
 
 #define LOG_NA NULL
 

@@ -29,6 +29,7 @@
 #include "./test.h"
 #include "./access.h"
 #include "./encounter.h"
+#include "./telemetry.h"
 
 #include "../../common/src/log.h"
 #include "../../common/src/pancast.h"
@@ -72,6 +73,8 @@ beacon_eph_id_t
 dongle_timer_t
     obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
 size_t cur_id_idx;
+dongle_epoch_counter_t epoch; // current epoch
+uint64_t signal_id;           // to identify scan records received, resets each epoch
 
 // 3. Reporting
 enctr_entry_counter_t enctr_entries_offset;
@@ -178,12 +181,15 @@ void dongle_init()
     cur_id_idx = 0;
     epoch = 0;
     enctr_entries_offset = 0;
+    signal_id = 0;
 
     log_info("Dongle initialized\n");
 
     dongle_info();
 
     k_timer_init(&kernel_time, NULL, NULL);
+
+    log_telemf("%02x", TELEM_TYPE_RESTART);
 
 // Timer zero point
 #define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
@@ -226,14 +232,14 @@ void dongle_loop()
         LOCK dongle_time += timer_status;
 
         // update epoch
-        static dongle_epoch_counter_t old_epoch;
-        old_epoch = epoch;
 #define t_init config.t_init
-        epoch = epoch_i(dongle_time, t_init);
+        dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
 #undef t_init
-        if (epoch != old_epoch)
+        if (new_epoch != epoch)
         {
-            log_debugf("EPOCH STARTED: %u\n", epoch);
+            log_debugf("EPOCH STARTED: %u\n", new_epoch);
+            epoch = new_epoch;
+            signal_id = 0;
             // TODO: log time to flash
         }
         dongle_report();
@@ -312,7 +318,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #undef en
 }
 
-static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
+static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
 {
 #define en (*enc)
 
@@ -320,8 +326,10 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
     beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
     if (service_id != BROADCAST_SERVICE_ID)
     {
-        //log_debugf("Broadcast skipped; service id 0x%x does not match\n", service_id);
-        return;
+        log_telemf("%02x,%u,%u,%llu\n",
+                   TELEM_TYPE_BROADCAST_ID_MISMATCH,
+                   dongle_time, epoch,
+                   signal_id);
     }
 
     // determine which tracked id, if any, is a match
@@ -349,10 +357,20 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
         num_obs_ids++;
         avg_rssi = exp_avg(avg_rssi, rssi);
 #endif
+        log_telemf("%02x,%u,%u,%llu,%u,%u\n",
+                   TELEM_TYPE_BROADCAST_TRACK_NEW,
+                   dongle_time, epoch,
+                   signal_id,
+                   *en.b, *en.t);
     }
     else
     {
         // when a matching ephemeral id is observed
+        log_telemf("%02x,%u,%u,%llu,%u,%u\n",
+                   TELEM_TYPE_BROADCAST_TRACK_MATCH,
+                   dongle_time, epoch,
+                   signal_id,
+                   *en.b, *en.t);
         // check conditions for a valid encounter
         dongle_timer_t dur = dongle_time - obs_time[i];
         if (dur >= DONGLE_ENCOUNTER_MIN_TIME)
@@ -361,6 +379,11 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
 #ifdef MODE__STAT
             avg_encounter_rssi = exp_avg(avg_encounter_rssi, rssi);
 #endif
+            log_telemf("%02x,%u,%u,%llu,%u,%u,%u\n",
+                       TELEM_TYPE_ENCOUNTER,
+                       dongle_time, epoch,
+                       signal_id,
+                       *en.b, *en.t, dur);
         }
     }
 #undef en
@@ -369,6 +392,14 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
 void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
                 struct net_buf_simple *ad)
 {
+#define add addr->a.val
+    log_telemf("%02x,%u,%u,%llu,%02x%02x%02x%02x%02x%02x,%d,%d\n",
+               TELEM_TYPE_SCAN_RESULT,
+               dongle_time, epoch,
+               signal_id,
+               add[0], add[1], add[2], add[3], add[4], add[5],
+               rssi, ad->len);
+#undef add
     char addr_str[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
     // Filter mis-sized packets
@@ -379,7 +410,8 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     decode_payload(ad->data);
     LOCK encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t *)ad->data);
-    _dongle_track_(&en, rssi);
+    dongle_track(&en, rssi, signal_id);
+    signal_id++;
     UNLOCK
 }
 

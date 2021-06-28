@@ -1,4 +1,5 @@
 #include "client.h"
+#include "util.h"
 #include <curl/curl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,11 +9,11 @@
 #include <errno.h>
 #include <termios.h>
 
-#define TEST_MODE
+// #define TEST_MODE
+// #define SERVER_TEST_MODE
 
 #define TERMINAL    "/dev/cu.usbmodem0004401986121"
 #define INTERVAL 20
-
 
 const char domain[] = "https://127.0.0.1:8081/"; // TODO: update to server URL when server is online
 const char request[] = "update";
@@ -21,6 +22,12 @@ struct memory {
    char *response;
    size_t size;
  };
+
+ struct broadcast_data {
+    int64_t broadcast_len; // 8 bytes = sizeof(data)
+    char *data;
+};
+
 
 /* Set attributes for serial communication, 
     from https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c 
@@ -62,10 +69,14 @@ int set_interface_attribs(int fd, int speed)
 
 /* Write data from stream, from CURLOPT_WRITEFUNCTION example 
     https://curl.se/libcurl/c/CURLOPT_WRITEFUNCTION.html
+    data - pointer to delivered data
+    size - size is always 1
+    nmemb - size of *data
+    userdata - argument set by CURLOPT_WRITEDATA
  */
 size_t write_function(char *data, size_t size, size_t nmemb, void *userdata){
 
-size_t realsize = size * nmemb;
+   size_t realsize = size * nmemb;
    struct memory *mem = (struct memory *)userdata;
  
    char *ptr = realloc(mem->response, mem->size + realsize + 1);
@@ -123,7 +134,6 @@ int handle_request(struct memory* chunk) {
             fprintf(stderr, "error: %s\r\n", curl_easy_strerror(res));
 
         printf("Received data! Size: %d\r\n", (int)chunk->size);
-        // printf("response: %s\r\n", chunk->response);
         
         curl_easy_cleanup(curl);
     }
@@ -138,41 +148,122 @@ int main(int argc, char *argv[]) {
     int fd;
     int wlen;
     char *xstr = "test write\n";
+    char *bigxstr = "Potato salad is a dish made from potatoes\n";  
+
+    char *biggerxstr = "It is generally considered a side dish, as it usually accompanies the main course. Potato salad is widely believed \
+     to have originated in Germany, spreading largely throughout Europe, European colonies and later Asia. American \
+     potato salad\n";
+
+
     int xlen = strlen(xstr);
+    int bigxlen = strlen(bigxstr);
+    int biggerxlen = strlen(biggerxstr);
+
+    int64_t test_size = 11*3;
+    int64_t big_test_size = 42;
+    int64_t bigger_test_size = 250;
 
     char* request_data;
 
+    uint8_t testarray[250];
+    for (int i = 0; i < 250; i++) {
+        testarray[i]=i;
+    }
+
     while (1) {
 
-        struct memory chunk = {0};
-        
+        struct memory response = {0};
+
         // handle HTTP request to pancast server
-        int req = handle_request(&chunk);
+        int req = handle_request(&response);
+
+        #ifdef SERVER_TEST_MODE
+        for (int i = 0; i < response.size; i++) {
+            printf("%x,", response.response[i]);
+        }
+        #endif
 
         if (req == 0) {
 
             printf("Writing data to serial port: %s\r\n", portname);
 
             // open serial terminal port
-            fd = open(portname, O_RDWR);
+            if (!fd) {
+                fd = open(portname, O_RDWR);
+            }
 
             if (fd < 0)
             {
                 printf("Error opening %s: %s\n", portname, strerror(errno));
-               // continue;
+                continue;
             }
 
             /*baudrate 115200, 8 bits, no parity, 1 stop bit */
             set_interface_attribs(fd, B115200);
 
-            /* simple output */
-            wlen = write(fd, xstr, xlen);
-            if (wlen != xlen) {
+            #ifdef TEST_MODE
+            // // write data length
+            // wlen = write(fd, &bigger_test_size, sizeof(int64_t));
+            // if (wlen != sizeof(int64_t)) {
+            //     printf("Error from write: %d, %d\n", wlen, errno);
+            // }
+            // printf("%d bytes written!\r\n", wlen);
+
+            // // write data
+            // wlen = write(fd, biggerxstr, biggerxlen);
+            // if (wlen != biggerxlen) {
+            //     printf("Error from write: %d, %d\n", wlen, errno);
+            // }
+            // tcdrain(fd);    /* delay for output */
+
+            // printf("%d bytes written!\r\n", wlen);
+
+            // write data length
+            wlen = write(fd, &bigger_test_size, sizeof(int64_t));
+            if (wlen != sizeof(int64_t)) {
+                printf("Error from write: %d, %d\n", wlen, errno);
+            }
+            printf("%d bytes written!\r\n", wlen);
+
+            // write data
+            wlen = write(fd, &testarray, 250);
+            if (wlen != 250) {
                 printf("Error from write: %d, %d\n", wlen, errno);
             }
             tcdrain(fd);    /* delay for output */
 
             printf("%d bytes written!\r\n", wlen);
+
+            char* readbuf = malloc(500);
+
+            read(fd, readbuf, 500);
+
+            printf("Received Print:\r\n %s\r\n", readbuf);
+
+            #else
+
+           // int64_t b_data_size = bytearr_to_uint64(response.response);
+            int64_t data_sent = 0;
+
+            // write data to serial port in CHUNK_SIZE increments
+            while (data_sent < response.size) {
+                printf("ready to receive\r\n");
+                uint8_t ready = 0;
+                while (ready == 0) {
+                    printf("about to read\r\n");
+                    int readmsg = read(fd, &ready, sizeof(uint8_t));
+                    printf("readmsg: %d\r\n", readmsg);
+                }
+                printf("recieved ready!\r\n");
+                // write data length
+                wlen = write(fd, &response.response[data_sent], CHUNK_SIZE);
+                if (wlen != CHUNK_SIZE) {
+                    printf("Error from write: %d, %d\n", wlen, errno);
+                }
+                printf("%d bytes written!\r\n", wlen);
+                data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
+            }
+            #endif
         }
 
         sleep(INTERVAL);

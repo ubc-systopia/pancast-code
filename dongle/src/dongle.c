@@ -12,7 +12,7 @@
 
 #define LOG_LEVEL__INFO
 #define MODE__TEST
-#define MODE__TELEM
+#define MODE__STAT
 
 #include <sys/printk.h>
 #include <sys/util.h>
@@ -86,7 +86,7 @@ int total_test_encounters = 0;
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
 
-#ifdef MODE__TELEM
+#ifdef MODE__STAT
 int8_t num_obs_ids = 0;
 int8_t avg_rssi = 0;
 int8_t avg_encounter_rssi = 0;
@@ -110,8 +110,8 @@ void dongle_main()
 #ifdef MODE__TEST
     log_info("Test mode enabled\n");
 #endif
-#ifdef MODE__TELEM
-    log_info("Telemetry enabled\n");
+#ifdef MODE__STAT
+    log_info("Statistics enabled\n");
 #define α 0.1
 #define exp_avg(a, x) !a ? x : (α * x) + ((1 - α) * a);
 #endif
@@ -345,7 +345,7 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
         memcpy(&cur_id[i], en.eph->bytes, BEACON_EPH_ID_HASH_LEN);
         obs_time[i] = dongle_time;
 
-#ifdef MODE__TELEM
+#ifdef MODE__STAT
         num_obs_ids++;
         avg_rssi = exp_avg(avg_rssi, rssi);
 #endif
@@ -358,7 +358,7 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
         if (dur >= DONGLE_ENCOUNTER_MIN_TIME)
         {
             _dongle_encounter_(&en, i);
-#ifdef MODE__TELEM
+#ifdef MODE__STAT
             avg_encounter_rssi = exp_avg(avg_encounter_rssi, rssi);
 #endif
         }
@@ -453,19 +453,19 @@ void dongle_report()
         log_info("\n***          Begin Report          ***\n");
 
         dongle_info();
-        dongle_telem();
+        dongle_stats();
         dongle_test();
 
         log_info("\n***          End Report            ***\n");
     }
 }
 
-void dongle_telem()
+void dongle_stats()
 {
     enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
-#ifdef MODE__TELEM
+#ifdef MODE__STAT
 
-    log_info("\nTelemetry:\n");
+    log_info("\nStatistics:\n");
     log_infof("    Dongle timer:                        %u\n", dongle_time);
     log_infof("    Encounters logged since last report: %llu\n", num - enctr_entries_offset);
     log_infof("    Total Encounters logged:             %llu\n", num);
@@ -543,4 +543,4 @@ void dongle_test()
 #undef APPL_VERSION
 #undef LOG_LEVEL__INFO
 #undef MODE__TEST
-#undef MODE__TELEM
+#undef MODE__STAT

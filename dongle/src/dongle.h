@@ -79,7 +79,7 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 void dongle_lock();
 void dongle_unlock();
 void dongle_info();
-void dongle_telem();
+void dongle_stats();
 void dongle_test();
 
 #endif

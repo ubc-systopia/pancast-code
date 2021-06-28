@@ -64,7 +64,7 @@
 #define log_info(s) log(TAG_INFO, s)
 #define log_infof(f, a...) logf(TAG_INFO, f, a)
 #define log_debug(s) log(TAG_DEBUG, s)
-#define log_debugf(f, a...) logf(TAG_INFO, f, a)
+#define log_debugf(f, a...) logf(TAG_DEBUG, f, a)
 #define LOG_LEVEL TAG_DEBUG
 #endif
 

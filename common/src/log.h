@@ -73,8 +73,8 @@
 #define log_errorf(f, a...) logf(TAG_ERROR, f, a)
 #define log_info(s) log(TAG_INFO, s)
 #define log_infof(f, a...) logf(TAG_INFO, f, a)
-#define log_telem(s) log(TAG_DEBUG, s)
-#define log_telemf(f, a...) logf(TAG_INFO, f, a)
+#define log_telem(s) log(TAG_TELEM, s)
+#define log_telemf(f, a...) logf(TAG_TELEM, f, a)
 #define LOG_LEVEL TAG_TELEM
 #endif
 

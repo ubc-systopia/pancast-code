@@ -164,10 +164,9 @@ static void _beacon_stats_()
     log_info("\n");
     log_info("Statistics: \n");
     log_infof("     Time since last report:         %d ms\n", stat_timer);
-    log_infof("     Timer:\n"
-              "         Start:                      %u\n"
-              "         End:                        %u\n",
-              stat_start, beacon_time);
+    log_info("     Timer:\n");
+    log_infof("         Start:                      %u\n", stat_start);
+    log_infof("         End:                        %u\n", beacon_time);
     log_infof("     Cycles:                         %u\n", stat_cycles);
     log_infof("     Completed Epochs:               %u\n", stat_epochs);
 }

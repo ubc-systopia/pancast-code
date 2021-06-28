@@ -10,7 +10,7 @@
 #define APPL__DONGLE
 #define APPL_VERSION "0.1.0"
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__TELEM
 #define MODE__TEST
 #define MODE__STAT
 
@@ -105,7 +105,7 @@ void main(void)
 void dongle_main()
 #endif
 {
-    log_info("\nStarting Dongle...\n");
+    log_info("\n"), log_info("Starting Dongle...\n");
 
 #ifdef MODE__TEST
     log_info("Test mode enabled\n");
@@ -320,7 +320,7 @@ static void _dongle_track_(encounter_broadcast_t *enc, int8_t rssi)
     beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
     if (service_id != BROADCAST_SERVICE_ID)
     {
-        log_debugf("Broadcast skipped; service id 0x%x does not match\n", service_id);
+        //log_debugf("Broadcast skipped; service id 0x%x does not match\n", service_id);
         return;
     }
 
@@ -429,7 +429,8 @@ int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
 
 void dongle_info()
 {
-    log_info("\nInfo:\n");
+    log_info("\n");
+    log_info("Info:\n");
     log_infof("    Platform:                        %s\n", "Zephyr OS");
     log_infof("    Board:                           %s\n", CONFIG_BOARD);
     log_infof("    Application Version:             %s\n", APPL_VERSION);
@@ -450,13 +451,15 @@ void dongle_report()
     {
         report_time = dongle_time;
 
-        log_info("\n***          Begin Report          ***\n");
+        log_info("\n");
+        log_info("***          Begin Report          ***\n");
 
         dongle_info();
         dongle_stats();
         dongle_test();
 
-        log_info("\n***          End Report            ***\n");
+        log_info("\n");
+        log_info("***          End Report            ***\n");
     }
 }
 
@@ -464,8 +467,8 @@ void dongle_stats()
 {
     enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
 #ifdef MODE__STAT
-
-    log_info("\nStatistics:\n");
+    log_info("\n");
+    log_info("Statistics:\n");
     log_infof("    Dongle timer:                        %u\n", dongle_time);
     log_infof("    Encounters logged since last report: %llu\n", num - enctr_entries_offset);
     log_infof("    Total Encounters logged:             %llu\n", num);
@@ -482,7 +485,8 @@ void dongle_test()
 {
     // Run Tests
 #ifdef MODE__TEST
-    log_info("\nTests:\n");
+    log_info("\n");
+    log_info("Tests:\n");
     test_errors = 0;
 #define FAIL(msg) (log_infof("    FAILURE: %s\n", msg), test_errors++)
 
@@ -526,12 +530,13 @@ void dongle_test()
     }
     if (test_errors)
     {
-        log_infof("\n    x Tests Failed: status = %d\n", test_errors);
+        log_info("\n");
+        log_infof("    x Tests Failed: status = %d\n", test_errors);
     }
     else
     {
-
-        log_info("\n    ✔ Tests Passed\n");
+        log_info("\n");
+        log_info("    ✔ Tests Passed\n");
     }
 #undef FAIL
     test_encounters = 0;

@@ -43,7 +43,7 @@ void main(void)
 void _beacon_main_()
 #endif
 {
-    log_info("\nStarting Beacon...\n");
+    log_info("\n"), log_info("Starting Beacon...\n");
 #ifdef MODE__STAT
     log_info("Statistics mode enabled\n");
 #endif
@@ -139,7 +139,8 @@ static void _beacon_load_()
 
 static void _beacon_info_()
 {
-    log_info("\nInfo: \n");
+    log_info("\n");
+    log_info("Info: \n");
     log_infof("    Platform:                        %s\n", "Zephyr OS");
     log_infof("    Board:                           %s\n", CONFIG_BOARD);
     log_infof("    Application Version:             %s\n", APPL_VERSION);
@@ -152,16 +153,16 @@ static void _beacon_info_()
     log_infof("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-    log_infof("    Advertising Interval: \n"
-              "        Min:                         %x ms\n"
-              "        Max:                         %x ms\n",
-              BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
+    log_info("    Advertising Interval:                \n");
+    log_infof("        Min:                         %x ms\n", BEACON_ADV_MIN_INTERVAL);
+    log_infof("        Max:                         %x ms\n", BEACON_ADV_MAX_INTERVAL);
 }
 
 #ifdef MODE__STAT
 static void _beacon_stats_()
 {
-    log_info("\nStatistics: \n");
+    log_info("\n");
+    log_info("Statistics: \n");
     log_infof("     Time since last report:         %d ms\n", stat_timer);
     log_infof("     Timer:\n"
               "         Start:                      %u\n"
@@ -181,13 +182,13 @@ static void _beacon_report_()
     else
     {
         report_time = beacon_time;
-        log_info("\n***          Begin Report          ***\n");
+        log_info("\n"), log_info("***          Begin Report          ***\n");
         _beacon_info_();
 #ifdef MODE__STAT
         _beacon_stats_();
         stat_timer = 0;
 #endif
-        log_info("\n***          End Report            ***\n");
+        log_info("\n"), log_info("***          End Report            ***\n");
     }
 }
 

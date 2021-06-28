@@ -79,7 +79,7 @@ static uint8_t _discover_(struct bt_conn *conn,
 
     if (!attr)
     {
-        printk("Discover complete\n");
+        log_debug("Discover complete\n");
         (void)memset(params, 0, sizeof(*params));
         return BT_GATT_ITER_STOP;
     }

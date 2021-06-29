@@ -329,6 +329,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signa
                    TELEM_TYPE_BROADCAST_ID_MISMATCH,
                    dongle_time, epoch,
                    signal_id);
+        return;
     }
 
     // determine which tracked id, if any, is a match

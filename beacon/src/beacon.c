@@ -6,7 +6,7 @@
 // details.
 //
 
-#define APPL_VERSION "0.1.0"
+#define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__INFO
 #define APPL__BEACON

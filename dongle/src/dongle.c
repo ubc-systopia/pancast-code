@@ -8,7 +8,7 @@
 #include "./dongle.h"
 
 #define APPL__DONGLE
-#define APPL_VERSION "0.1.0"
+#define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__TELEM
 #define MODE__TEST

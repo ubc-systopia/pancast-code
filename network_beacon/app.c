@@ -29,7 +29,7 @@
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;
 
 // Risk Broadcast Data
-uint8_t risk_data[RISK_DATA_SIZE] = {};
+uint8_t risk_data[RISK_DATA_SIZE];
 int risk_data_len;
 
 // Current index of periodic data broadcast
@@ -54,7 +54,7 @@ void update_risk_data(int len, char* data)
 
   if (len > RISK_DATA_SIZE)
     {
-      printf ("len: %d larger than current risk size\r\n", len);
+  //    printf ("len: %d larger than current risk size\r\n", len);
       return;
     }
 
@@ -65,38 +65,34 @@ void update_risk_data(int len, char* data)
   memcpy(&risk_data, data, len);
   risk_data_len = len;
 
-  printf ("Setting advertising data...\r\n");
+//  printf ("Setting advertising data...\r\n");
   sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
                                          PER_ADV_SIZE, &risk_data[0]);
 
   if (sc != 0)
     {
-      printf ("Error setting advertising data, sc: 0x%lx", sc);
+  //    printf ("Error setting advertising data, sc: 0x%lx", sc);
     }
 }
 
 /* Get risk data from rapsberry pi client */
 void get_risk_data() {
 
-	// Read length (integer)
-	uint64_t data_len = 0;
+	uint8_t ready = XON;
 
-	read(SL_IOSTREAM_STDIN, &data_len, sizeof(uint64_t));
-	if (data_len == 0) {
-		printf("No data ready to read\r\n");
-		return;
-	}
+	// request next chunk of data
+	write(SL_IOSTREAM_STDOUT, &ready, sizeof(uint8_t));
 
-	printf("data_len: %lu\r\n", (long unsigned int)data_len);
+	int read_len;
+	char buf[PER_ADV_SIZE];
 
-	char buf[data_len];
+	do {
+	read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
+	} while (read_len > 0);
 
-	// Read length bytes from stdin
-	read(SL_IOSTREAM_STDIN, &buf, data_len);
-    printf("Read: %s\r\n", buf);
-
-	// Update broadcassts data
-    update_risk_data(data_len, buf);
+	// Update broadcast data
+    update_risk_data(PER_ADV_SIZE, buf);
+    free(buf);
 }
 
 /* Bluetooth stack event handler.
@@ -122,7 +118,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
 
       // Create an advertising set.
-      printf("Creating advertising set...\r\n");
+    //  printf("Creating advertising set...\r\n");
       sc = sl_bt_advertiser_create_set (&advertising_set_handle);
       app_assert_status(sc);
 
@@ -138,12 +134,12 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 			  NO_MAX_EVT);  	// max. num. adv. events
       app_assert_status(sc);
 
-      printf ("Starting periodic advertising...\r\n");
+    //  printf ("Starting periodic advertising...\r\n");
       sc = sl_bt_advertiser_start_periodic_advertising (advertising_set_handle,
       PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
       app_assert_status(sc);
 
-      printf ("Setting advertising data...\r\n");
+    //  printf ("Setting advertising data...\r\n");
       sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
                                       &risk_data[adv_index * PER_ADV_SIZE]);
       app_assert_status(sc);
@@ -151,19 +147,13 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       // Start advertising location ephemeral ID
       start_legacy_advertising();
 
-      printf ("Setting timers...\r\n");
-      sc = sl_bt_system_set_soft_timer (PER_UPDATE_FREQ * TIMER_1S, PER_TIMER_HANDLE, 0);
-      if (sc != 0)
-        {
-          printf ("Error setting timer, sc: 0x%lx\r\n", sc);
-        }
       sc = sl_bt_system_set_soft_timer(RISK_UPDATE_FREQ * TIMER_1S, RISK_TIMER_HANDLE, 0);
       if (sc != 0)
          {
-           printf ("Error setting timer, sc: 0x%lx\r\n", sc);
+      //     printf ("Error setting timer, sc: 0x%lx\r\n", sc);
          }
 
-      printf ("Success!\r\n");
+ //     printf ("Success!\r\n");
 
       break;
 
@@ -175,7 +165,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                                       &risk_data[adv_index * PER_ADV_SIZE]);
     	  if (sc != 0)
     	  {
-    		  printf ("sc: %lx \r\n", sc);
+    //		  printf ("sc: %lx \r\n", sc);
     	  }
     	  app_assert_status(sc);
 

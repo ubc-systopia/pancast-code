@@ -27,8 +27,8 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 6
-#define PER_ADV_SIZE 240
+#define PER_ADV_INTERVAL 1000
+#define PER_ADV_SIZE 250
 #define PER_ADV_UPDATE 1 // interval in seconds to update ad data
 #define PER_FLAGS 0 // no periodic advertising flags
 
@@ -42,14 +42,16 @@
 #define RISK_TIMER_HANDLE 1
 #define RISK_UPDATE_FREQ 5
 
+#define XON 0x17
+#define XOFF 0x19
+
 /* Risk Data */
-#define RISK_DATA_SIZE 4096
+#define RISK_DATA_SIZE 250
 
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
-void
-app_init (void);
+void app_init (void);
 
 /***************************************************************************//**
  * App ticking function.

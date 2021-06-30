@@ -1,45 +1,44 @@
 # Silicon Labs Project Configuration Tools: slcp, v0, Component selection file.
-include:
-- path: ''
-  file_list:
-  - {path: app.h}
-  - {path: app_iostream_eusart.h}
-package: platform
-configuration:
-- {name: SL_BOARD_ENABLE_VCOM, value: '1'}
+project_name: network_beacon
+label: network_beacon
 description: "This example project uses the I/O Stream service running in a bare-metal\
   \ configuration  to demonstrate the use of EUSART communication over the virtual\
   \ COM port (VCOM). The  application will echo back any characters it receives over\
   \ the serial connection. The  VCOM serial port can be used either over USB or by\
   \ connecting to port 4902 if the kit  is connected via Ethernet. \n"
-label: network_beacon
+category: Example|Platform
+package: platform
+quality: production
 source:
 - {path: app.c}
 - {path: main.c}
 - {path: app_iostream_eusart.c}
-project_name: network_beacon
-quality: production
+include:
+- path: ''
+  file_list:
+  - {path: app.h}
+  - {path: app_iostream_eusart.h}
+toolchain_settings: []
 component:
 - {id: iostream_retarget_stdio}
 - {id: sl_system}
-- {id: brd4001a}
 - {id: bluetooth_feature_gatt_server}
 - {id: iostream}
 - {id: bluetooth_feature_advertiser}
-- {id: bluetooth_feature_periodic_adv}
 - {id: bluetooth_feature_sm}
-- {id: EFR32MG22C224F512IM32}
+- {id: bluetooth_feature_periodic_adv}
 - {id: bluetooth_feature_system}
-- {id: brd4183a}
 - {id: device_init_hfxo}
 - {id: device_init}
+- {id: brd4184a}
 - instance: [vcom]
   id: iostream_eusart
 - {id: app_assert}
 - {id: bluetooth_feature_gatt}
+- {id: EFR32BG22C224F512IM40}
 define:
 - {name: DEBUG_EFM}
-category: Example|Platform
-toolchain_settings: []
+configuration:
+- {name: SL_BOARD_ENABLE_VCOM, value: '1'}
 ui_hints: {}
 

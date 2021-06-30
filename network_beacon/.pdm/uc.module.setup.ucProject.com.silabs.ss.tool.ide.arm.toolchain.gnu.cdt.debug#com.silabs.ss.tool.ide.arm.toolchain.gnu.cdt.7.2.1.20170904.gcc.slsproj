@@ -3,5 +3,4 @@
   <folder name="autogen">
     <file name=".crc_config.crc" builtin="true" generated="true" uri="studio:/project/autogen/.crc_config.crc"/>
   </folder>
-  <includePath uri="studio:/project/autogen"/>
 </project>

@@ -54,11 +54,17 @@
 // <<< end of configuration section >>>
 
 // Convert CMSIS Markup config defines to mbedTLS specific config defines
+
+// Allow undefining the specified cipher suites
+#if defined(SLI_MBEDTLS_AUTODETECT_CIPHERSUITES)
+#undef MBEDTLS_SSL_CIPHERSUITES
+#endif
+
 #if SL_MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
-#define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
+  #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
 #endif
 #if SL_MBEDTLS_SSL_EXPORT_KEYS
-#define MBEDTLS_SSL_EXPORT_KEYS
+  #define MBEDTLS_SSL_EXPORT_KEYS
 #endif
 #if SL_MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
   #define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED

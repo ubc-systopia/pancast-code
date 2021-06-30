@@ -63,4 +63,6 @@
 
 // <<< sl:end pin_tool >>>
 
+#define SL_BOARD_ENABLE_VCOM                     1
+
 #endif // SL_BOARD_CONTROL_CONFIG_H

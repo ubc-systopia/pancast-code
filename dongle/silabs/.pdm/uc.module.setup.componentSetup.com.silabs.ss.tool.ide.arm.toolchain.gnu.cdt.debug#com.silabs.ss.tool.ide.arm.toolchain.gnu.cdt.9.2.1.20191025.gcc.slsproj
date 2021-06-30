@@ -117,6 +117,7 @@
         <folder name="iostream">
           <folder name="src">
             <file name="sl_iostream.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream.c"/>
+            <file name="sl_iostream_retarget_stdio.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_retarget_stdio.c"/>
             <file name="sl_iostream_uart.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_uart.c"/>
             <file name="sl_iostream_usart.c" uri="studio:/sdk/platform/service/iostream/src/sl_iostream_usart.c"/>
           </folder>

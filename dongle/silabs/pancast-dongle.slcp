@@ -17,6 +17,7 @@ sdk: {id: gecko_sdk, version: 3.2.0}
 toolchain_settings: []
 component:
 - {id: sl_system}
+- {id: iostream_retarget_stdio}
 - {id: device_init}
 - {id: brd4184a}
 - instance: [vcom]

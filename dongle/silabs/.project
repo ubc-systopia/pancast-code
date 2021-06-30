@@ -306,6 +306,11 @@
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream.c</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_retarget_stdio.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_retarget_stdio.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_uart.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_uart.c</locationURI>

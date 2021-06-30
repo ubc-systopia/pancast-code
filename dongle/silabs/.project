@@ -91,6 +91,11 @@
 			<locationURI>STUDIO_SDK_LOC/platform/CMSIS/Include/mpu_armv8.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/common/inc/sl_atomic.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_atomic.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/common/inc/sl_enum.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_enum.h</locationURI>
@@ -274,6 +279,41 @@
 			<name>gecko_sdk_3.2.0/platform/service/device_init/src/sl_device_init_nvic.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/service/device_init/src/sl_device_init_nvic.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_uart.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_uart.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_usart.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_usart.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sli_iostream_uart.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sli_iostream_uart.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_uart.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_uart.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_usart.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_usart.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/service/system/inc/sl_system_init.h</name>

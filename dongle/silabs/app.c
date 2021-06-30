@@ -17,12 +17,16 @@
 
 #include <stdio.h>
 
+#define LOG_LEVEL__DEBUG
+
+#include "../../../common/src/log.h"
+
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
 void app_init(void)
 {
-  printf("init\r\n");
+  log_debug("init\r\n");
 }
 
 /***************************************************************************//**
@@ -31,6 +35,6 @@ void app_init(void)
 void app_process_action(void)
 {
   static int i;
-  printf("tick: %d\r\n", i);
+  log_debugf("tick: %d\r\n", i);
   i++;
 }

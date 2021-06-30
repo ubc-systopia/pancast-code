@@ -39,9 +39,9 @@
 #endif
 #endif
 #ifdef LOG_SHOW_TAGS
-#define logf(tag, fmtstr, args...) (printk("[%s] ", tag), printk(fmtstr, args))
+#define logf(tag, fmtstr, args...) (printf("[%s] ", tag), printf(fmtstr, args))
 #else
-#define logf(tag, fmtstr, args...) printk(fmtstr, args)
+#define logf(tag, fmtstr, args...) printf(fmtstr, args)
 #endif
 
 #define log(tag, str) logf(tag, "%s", str)

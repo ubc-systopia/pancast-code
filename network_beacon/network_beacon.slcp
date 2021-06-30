@@ -18,6 +18,7 @@ include:
   file_list:
   - {path: app.h}
   - {path: app_iostream_eusart.h}
+sdk: {id: gecko_sdk, version: 3.2.0}
 toolchain_settings: []
 component:
 - {id: iostream_retarget_stdio}

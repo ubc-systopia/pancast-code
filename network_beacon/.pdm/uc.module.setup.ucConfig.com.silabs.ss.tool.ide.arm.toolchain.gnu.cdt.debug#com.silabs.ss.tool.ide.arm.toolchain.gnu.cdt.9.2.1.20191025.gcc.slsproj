@@ -19,8 +19,8 @@
     <file name="mbedtls_config.h" generated="true" linked="false" uri="studio:/project/config/mbedtls_config.h"/>
     <file name="app_assert_config.h" generated="true" linked="false" uri="studio:/project/config/app_assert_config.h"/>
     <file name="emlib_core_debug_config.h" generated="true" linked="false" uri="studio:/project/config/emlib_core_debug_config.h"/>
-    <file name="sl_sleeptimer_config.h" generated="true" linked="false" uri="studio:/project/config/sl_sleeptimer_config.h"/>
     <file name="psa_crypto_config.h" generated="true" linked="false" uri="studio:/project/config/psa_crypto_config.h"/>
+    <file name="sl_sleeptimer_config.h" generated="true" linked="false" uri="studio:/project/config/sl_sleeptimer_config.h"/>
   </folder>
   <includePath uri="studio:/project/config/"/>
 </project>

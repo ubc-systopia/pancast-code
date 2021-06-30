@@ -26,8 +26,8 @@ component:
 - {id: bluetooth_feature_gatt_server}
 - {id: iostream}
 - {id: bluetooth_feature_advertiser}
-- {id: bluetooth_feature_sm}
 - {id: bluetooth_feature_periodic_adv}
+- {id: bluetooth_feature_sm}
 - {id: bluetooth_feature_system}
 - {id: device_init_hfxo}
 - {id: device_init}

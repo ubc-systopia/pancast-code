@@ -19,16 +19,26 @@
 
 #include "sl_bluetooth.h"
 
-#define LOG_LEVEL__INFO
-
+#define LOG_LEVEL__DEBUG
 #include "../../../common/src/log.h"
+#include "../../../common/src/pancast.h"
+
+
+dongle_timer_t dongle_timer = 0;
+
+void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
+{
+  dongle_timer++;
+  log_debugf("Dongle clock: %lu\r\n", dongle_timer);
+}
 
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
-void app_init(void)
+sl_status_t app_init(void)
 {
-  log_debug("Initialize\r\n");
+  log_info("Initialize\r\n");
+  return SL_STATUS_OK;
 }
 
 /***************************************************************************//**
@@ -36,9 +46,6 @@ void app_init(void)
  ******************************************************************************/
 void app_process_action(void)
 {
-  static int i;
-  log_debugf("tick: %d\r\n", i);
-  i++;
 }
 
 void sl_bt_on_event (sl_bt_msg_t *evt)
@@ -48,8 +55,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         log_info("Bluetooth device booted and ready\r\n");
         break;
       case sl_bt_evt_system_soft_timer_id:
-        log_info("Timer tick\r\n");
-        break;
       default:
         log_debug("Unhandled bluetooth event\r\n");
         break;

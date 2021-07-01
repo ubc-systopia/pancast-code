@@ -1,5 +1,6 @@
 #include "./access.h"
 
+#include <stdio.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 

@@ -1,4 +1,4 @@
-#include <sys/printk.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "./encounter.h"

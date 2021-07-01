@@ -14,7 +14,6 @@
 #define MODE__TEST
 #define MODE__STAT
 
-#include <sys/printk.h>
 #include <sys/util.h>
 #include <zephyr.h>
 #include <stdio.h>

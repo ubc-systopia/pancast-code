@@ -1,5 +1,7 @@
 #define LOG_LEVEL__INFO
 
+#include <stdio.h>
+
 #include "./storage.h"
 
 #include <drivers/flash.h>

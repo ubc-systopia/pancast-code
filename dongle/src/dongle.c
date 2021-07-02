@@ -123,8 +123,8 @@ void dongle_main()
 #endif
 #ifdef MODE__STAT
     log_info("Statistics enabled\n");
-#define α 0.1
-#define exp_avg(a, x) !a ? x : (α * x) + ((1 - α) * a);
+#define alpha 0.1
+#define exp_avg(a, x) !a ? x : (alpha * x) + ((1 - alpha) * a);
 #endif
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
@@ -556,7 +556,7 @@ void dongle_stats()
     enctr_entries_offset = num;
 }
 
-#undef α
+#undef alpha
 
 void dongle_test()
 {

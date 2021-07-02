@@ -7,7 +7,7 @@
 
 #define DONGLE_NO_OP assert(1);
 
-//#define DONGLE_PLATFORM__ZEPHYR
+#define DONGLE_PLATFORM__ZEPHYR
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #include <bluetooth/bluetooth.h>

@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "./encounter.h"
-#include "./dongle.h"
+#include "encounter.h"
+#include "dongle.h"
 
 #define LOG_LEVEL__INFO
 #include "../../common/src/log.h"

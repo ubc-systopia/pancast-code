@@ -5,7 +5,7 @@
 // Defines a simple API to read and write specific data structures
 // with minimal coupling the underlying drivers.
 
-#include "./dongle.h"
+#include "dongle.h"
 
 #include <stddef.h>
 

@@ -10,8 +10,8 @@
 
 #include <stdint.h>
 
-#include "./dongle.h"
-#include "./storage.h"
+#include "dongle.h"
+#include "storage.h"
 
 // SERVICE UUID: e7f72a03-803b-410a-98d4-4be5fad8e217
 #define DONGLE_INTERACT_SERVICE_ID_0 0xe7f72a03

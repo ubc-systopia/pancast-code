@@ -26,11 +26,11 @@
 #include <drivers/flash.h>
 #endif
 
-#include "./storage.h"
-#include "./test.h"
-#include "./access.h"
-#include "./encounter.h"
-#include "./telemetry.h"
+#include "storage.h"
+#include "test.h"
+#include "access.h"
+#include "encounter.h"
+#include "telemetry.h"
 
 #include "../../common/src/log.h"
 #include "../../common/src/pancast.h"

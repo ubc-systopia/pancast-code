@@ -1,6 +1,6 @@
 #define LOG_LEVEL__INFO
 
-#include "./storage.h"
+#include "storage.h"
 
 #include "../../common/src/log.h"
 #include "../../common/src/util.h"

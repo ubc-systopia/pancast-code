@@ -8,8 +8,8 @@
 #include <bluetooth/gatt.h>
 #endif
 
-#include "./encounter.h"
-#include "./storage.h"
+#include "encounter.h"
+#include "storage.h"
 
 #define LOG_LEVEL__INFO
 #include "../../common/src/log.h"

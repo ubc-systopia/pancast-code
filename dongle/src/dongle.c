@@ -10,19 +10,21 @@
 #define APPL__DONGLE
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__TELEM
+#define LOG_LEVEL__INFO
 #define MODE__TEST
 #define MODE__STAT
 
-#include <sys/util.h>
-#include <zephyr.h>
-#include <stdio.h>
+#include <string.h>
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
+#include <zephyr.h>
+#include <sys/util.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
 #include <drivers/flash.h>
+#endif
 
 #include "./storage.h"
 #include "./test.h"
@@ -42,9 +44,14 @@
 // 1. Mutual exclusion
 // Access for both central updates and scan interupts
 // is given on a FIFO basis
+#ifdef DONGLE_PLATFORM__ZEPHYR
 struct k_mutex dongle_mu;
 #define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
 #define UNLOCK k_mutex_unlock(&dongle_mu);
+#else
+#define LOCK DONGLE_NO_OP;
+#define UNLOCK DONGLE_NO_OP;
+#endif
 
 void dongle_lock()
 {
@@ -64,7 +71,9 @@ dongle_storage *get_dongle_storage()
     return &storage;
 }
 dongle_epoch_counter_t epoch;
+#ifdef DONGLE_PLATFORM__ZEPHYR
 struct k_timer kernel_time;
+#endif
 dongle_timer_t dongle_time; // main dongle timer
 dongle_timer_t report_time;
 beacon_eph_id_t
@@ -101,7 +110,7 @@ int8_t avg_encounter_rssi = 0;
 // MAIN
 // Entrypoint of the application
 // Initialize bluetooth, then call advertising and scan routines
-#ifdef APPL__DONGLE
+#ifdef DONGLE_PLATFORM__ZEPHYR
 void main(void)
 #else
 void dongle_main()
@@ -118,6 +127,7 @@ void dongle_main()
 #define exp_avg(a, x) !a ? x : (α * x) + ((1 - α) * a);
 #endif
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
     int err;
 
     err = bt_enable(NULL);
@@ -128,6 +138,7 @@ void dongle_main()
     }
 
     log_info("Bluetooth initialized\n");
+#endif
 
     if (access_advertise())
     {
@@ -146,6 +157,7 @@ void dongle_scan(void)
     dongle_init();
 
     // Scan Start
+#ifdef DONGLE_PLATFORM__ZEPHYR
     int err = err = bt_le_scan_start(
         BT_LE_SCAN_PARAM(
             BT_LE_SCAN_TYPE_PASSIVE,   // passive scan
@@ -154,6 +166,10 @@ void dongle_scan(void)
             BT_GAP_SCAN_FAST_WINDOW    // window
             ),
         dongle_log);
+#else
+    DONGLE_NO_OP;
+    int err = 0;
+#endif
     if (err)
     {
         log_errorf("Scanning failed to start (err %d)\n", err);
@@ -171,7 +187,9 @@ void dongle_scan(void)
 // initial value. Also initialize timing structs
 void dongle_init()
 {
+#ifdef DONGLE_PLATFORM__ZEPHYR
     k_mutex_init(&dongle_mu);
+#endif
 
     dongle_load();
 
@@ -186,14 +204,16 @@ void dongle_init()
 
     dongle_info();
 
-    k_timer_init(&kernel_time, NULL, NULL);
-
     log_telemf("%02x", TELEM_TYPE_RESTART);
+
+#ifdef DONGLE_PLATFORM__ZEPHYR
+    k_timer_init(&kernel_time, NULL, NULL);
 
 // Timer zero point
 #define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
     k_timer_start(&kernel_time, DUR, DUR);
 #undef DUR // Initial time
+#endif
 }
 
 // LOAD
@@ -214,12 +234,34 @@ void dongle_load()
 #endif
 }
 
+// UPDATE
+// For callback-based timers. This is called with the mutex
+// locked whenever the application clock obtains a new value.
+void dongle_on_clock_update()
+{
+    // update epoch
+#define t_init config.t_init
+    dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
+#undef t_init
+    if (new_epoch != epoch)
+    {
+        log_debugf("EPOCH STARTED: %u\n", new_epoch);
+        epoch = new_epoch;
+        signal_id = 0;
+        // TODO: log time to flash
+    }
+    dongle_report();
+}
+
 // MAIN LOOP
 // timing and control logic is largely the same as the beacon
 // application. The main difference is that scanning does not
 // require restart for a new epoch.
 void dongle_loop()
 {
+// For the Zephyr platform, an explicit loop is defined. Others
+// are configured to set up and call the clock update callback.
+#ifdef DONGLE_PLATFORM__ZEPHYR
     uint32_t timer_status = 0;
 
     int err = 0;
@@ -229,20 +271,12 @@ void dongle_loop()
         timer_status = k_timer_status_sync(&kernel_time);
         timer_status += k_timer_status_get(&kernel_time);
         LOCK dongle_time += timer_status;
-        // update epoch
-#define t_init config.t_init
-        dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
-#undef t_init
-        if (new_epoch != epoch)
-        {
-            log_debugf("EPOCH STARTED: %u\n", new_epoch);
-            epoch = new_epoch;
-            signal_id = 0;
-            // TODO: log time to flash
-        }
-        dongle_report();
+        dongle_on_clock_update();
         UNLOCK
     }
+#else
+    DONGLE_NO_OP;
+#endif
 }
 
 static int
@@ -388,6 +422,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signa
 #undef en
 }
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
 void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
                 struct net_buf_simple *ad)
 {
@@ -413,6 +448,9 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     signal_id++;
     UNLOCK
 }
+#else
+void dongle_log();
+#endif
 
 uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
 {
@@ -462,10 +500,18 @@ void dongle_info()
 {
     log_info("\n");
     log_info("Info:\n");
+#ifdef DONGLE_PLATFORM__ZEPHYR
     log_infof("    Platform:                        %s\n", "Zephyr OS");
     log_infof("    Board:                           %s\n", CONFIG_BOARD);
-    log_infof("    Application Version:             %s\n", APPL_VERSION);
     log_infof("    Bluetooth device name:           %s\n", CONFIG_BT_DEVICE_NAME);
+#else
+    log_infof("    Platform:                        %s\n", "Gecko");
+#define CONFIG_UNKOWN "Unkown"
+    log_infof("    Board:                           %s\n", CONFIG_UNKOWN);
+    log_infof("    Bluetooth device name:           %s\n", CONFIG_UNKOWN);
+#undef CONFIG_UNKOWN
+#endif
+    log_infof("    Application Version:             %s\n", APPL_VERSION);
     log_infof("    Dongle ID:                       %u\n", config.id);
     log_infof("    Initial clock:                   %u\n", config.t_init);
     log_infof("    Backend public key size:         %u bytes\n", config.backend_pk_size);

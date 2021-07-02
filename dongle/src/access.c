@@ -1,8 +1,12 @@
 #include "./access.h"
 
+#include <string.h>
+
+#ifdef DONGLE_PLATFORM__ZEPHYR
 #include <stdio.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
+#endif
 
 #include "./encounter.h"
 #include "./storage.h"
@@ -12,16 +16,20 @@
 #include "../../common/src/util.h"
 
 // Memory
+#ifdef DONGLE_PLATFORM__ZEPHYR
 struct k_mutex state_mu;
+#endif
 interact_state state;
 uint8_t dongle_state;
 enctr_entry_counter_t num_recs;
 enctr_entry_counter_t next_rec = 0;
 dongle_encounter_entry send_en;
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL,
                   DONGLE_SERVICE_UUID)};
+#endif
 
 // STATES
 #define DONGLE_UPLOAD_STATE_LOCKED 0x01
@@ -32,6 +40,7 @@ static const struct bt_data ad[] = {
 #define DONGLE_UPLOAD_STATE_SEND_DATA_3 0x06
 #define DONGLE_UPLOAD_STATE_SEND_DATA_4 0x07
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
 struct bt_conn *terminal_conn = NULL;
 static struct bt_uuid_128 SERVICE_UUID = BT_UUID_INIT_128(DONGLE_SERVICE_UUID);
 static struct bt_uuid_128 CHARACTERISTIC_UUID = BT_UUID_INIT_128(DONGLE_CHARACTERISTIC_UUID);
@@ -136,10 +145,15 @@ static uint8_t _discover_(struct bt_conn *conn,
 
     return BT_GATT_ITER_STOP;
 }
+#endif
 
 void interact_update()
 {
+#ifdef DONGLE_PLATFORM__ZEPHYR
     k_mutex_lock(&state_mu, K_FOREVER);
+#else
+    DONGLE_NO_OP;
+#endif
     switch (dongle_state)
     {
     case DONGLE_UPLOAD_STATE_LOCKED:
@@ -268,16 +282,25 @@ void interact_update()
     default:
         log_errorf("No match for state! (%d)\n", dongle_state);
     }
+#ifdef DONGLE_PLATFORM__ZEPHYR
     k_mutex_unlock(&state_mu);
+#else
+    DONGLE_NO_OP;
+#endif
 }
 
 void peer_update()
 {
+#ifdef DONGLE_PLATFORM__ZEPHYR
     k_mutex_lock(&state_mu, K_FOREVER);
     bt_gatt_notify(NULL, &dongle_service.attrs[1], &state, sizeof(interact_state));
     k_mutex_unlock(&state_mu);
+#else
+    DONGLE_NO_OP;
+#endif
 }
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
 static void _peer_connected_(struct bt_conn *conn, uint8_t err)
 {
     if (err)
@@ -333,12 +356,14 @@ static void _peer_auth_cancel_(struct bt_conn *conn)
 static struct bt_conn_auth_cb auth_cb_display = {
     .cancel = _peer_auth_cancel_,
 };
+#endif
 
 int access_advertise()
 {
 
     dongle_state = DONGLE_UPLOAD_STATE_LOCKED;
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
     print_bytes(ad[0].data, ad[0].data_len, "ad data");
     int err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
     if (err)
@@ -359,6 +384,9 @@ int access_advertise()
     bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
     log_infof("ACCESS: Bluetooth advertising started with address %s\n", addr_s);
+#else
+    DONGLE_NO_OP;
+#endif
 
     return 0;
 }

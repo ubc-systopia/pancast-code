@@ -7,11 +7,18 @@
 
 #include "./dongle.h"
 
-#include <drivers/flash.h>
+#include <stddef.h>
 
 #define FLASH_OFFSET 0x2D000
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
+#include <drivers/flash.h>
 typedef off_t storage_addr_t;
+typedef const struct device flash_device_t;
+#else
+typedef int storage_addr_t;
+typedef int flash_device_t;
+#endif
 
 typedef struct
 {
@@ -23,7 +30,7 @@ typedef struct
 
 typedef struct
 {
-    const struct device *dev;
+    flash_device_t *dev;
     size_t min_block_size;
     int num_pages;
     size_t page_size;

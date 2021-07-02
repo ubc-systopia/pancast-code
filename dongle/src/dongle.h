@@ -3,10 +3,18 @@
 
 // Dongle Application
 
+#include <assert.h>
+
+#define DONGLE_NO_OP assert(1);
+
+//#define DONGLE_PLATFORM__ZEPHYR
+
+#ifdef DONGLE_PLATFORM__ZEPHYR
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
+#endif
 
 #include "../../common/src/pancast.h"
 
@@ -73,13 +81,17 @@ void dongle_init();
 void dongle_load();
 void dongle_loop();
 void dongle_report();
+#ifdef DONGLE_PLATFORM__ZEPHYR
 void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
                 struct net_buf_simple *ad);
-
+#else
+void dongle_log();
+#endif
 void dongle_lock();
 void dongle_unlock();
 void dongle_info();
 void dongle_stats();
 void dongle_test();
+void dongle_on_clock_update();
 
 #endif

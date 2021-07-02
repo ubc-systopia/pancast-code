@@ -1,10 +1,6 @@
 #define LOG_LEVEL__INFO
 
-#include <stdio.h>
-
 #include "./storage.h"
-
-#include <drivers/flash.h>
 
 #include "../../common/src/log.h"
 #include "../../common/src/util.h"
@@ -12,8 +8,9 @@
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
-off_t off; // flash offset
+storage_addr_t off; // flash offset
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
 static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 {
 #define sto ((dongle_storage *)data)
@@ -30,13 +27,18 @@ static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
     return true;
 #undef sto
 }
+#endif
 
 #define st (*sto)
 
 void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 {
     log_debugf("erasing page at 0x%x\n", (offset));
+#ifdef DONGLE_PLATFORM__ZEPHYR
     flash_erase(st.dev, (offset), st.page_size);
+#else
+    DONGLE_NO_OP;
+#endif
 }
 
 #define erase(addr) dongle_storage_erase(sto, addr)
@@ -59,15 +61,46 @@ void pre_erase(dongle_storage *sto, size_t write_size)
 int _flash_read_(dongle_storage *sto, void *data, size_t size)
 {
     log_debugf("reading %d bytes from flash at address 0x%x\n", size, off);
+#ifdef DONGLE_PLATFORM__ZEPHYR
     return flash_read(st.dev, off, data, size);
+#else
+    DONGLE_NO_OP;
+    return 0;
+#endif
 }
 
 int _flash_write_(dongle_storage *sto, void *data, size_t size)
 {
     log_debugf("writing %d bytes to flash at address 0x%x\n", size, off);
+#ifdef DONGLE_PLATFORM__ZEPHYR
     return flash_write(st.dev, off, data, size)
            ? log_error("Error writing flash\n"),
            1 : 0;
+#else
+    DONGLE_NO_OP;
+    return 0;
+#endif
+}
+
+void dongle_storage_get_info(dongle_storage *sto)
+{
+    log_info("Getting flash information...\n");
+    st.num_pages = 0;
+#ifdef DONGLE_PLATFORM__ZEPHYR
+    st.min_block_size = flash_get_write_block_size(st.dev);
+    flash_page_foreach(st.dev, _flash_page_info_, sto);
+#else
+    DONGLE_NO_OP;
+#endif
+}
+
+void dongle_storage_init_device(dongle_storage *sto)
+{
+#ifdef DONGLE_PLATFORM__ZEPHYR
+    st.dev = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
+#else
+    DONGLE_NO_OP;
+#endif
 }
 
 void dongle_storage_init(dongle_storage *sto)
@@ -75,11 +108,8 @@ void dongle_storage_init(dongle_storage *sto)
     log_info("Initializing storage...\n");
     off = 0;
     st.map.enctr_entries = 0;
-    st.dev = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-    log_info("Getting flash information...\n");
-    st.min_block_size = flash_get_write_block_size(st.dev);
-    st.num_pages = 0;
-    flash_page_foreach(st.dev, _flash_page_info_, sto);
+    dongle_storage_init_device(sto);
+    dongle_storage_get_info(sto);
     log_infof("Pages: %d, Page Size: %u\n", st.num_pages, st.page_size);
     st.map.config = FLASH_OFFSET;
 }

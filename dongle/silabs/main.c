@@ -26,7 +26,7 @@
 #include "sl_system_process_action.h"
 #endif // SL_CATALOG_KERNEL_PRESENT
 
-#include "../../../common/src/pancast.h"
+#include "../../common/src/pancast.h"
 
 int main(void)
 {

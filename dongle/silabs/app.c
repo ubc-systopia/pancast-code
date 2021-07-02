@@ -20,8 +20,8 @@
 #include "sl_bluetooth.h"
 
 #define LOG_LEVEL__DEBUG
-#include "../../../common/src/log.h"
-#include "../../../common/src/pancast.h"
+#include "../../common/src/log.h"
+#include "../../common/src/pancast.h"
 
 
 dongle_timer_t dongle_timer = 0;

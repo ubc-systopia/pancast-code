@@ -238,7 +238,7 @@ void dongle_clock_increment()
 {
     dongle_lock();
     dongle_time++;
-    log_debugf("Dongle clock: %lu\r\n", dongle_timer);
+    log_debugf("Dongle clock: %lu\r\n", dongle_time);
     dongle_on_clock_update();
     dongle_unlock();
 }

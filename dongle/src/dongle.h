@@ -93,5 +93,6 @@ void dongle_info();
 void dongle_stats();
 void dongle_test();
 void dongle_on_clock_update();
+void dongle_clock_increment();
 
 #endif

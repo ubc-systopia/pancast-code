@@ -53,6 +53,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
   switch (SL_BT_MSG_ID(evt->header)) {
       case sl_bt_evt_system_boot_id:
         log_info("Bluetooth device booted and ready\r\n");
+        dongle_start();
         break;
       case sl_bt_evt_system_soft_timer_id:
       default:

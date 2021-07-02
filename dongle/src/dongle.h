@@ -76,6 +76,9 @@ typedef struct
 } dongle_encounter_entry;
 
 // High-level routine structure
+#ifndef DONGLE_PLATFORM__ZEPHYR
+void dongle_start();
+#endif
 void dongle_scan(void);
 void dongle_init();
 void dongle_load();

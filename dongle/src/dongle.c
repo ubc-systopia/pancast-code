@@ -7,7 +7,6 @@
 
 #include "./dongle.h"
 
-#define APPL__DONGLE
 #define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__DEBUG
@@ -113,7 +112,7 @@ int8_t avg_encounter_rssi = 0;
 #ifdef DONGLE_PLATFORM__ZEPHYR
 void main(void)
 #else
-void dongle_main()
+void dongle_start()
 #endif
 {
     log_info("\r\n"), log_info("Starting Dongle...\r\n");

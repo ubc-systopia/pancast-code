@@ -8,10 +8,7 @@
 #include "./log.h"
 
 #define log_bytes(log, logf, data, len, name) \
-    if (name == NULL)                         \
-        log("data: 0x");                      \
-    else                                      \
-        logf("%s: 0x", name);                 \
+    logf("%s: 0x", name);                     \
     for (int i = 0; i < len; i++)             \
     {                                         \
         if (!(i % 16))                        \

@@ -1,6 +1,9 @@
 #ifndef COMMON_LOG__H
 #define COMMON_LOG__H
 
+#include <assert.h>
+#include <stdio.h>
+
 // Simple logging Macros provided mostly as placeholders for a
 // more robust logging mechanism, and to differentiate between
 // the types of outputs.
@@ -30,7 +33,7 @@
 
 #define LOG_SHOW_TAGS
 
-#define LOG_NA NULL
+#define LOG_NA assert(1)
 
 // // If telemetry is enabled, show tags always
 #ifdef LOG_LEVEL__TELEM

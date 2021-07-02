@@ -23,6 +23,7 @@
 #include "app_assert.h"
 #include "sl_bluetooth.h"
 #include "sl_iostream.h"
+#include "em_gpio.h"
 
 
 // The advertising set handle allocated from Bluetooth stack.
@@ -42,8 +43,10 @@ void app_init (void)
 {
   app_iostream_eusart_init();
   risk_data_len = RISK_DATA_SIZE;
-  adv_index = 0;
   memset(&risk_data, 0, risk_data_len);
+
+  // Set pin PB01 for output
+  GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
 }
 
 
@@ -78,21 +81,26 @@ void update_risk_data(int len, char* data)
 /* Get risk data from rapsberry pi client */
 void get_risk_data() {
 
-	uint8_t ready = XON;
+	// set ready pin
+	GPIO_PinOutSet(gpioPortB, 1);
 
-	// request next chunk of data
-	write(SL_IOSTREAM_STDOUT, &ready, sizeof(uint8_t));
-
-	int read_len;
+	int read_len = 0;
 	char buf[PER_ADV_SIZE];
 
-	do {
 	read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
-	} while (read_len > 0);
 
-	// Update broadcast data
+	// read until data returned
+	while (read_len < 0) {
+		read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
+	}
+
+	// clear pin once data has been recieved
+    GPIO_PinOutClear(gpioPortB, 1);
+
+	// update broadcast data
     update_risk_data(PER_ADV_SIZE, buf);
-    free(buf);
+
+    // probably want to reset timer here
 }
 
 /* Bluetooth stack event handler.
@@ -158,23 +166,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_system_soft_timer_id:
-
-      // handle periodic set advertising data
-      if (evt->data.handle == PER_TIMER_HANDLE) {
-    	  sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
-                                      &risk_data[adv_index * PER_ADV_SIZE]);
-    	  if (sc != 0)
-    	  {
-    //		  printf ("sc: %lx \r\n", sc);
-    	  }
-    	  app_assert_status(sc);
-
-    	  adv_index++;
-    	  if (adv_index * PER_ADV_SIZE > risk_data_len)
-    	  {
-    		  adv_index = 0;
-    	  }
-      }
 
       // handle data updates
       if (evt->data.handle == RISK_TIMER_HANDLE) {

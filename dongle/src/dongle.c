@@ -234,6 +234,15 @@ void dongle_load()
 #endif
 }
 
+void dongle_clock_increment()
+{
+    dongle_lock();
+    dongle_time++;
+    log_debugf("Dongle clock: %lu\r\n", dongle_timer);
+    dongle_on_clock_update();
+    dongle_unlock();
+}
+
 // UPDATE
 // For callback-based timers. This is called with the mutex
 // locked whenever the application clock obtains a new value.

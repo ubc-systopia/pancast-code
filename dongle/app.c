@@ -19,18 +19,17 @@
 
 #include "sl_bluetooth.h"
 
+#include "src/dongle.h"
+
 #define LOG_LEVEL__DEBUG
 #include "../../common/src/log.h"
-#include "../../common/src/pancast.h"
 
 
-dongle_timer_t dongle_timer = 0;
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
   log_debugf("Timer expiration; handle = %p, data = %p\r\n", handle, data);
-  dongle_timer++;
-  log_debugf("Dongle clock: %lu\r\n", dongle_timer);
+  dongle_clock_increment();
 }
 
 /***************************************************************************//**

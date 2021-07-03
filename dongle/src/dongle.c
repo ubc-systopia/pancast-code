@@ -367,7 +367,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
     if (service_id != BROADCAST_SERVICE_ID)
     {
-        log_telemf("%02x,%u,%u,%llu\r\n",
+        log_telemf("%02x,%u,%u,%lu\r\n",
                    TELEM_TYPE_BROADCAST_ID_MISMATCH,
                    dongle_time, epoch,
                    signal_id);
@@ -399,7 +399,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
         num_obs_ids++;
         avg_rssi = exp_avg(avg_rssi, rssi);
 #endif
-        log_telemf("%02x,%u,%u,%llu,%u,%u\r\n",
+        log_telemf("%02x,%u,%u,%lu,%u,%u\r\n",
                    TELEM_TYPE_BROADCAST_TRACK_NEW,
                    dongle_time, epoch,
                    signal_id,
@@ -408,7 +408,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     else
     {
         // when a matching ephemeral id is observed
-        log_telemf("%02x,%u,%u,%llu,%u,%u\r\n",
+        log_telemf("%02x,%u,%u,%lu,%u,%u\r\n",
                    TELEM_TYPE_BROADCAST_TRACK_MATCH,
                    dongle_time, epoch,
                    signal_id,
@@ -421,7 +421,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
 #ifdef MODE__STAT
             avg_encounter_rssi = exp_avg(avg_encounter_rssi, rssi);
 #endif
-            log_telemf("%02x,%u,%u,%llu,%u,%u,%u\r\n",
+            log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n",
                        TELEM_TYPE_ENCOUNTER,
                        dongle_time, epoch,
                        signal_id,
@@ -445,7 +445,7 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
     }
     LOCK
 #define add addr->a.val
-        log_telemf("%02x,%u,%u,%llu,%02x%02x%02x%02x%02x%02x,%d\r\n",
+        log_telemf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
                    TELEM_TYPE_SCAN_RESULT,
                    dongle_time, epoch,
                    signal_id,
@@ -482,7 +482,7 @@ uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry
 
 int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
 {
-    //log_infof("%.4llu.", i);
+    //log_infof("%.4lu.", i);
     //_display_encounter_(entry);
 #ifdef MODE__TEST
     log_debug("comparing logged encounter against test record\r\n");
@@ -557,8 +557,8 @@ void dongle_stats()
     log_info("\r\n");
     log_info("Statistics:\r\n");
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
-    log_infof("    Encounters logged since last report: %llu\r\n", num - enctr_entries_offset);
-    log_infof("    Total Encounters logged:             %llu\r\n", num);
+    log_infof("    Encounters logged since last report: %lu\r\n", num - enctr_entries_offset);
+    log_infof("    Total Encounters logged:             %lu\r\n", num);
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);

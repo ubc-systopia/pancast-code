@@ -16,8 +16,8 @@
 typedef off_t storage_addr_t;
 typedef const struct device flash_device_t;
 #else
-typedef int storage_addr_t;
-typedef int flash_device_t;
+#include "em_msc.h"
+typedef uint32_t storage_addr_t;
 #endif
 
 typedef struct
@@ -30,7 +30,9 @@ typedef struct
 
 typedef struct
 {
+#ifdef DONGLE_PLATFORM__ZEPHYR
     flash_device_t *dev;
+#endif
     size_t min_block_size;
     int num_pages;
     size_t page_size;

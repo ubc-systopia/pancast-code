@@ -1,6 +1,9 @@
 #define LOG_LEVEL__INFO
 
 #include "storage.h"
+#include "gecko.h"
+
+#include <string.h>
 
 #include "../../common/src/log.h"
 #include "../../common/src/util.h"
@@ -37,7 +40,7 @@ void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 #ifdef DONGLE_PLATFORM__ZEPHYR
     flash_erase(st.dev, (offset), st.page_size);
 #else
-    DONGLE_NO_OP;
+    MSC_ErasePage((uint32_t *)offset);
 #endif
 }
 
@@ -64,7 +67,7 @@ int _flash_read_(dongle_storage *sto, void *data, size_t size)
 #ifdef DONGLE_PLATFORM__ZEPHYR
     return flash_read(st.dev, off, data, size);
 #else
-    DONGLE_NO_OP;
+    memcpy(data, (uint32_t *)off, size);
     return 0;
 #endif
 }
@@ -77,7 +80,7 @@ int _flash_write_(dongle_storage *sto, void *data, size_t size)
            ? log_error("Error writing flash\r\n"),
            1 : 0;
 #else
-    DONGLE_NO_OP;
+    MSC_WriteWord((uint32_t *)off, data, (uint32_t)size);
     return 0;
 #endif
 }
@@ -85,12 +88,14 @@ int _flash_write_(dongle_storage *sto, void *data, size_t size)
 void dongle_storage_get_info(dongle_storage *sto)
 {
     log_info("Getting flash information...\r\n");
-    st.num_pages = 0;
 #ifdef DONGLE_PLATFORM__ZEPHYR
+    st.num_pages = 0;
     st.min_block_size = flash_get_write_block_size(st.dev);
     flash_page_foreach(st.dev, _flash_page_info_, sto);
 #else
-    DONGLE_NO_OP;
+    st.num_pages = FLASH_DEVICE_NUM_PAGES;
+    st.min_block_size = FLASH_DEVICE_BLOCK_SIZE;
+    st.page_size = FLASH_DEVICE_PAGE_SIZE;
 #endif
 }
 
@@ -99,7 +104,9 @@ void dongle_storage_init_device(dongle_storage *sto)
 #ifdef DONGLE_PLATFORM__ZEPHYR
     st.dev = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
 #else
-    DONGLE_NO_OP;
+    MSC_ExecConfig_TypeDef execConfig = MSC_EXECCONFIG_DEFAULT;
+    MSC_ExecConfigSet(&execConfig);
+    MSC_Init();
 #endif
 }
 

@@ -23,6 +23,8 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
 #include <drivers/flash.h>
+#else
+#include "mutex.h"
 #endif
 
 #include "storage.h"
@@ -48,8 +50,9 @@ struct k_mutex dongle_mu;
 #define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
 #define UNLOCK k_mutex_unlock(&dongle_mu);
 #else
-#define LOCK DONGLE_NO_OP;
-#define UNLOCK DONGLE_NO_OP;
+mutex dongle_mu;
+#define LOCK mutex_lock(&dongle_mu);
+#define UNLOCK mutex_unlock(&dongle_mu);
 #endif
 
 void dongle_lock()

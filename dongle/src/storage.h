@@ -36,11 +36,15 @@ typedef struct
 {
 #ifdef DONGLE_PLATFORM__ZEPHYR
     flash_device_t *dev;
+#else
+    MSC_ExecConfig_TypeDef mscExecConfig;
 #endif
     size_t min_block_size;
     int num_pages;
     size_t page_size;
     _dongle_storage_map_ map;
+    storage_addr_t off; // flash offset
+    uint64_t numErasures;
 } dongle_storage;
 
 // STORAGE INIT

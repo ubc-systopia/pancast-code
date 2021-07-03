@@ -220,6 +220,7 @@ void dongle_init()
 void dongle_load()
 {
     dongle_storage_init(&storage);
+    // Config load is required to properly set up the memory maps
     dongle_storage_load_config(&storage, &config);
 #ifdef MODE__TEST
     config.id = TEST_DONGLE_ID;

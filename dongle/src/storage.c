@@ -120,6 +120,10 @@ void dongle_storage_init(dongle_storage *sto)
     dongle_storage_get_info(sto);
     log_infof("Pages: %d, Page Size: %u\r\n", st.num_pages, st.page_size);
     st.map.config = FLASH_OFFSET;
+    if (FLASH_OFFSET % st.page_size != 0)
+    {
+        log_error("Start address of storage area is not a page-multiple!\r\n");
+    }
 }
 
 #define cf (*cfg)
@@ -145,7 +149,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-    log_debug("Saving config\r\n");
+    log_info("Saving config\r\n");
     off = st.map.config;
 #define write(data, size) (pre_erase(sto, size), _flash_write_(sto, data, size), off += size)
     write(&cf.id, sizeof(dongle_id_t));
@@ -155,6 +159,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
     write(&cf.dongle_sk_size, sizeof(key_size_t));
     write(&cf.dongle_sk, SK_MAX_SIZE);
 #undef write
+    log_info("saved.\r\n");
 }
 
 #undef cf
@@ -168,13 +173,14 @@ void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 
 void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
 {
-    log_debug("Saving OTPs\r\n");
+    log_info("Saving OTPs\r\n");
     for (int i = 0; i < NUM_OTP; i++)
     {
         off = OTP(i);
         pre_erase(sto, sizeof(dongle_otp_t));
         _flash_write_(sto, &otps[i], sizeof(dongle_otp_t));
     }
+    log_info("Saved.\r\n");
 }
 
 int otp_is_used(dongle_otp_t *otp)

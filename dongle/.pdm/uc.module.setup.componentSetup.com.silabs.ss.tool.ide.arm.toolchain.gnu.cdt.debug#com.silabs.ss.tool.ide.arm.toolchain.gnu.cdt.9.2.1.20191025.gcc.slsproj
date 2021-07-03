@@ -70,15 +70,9 @@
       <folder name="common">
         <folder name="inc">
           <file name="sl_atomic.h" uri="studio:/sdk/platform/common/inc/sl_atomic.h"/>
-          <file name="sl_cmsis_os2_common.h" uri="studio:/sdk/platform/common/inc/sl_cmsis_os2_common.h"/>
-          <file name="sli_cmsis_os2_ext_task_register.h" uri="studio:/sdk/platform/common/inc/sli_cmsis_os2_ext_task_register.h"/>
           <file name="sl_enum.h" uri="studio:/sdk/platform/common/inc/sl_enum.h"/>
           <file name="sl_slist.h" uri="studio:/sdk/platform/common/inc/sl_slist.h"/>
           <file name="sl_status.h" uri="studio:/sdk/platform/common/inc/sl_status.h"/>
-        </folder>
-        <folder name="src">
-          <file name="sli_cmsis_os2_ext_task_register.c" uri="studio:/sdk/platform/common/src/sli_cmsis_os2_ext_task_register.c"/>
-          <file name="sl_slist.c" uri="studio:/sdk/platform/common/src/sl_slist.c"/>
         </folder>
         <folder name="toolchain">
           <folder name="src">
@@ -89,6 +83,9 @@
             <file name="sl_memory.h" uri="studio:/sdk/platform/common/toolchain/inc/sl_memory.h"/>
             <file name="sl_gcc_preinclude.h" uri="studio:/sdk/platform/common/toolchain/inc/sl_gcc_preinclude.h"/>
           </folder>
+        </folder>
+        <folder name="src">
+          <file name="sl_slist.c" uri="studio:/sdk/platform/common/src/sl_slist.c"/>
         </folder>
       </folder>
       <folder name="CMSIS">
@@ -101,15 +98,6 @@
           <file name="cmsis_gcc.h" uri="studio:/sdk/platform/CMSIS/Include/cmsis_gcc.h"/>
           <file name="core_cm33.h" uri="studio:/sdk/platform/CMSIS/Include/core_cm33.h"/>
           <file name="mpu_armv8.h" uri="studio:/sdk/platform/CMSIS/Include/mpu_armv8.h"/>
-        </folder>
-        <folder name="RTOS2">
-          <folder name="Source">
-            <file name="os_systick.c" uri="studio:/sdk/platform/CMSIS/RTOS2/Source/os_systick.c"/>
-          </folder>
-          <folder name="Include">
-            <file name="cmsis_os2.h" uri="studio:/sdk/platform/CMSIS/RTOS2/Include/cmsis_os2.h"/>
-            <file name="os_tick.h" uri="studio:/sdk/platform/CMSIS/RTOS2/Include/os_tick.h"/>
-          </folder>
         </folder>
       </folder>
       <folder name="service">
@@ -173,11 +161,11 @@
         <folder name="system">
           <folder name="src">
             <file name="sl_system_init.c" uri="studio:/sdk/platform/service/system/src/sl_system_init.c"/>
-            <file name="sl_system_kernel.c" uri="studio:/sdk/platform/service/system/src/sl_system_kernel.c"/>
+            <file name="sl_system_process_action.c" uri="studio:/sdk/platform/service/system/src/sl_system_process_action.c"/>
           </folder>
           <folder name="inc">
             <file name="sl_system_init.h" uri="studio:/sdk/platform/service/system/inc/sl_system_init.h"/>
-            <file name="sl_system_kernel.h" uri="studio:/sdk/platform/service/system/inc/sl_system_kernel.h"/>
+            <file name="sl_system_process_action.h" uri="studio:/sdk/platform/service/system/inc/sl_system_process_action.h"/>
           </folder>
         </folder>
         <folder name="sleeptimer">
@@ -315,11 +303,7 @@
     </folder>
     <folder name="protocol">
       <folder name="bluetooth">
-        <folder name="src">
-          <file name="sl_bt_rtos_adaptation.c" uri="studio:/sdk/protocol/bluetooth/src/sl_bt_rtos_adaptation.c"/>
-        </folder>
         <folder name="inc">
-          <file name="sl_bt_rtos_adaptation.h" uri="studio:/sdk/protocol/bluetooth/inc/sl_bt_rtos_adaptation.h"/>
           <file name="sl_bt_stack_config.h" uri="studio:/sdk/protocol/bluetooth/inc/sl_bt_stack_config.h"/>
           <file name="sl_bt_ll_config.h" uri="studio:/sdk/protocol/bluetooth/inc/sl_bt_ll_config.h"/>
           <file name="sli_bt_gattdb_def.h" uri="studio:/sdk/protocol/bluetooth/inc/sli_bt_gattdb_def.h"/>
@@ -493,7 +477,7 @@
                 <file name="sl_se_manager_util.c" uri="studio:/sdk/util/third_party/crypto/sl_component/se_manager/src/sl_se_manager_util.c"/>
                 <file name="sl_se_manager_attestation.c" uri="studio:/sdk/util/third_party/crypto/sl_component/se_manager/src/sl_se_manager_attestation.c"/>
                 <file name="sli_se_manager_osal.h" uri="studio:/sdk/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal.h"/>
-                <file name="sli_se_manager_osal_cmsis_rtos2.h" uri="studio:/sdk/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal_cmsis_rtos2.h"/>
+                <file name="sli_se_manager_osal_baremetal.h" uri="studio:/sdk/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal_baremetal.h"/>
               </folder>
               <folder name="inc">
                 <file name="sl_se_manager.h" uri="studio:/sdk/util/third_party/crypto/sl_component/se_manager/inc/sl_se_manager.h"/>
@@ -666,64 +650,6 @@
             </folder>
           </folder>
         </folder>
-        <folder name="freertos">
-          <folder name="cmsis">
-            <folder name="Source">
-              <file name="cmsis_os2.c" uri="studio:/sdk/util/third_party/freertos/cmsis/Source/cmsis_os2.c"/>
-            </folder>
-            <folder name="Include">
-              <file name="freertos_os2.h" uri="studio:/sdk/util/third_party/freertos/cmsis/Include/freertos_os2.h"/>
-              <file name="freertos_mpool.h" uri="studio:/sdk/util/third_party/freertos/cmsis/Include/freertos_mpool.h"/>
-            </folder>
-          </folder>
-          <folder name="kernel">
-            <folder name="portable">
-              <folder name="SiliconLabs">
-                <file name="tick_power_manager.c" uri="studio:/sdk/util/third_party/freertos/kernel/portable/SiliconLabs/tick_power_manager.c"/>
-              </folder>
-              <folder name="GCC">
-                <folder name="ARM_CM33_NTZ">
-                  <folder name="non_secure">
-                    <file name="port.c" uri="studio:/sdk/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/port.c"/>
-                    <file name="portasm.c" uri="studio:/sdk/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.c"/>
-                    <file name="portmacro.h" uri="studio:/sdk/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portmacro.h"/>
-                    <file name="portasm.h" uri="studio:/sdk/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.h"/>
-                  </folder>
-                </folder>
-              </folder>
-              <folder name="MemMang">
-                <file name="heap_4.c" uri="studio:/sdk/util/third_party/freertos/kernel/portable/MemMang/heap_4.c"/>
-              </folder>
-            </folder>
-            <folder name="include">
-              <file name="atomic.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/atomic.h"/>
-              <file name="croutine.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/croutine.h"/>
-              <file name="deprecated_definitions.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/deprecated_definitions.h"/>
-              <file name="event_groups.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/event_groups.h"/>
-              <file name="FreeRTOS.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/FreeRTOS.h"/>
-              <file name="list.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/list.h"/>
-              <file name="message_buffer.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/message_buffer.h"/>
-              <file name="mpu_prototypes.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/mpu_prototypes.h"/>
-              <file name="mpu_wrappers.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/mpu_wrappers.h"/>
-              <file name="portable.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/portable.h"/>
-              <file name="projdefs.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/projdefs.h"/>
-              <file name="queue.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/queue.h"/>
-              <file name="semphr.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/semphr.h"/>
-              <file name="stack_macros.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/stack_macros.h"/>
-              <file name="StackMacros.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/StackMacros.h"/>
-              <file name="stream_buffer.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/stream_buffer.h"/>
-              <file name="task.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/task.h"/>
-              <file name="timers.h" uri="studio:/sdk/util/third_party/freertos/kernel/include/timers.h"/>
-            </folder>
-            <file name="croutine.c" uri="studio:/sdk/util/third_party/freertos/kernel/croutine.c"/>
-            <file name="event_groups.c" uri="studio:/sdk/util/third_party/freertos/kernel/event_groups.c"/>
-            <file name="list.c" uri="studio:/sdk/util/third_party/freertos/kernel/list.c"/>
-            <file name="queue.c" uri="studio:/sdk/util/third_party/freertos/kernel/queue.c"/>
-            <file name="stream_buffer.c" uri="studio:/sdk/util/third_party/freertos/kernel/stream_buffer.c"/>
-            <file name="tasks.c" uri="studio:/sdk/util/third_party/freertos/kernel/tasks.c"/>
-            <file name="timers.c" uri="studio:/sdk/util/third_party/freertos/kernel/timers.c"/>
-          </folder>
-        </folder>
       </folder>
       <folder name="silicon_labs">
         <folder name="silabs_core">
@@ -744,14 +670,10 @@
   <includePath uri="studio:/sdk/protocol/bluetooth/inc"/>
   <includePath uri="studio:/sdk/hardware/board/inc"/>
   <includePath uri="studio:/sdk/platform/CMSIS/Include"/>
-  <includePath uri="studio:/sdk/platform/CMSIS/RTOS2/Include"/>
   <includePath uri="studio:/sdk/util/third_party/crypto/sl_component/sl_cryptoacc_library/include"/>
   <includePath uri="studio:/sdk/platform/service/device_init/inc"/>
   <includePath uri="studio:/sdk/platform/emdrv/common/inc"/>
   <includePath uri="studio:/sdk/platform/emlib/inc"/>
-  <includePath uri="studio:/sdk/util/third_party/freertos/cmsis/Include"/>
-  <includePath uri="studio:/sdk/util/third_party/freertos/kernel/include"/>
-  <includePath uri="studio:/sdk/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure"/>
   <includePath uri="studio:/sdk/platform/service/hfxo_manager/inc"/>
   <includePath uri="studio:/sdk/platform/service/iostream/inc"/>
   <includePath uri="studio:/sdk/util/third_party/crypto/sl_component/sl_mbedtls_support/config"/>
@@ -781,7 +703,6 @@
   <includePath uri="studio:/sdk/platform/service/udelay/inc"/>
   <macroDefinition name="DEBUG_EFM"/>
   <macroDefinition name="EFR32BG22C224F512IM40"/>
-  <macroDefinition name="configNUM_SDK_THREAD_LOCAL_STORAGE_POINTERS" value="2"/>
   <macroDefinition name="SL_COMPONENT_CATALOG_PRESENT"/>
   <macroDefinition name="MBEDTLS_CONFIG_FILE" value="&lt;mbedtls_config.h>"/>
   <macroDefinition name="MBEDTLS_PSA_CRYPTO_CONFIG_FILE" value="&lt;psa_crypto_config.h>"/>

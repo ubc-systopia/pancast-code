@@ -1,12 +1,10 @@
 #CRC Codes for initially generated config files -- do not modify!
-FreeRTOSConfig.h=538121564
 emlib_core_debug_config.h=171843933
 mbedtls_config.h=384290189
 nvm3_default_config.h=-1865878923
 psa_crypto_config.h=-715200899
 sl_bluetooth_config.h=-1565218373
 sl_board_control_config.h=-436878843
-sl_bt_rtos_config.h=-1672170025
 sl_device_init_dcdc_config.h=540536968
 sl_device_init_emu_config.h=1238190016
 sl_device_init_hfxo_config.h=101953940

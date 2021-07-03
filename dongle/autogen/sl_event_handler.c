@@ -11,14 +11,12 @@
 #include "sl_device_init_clocks.h"
 #include "sl_device_init_emu.h"
 #include "pa_conversions_efr32.h"
-#include "sl_bt_rtos_adaptation.h"
 #include "sl_sleeptimer.h"
+#include "sl_bluetooth.h"
 #include "sl_iostream_init_instances.h"
 #include "sl_iostream_init_usart_instances.h"
 #include "sl_mbedtls.h"
 #include "nvm3_default.h"
-#include "cmsis_os2.h"
-#include "sl_bluetooth.h"
 #include "sl_power_manager.h"
 
 void sl_iostream_init_instances(void)
@@ -40,13 +38,7 @@ void sl_platform_init(void)
   sl_device_init_emu();
   sl_board_init();
   nvm3_initDefault();
-  osKernelInitialize();
   sl_power_manager_init();
-}
-
-void sl_kernel_start(void)
-{
-  osKernelStart();
 }
 
 void sl_driver_init(void)
@@ -64,10 +56,27 @@ void sl_service_init(void)
 void sl_stack_init(void)
 {
   sl_rail_util_pa_init();
-  sl_bt_rtos_init();
+  sl_bt_init();
 }
 
 void sl_internal_app_init(void)
+{
+}
+
+void sl_platform_process_action(void)
+{
+}
+
+void sl_service_process_action(void)
+{
+}
+
+void sl_stack_process_action(void)
+{
+  sl_bt_step();
+}
+
+void sl_internal_app_process_action(void)
 {
 }
 

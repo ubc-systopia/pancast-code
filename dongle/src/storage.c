@@ -42,6 +42,7 @@ void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 #else
     MSC_ErasePage((uint32_t *)offset);
 #endif
+    log_debug("erased.\r\n");
 }
 
 #define erase(addr) dongle_storage_erase(sto, addr)
@@ -87,8 +88,8 @@ int _flash_write_(dongle_storage *sto, void *data, size_t size)
 
 void dongle_storage_get_info(dongle_storage *sto)
 {
-    log_info("Getting flash information...\r\n");
 #ifdef DONGLE_PLATFORM__ZEPHYR
+    log_info("Getting flash information...\r\n");
     st.num_pages = 0;
     st.min_block_size = flash_get_write_block_size(st.dev);
     flash_page_foreach(st.dev, _flash_page_info_, sto);
@@ -139,6 +140,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
     st.map.log = next_multiple(st.page_size,
                                st.map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
 #undef read
+    log_info("Config loaded.\r\n");
 }
 
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)

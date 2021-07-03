@@ -9,7 +9,11 @@
 
 #include <stddef.h>
 
+#ifdef DONGLE_PLATFORM__ZEPHYR
 #define FLASH_OFFSET 0x2D000
+#else
+#define FLASH_OFFSET 0x2d8d8
+#endif
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #include <drivers/flash.h>

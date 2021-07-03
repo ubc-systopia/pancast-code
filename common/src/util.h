@@ -9,7 +9,7 @@
 
 #define log_bytes(log, logf, data, len, name) \
     logf("%s: 0x", name);                     \
-    for (int i = 0; i < len; i++)             \
+    for (unsigned int i = 0; i < len; i++)    \
     {                                         \
         if (!(i % 16))                        \
         {                                     \

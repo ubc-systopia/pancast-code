@@ -254,7 +254,7 @@ void dongle_on_clock_update()
 #undef t_init
     if (new_epoch != epoch)
     {
-        log_debugf("EPOCH STARTED: %u\r\n", new_epoch);
+        log_debugf("EPOCH STARTED: %lu\r\n", new_epoch);
         epoch = new_epoch;
         signal_id = 0;
         // TODO: log time to flash
@@ -333,7 +333,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #define en (*enc)
     // when a valid encounter is detected
     // log the encounter
-    log_debugf("Beacon Encounter (id=%u, t_b=%u, t_d=%u)\r\n", *en.b, *en.t,
+    log_debugf("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
                dongle_time);
     // Write to storage
     dongle_storage_print(&storage, 0x22000, 32);
@@ -359,7 +359,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #undef en
 }
 
-static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
+static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
 {
 #define en (*enc)
 
@@ -371,7 +371,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signa
                    TELEM_TYPE_BROADCAST_ID_MISMATCH,
                    dongle_time, epoch,
                    signal_id);
-        return;
+        return signal_id;
     }
 
     // determine which tracked id, if any, is a match
@@ -388,7 +388,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signa
         // if no match was found, start tracking the new id, replacing the oldest
         // one currently tracked
         i = cur_id_idx;
-        log_debugf("new ephemeral id observed (beacon=%u), tracking at index %d\r\n",
+        log_debugf("new ephemeral id observed (beacon=%lu), tracking at index %d\r\n",
                    *en.b, i);
         print_bytes(en.eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
         cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
@@ -429,6 +429,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signa
         }
     }
 #undef en
+    return signal_id;
 }
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
@@ -521,10 +522,10 @@ void dongle_info()
 #undef CONFIG_UNKOWN
 #endif
     log_infof("    Application Version:             %s\r\n", APPL_VERSION);
-    log_infof("    Dongle ID:                       %u\r\n", config.id);
-    log_infof("    Initial clock:                   %u\r\n", config.t_init);
-    log_infof("    Backend public key size:         %u bytes\r\n", config.backend_pk_size);
-    log_infof("    Secret key size:                 %u bytes\r\n", config.dongle_sk_size);
+    log_infof("    Dongle ID:                       %lu\r\n", config.id);
+    log_infof("    Initial clock:                   %lu\r\n", config.t_init);
+    log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
+    log_infof("    Secret key size:                 %lu bytes\r\n", config.dongle_sk_size);
     log_infof("    Timer Resolution:                %u ms\r\n", DONGLE_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\r\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
@@ -555,7 +556,7 @@ void dongle_stats()
 #ifdef MODE__STAT
     log_info("\r\n");
     log_info("Statistics:\r\n");
-    log_infof("    Dongle timer:                        %u\r\n", dongle_time);
+    log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
     log_infof("    Encounters logged since last report: %llu\r\n", num - enctr_entries_offset);
     log_infof("    Total Encounters logged:             %llu\r\n", num);
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);

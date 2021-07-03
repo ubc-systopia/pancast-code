@@ -557,8 +557,8 @@ void dongle_stats()
     log_info("\r\n");
     log_info("Statistics:\r\n");
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
-    log_infof("    Encounters logged since last report: %lu\r\n", num - enctr_entries_offset);
-    log_infof("    Total Encounters logged:             %lu\r\n", num);
+    log_infof("    Encounters logged since last report: %llu\r\n", num - enctr_entries_offset);
+    log_infof("    Total Encounters logged:             %llu\r\n", num);
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);

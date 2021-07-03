@@ -41,7 +41,7 @@
 // All of the variables used throughout the main program are allocated here
 
 // 1. Mutual exclusion
-// Access for both central updates and scan interupts
+// Access for both central updates and scan interrupts
 // is given on a FIFO basis
 #ifdef DONGLE_PLATFORM__ZEPHYR
 struct k_mutex dongle_mu;

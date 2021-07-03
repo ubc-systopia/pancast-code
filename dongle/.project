@@ -96,6 +96,11 @@
 			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_atomic.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/common/inc/sl_cmsis_os2_common.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_cmsis_os2_common.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/common/inc/sl_enum.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_enum.h</locationURI>
@@ -111,9 +116,19 @@
 			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_status.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/common/inc/sli_cmsis_os2_ext_task_register.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sli_cmsis_os2_ext_task_register.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/common/src/sl_slist.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/common/src/sl_slist.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/common/src/sli_cmsis_os2_ext_task_register.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/common/src/sli_cmsis_os2_ext_task_register.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/emlib/inc/em_assert.h</name>
@@ -291,6 +306,11 @@
 			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/inc/sl_bt_ll_config.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/protocol/bluetooth/inc/sl_bt_rtos_adaptation.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/inc/sl_bt_rtos_adaptation.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/protocol/bluetooth/inc/sl_bt_stack_config.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/inc/sl_bt_stack_config.h</locationURI>
@@ -314,6 +334,26 @@
 			<name>gecko_sdk_3.2.0/protocol/bluetooth/inc/sli_bt_gattdb_def.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/inc/sli_bt_gattdb_def.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/protocol/bluetooth/src/sl_bt_rtos_adaptation.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/src/sl_bt_rtos_adaptation.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/CMSIS/RTOS2/Include/cmsis_os2.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/CMSIS/RTOS2/Include/cmsis_os2.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/CMSIS/RTOS2/Include/os_tick.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/CMSIS/RTOS2/Include/os_tick.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/CMSIS/RTOS2/Source/os_systick.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/CMSIS/RTOS2/Source/os_systick.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/common/toolchain/inc/sl_gcc_preinclude.h</name>
@@ -611,9 +651,9 @@
 			<locationURI>STUDIO_SDK_LOC/platform/service/system/inc/sl_system_init.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/service/system/inc/sl_system_process_action.h</name>
+			<name>gecko_sdk_3.2.0/platform/service/system/inc/sl_system_kernel.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/service/system/inc/sl_system_process_action.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/service/system/inc/sl_system_kernel.h</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/service/system/src/sl_system_init.c</name>
@@ -621,9 +661,9 @@
 			<locationURI>STUDIO_SDK_LOC/platform/service/system/src/sl_system_init.c</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/service/system/src/sl_system_process_action.c</name>
+			<name>gecko_sdk_3.2.0/platform/service/system/src/sl_system_kernel.c</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/service/system/src/sl_system_process_action.c</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/service/system/src/sl_system_kernel.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/service/udelay/inc/sl_udelay.h</name>
@@ -649,6 +689,41 @@
 			<name>gecko_sdk_3.2.0/util/silicon_labs/silabs_core/memory_manager/sl_malloc.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/silicon_labs/silabs_core/memory_manager/sl_malloc.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/croutine.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/croutine.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/event_groups.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/event_groups.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/list.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/list.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/queue.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/queue.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/stream_buffer.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/stream_buffer.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/tasks.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/tasks.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/timers.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/timers.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/hardware/driver/mx25_flash_shutdown/inc/sl_mx25_flash_shutdown_usart/sl_mx25_flash_shutdown.h</name>
@@ -1164,6 +1239,111 @@
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/threading.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/threading.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/cmsis/Include/freertos_mpool.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/cmsis/Include/freertos_mpool.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/cmsis/Include/freertos_os2.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/cmsis/Include/freertos_os2.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/cmsis/Source/cmsis_os2.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/cmsis/Source/cmsis_os2.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/FreeRTOS.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/FreeRTOS.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/StackMacros.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/StackMacros.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/atomic.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/atomic.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/croutine.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/croutine.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/deprecated_definitions.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/deprecated_definitions.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/event_groups.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/event_groups.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/list.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/list.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/message_buffer.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/message_buffer.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/mpu_prototypes.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/mpu_prototypes.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/mpu_wrappers.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/mpu_wrappers.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/portable.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/portable.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/projdefs.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/projdefs.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/queue.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/queue.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/semphr.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/semphr.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/stack_macros.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/stack_macros.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/stream_buffer.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/stream_buffer.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/task.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/task.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/include/timers.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/include/timers.h</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Source/GCC/startup_efr32bg22.c</name>
@@ -1781,9 +1961,9 @@
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal_baremetal.h</name>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal_cmsis_rtos2.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal_baremetal.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/se_manager/src/sli_se_manager_osal_cmsis_rtos2.h</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_alt/include/sl_mbedtls.h</name>
@@ -2216,6 +2396,16 @@
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_psa_driver/src/sli_psa_trng.c</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/portable/MemMang/heap_4.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/MemMang/heap_4.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/portable/SiliconLabs/tick_power_manager.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/SiliconLabs/tick_power_manager.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_alt/include/psa/error.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_alt/include/psa/error.h</locationURI>
@@ -2224,6 +2414,26 @@
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_alt/include/psa/internal_trusted_storage.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_alt/include/psa/internal_trusted_storage.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/port.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/port.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portmacro.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portmacro.h</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

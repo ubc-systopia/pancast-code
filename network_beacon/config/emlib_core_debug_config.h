@@ -1,9 +1,9 @@
 /***************************************************************************//**
  * @file
- * @brief Board Default Init
+ * @brief emlib_core Configuration
  *******************************************************************************
  * # License
- * <b>Copyright 2020 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2019 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -27,14 +27,20 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
-#include "sl_board_control.h"
 
-void sl_board_default_init(void)
-{
-  sl_board_disable_sensor(SL_BOARD_SENSOR_RHT);
+#ifndef EM_CORE_DEBUG_CONFIG_H
+#define EM_CORE_DEBUG_CONFIG_H
 
-  sl_board_disable_sensor(SL_BOARD_SENSOR_IMU);
+// <<< Use Configuration Wizard in Context Menu >>>
 
-  sl_board_disable_sensor(SL_BOARD_SENSOR_MICROPHONE);
-  
-}
+// <h> Core Configuration
+
+// <q SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING> Enables measuring of interrupt disable time for debugging purposes.
+// <i> Default: 0
+// <i> If Enabled, either cycle_counter or systemview component must be added to project.
+#define SL_EMLIB_CORE_ENABLE_INTERRUPT_DISABLED_TIMING    0
+
+// </h>
+
+// <<< end of configuration section >>>
+#endif // EM_CORE_CONFIG_H

@@ -17,8 +17,7 @@
  * @note  This function is called with the interrupt disabled and it MUST NOT be
  *        re-enabled.
  ******************************************************************************/
-__WEAK bool
-app_is_ok_to_sleep (void)
+__WEAK bool app_is_ok_to_sleep(void)
 {
   return true;
 }
@@ -41,8 +40,7 @@ app_is_ok_to_sleep (void)
  *        called for every ISR. If a prior hook function requires to wakeup, such
  *        as a wireless stack, the application hook function won't be called.
  ******************************************************************************/
-__WEAK sl_power_manager_on_isr_exit_t
-app_sleep_on_isr_exit (void)
+__WEAK sl_power_manager_on_isr_exit_t app_sleep_on_isr_exit(void)
 {
   return SL_POWER_MANAGER_IGNORE;
 }
@@ -53,19 +51,16 @@ app_sleep_on_isr_exit (void)
  * the software to cancel going to sleep in case of a last-minute event occurred
  * (window between the function call and interrupt disable).
  ******************************************************************************/
-bool
-sl_power_manager_is_ok_to_sleep (void)
+bool sl_power_manager_is_ok_to_sleep(void)
 {
   bool ok_to_sleep = true;
-  if (sli_bt_is_ok_to_sleep () == false)
-    {
-      ok_to_sleep = false;
-    }
+  if (sli_bt_is_ok_to_sleep() == false) {
+    ok_to_sleep = false;
+  }
   // Application hook
-  if (app_is_ok_to_sleep () == false)
-    {
-      ok_to_sleep = false;
-    }
+  if (app_is_ok_to_sleep() == false) {
+    ok_to_sleep = false;
+  }
 
   return ok_to_sleep;
 }
@@ -74,54 +69,43 @@ sl_power_manager_is_ok_to_sleep (void)
  * Mandatory callback that must validate if the MCU can sleep after having
  * processed an interrupt when the system was sleeping.
  ******************************************************************************/
-bool
-sl_power_manager_sleep_on_isr_exit (void)
+bool sl_power_manager_sleep_on_isr_exit(void)
 {
   sl_power_manager_on_isr_exit_t answer;
   bool sleep = false;
   bool force_wakeup = false;
-
+   
   // This function allow the power manager to return into sleep, if the latest timer 
-  // to expire was power manager's internal one used to restore HFXO on time. 
+  // to expire was power manager's internal one used to restore HFXO on time or 
+  // the HFXO interrupt. 
   // Most of the time we want to get back to sleep until the next event occurs.
-  sleep =
-      sl_sleeptimer_is_power_manager_early_restore_timer_latest_to_expire ();
+  sleep = sl_power_manager_is_latest_wakeup_internal();
 
-  answer = sli_bt_sleep_on_isr_exit ();
-  if (answer == SL_POWER_MANAGER_WAKEUP)
-    {
-      force_wakeup = true;
-    }
-  else if (answer == SL_POWER_MANAGER_SLEEP)
-    {
-      sleep = true;
-    }
+  answer = sli_bt_sleep_on_isr_exit();
+  if (answer == SL_POWER_MANAGER_WAKEUP) {
+    force_wakeup = true;
+  } else if (answer == SL_POWER_MANAGER_SLEEP) {
+    sleep = true;
+  }
 
-  answer = sl_iostream_eusart_vcom_sleep_on_isr_exit ();
-  if (answer == SL_POWER_MANAGER_WAKEUP)
-    {
-      force_wakeup = true;
-    }
-  else if (answer == SL_POWER_MANAGER_SLEEP)
-    {
-      sleep = true;
-    }
+  answer = sl_iostream_eusart_vcom_sleep_on_isr_exit();
+  if (answer == SL_POWER_MANAGER_WAKEUP) {
+    force_wakeup = true;
+  } else if (answer == SL_POWER_MANAGER_SLEEP) {
+    sleep = true;
+  }
 
   // Application hook
-  answer = app_sleep_on_isr_exit ();
-  if (answer == SL_POWER_MANAGER_WAKEUP)
-    {
-      force_wakeup = true;
-    }
-  else if (answer == SL_POWER_MANAGER_SLEEP)
-    {
-      sleep = true;
-    }
-
-  if (force_wakeup)
-    {
-      sleep = false;
-    }
+  answer = app_sleep_on_isr_exit();
+  if (answer == SL_POWER_MANAGER_WAKEUP) {
+    force_wakeup = true;
+  } else if (answer == SL_POWER_MANAGER_SLEEP) {
+    sleep = true;
+  }
+  
+  if (force_wakeup) {
+    sleep = false;
+  }
 
   return sleep;
 }

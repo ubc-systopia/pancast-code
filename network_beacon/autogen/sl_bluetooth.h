@@ -7,13 +7,13 @@
 #include "sl_bt_api.h"
 #define SL_BT_COMPONENT_ADVERTISERS 0
 
+#define SL_BT_COMPONENT_CONNECTIONS 0
+
 // Initialize Bluetooth core functionality
-void
-sl_bt_init (void);
+void sl_bt_init(void);
 
 // Polls bluetooth stack for an event and processes it
-void
-sl_bt_step (void);
+void sl_bt_step(void);
 
 /**
  * Tell if the application can process a new Bluetooth event in its current
@@ -28,20 +28,15 @@ sl_bt_step (void);
  * @param len Data length of the event
  * @return ture if event can be processed; false otherwise
  */
-bool
-sl_bt_can_process_event (uint32_t len);
+bool sl_bt_can_process_event(uint32_t len);
 
 // Processes a single bluetooth event
-void
-sl_bt_process_event (sl_bt_msg_t *evt);
+void sl_bt_process_event(sl_bt_msg_t *evt);
 
-void
-sl_bt_on_event (sl_bt_msg_t *evt);
+void sl_bt_on_event(sl_bt_msg_t* evt);
 
 // Power Manager related functions
-bool
-sli_bt_is_ok_to_sleep (void);
-sl_power_manager_on_isr_exit_t
-sli_bt_sleep_on_isr_exit (void);
+bool sli_bt_is_ok_to_sleep(void);
+sl_power_manager_on_isr_exit_t sli_bt_sleep_on_isr_exit(void);
 
 #endif // BLUETOOTH_H

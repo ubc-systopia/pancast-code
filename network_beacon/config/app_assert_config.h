@@ -24,9 +24,15 @@
 // <i> Enables Assert.
 #define APP_ASSERT_ENABLE      1
 
-// <q APP_ASSERT_LOG_ENABLE> Logging
-// <i> Enables logging for Assert.
+// <e APP_ASSERT_LOG_ENABLE> Logging
+// <i> Enables logging for assert.
 #define APP_ASSERT_LOG_ENABLE      1
+
+// <q APP_ASSERT_TRACE_ENABLE> Enable trace
+// <i> Enables trace for assert.
+#define APP_ASSERT_TRACE_ENABLE      1
+
+// </e>
 
 // </e>
 

@@ -7,8 +7,7 @@ extern "C" {
 #endif
 
 // Initialize iostream component(s) / instance(s)
-void
-sl_iostream_init_instances (void);
+void sl_iostream_init_instances(void);
 
 #ifdef __cplusplus
 }

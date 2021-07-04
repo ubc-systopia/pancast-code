@@ -48,6 +48,8 @@ struct k_mutex dongle_mu;
 #define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
 #define UNLOCK k_mutex_unlock(&dongle_mu);
 #else
+// In the Gecko Platform, locks are no-ops until a firmware implementation
+// can be made to work.
 #define LOCK DONGLE_NO_OP;
 #define UNLOCK DONGLE_NO_OP;
 #endif

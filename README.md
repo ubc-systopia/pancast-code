@@ -3,14 +3,14 @@ Code for some components of the PanCast system, including an implementation of t
 
 ## Features
 ### Critical Functionality
-| Name | Completion | Notes |
-|------|------------|-------|
-| Bluetooth LE Broadcast/Recieve | 90 % | Still working on modifying API to use 31 bytes for payload|
-| Ephemeral ID Generation | 100 % ||
-|Encounter Logging| 100 % |  |
-| Device Configuration Load from Flash | 100 % | |
-| OTP Storage | 100 % |  |
-| Terminal Connection - Delayed Release Upload | 100 % ||
+| Name                                         | Completion | Notes                                                      |
+| -------------------------------------------- | ---------- | ---------------------------------------------------------- |
+| Bluetooth LE Broadcast/Recieve               | 90 %       | Still working on modifying API to use 31 bytes for payload |
+| Ephemeral ID Generation                      | 100 %      |                                                            |
+| Encounter Logging                            | 100 %      |                                                            |
+| Device Configuration Load from Flash         | 100 %      |                                                            |
+| OTP Storage                                  | 100 %      |                                                            |
+| Terminal Connection - Delayed Release Upload | 100 %      |                                                            |
 
 ## Structure
 Application code is found in the various directories of the project.

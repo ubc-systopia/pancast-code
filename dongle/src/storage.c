@@ -265,7 +265,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
 {
     storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.map.enctr_entries);
     st.off = start;
-    log_debugf("write log; existing entries: %llu, offset: 0x%x\r\n", st.map.enctr_entries, st.off);
+    log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
+               (uint32_t)st.map.enctr_entries, st.off);
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), st.off += size
@@ -277,7 +278,7 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     log_debugf("total size: %u (entry size=%d)\r\n", st.off - start, ENCOUNTER_ENTRY_SIZE);
 #undef write
     st.map.enctr_entries++;
-    log_debugf("log now contains %llu entries\r\n", st.map.enctr_entries);
+    log_debugf("log now contains %lu entries\r\n", (uint32_t)st.map.enctr_entries);
 }
 
 int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)

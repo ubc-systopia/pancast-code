@@ -353,7 +353,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
         test_encounters++;
     }
 #define test_en (test_encounter_list[total_test_encounters])
-    test_en.location_id = *enc->loc;
+    memcpy(&test_en.location_id, enc->loc, sizeof(beacon_location_id_t));
     test_en.beacon_id = *enc->b;
     test_en.beacon_time = *enc->t;
     test_en.dongle_time = dongle_time;

@@ -161,19 +161,19 @@ void dongle_scan(void)
 #ifdef DONGLE_PLATFORM__ZEPHYR
     int err = err = bt_le_scan_start(
         BT_LE_SCAN_PARAM(
-            BT_LE_SCAN_TYPE_PASSIVE,   // passive scan
-            BT_LE_SCAN_OPT_NONE,       // no options; in particular, allow duplicates
-            DONGLE_SCAN_INTERVAL,      // interval
-            DONGLE_SCAN_WINDOW         // window
+            BT_LE_SCAN_TYPE_PASSIVE, // passive scan
+            BT_LE_SCAN_OPT_NONE,     // no options; in particular, allow duplicates
+            DONGLE_SCAN_INTERVAL,    // interval
+            DONGLE_SCAN_WINDOW       // window
             ),
         dongle_log);
 #else
     sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
-            DONGLE_SCAN_INTERVAL,
-            DONGLE_SCAN_WINDOW);
-    sl_bt_scanner_set_mode(gap_1m_phy, 0);       // passive scan
+                             DONGLE_SCAN_INTERVAL,
+                             DONGLE_SCAN_WINDOW);
+    sl_bt_scanner_set_mode(gap_1m_phy, 0); // passive scan
     sl_bt_scanner_start(gap_1m_phy,
-            sl_bt_scanner_discover_observation); // scan all devices
+                        sl_bt_scanner_discover_observation); // scan all devices
     int err = 0;
 #endif
     if (err)
@@ -455,7 +455,7 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #define add (addr->addr)
 #define dat (data)
 #endif
-// Filter mis-sized packets
+    // Filter mis-sized packets
     if (len != ENCOUNTER_BROADCAST_SIZE + 1)
     {
         return;

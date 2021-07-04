@@ -56,7 +56,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         dongle_start();
         break;
       case sl_bt_evt_scanner_scan_report_id:
-        log_debug("Device found!\r\n");
+#define report (evt->data.evt_scanner_scan_report)
+        dongle_log(&report.address,
+                   report.rssi, report.data.data, report.data.len);
+#undef report
         break;
       case sl_bt_evt_system_soft_timer_id:
       default:

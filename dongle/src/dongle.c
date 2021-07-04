@@ -25,8 +25,6 @@
 #include <drivers/flash.h>
 #else
 #include "mutex.h"
-//#include "sl_le_gap.h"
-#include "sl_bt_api.h"
 #endif
 
 #include "storage.h"
@@ -450,29 +448,37 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 {
     char addr_str[BT_ADDR_LE_STR_LEN];
     bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-    // Filter mis-sized packets
-    if (ad->len != ENCOUNTER_BROADCAST_SIZE + 1)
+#define len (ad->len)
+#define add (addr->a.val)
+#define dat (ad->data)
+#else
+void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
+{
+#define len (data_len)
+#define add (addr->addr)
+#define dat (data)
+#endif
+// Filter mis-sized packets
+    if (len != ENCOUNTER_BROADCAST_SIZE + 1)
     {
         return;
     }
     LOCK
-#define add addr->a.val
         log_telemf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
                    TELEM_TYPE_SCAN_RESULT,
                    dongle_time, epoch,
                    signal_id,
                    add[0], add[1], add[2], add[3], add[4], add[5], rssi);
-#undef add
-    decode_payload(ad->data);
+    decode_payload(dat);
     encounter_broadcast_t en;
-    decode_encounter(&en, (encounter_broadcast_raw_t *)ad->data);
+    decode_encounter(&en, (encounter_broadcast_raw_t *)dat);
     dongle_track(&en, rssi, signal_id);
     signal_id++;
     UNLOCK
+#undef dat
+#undef data
+#undef add
 }
-#else
-void dongle_log();
-#endif
 
 uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
 {

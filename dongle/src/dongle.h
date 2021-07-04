@@ -14,6 +14,8 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
+#else
+#include "sl_bt_api.h"
 #endif
 
 #include "../../common/src/pancast.h"
@@ -99,7 +101,7 @@ void dongle_report();
 void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
                 struct net_buf_simple *ad);
 #else
-void dongle_log();
+void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
 #endif
 void dongle_lock();
 void dongle_unlock();

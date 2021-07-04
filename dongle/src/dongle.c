@@ -25,6 +25,8 @@
 #include <drivers/flash.h>
 #else
 #include "mutex.h"
+//#include "sl_le_gap.h"
+#include "sl_bt_api.h"
 #endif
 
 #include "storage.h"
@@ -115,6 +117,8 @@ int8_t avg_encounter_rssi = 0;
 #ifdef DONGLE_PLATFORM__ZEPHYR
 void main(void)
 #else
+// a.k.a DONGLE START
+// Assumes that kernel has initialized and bluetooth device is booted.
 void dongle_start()
 #endif
 {
@@ -164,12 +168,17 @@ void dongle_scan(void)
         BT_LE_SCAN_PARAM(
             BT_LE_SCAN_TYPE_PASSIVE,   // passive scan
             BT_LE_SCAN_OPT_NONE,       // no options; in particular, allow duplicates
-            BT_GAP_SCAN_FAST_INTERVAL, // interval
-            BT_GAP_SCAN_FAST_WINDOW    // window
+            DONGLE_SCAN_INTERVAL,      // interval
+            DONGLE_SCAN_WINDOW         // window
             ),
         dongle_log);
 #else
-    DONGLE_NO_OP;
+    sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
+            DONGLE_SCAN_INTERVAL,
+            DONGLE_SCAN_WINDOW);
+    sl_bt_scanner_set_mode(gap_1m_phy, 0);       // passive scan
+    sl_bt_scanner_start(gap_1m_phy,
+            sl_bt_scanner_discover_observation); // scan all devices
     int err = 0;
 #endif
     if (err)

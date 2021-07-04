@@ -25,6 +25,17 @@
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
 
+// Bluetooth Scanning Parameters
+#ifdef DONGLE_PLATFORM__ZEPHYR
+// These are defined constants
+#define DONGLE_SCAN_INTERVAL BT_GAP_SCAN_FAST_INTERVAL
+#define DONGLE_SCAN_WINDOW BT_GAP_SCAN_FAST_WINDOW
+#else
+// These are hard-coded, in ms
+#define DONGLE_SCAN_INTERVAL 60
+#define DONGLE_SCAN_WINDOW 30
+#endif
+
 // Data Structures
 
 // Fixed configuration info.

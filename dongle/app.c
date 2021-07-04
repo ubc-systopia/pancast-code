@@ -55,6 +55,9 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         log_info("Bluetooth device booted and ready\r\n");
         dongle_start();
         break;
+      case sl_bt_evt_scanner_scan_report_id:
+        log_debug("Device found!\r\n");
+        break;
       case sl_bt_evt_system_soft_timer_id:
       default:
         log_debug("Unhandled bluetooth event\r\n");

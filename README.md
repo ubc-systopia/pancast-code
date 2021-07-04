@@ -5,12 +5,14 @@ Code for some components of the PanCast system, including an implementation of t
 ### Critical Functionality
 | Name                                         | Completion | Notes                                                      |
 | -------------------------------------------- | ---------- | ---------------------------------------------------------- |
-| Bluetooth LE Broadcast/Recieve               | 90 %       | Still working on modifying API to use 31 bytes for payload |
+| Bluetooth LE Broadcast/Recieve               | 90 %       | Zephyr OS suppors 30 byte payload. SiLabs will support 31. |
 | Ephemeral ID Generation                      | 100 %      |                                                            |
 | Encounter Logging                            | 100 %      |                                                            |
 | Device Configuration Load from Flash         | 100 %      |                                                            |
 | OTP Storage                                  | 100 %      |                                                            |
 | Terminal Connection - Delayed Release Upload | 100 %      |                                                            |
+| Log Deletion (e.g. past 14 Days)             | 0%         |                                                            |
+| Terminal Data Encryption                     | 0%         | Need to develop a data protocol with backend.              |
 
 ## Structure
 Application code is found in the various directories of the project.
@@ -53,6 +55,7 @@ in flash that contains no application data (if such a page exists). The prototyp
 found [here](https://github.com/ubc-systopia/pancast-keys) is set up to prepare hex files that conform
 to this spec. A little work must be done to combine application and configuration data into a single,
 flashable program:
+
 1. First, compile the application (without configs) as desired. Make sure the application FLASH_OFFSET
 parameters are set correctly. We will assume the output lives in `zephyr.hex`.
 2. Generate the desired config hex file for the device, call this something like `config.hex`. This can be done easily using the key-generation program. (NOTE: make sure the generated config device type matches the application being used).

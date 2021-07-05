@@ -10,7 +10,7 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__DEBUG
 #define APPL__BEACON
 #define MODE__STAT
 #define MODE__TEST
@@ -25,6 +25,8 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <drivers/flash.h>
+#else
+#include "sl_bluetooth.h"
 #endif
 
 #include "../../common/src/pancast.h"
@@ -94,6 +96,8 @@ static bt_data_t adv_res[] = {
             sizeof(CONFIG_BT_DEVICE_NAME) - 1)}; // Advertising response
 #else
 uint8_t adv_payload[MAX_BROADCAST_SIZE];
+// Advertising handle
+static uint8_t legacy_set_handle = 0xf1;
 #endif
 //
 // Reporting
@@ -338,6 +342,21 @@ static void _beacon_epoch_()
     }
 }
 
+int _set_adv_data_()
+{
+    log_debug("Setting legacy adv data...\r\n");
+    sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
+                                               0, 31,
+                                               adv_payload);
+    if (sc != 0)
+    {
+        log_errorf("Error, sc: 0x%lx\r\n", sc);
+        return -1;
+    }
+    log_debug("Success!\r\n");
+    return 0;
+}
+
 static int _beacon_advertise_()
 {
     int err = 0;
@@ -369,7 +388,38 @@ static int _beacon_advertise_()
         log_debugf("advertising started with address %s\n", addr_s);
     }
 #else
-    BEACON_NO_OP;
+    sl_status_t sc;
+    log_debug("Creating legacy advertising set\r\n");
+    sc = sl_bt_advertiser_create_set(&legacy_set_handle);
+    if (sc != 0)
+    {
+        log_errorf("Error, sc: 0x%lx\r\n", sc);
+        return -1;
+    }
+    printf("Starting legacy advertising...\r\n");
+    // Set advertising interval to 100ms.
+    sc = sl_bt_advertiser_set_timing(
+        legacy_set_handle,
+        BEACON_ADV_MIN_INTERVAL, // min. adv. interval (milliseconds * 1.6)
+        BEACON_ADV_MAX_INTERVAL, // max. adv. interval (milliseconds * 1.6) next: 0x4000
+        0,                       // adv. duration, 0 for continuous advertising
+        0);                      // max. num. adv. events
+    if (sc != 0)
+    {
+        log_errorf("Error, sc: 0x%lx\r\n", sc);
+        return -1;
+    }
+    // Start legacy advertising
+    sc = sl_bt_advertiser_start(
+        legacy_set_handle,
+        advertiser_broadcast,
+        advertiser_non_connectable);
+    if (sc != 0)
+    {
+        log_errorf("Error starting advertising, sc: 0x%lx\r\n", sc);
+        return -1;
+    }
+    err = _set_adv_data_();
 #endif
     return err;
 }
@@ -379,22 +429,19 @@ static int _beacon_pause_()
     // stop current advertising cycle
 #ifdef BEACON_PLATFORM__ZEPHYR
     int err = bt_le_adv_stop();
-#else
-    int err = 0;
-    BEACON_NO_OP;
-#endif
     if (err)
     {
         log_errorf("Advertising failed to stop (err %d)\n", err);
         return err;
     }
+    log_debug("advertising stopped\n");
+#endif
     cycles++;
 #ifdef MODE__STAT
     stat_cycles++;
 #endif
     _beacon_report_();
-    log_debug("advertising stopped\n");
-    return err;
+    return 0;
 }
 
 int beacon_clock_increment(beacon_timer_t time)
@@ -405,11 +452,8 @@ int beacon_clock_increment(beacon_timer_t time)
     _beacon_epoch_();
     _beacon_encode_();
 
-    int err = _beacon_advertise_();
-    if (err)
-    {
-        return err;
-    }
+    _set_adv_data_();
+
     _beacon_pause_();
     return 0;
 }
@@ -464,6 +508,12 @@ void beacon_broadcast()
 
 #ifdef BEACON_PLATFORM__ZEPHYR
     beacon_loop();
+#else
+    int err = _beacon_advertise_();
+    if (err)
+    {
+        return;
+    }
 #endif
 }
 

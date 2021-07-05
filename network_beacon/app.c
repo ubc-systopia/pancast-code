@@ -17,7 +17,6 @@
 
 #include "app.h"
 #include "app_iostream_eusart.h"
-#include "legacy.h"
 #include "app_assert.h"
 #include "sl_bluetooth.h"
 #include "sl_iostream.h"
@@ -92,7 +91,7 @@ void app_process_action (void)
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
   sec_clock++;
-  if (sec_clock % BEACON_TIMER_RESOLUTION == 0)
+  if (sec_clock == (BEACON_TIMER_RESOLUTION/1000))
   {
       beacon_clock_increment(1);
       sec_clock = 0;
@@ -100,7 +99,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 
   sl_status_t sc;
   // handle periodic set advertising data
-  printf ("Setting advertising data...\r\n");
+  printf ("Setting periodic advertising data...\r\n");
   sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
                                 &risk_data[adv_index * PER_ADV_SIZE]);
   if (sc != 0)
@@ -178,9 +177,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                                       &risk_data[adv_index * PER_ADV_SIZE]);
       app_assert_status(sc);
       printf ("Success!\r\n");
-
-      // Start advertising location ephemeral ID
-      start_legacy_advertising();
 
       beacon_start();
       break;

@@ -38,6 +38,9 @@ typedef union
     encounter_broadcast_raw_t en_data;
     bt_data_t bt_data[1];
 } bt_wrapper_t;
+#else
+#define BEACON_ADV_MIN_INTERVAL 0x30
+#define BEACON_ADV_MAX_INTERVAL 0x60
 #endif
 
 #ifdef BEACON_PLATFORM__ZEPHYR
@@ -51,5 +54,6 @@ static void _beacon_broadcast_(int);
 void beacon_broadcast();
 #endif
 static void _beacon_info_();
+int _set_adv_data_();
 
 #endif

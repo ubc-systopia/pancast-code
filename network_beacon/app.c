@@ -81,9 +81,11 @@ void update_risk_data(int len, char *data)
     }
 }
 
-/* Get risk data from rapsberry pi client */
+/* Get risk data from raspberry pi client */
 void get_risk_data()
 {
+
+    fflush(SL_IOSTREAM_STDIN);
 
     // set ready pin
     GPIO_PinOutSet(gpioPortB, 1);
@@ -93,19 +95,24 @@ void get_risk_data()
 
     read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
 
-    // read until data returned
+    // read until data returned, should do read_len != PER_ADV_SIZE?
     while (read_len < 0)
     {
         read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
     }
 
-    // clear pin once data has been recieved
+    // clear pin once data has been received
     GPIO_PinOutClear(gpioPortB, 1);
 
     // update broadcast data
-    update_risk_data(PER_ADV_SIZE, buf);
+    if (read_len == PER_ADV_SIZE)
+    {
+        update_risk_data(PER_ADV_SIZE, buf);
+    }
 
-    // probably want to reset timer here
+#ifdef BATCH_SIZE
+// add batching
+#endif
 }
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
@@ -164,7 +171,8 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                          NO_MAX_EVT);      // max. num. adv. events
         app_assert_status(sc);
 
-        // printf("Starting periodic advertising...\r\n");
+        printf("Starting periodic advertising...\r\n");
+
         sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
         app_assert_status(sc);

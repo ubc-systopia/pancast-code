@@ -266,11 +266,17 @@ static void _beacon_encode_()
 
 static void _gen_ephid_()
 {
-#ifdef BEACON_PLATFORM__ZEPHYR
     hash_t h;
+    digest_t d;
+#ifdef BEACON_PLATFORM__ZEPHYR
 #define init() tc_sha256_init(&h)
 #define add(data, size) tc_sha256_update(&h, (uint8_t *)data, size)
-#define complete(d) tc_sha256_final(d.bytes, &h)
+#define complete() tc_sha256_final(d.bytes, &h)
+#else
+#define init() sha_256_init(&h, d.bytes)
+#define add(data, size) sha_256_write(&h, data, size)
+#define complete() sha_256_close(&h)
+#endif
     // Initialize hash
     init();
     // Add relevant data
@@ -278,15 +284,11 @@ static void _gen_ephid_()
     add(&beacon_location_id, sizeof(beacon_location_id_t));
     add(&epoch, sizeof(beacon_epoch_counter_t));
     // finalize and copy to id
-    digest_t d;
-    complete(d);
+    complete();
     memcpy(&beacon_eph_id, &d, BEACON_EPH_ID_HASH_LEN); // Little endian so these are the least significant
 #undef complete
 #undef add
 #undef init
-#else
-    BEACON_NO_OP;
-#endif
     print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 }
 
@@ -340,6 +342,7 @@ static void _beacon_epoch_()
 
 int _set_adv_data_()
 {
+#ifdef BEACON_PLATFORM__GECKO
     log_debug("Setting legacy adv data...\r\n");
     sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
                                                0, 31,
@@ -350,6 +353,7 @@ int _set_adv_data_()
         return -1;
     }
     log_debug("Success!\r\n");
+#endif
     return 0;
 }
 

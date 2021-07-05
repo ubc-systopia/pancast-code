@@ -12,6 +12,8 @@
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>
 #include <bluetooth/bluetooth.h>
+#else
+#include "./sha256/sha-256.h"
 #endif
 
 #define BEACON_REPORT_INTERVAL 2
@@ -41,6 +43,13 @@ typedef union
 #else
 #define BEACON_ADV_MIN_INTERVAL 0x30
 #define BEACON_ADV_MAX_INTERVAL 0x60
+
+typedef struct
+{
+    uint8_t bytes[32];
+} digest_t;
+
+typedef struct Sha_256 hash_t;
 #endif
 
 #ifdef BEACON_PLATFORM__ZEPHYR

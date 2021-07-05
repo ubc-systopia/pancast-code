@@ -90,15 +90,14 @@ static struct k_timer kernel_time_hp; // high-precision kernel timer
 //
 // Bluetooth
 #ifdef BEACON_PLATFORM__ZEPHYR
-static bt_wrapper_t payload; // container for actual blutooth payload
 static bt_data_t adv_res[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME,
             sizeof(CONFIG_BT_DEVICE_NAME) - 1)}; // Advertising response
 #else
-uint8_t adv_payload[MAX_BROADCAST_SIZE];
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
 #endif
+static bt_wrapper_t payload; // container for actual blutooth payload
 //
 // Reporting
 static beacon_timer_t report_time; // Report tracking clock
@@ -214,7 +213,6 @@ static void _beacon_report_()
     }
 }
 
-#ifdef BEACON_PLATFORM__ZEPHYR
 // Intermediary transformer to create a well-formed BT data type
 // for using the high-level APIs. Becomes obsolete once advertising
 // routine supports a full raw payload
@@ -232,18 +230,13 @@ static void _form_payload_()
     bt->data = (uint8_t *)&of;
 #undef bt
 }
-#endif
 
 // pack a raw byte payload by copying from the high-level type
 // order is important here so as to avoid unaligned access on the
 // receiver side
 static void _encode_encounter_()
 {
-#ifdef BEACON_PLATFORM__ZEPHYR
     uint8_t *dst = (uint8_t *)&payload.en_data;
-#else
-    uint8_t *dst = adv_payload;
-#endif
     size_t pos = 0;
 #define copy(src, size)           \
     memcpy(dst + pos, src, size); \
@@ -259,9 +252,7 @@ static void _beacon_encode_()
 {
     // Load broadcast into bluetooth payload
     _encode_encounter_();
-#ifdef BEACON_PLATFORM__ZEPHYR
     _form_payload_();
-#endif
 }
 
 static void _gen_ephid_()
@@ -344,9 +335,10 @@ int _set_adv_data_()
 {
 #ifdef BEACON_PLATFORM__GECKO
     log_debug("Setting legacy adv data...\r\n");
+    print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
     sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
                                                0, 31,
-                                               adv_payload);
+                                               payload.en_data.bytes);
     if (sc != 0)
     {
         log_errorf("Error, sc: 0x%lx\r\n", sc);

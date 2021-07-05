@@ -179,7 +179,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       printf ("Success!\r\n");
 
       // Start advertising location ephemeral ID
-      //start_legacy_advertising();
+      start_legacy_advertising();
       break;
 
     case sl_bt_evt_system_soft_timer_id:

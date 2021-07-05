@@ -13,11 +13,11 @@
     {                                         \
         if (!(i % 16))                        \
         {                                     \
-            log("\n");                        \
+            log("\r\n");                      \
         }                                     \
         logf(" %.2x", ((uint8_t *)data)[i]);  \
     }                                         \
-    log("\n")
+    log("\r\n")
 
 #define print_bytes(data, len, name) \
     log_bytes(log_debug, log_debugf, data, len, name)
@@ -25,6 +25,6 @@
 #define info_bytes(data, len, name) \
     log_bytes(log_info, log_infof, data, len, name)
 
-#define print_ptr(p, name) log_debugf("%s: %p\n", name, (void *)p)
+#define print_ptr(p, name) log_debugf("%s: %p\r\n", name, (void *)p)
 
 #endif

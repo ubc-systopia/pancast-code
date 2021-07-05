@@ -49,16 +49,16 @@ void main(void)
 void beacon_start()
 #endif
 {
-    log_info("\n"), log_info("Starting Beacon...\n");
+    log_info("\r\n"), log_info("Starting Beacon...\r\n");
 #ifdef MODE__STAT
-    log_info("Statistics mode enabled\n");
+    log_info("Statistics mode enabled\r\n");
 #endif
-    log_infof("Reporting every %d ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+    log_infof("Reporting every %d ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
 #ifdef BEACON_PLATFORM__ZEPHYR
     int err = bt_enable(_beacon_broadcast_);
     if (err)
     {
-        log_errorf("Bluetooth Enable Failure: error code = %d\n", err);
+        log_errorf("Bluetooth Enable Failure: error code = %d\r\n", err);
     }
 #else
     beacon_broadcast();
@@ -139,14 +139,14 @@ static void _beacon_load_()
     read(sizeof(key_size_t), &backend_pk_size);
     if (backend_pk_size > PK_MAX_SIZE)
     {
-        log_errorf("Key size read for public key (%u bytes) is larger than max (%u)\n",
+        log_errorf("Key size read for public key (%u bytes) is larger than max (%u)\r\n",
                    backend_pk_size, PK_MAX_SIZE);
     }
     read(backend_pk_size, &backend_pk);
     read(sizeof(key_size_t), &beacon_sk_size);
     if (beacon_sk_size > SK_MAX_SIZE)
     {
-        log_errorf("Key size read for secret key (%u bytes) is larger than max (%u)\n",
+        log_errorf("Key size read for secret key (%u bytes) is larger than max (%u)\r\n",
                    beacon_sk_size, SK_MAX_SIZE);
     }
     read(beacon_sk_size, &beacon_sk);
@@ -156,44 +156,40 @@ static void _beacon_load_()
 
 static void _beacon_info_()
 {
-    log_info("\n");
-    log_info("Info: \n");
-    log_infof("    Platform:                        %s\n", "Zephyr OS");
+    log_info("\r\n");
+    log_info("Info: \r\n");
+    log_infof("    Platform:                        %s\r\n", "Zephyr OS");
 #ifndef BEACON_PLATFORM__ZEPHYR
 #define UK "Unknown"
 #define CONFIG_BOARD UK
 #define CONFIG_BT_DEVICE_NAME UK
 #endif
-    log_infof("    Board:                           %s\n", CONFIG_BOARD);
-    log_infof("    Bluetooth device name:           %s\n", CONFIG_BT_DEVICE_NAME);
-    log_infof("    Application Version:             %s\n", APPL_VERSION);
-    log_infof("    Beacon ID:                       %u\n", beacon_id);
-    log_infof("    Location ID:                     %llu\n", beacon_location_id);
-    log_infof("    Initial clock:                   %u\n", t_init);
-    log_infof("    Backend public key size:         %u bytes\n", backend_pk_size);
-    log_infof("    Secret key size:                 %u bytes\n", beacon_sk_size);
-    log_infof("    Timer Resolution:                %u ms\n", BEACON_TIMER_RESOLUTION);
-    log_infof("    Epoch Length:                    %u ms\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
-    log_infof("    Report Interval:                 %u ms\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-    log_info("    Advertising Interval:                \n");
-#ifdef BEACON_PLATFORM__ZEPHYR
-    log_infof("        Min:                         %x ms\n", BEACON_ADV_MIN_INTERVAL);
-    log_infof("        Max:                         %x ms\n", BEACON_ADV_MAX_INTERVAL);
-#else
-#endif
+    log_infof("    Board:                           %s\r\n", CONFIG_BOARD);
+    log_infof("    Bluetooth device name:           %s\r\n", CONFIG_BT_DEVICE_NAME);
+    log_infof("    Application Version:             %s\r\n", APPL_VERSION);
+    log_infof("    Beacon ID:                       %u\r\n", beacon_id);
+    log_infof("    Location ID:                     %lu\r\n", (uint32_t)beacon_location_id);
+    log_infof("    Initial clock:                   %u\r\n", t_init);
+    log_infof("    Backend public key size:         %u bytes\r\n", backend_pk_size);
+    log_infof("    Secret key size:                 %u bytes\r\n", beacon_sk_size);
+    log_infof("    Timer Resolution:                %u ms\r\n", BEACON_TIMER_RESOLUTION);
+    log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
+    log_infof("    Report Interval:                 %u ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+    log_infof("        Min:                         %x ms\r\n", BEACON_ADV_MIN_INTERVAL);
+    log_infof("        Max:                         %x ms\r\n", BEACON_ADV_MAX_INTERVAL);
 }
 
 #ifdef MODE__STAT
 static void _beacon_stats_()
 {
-    log_info("\n");
-    log_info("Statistics: \n");
-    log_infof("     Time since last report:         %d ms\n", beacon_time - stat_start);
-    log_info("     Timer:\n");
-    log_infof("         Start:                      %u\n", stat_start);
-    log_infof("         End:                        %u\n", beacon_time);
-    log_infof("     Cycles:                         %u\n", stat_cycles);
-    log_infof("     Completed Epochs:               %u\n", stat_epochs);
+    log_info("\r\n");
+    log_info("Statistics: \r\n");
+    log_infof("     Time since last report:         %d ms\r\n", beacon_time - stat_start);
+    log_info("     Timer:\r\n");
+    log_infof("         Start:                      %u\r\n", stat_start);
+    log_infof("         End:                        %u\r\n", beacon_time);
+    log_infof("     Cycles:                         %u\r\n", stat_cycles);
+    log_infof("     Completed Epochs:               %u\r\n", stat_epochs);
 }
 #endif
 
@@ -206,7 +202,7 @@ static void _beacon_report_()
     else
     {
         report_time = beacon_time;
-        log_info("\n"), log_info("***          Begin Report          ***\n");
+        log_info("\r\n"), log_info("***          Begin Report          ***\r\n");
         _beacon_info_();
 #ifdef MODE__STAT
         _beacon_stats_();
@@ -214,7 +210,7 @@ static void _beacon_report_()
         stat_cycles = 0;
         stat_epochs = 0;
 #endif
-        log_info("\n"), log_info("***          End Report            ***\n");
+        log_info("\r\n"), log_info("***          End Report            ***\r\n");
     }
 }
 
@@ -329,7 +325,7 @@ static void _beacon_epoch_()
     epoch = epoch_i(beacon_time, t_init);
     if (!cycles || epoch != old_epoch)
     {
-        log_debugf("EPOCH STARTED: %u\n", epoch);
+        log_debugf("EPOCH STARTED: %u\r\n", epoch);
         // When a new epoch has started, generate a new ephemeral id
         _gen_ephid_();
         if (epoch != old_epoch)
@@ -373,7 +369,7 @@ static int _beacon_advertise_()
         adv_res, ARRAY_SIZE(adv_res));
     if (err)
     {
-        log_errorf("Advertising failed to start (err %d)\n", err);
+        log_errorf("Advertising failed to start (err %d)\r\n", err);
     }
     else
     {
@@ -385,7 +381,7 @@ static int _beacon_advertise_()
         bt_id_get(&addr, &count);
         bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
-        log_debugf("advertising started with address %s\n", addr_s);
+        log_debugf("advertising started with address %s\r\n", addr_s);
     }
 #else
     sl_status_t sc;
@@ -431,10 +427,10 @@ static int _beacon_pause_()
     int err = bt_le_adv_stop();
     if (err)
     {
-        log_errorf("Advertising failed to stop (err %d)\n", err);
+        log_errorf("Advertising failed to stop (err %d)\r\n", err);
         return err;
     }
-    log_debug("advertising stopped\n");
+    log_debug("advertising stopped\r\n");
 #endif
     cycles++;
 #ifdef MODE__STAT
@@ -447,7 +443,7 @@ static int _beacon_pause_()
 int beacon_clock_increment(beacon_timer_t time)
 {
     beacon_time += time;
-    log_debugf("beacon timer: %u\n", beacon_time);
+    log_debugf("beacon timer: %u\r\n", beacon_time);
 
     _beacon_epoch_();
     _beacon_encode_();
@@ -493,15 +489,15 @@ static void _beacon_broadcast_(int err)
     // check initialization
     if (err)
     {
-        log_errorf("Bluetooth init failed (err %d)\n", err);
+        log_errorf("Bluetooth init failed (err %d)\r\n", err);
         return;
     }
 
-    log_info("Bluetooth initialized - starting broadcast\n");
+    log_info("Bluetooth initialized - starting broadcast\r\n");
 #else
 void beacon_broadcast()
 {
-    log_info("Starting broadcast\n");
+    log_info("Starting broadcast\r\n");
 #endif
 
     _beacon_load_(), _beacon_init_();

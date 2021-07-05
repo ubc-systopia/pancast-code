@@ -23,10 +23,11 @@
 #include "sl_iostream.h"
 #include <stdio.h>
 
+#include "src/beacon.h"
+
 #include "../../common/src/pancast.h"
 
 uint64_t sec_clock = 0;
-beacon_timer_t beacon_clock = 0;
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
@@ -93,7 +94,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
   sec_clock++;
   if (sec_clock % BEACON_TIMER_RESOLUTION == 0)
   {
-      beacon_clock++;
+      beacon_clock_increment(1);
       sec_clock = 0;
   }
 
@@ -180,6 +181,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
       // Start advertising location ephemeral ID
       start_legacy_advertising();
+
+      beacon_start();
       break;
 
     case sl_bt_evt_system_soft_timer_id:

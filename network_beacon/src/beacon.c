@@ -444,16 +444,18 @@ static int _beacon_pause_()
     return 0;
 }
 
+void _beacon_update_()
+{
+    _beacon_epoch_();
+    _beacon_encode_();
+    _set_adv_data_();
+}
+
 int beacon_clock_increment(beacon_timer_t time)
 {
     beacon_time += time;
     log_debugf("beacon timer: %u\r\n", beacon_time);
-
-    _beacon_epoch_();
-    _beacon_encode_();
-
-    _set_adv_data_();
-
+    _beacon_update_();
     _beacon_pause_();
     return 0;
 }
@@ -461,6 +463,8 @@ int beacon_clock_increment(beacon_timer_t time)
 #ifdef BEACON_PLATFORM__ZEPHYR
 int beacon_loop()
 {
+    _beacon_update_();
+
     uint32_t lp_timer_status = 0, hp_timer_status = 0;
 
     int err;
@@ -514,6 +518,7 @@ void beacon_broadcast()
     {
         return;
     }
+    _beacon_update_();
 #endif
 }
 

@@ -81,18 +81,15 @@ void* uart_main(void* arg) {
 
     struct risk_data* r_data = (struct risk_data*)arg;
 
-    printf("Data size: %d\r\n", r_data->data.size);
-
     while (1) {
-    // open port for write only
-    if (!fd) {
+        // open port for write only
         fd = open(portname, O_WRONLY);
-    }
 
-    if (fd < 0) {
-     //  fprintf(stderr, "Error opening %s: %s\n", portname, strerror(errno));
-       // continue;
-    }
+
+        if (fd < 0) {
+          fprintf(stderr, "Error opening %s: %s\n", portname, strerror(errno));
+            // continue;
+        }
 
     /*baudrate 115200, 8 bits, no parity, 1 stop bit */
     set_interface_attribs(fd, B115200);
@@ -117,7 +114,7 @@ void* uart_main(void* arg) {
         // wait for ready signal from GPIO
         uint8_t ready = 0;
         while (ready == 0) {
-            int ready = GPIORead(PIN);
+            ready = GPIORead(PIN);
         }
 
         // write data 
@@ -147,9 +144,8 @@ void* uart_main(void* arg) {
         // wait for ready signal from GPIO
         uint8_t ready = 0;
         while (ready == 0) {
-            int ready = GPIORead(PIN);
+            ready = GPIORead(PIN);
         }
-
         // write data 
         tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
         int wlen = write(fd, &r_data->data.response[data_sent], CHUNK_SIZE);

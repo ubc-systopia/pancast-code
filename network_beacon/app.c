@@ -78,8 +78,10 @@ void update_risk_data(int len, char* data)
     }
 }
 
-/* Get risk data from rapsberry pi client */
+/* Get risk data from raspberry pi client */
 void get_risk_data() {
+
+	fflush(SL_IOSTREAM_STDIN);
 
 	// set ready pin
 	GPIO_PinOutSet(gpioPortB, 1);
@@ -89,18 +91,22 @@ void get_risk_data() {
 
 	read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
 
-	// read until data returned
+	// read until data returned, should do read_len != PER_ADV_SIZE?
 	while (read_len < 0) {
 		read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
 	}
 
-	// clear pin once data has been recieved
+	// clear pin once data has been received
     GPIO_PinOutClear(gpioPortB, 1);
 
 	// update broadcast data
-    update_risk_data(PER_ADV_SIZE, buf);
+    if (read_len == PER_ADV_SIZE) {
+    	update_risk_data(PER_ADV_SIZE, buf);
+    }
 
-    // probably want to reset timer here
+#ifdef BATCH_SIZE
+// add batching
+#endif
 }
 
 /* Bluetooth stack event handler.
@@ -147,7 +153,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
       app_assert_status(sc);
 
-    //  printf ("Setting advertising data...\r\n");
+      printf ("Setting advertising data...\r\n");
+
       sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
                                       &risk_data[adv_index * PER_ADV_SIZE]);
       app_assert_status(sc);
@@ -169,7 +176,13 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
       // handle data updates
       if (evt->data.handle == RISK_TIMER_HANDLE) {
+
     	  get_risk_data();
+//
+//    	  if (adv_index == BATCH_SIZE) {
+//    		  // fetch new data and update
+//    		  // otherwise just increase pointer and set data
+//    	  }
        }
       break;
 

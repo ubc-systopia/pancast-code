@@ -27,9 +27,8 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 1000
+#define PER_ADV_INTERVAL 100
 #define PER_ADV_SIZE 250
-#define PER_ADV_UPDATE 1 // interval in seconds to update ad data
 #define PER_FLAGS 0 // no periodic advertising flags
 
 #define NO_MAX_DUR 0 // 0 for no duration limit
@@ -37,16 +36,12 @@
 
 /* Timers */
 #define TIMER_1S 32768 // one second in system clock ticks, used for timer
-#define PER_TIMER_HANDLE 0
-#define PER_UPDATE_FREQ 1
 #define RISK_TIMER_HANDLE 1
-#define RISK_UPDATE_FREQ 5
-
-#define XON 0x17
-#define XOFF 0x19
+#define RISK_UPDATE_FREQ 0.08
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250
+//#define BATCH_SIZE 2
 
 /***************************************************************************//**
  * Initialize application.

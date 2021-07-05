@@ -18,6 +18,8 @@
 #ifndef APP_H
 #define APP_H
 
+#include "sl_sleeptimer.h"
+
 
 /***************************************************************************//**
  * Variables
@@ -37,5 +39,10 @@ app_init (void);
  ******************************************************************************/
 void
 app_process_action (void);
+
+/***************************************************************************//**
+ * Timer expiration callback.
+ ******************************************************************************/
+void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data);
 
 #endif  // APP_H

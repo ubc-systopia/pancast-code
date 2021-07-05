@@ -23,6 +23,11 @@
 #include "sl_iostream.h"
 #include <stdio.h>
 
+#include "../../common/src/pancast.h"
+
+uint64_t sec_clock = 0;
+beacon_timer_t beacon_clock = 0;
+
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = 0xff;
 
@@ -83,6 +88,46 @@ void app_process_action (void)
   app_iostream_eusart_process_action();
 }
 
+void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
+{
+  sec_clock++;
+  if (sec_clock % BEACON_TIMER_RESOLUTION == 0)
+  {
+      beacon_clock++;
+      sec_clock = 0;
+  }
+
+  sl_status_t sc;
+  // handle periodic set advertising data
+  printf ("Setting advertising data...\r\n");
+  sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
+                                &risk_data[adv_index * PER_ADV_SIZE]);
+  if (sc != 0)
+  {
+    printf ("sc: %lx \r\n", sc);
+  }
+  app_assert_status(sc);
+
+  adv_index++;
+  if (adv_index * PER_ADV_SIZE > risk_data_len)
+  {
+    adv_index = 0;
+  }
+  printf ("Success!\r\n");
+
+  // handle data updates
+  // do this half of the time
+  if (sec_clock % 2 == 0) {
+   int update_len = ready_for_update();
+   if (update_len != 0)
+    {
+     printf ("updating risk data\r\n");
+     printf ("\r\nrisk_data_buffer[0]: %u", risk_data_buffer[0]);
+     update_risk_data(update_len);
+    }
+   }
+}
+
 /* Bluetooth stack event handler.
   This overrides the dummy weak implementation.
   @param[in] evt Event coming from the Bluetooth stack.
@@ -134,55 +179,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       printf ("Success!\r\n");
 
       // Start advertising location ephemeral ID
-      start_legacy_advertising();
-
-      printf ("Setting timer\r\n");
-      sc = sl_bt_system_set_soft_timer (32768, 0, 0);
-      if (sc != 0)
-        {
-          printf ("Error setting timer, sc: 0x%lx\r\n", sc);
-        }
-      sc = sl_bt_system_set_soft_timer(32768*2, 1, 0);
-      if (sc != 0)
-         {
-           printf ("Error setting timer, sc: 0x%lx\r\n", sc);
-         }
-
+      //start_legacy_advertising();
       break;
 
     case sl_bt_evt_system_soft_timer_id:
-
-      // handle periodic set advertising data
-      if (evt->data.handle == 0) {
-    	//  printf ("Setting advertising data...\r\n");
-    	  sc = sl_bt_advertiser_set_data (advertising_set_handle, 8, PER_ADV_SIZE,
-                                      &risk_data[adv_index * PER_ADV_SIZE]);
-    	  if (sc != 0)
-    	  {
-    		  printf ("sc: %lx \r\n", sc);
-    	  }
-    	  app_assert_status(sc);
-
-    	  adv_index++;
-    	  if (adv_index * PER_ADV_SIZE > risk_data_len)
-    	  {
-    		  adv_index = 0;
-    	  }
-    	//  printf ("Success!\r\n");
-      }
-
-      // handle data updates
-      if (evt->data.handle == 1) {
-    	  int update_len = ready_for_update();
-       if (update_len != 0)
-        {
-         printf ("updating risk data\r\n");
-         printf ("\r\nrisk_data_buffer[0]: %u", risk_data_buffer[0]);
-         update_risk_data(update_len);
-        }
-       }
-      break;
-
     // Default event handler.
     default:
       break;

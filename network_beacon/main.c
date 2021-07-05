@@ -26,6 +26,8 @@
 #include "sl_system_process_action.h"
 #endif // SL_CATALOG_KERNEL_PRESENT
 
+#include "../../common/src/pancast.h"
+
 int
 main (void)
 {
@@ -42,6 +44,14 @@ main (void)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
+  // Initialize the main timer
+  sl_sleeptimer_timer_handle_t timer;
+  sl_status_t sc = sl_sleeptimer_init();
+  sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
+                       1000,                  // 1s timer
+                       sl_timer_on_expire,
+                       (void*) NULL,
+                       0, 0);
   while (1)
     {
       // Do not remove this call: Silicon Labs components process action routine

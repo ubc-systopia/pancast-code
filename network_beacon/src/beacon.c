@@ -225,9 +225,11 @@ static void _form_payload_()
 #define en (payload.en_data)
     en.bytes[MAX_BROADCAST_SIZE - 1] = tmp;
 #undef en
+#ifdef BEACON_PLATFORM__ZEPHYR
     static uint8_t of[MAX_BROADCAST_SIZE - 2];
     memcpy(of, ((uint8_t *)bt) + 2, MAX_BROADCAST_SIZE - 2);
     bt->data = (uint8_t *)&of;
+#endif
 #undef bt
 }
 

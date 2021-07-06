@@ -21,21 +21,18 @@
 #include "stdint.h"
 
 /* Data array */
-extern uint8_t risk_data_buffer[1000];
+extern uint8_t risk_data_buffer[4096];
 
 /***************************************************************************//**
  * Initialize iostream usart
  ******************************************************************************/
-void
-app_iostream_eusart_init (void);
+void app_iostream_eusart_init (void);
+
+// void get_risk_data(void);
 
 /***************************************************************************//**
  * iostream usart ticking function
  ******************************************************************************/
-void
-app_iostream_eusart_process_action (void);
-
-int
-ready_for_update (void);
+void app_iostream_eusart_process_action (void);
 
 #endif  // APP_IOSTREAM_EUSART_H

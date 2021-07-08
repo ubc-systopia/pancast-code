@@ -24,6 +24,8 @@
 #define BEACON_TIMER_RESOLUTION 60000
 // Dongle clock resolution in ms - should be 1 min in prod.
 #define DONGLE_TIMER_RESOLUTION 60000
+// Maximum age of an encounter in the dongle log, in time units. Should correspond to 14 days
+#define DONGLE_MAX_LOG_AGE 4 //(14 * 24 * 60)
 
 // Simple Data Types
 typedef uint32_t beacon_id_t;

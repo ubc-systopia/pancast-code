@@ -9,7 +9,7 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__DEBUG
+#define LOG_LEVEL__INFO
 #define MODE__TEST
 #define MODE__STAT
 
@@ -86,7 +86,7 @@ dongle_epoch_counter_t epoch; // current epoch
 uint64_t signal_id;           // to identify scan records received, resets each epoch
 
 // 3. Reporting
-enctr_entry_counter_t enctr_entries_offset;
+enctr_entry_counter_t non_report_entry_count;
 
 // 4. Testing
 // Allocation is conditioned on the compile setting
@@ -205,7 +205,7 @@ void dongle_init()
     report_time = dongle_time;
     cur_id_idx = 0;
     epoch = 0;
-    enctr_entries_offset = 0;
+    non_report_entry_count = 0;
     signal_id = 0;
 
     log_info("Dongle initialized\r\n");
@@ -345,10 +345,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     log_debugf("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
                dongle_time);
     // Write to storage
-    dongle_storage_print(&storage, 0x22000, 32);
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);
-    dongle_storage_print(&storage, 0x22000, 32);
 #ifdef MODE__TEST
     if (*en.b == TEST_BEACON_ID)
     {
@@ -360,6 +358,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     test_en.beacon_time = *enc->t;
     test_en.dongle_time = dongle_time;
     test_en.eph_id = *enc->eph;
+    log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
+    //_display_encounter_(&test_en);
 #undef test_en
     total_test_encounters++;
 #endif
@@ -453,6 +453,8 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 #else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
+//    print_bytes(addr->addr, 6, "address");
+//    print_bytes(data, data_len, "adv_data");
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)
@@ -497,32 +499,6 @@ uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry
     return res;
 }
 
-int _report_encounter_(enctr_entry_counter_t i, dongle_encounter_entry *entry)
-{
-    //log_infof("%.4lu.", i);
-    //_display_encounter_(entry);
-#ifdef MODE__TEST
-    log_debug("comparing logged encounter against test record\r\n");
-    dongle_encounter_entry test_en = test_encounter_list[i - enctr_entries_offset];
-    uint8_t comp = compare_encounter_entry(*entry, test_en);
-    if (comp)
-    {
-        log_info("FAILED: entry mismatch\r\n");
-        log_infof("Comp=%u\r\n", comp);
-        test_errors++;
-        log_info("Entry from log:\r\n");
-        _display_encounter_(entry);
-        log_info("Test:\r\n");
-        _display_encounter_(&test_en);
-    }
-    else
-    {
-        log_debug("Entries MATCH\r\n");
-    }
-#endif
-    return 1;
-}
-
 void dongle_info()
 {
     log_info("\r\n");
@@ -553,7 +529,6 @@ void dongle_report()
     // do report
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
     {
-        report_time = dongle_time;
 
         log_info("\r\n");
         log_info("***          Begin Report          ***\r\n");
@@ -564,33 +539,81 @@ void dongle_report()
 
         log_info("\r\n");
         log_info("***          End Report            ***\r\n");
+
+        non_report_entry_count = dongle_storage_num_encounters_total(&storage);
+        report_time = dongle_time;
     }
 }
 
 void dongle_stats()
 {
-    enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
+    enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 #ifdef MODE__STAT
     log_info("\r\n");
     log_info("Statistics:\r\n");
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
     // Large integers here are casted for formatting compatabilty. This may result in false
     // output for large values.
-    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - enctr_entries_offset));
-    log_infof("    Total Encounters logged:             %lu\r\n", (uint32_t)num);
+    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
+    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
+
+    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
+              (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);
 #endif
-    enctr_entries_offset = num;
 }
 
 #undef alpha
 
+#ifdef MODE__TEST
+
+//
+// TESTING
+//
+
+int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entry)
+{
+    //log_infof("%.4lu.", i);
+    //_display_encounter_(entry);
+    log_debug("comparing logged encounter against test record\r\n");
+    dongle_encounter_entry test_en = test_encounter_list[i];
+    uint8_t comp = compare_encounter_entry(*entry, test_en);
+    if (comp)
+    {
+        log_infof("FAILED: entry mismatch (index=%lu)\r\n", (uint32_t)i);
+        log_infof("Comp=%u\r\n", comp);
+        test_errors++;
+        log_info("Entry from log:\r\n");
+        _display_encounter_(entry);
+        log_info("Test:\r\n");
+        _display_encounter_(&test_en);
+        return 0;
+    }
+    else
+    {
+        log_debug("Entries MATCH\r\n");
+    }
+    return 1;
+}
+
+int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry *entry)
+{
+    if ((dongle_time - entry->dongle_time) > DONGLE_MAX_LOG_AGE)
+    {
+        log_infof("FAILED: Encounter at index %lu is too old (age=%lu)\r\n",
+                  (uint32_t)i, (uint32_t)entry->dongle_time);
+        test_errors++;
+        return 0;
+    }
+    return 1;
+}
+
 void dongle_test()
 {
     // Run Tests
-#ifdef MODE__TEST
     log_info("\r\n");
     log_info("Tests:\r\n");
     test_errors = 0;
@@ -618,14 +641,6 @@ void dongle_test()
     dongle_storage_save_config(&storage, &config);
     dongle_storage_save_otp(&storage, TEST_OTPS);
 
-    log_info("    ? Testing that logged encounters are correct\r\n");
-    enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
-    if (num > enctr_entries_offset)
-    {
-        // There are new entries logged
-        dongle_storage_load_encounter(&storage, enctr_entries_offset,
-                                      _report_encounter_);
-    }
     log_info("    ? Testing that correct number of encounters were logged\r\n");
     int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
     if (test_encounters != numExpected)
@@ -634,6 +649,30 @@ void dongle_test()
         log_infof("Encounters logged in window: %d; Expected: %d\r\n",
                   test_encounters, numExpected);
     }
+
+    log_info("    ? Testing that logged encounters are correct\r\n");
+    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
+    if (num > non_report_entry_count)
+    {
+        // There are new entries logged
+        dongle_storage_load_encounters_from_time(&storage, report_time,
+                                                 test_compare_entry_idx);
+    }
+    else
+    {
+        log_error("Cannot test, no new encounters logged.\r\n");
+    }
+
+    log_info("    ? Testing that old encounters are deleted\r\n");
+    if (dongle_time > DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
+    {
+        dongle_storage_load_all_encounter(&storage, test_check_entry_age);
+    }
+    else
+    {
+        log_error("Cannot test, not enough time has elapsed.\r\n");
+    }
+
     if (test_errors)
     {
         log_info("\r\n");
@@ -647,8 +686,9 @@ void dongle_test()
 #undef FAIL
     test_encounters = 0;
     total_test_encounters = 0;
-#endif
 }
+
+#endif
 
 #undef APPL__DONGLE
 #undef APPL_VERSION

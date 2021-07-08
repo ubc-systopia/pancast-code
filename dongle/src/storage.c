@@ -115,7 +115,9 @@ void dongle_storage_init(dongle_storage *sto)
 {
     log_info("Initializing storage...\r\n");
     st.off = 0;
-    st.map.enctr_entries = 0;
+    st.encounters.tail = 0;
+    st.encounters.head = 0;
+    st.total_encounters = 0;
     st.numErasures = 0;
     dongle_storage_init_device(sto);
     dongle_storage_get_info(sto);
@@ -144,6 +146,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
     // log start is pushed onto the next blank page
     st.map.log = next_multiple(st.page_size,
                                st.map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
+    st.map.log_end = st.map.log + FLASH_LOG_SIZE;
 #undef read
     log_info("Config loaded.\r\n");
 }
@@ -206,32 +209,52 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
     return -1;
 }
 
-enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
+void _log_increment_(dongle_storage *sto)
 {
-    return st.map.enctr_entries;
+    st.encounters.head = (st.encounters.head + 1) % MAX_LOG_COUNT;
+    // FORCED_DELETION
+    // If the head catches, the tail, can either opt to block or delete.
+    // We delete since newer records are preferred.
+    if (st.encounters.head == st.encounters.tail)
+    {
+        log_debugf("Head caught up; idx=%lu\r\n", (uint32_t)st.encounters.head);
+        st.encounters.tail = (st.encounters.tail + 1) % MAX_LOG_COUNT;
+    }
 }
 
-// Reflects the total size of the entry in storage while taking
-// minimum alignment into account.
-#define ENCOUNTER_ENTRY_SIZE (sizeof(beacon_location_id_t) + sizeof(beacon_id_t) + \
-                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
-                              BEACON_EPH_ID_SIZE)
+enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
+{
+    log_debugf("tail: %lu\r\n", (uint32_t)st.encounters.tail);
+    log_debugf("head: %lu\r\n", (uint32_t)st.encounters.head);
+    if (st.encounters.head >= st.encounters.tail)
+    {
+        return st.encounters.head - st.encounters.tail;
+    }
+    else
+    {
+        return MAX_LOG_COUNT;
+    }
+}
+
+enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto)
+{
+    return st.total_encounters;
+}
 
 //#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
-#define ENCOUNTER_LOG_OFFSET(j) (st.map.log + (j * ENCOUNTER_ENTRY_SIZE))
+#define ENCOUNTER_LOG_OFFSET(j) \
+    (st.map.log +               \
+     (((st.encounters.tail + j) % MAX_LOG_COUNT) * ENCOUNTER_ENTRY_SIZE))
 
 void dongle_storage_load_encounter(dongle_storage *sto,
                                    enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
+    log_debugf("loading log entries starting at (virtual) index %lu\r\n", (uint32_t)i);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
     dongle_encounter_entry en;
-    if (i >= st.map.enctr_entries)
-    {
-        log_errorf("Starting index for encounter log (%llu) is too large\r\n", i);
-    }
-    log_debugf("loading log entries starting at index %llu\r\n", i);
     do
     {
-        if (i < st.map.enctr_entries)
+        if (i < num)
         {
             dongle_storage_load_single_encounter(sto, i, &en);
         }
@@ -243,9 +266,19 @@ void dongle_storage_load_encounter(dongle_storage *sto,
     } while (cb(i - 1, &en));
 }
 
+void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb)
+{
+    dongle_storage_load_encounter(sto, 0, cb);
+}
+
 void dongle_storage_load_single_encounter(dongle_storage *sto,
                                           enctr_entry_counter_t i, dongle_encounter_entry *en)
 {
+    enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
+    if (i >= num)
+    {
+        log_errorf("Index for encounter log (%lu) is too large\r\n", (uint32_t)i);
+    }
     st.off = ENCOUNTER_LOG_OFFSET(i);
 #define read(size, dst) _flash_read_(sto, dst, size), st.off += size
     read(sizeof(beacon_id_t), &en->beacon_id);
@@ -256,6 +289,28 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
 #undef read
 }
 
+void dongle_storage_load_encounters_from_time(dongle_storage *sto,
+                                              dongle_timer_t min_time, dongle_encounter_cb cb)
+{
+    log_debugf("loading log entries starting at time %lu\r\n", (uint32_t)min_time);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
+    dongle_encounter_entry en;
+    enctr_entry_counter_t j = 0;
+    for (enctr_entry_counter_t i = 0; i < num; i++)
+    {
+        // Can be optimized to track timestamps and avoid extra loads
+        dongle_storage_load_single_encounter(sto, i, &en);
+        if (en.dongle_time >= min_time)
+        {
+            if (!cb(j, &en))
+            {
+                break;
+            }
+            j++;
+        }
+    }
+}
+
 void dongle_storage_log_encounter(dongle_storage *sto,
                                   beacon_location_id_t *location_id,
                                   beacon_id_t *beacon_id,
@@ -263,10 +318,13 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                                   dongle_timer_t *dongle_time,
                                   beacon_eph_id_t *eph_id)
 {
-    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.map.enctr_entries);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
+    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.encounters.head);
     st.off = start;
     log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
-               (uint32_t)st.map.enctr_entries, st.off);
+               (uint32_t)num, st.off);
+    // TODO: save erased into memory in case the cursor has wrapped around
+    // currently reads corrupted data once the max size is reached
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), st.off += size
@@ -277,8 +335,10 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     write(eph_id, BEACON_EPH_ID_SIZE);
     log_debugf("total size: %u (entry size=%d)\r\n", st.off - start, ENCOUNTER_ENTRY_SIZE);
 #undef write
-    st.map.enctr_entries++;
-    log_debugf("log now contains %lu entries\r\n", (uint32_t)st.map.enctr_entries);
+    st.total_encounters++;
+    _log_increment_(sto);
+    num = dongle_storage_num_encounters_current(sto);
+    log_debugf("log now contains %lu entries\r\n", (uint32_t)num);
 }
 
 int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)

@@ -1,6 +1,6 @@
 #include "uart.h"
 
-// #define TEST_MODE
+#define TEST_MODE
 
 static int GPIORead(int pin)
 {
@@ -25,17 +25,6 @@ static int GPIORead(int pin)
 	return(atoi(value_str));
 }
 
-static int GPIO_open(int pin)
-{
-    // TODO: open GPIO
-    return 0;
-}
-
-static int GPIO_read(int pin)
-{
-    // TODO: read GPIO
-    return 0;
-}
 
 /* Set attributes for serial communication, 
     from https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c 
@@ -78,90 +67,90 @@ int set_interface_attribs(int fd, int speed)
 void* uart_main(void* arg) {
     int fd; 
     char* portname = TERMINAL;
-
     struct risk_data* r_data = (struct risk_data*)arg;
 
     while (1) {
         // open port for write only
         fd = open(portname, O_WRONLY);
 
-
         if (fd < 0) {
           fprintf(stderr, "Error opening %s: %s\n", portname, strerror(errno));
-            // continue;
+          //  continue;
         }
 
-    /*baudrate 115200, 8 bits, no parity, 1 stop bit */
-    set_interface_attribs(fd, B115200);
+        /*baudrate 115200, 8 bits, no parity, 1 stop bit */
+        set_interface_attribs(fd, B115200);
 
     #ifdef TEST_MODE
 
-    // Set test data to sequential values
-    uint8_t testarray[TEST_SIZE];
-    for (int i = 0; i < TEST_SIZE; i++) {
-        testarray[i]= i%sizeof(uint8_t);
-    }
-
-    struct risk_data* r_data = (struct risk_data*)arg;
-
-    // lock data
-    pthread_mutex_lock(&r_data->mutex);
-    int data_sent = 0;
-
-    // write data to serial port in CHUNK_SIZE increments
-    while (data_sent < TEST_SIZE) {
-        tcflush(fd, TCIOFLUSH);
-        // wait for ready signal from GPIO
-        uint8_t ready = 0;
-        while (ready == 0) {
-            ready = GPIORead(PIN);
+        // Set test data to sequential values
+        uint8_t testarray[TEST_SIZE];
+        for (int i = 0; i < TEST_SIZE; i++) {
+           testarray[i]= i%sizeof(uint8_t);
         }
 
-        // write data 
-        tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
-        int wlen = write(fd, &testarray[data_sent], CHUNK_SIZE);
-        if (wlen != CHUNK_SIZE) {
-            fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
-        }
-        tcdrain(fd); // ensure all bytes are trasnmitted before continue
+        struct risk_data* r_data = (struct risk_data*)arg;
 
-        // prepare next chunk of data to send
-        data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
-        if (data_sent >= TEST_SIZE) {
-            data_sent = 0;
+        // lock data
+	printf("trying to get lock\r\n");
+        pthread_mutex_lock(&r_data->mutex);
+	printf("got lock\r\n");
+        int data_sent = 0;
+
+        // write data to serial port in CHUNK_SIZE increments
+        while (data_sent < TEST_SIZE) {
+            tcflush(fd, TCIOFLUSH);
+            // wait for ready signal from GPIO
+            uint8_t ready = 0;
+            while (ready == 0) {
+                ready = GPIORead(PIN);
+            }
+
+            // write data 
+            tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
+            int wlen = write(fd, &testarray[data_sent], CHUNK_SIZE);
+            if (wlen != CHUNK_SIZE) {
+                fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
+            }
+            tcdrain(fd); // ensure all bytes are trasnmitted before continue
+
+            // prepare next chunk of data to send
+            data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
+            if (data_sent >= TEST_SIZE) {
+                data_sent = 0;
+            }
+            // should not reach here yet, TODO
+            // pthread_mutex_unlock(&r_data->mutex);      
         }
-        // should not reach here yet, TODO
-        pthread_mutex_unlock(&r_data->mutex);
-        close(fd);
-    }
     #else
 
-    int data_sent = 0;
+        int data_sent = 0;
 
-    // write data to serial port in CHUNK_SIZE increments
-    while (data_sent < r_data->data.size) {
-        tcflush(fd, TCIOFLUSH);
-        // wait for ready signal from GPIO
-        uint8_t ready = 0;
-        while (ready == 0) {
-            ready = GPIORead(PIN);
-        }
-        // write data 
-        tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
-        int wlen = write(fd, &r_data->data.response[data_sent], CHUNK_SIZE);
-        if (wlen != CHUNK_SIZE) {
-           fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
-        }
-        tcdrain(fd);
+        // write data to serial port in CHUNK_SIZE increments
+        while (data_sent < r_data->data.size) {
+            tcflush(fd, TCIOFLUSH);
+            // wait for ready signal from GPIO
+            uint8_t ready = 0;
+            while (ready == 0) {
+                ready = GPIORead(PIN);
+            }
+            // write data 
+            tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
+            int wlen = write(fd, &r_data->data.response[data_sent], CHUNK_SIZE);
+            if (wlen != CHUNK_SIZE) {
+               fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
+            }
+            tcdrain(fd);
 
-        // prepare next chunk of data to send
-        data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
-        if (data_sent >= r_data->data.size) {
-            data_sent = 0;
+            // prepare next chunk of data to send
+            data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
+            if (data_sent >= r_data->data.size) {
+                data_sent = 0;
+            }
         }
-    }
     #endif
-}
-
+	pthread_mutex_unlock(&r_data->mutex);
+        close(fd);
+    }
     return 0;
 }

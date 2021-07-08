@@ -345,10 +345,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     log_debugf("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
                dongle_time);
     // Write to storage
-    dongle_storage_print(&storage, 0x22000, 32);
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);
-    dongle_storage_print(&storage, 0x22000, 32);
 #ifdef MODE__TEST
     if (*en.b == TEST_BEACON_ID)
     {

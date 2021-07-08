@@ -9,7 +9,7 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__DEBUG
+#define LOG_LEVEL__INFO
 #define MODE__TEST
 #define MODE__STAT
 

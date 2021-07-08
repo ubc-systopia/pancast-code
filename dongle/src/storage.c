@@ -249,7 +249,7 @@ enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto)
 void dongle_storage_load_encounter(dongle_storage *sto,
                                    enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
-    log_debugf("loading log entries starting at (virtual) index %ll\r\n", (uint32_t)i);
+    log_debugf("loading log entries starting at (virtual) index %lu\r\n", (uint32_t)i);
     enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
     dongle_encounter_entry en;
     do
@@ -287,6 +287,28 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
     read(sizeof(dongle_timer_t), &en->dongle_time);
     read(BEACON_EPH_ID_SIZE, &en->eph_id);
 #undef read
+}
+
+void dongle_storage_load_encounters_from_time(dongle_storage *sto,
+                                              dongle_timer_t min_time, dongle_encounter_cb cb)
+{
+    log_debugf("loading log entries starting at time %lu\r\n", (uint32_t)min_time);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
+    dongle_encounter_entry en;
+    enctr_entry_counter_t j = 0;
+    for (enctr_entry_counter_t i = 0; i < num; i++)
+    {
+        // Can be optimized to track timestamps and avoid extra loads
+        dongle_storage_load_single_encounter(sto, i, &en);
+        if (en.dongle_time >= min_time)
+        {
+            if (!cb(j, &en))
+            {
+                break;
+            }
+            j++;
+        }
+    }
 }
 
 void dongle_storage_log_encounter(dongle_storage *sto,

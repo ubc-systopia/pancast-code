@@ -358,6 +358,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     test_en.beacon_time = *enc->t;
     test_en.dongle_time = dongle_time;
     test_en.eph_id = *enc->eph;
+    log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
+    //_display_encounter_(&test_en);
 #undef test_en
     total_test_encounters++;
 #endif
@@ -525,7 +527,6 @@ void dongle_report()
     // do report
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
     {
-        report_time = dongle_time;
 
         log_info("\r\n");
         log_info("***          Begin Report          ***\r\n");
@@ -538,6 +539,7 @@ void dongle_report()
         log_info("***          End Report            ***\r\n");
 
         non_report_entry_count = dongle_storage_num_encounters_total(&storage);
+        report_time = dongle_time;
     }
 }
 
@@ -575,11 +577,11 @@ int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entr
     //log_infof("%.4lu.", i);
     //_display_encounter_(entry);
     log_debug("comparing logged encounter against test record\r\n");
-    dongle_encounter_entry test_en = test_encounter_list[i - non_report_entry_count];
+    dongle_encounter_entry test_en = test_encounter_list[i];
     uint8_t comp = compare_encounter_entry(*entry, test_en);
     if (comp)
     {
-        log_info("FAILED: entry mismatch\r\n");
+        log_infof("FAILED: entry mismatch (index=%lu)\r\n", (uint32_t)i);
         log_infof("Comp=%u\r\n", comp);
         test_errors++;
         log_info("Entry from log:\r\n");
@@ -651,8 +653,8 @@ void dongle_test()
     if (num > non_report_entry_count)
     {
         // There are new entries logged
-        // dongle_storage_load_encounter(&storage, non_report_entry_count,
-        //                               test_compare_entry_idx);
+        dongle_storage_load_encounters_from_time(&storage, report_time,
+                                                 test_compare_entry_idx);
     }
     else
     {

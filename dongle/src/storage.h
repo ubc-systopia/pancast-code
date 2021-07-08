@@ -125,6 +125,9 @@ void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
                                           enctr_entry_counter_t i, dongle_encounter_entry *);
 
+void dongle_storage_load_encounters_from_time(dongle_storage *sto,
+                                              dongle_timer_t min_time, dongle_encounter_cb cb);
+
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto,
                                   beacon_location_id_t *loc,

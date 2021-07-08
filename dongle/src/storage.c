@@ -144,6 +144,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
     // log start is pushed onto the next blank page
     st.map.log = next_multiple(st.page_size,
                                st.map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
+    st.map.log_end = st.map.log + FLASH_LOG_SIZE;
 #undef read
     log_info("Config loaded.\r\n");
 }
@@ -268,10 +269,22 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                                   dongle_timer_t *dongle_time,
                                   beacon_eph_id_t *eph_id)
 {
+    enctr_entry_counter_t num = dongle_storage_num_encounters(sto);
     storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.encounters.head);
+    if (start + ENCOUNTER_ENTRY_SIZE >= st.map.log_end)
+    {
+        log_errorf("Cannot log encounter - no space left!\r\n"
+                   "    Logged encounters:    %lu\r\n"
+                   "    Size in flash (each): %d\r\n"
+                   "    Total size:           %lu\r\n"
+                   "    Max log size:         %lu bytes\r\n",
+                   (uint32_t)num, ENCOUNTER_ENTRY_SIZE,
+                   (uint32_t)(num * ENCOUNTER_ENTRY_SIZE), FLASH_LOG_SIZE);
+        return;
+    }
     st.off = start;
     log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
-               (uint32_t)st.encounters.head, st.off);
+               (uint32_t)num, st.off);
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), st.off += size
@@ -283,7 +296,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     log_debugf("total size: %u (entry size=%d)\r\n", st.off - start, ENCOUNTER_ENTRY_SIZE);
 #undef write
     st.encounters.head++;
-    log_debugf("log now contains %lu entries\r\n", (uint32_t)st.encounters.head);
+    num = dongle_storage_num_encounters(sto);
+    log_debugf("log now contains %lu entries\r\n", (uint32_t)num);
 }
 
 int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)

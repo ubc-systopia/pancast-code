@@ -15,6 +15,9 @@
 #define FLASH_OFFSET 0x2e000
 #endif
 
+// Maximum number of bytes used to store encounters
+#define FLASH_LOG_SIZE 0x100
+
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #include <drivers/flash.h>
 typedef off_t storage_addr_t;
@@ -31,9 +34,10 @@ typedef struct
 
 typedef struct
 {
-    storage_addr_t config;
-    storage_addr_t otp;
-    storage_addr_t log;
+    storage_addr_t config;  // address of device configuration
+    storage_addr_t otp;     // address of OTP storage
+    storage_addr_t log;     // address of first log entry
+    storage_addr_t log_end; // address of next available space after log
 } _dongle_storage_map_;
 
 typedef struct

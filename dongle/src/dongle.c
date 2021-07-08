@@ -537,13 +537,14 @@ void dongle_report()
         log_info("\r\n");
         log_info("***          End Report            ***\r\n");
 
-        non_report_entry_count = dongle_storage_num_encounters(&storage);
+        non_report_entry_count = dongle_storage_num_encounters_total(&storage);
     }
 }
 
 void dongle_stats()
 {
-    enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
+    enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 #ifdef MODE__STAT
     log_info("\r\n");
     log_info("Statistics:\r\n");
@@ -551,7 +552,10 @@ void dongle_stats()
     // Large integers here are casted for formatting compatabilty. This may result in false
     // output for large values.
     log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
-    log_infof("    Total Encounters logged:             %lu\r\n", (uint32_t)num);
+    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
+
+    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
+              (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);
@@ -643,12 +647,12 @@ void dongle_test()
     }
 
     log_info("    ? Testing that logged encounters are correct\r\n");
-    enctr_entry_counter_t num = dongle_storage_num_encounters(&storage);
+    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
     if (num > non_report_entry_count)
     {
         // There are new entries logged
-        dongle_storage_load_encounter(&storage, non_report_entry_count,
-                                      test_compare_entry_idx);
+        // dongle_storage_load_encounter(&storage, non_report_entry_count,
+        //                               test_compare_entry_idx);
     }
     else
     {

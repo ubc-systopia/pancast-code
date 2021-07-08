@@ -243,6 +243,11 @@ void dongle_storage_load_encounter(dongle_storage *sto,
     } while (cb(i - 1, &en));
 }
 
+void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb)
+{
+    dongle_storage_load_encounter(sto, 0, cb);
+}
+
 void dongle_storage_load_single_encounter(dongle_storage *sto,
                                           enctr_entry_counter_t i, dongle_encounter_entry *en)
 {

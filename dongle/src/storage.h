@@ -9,14 +9,28 @@
 
 #include <stddef.h>
 
+// Reflects the total size of the entry in storage while taking
+// minimum alignment into account.
+#define ENCOUNTER_ENTRY_SIZE (sizeof(beacon_location_id_t) + sizeof(beacon_id_t) + \
+                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
+                              BEACON_EPH_ID_SIZE)
+
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #define FLASH_OFFSET 0x2D000
 #else
 #define FLASH_OFFSET 0x2e000
 #endif
 
+// Upper-bound of size of encounter log, in bytes
+#define TARGET_FLASH_LOG_SIZE 0x100
+
+// Maximum number of encounters stored at one time
+#define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)
+
 // Maximum number of bytes used to store encounters
-#define FLASH_LOG_SIZE 0x100
+// This is multiple of the encounter size
+// And assumes the size is block-aligned
+#define FLASH_LOG_SIZE (ENCOUNTER_ENTRY_SIZE * MAX_LOG_COUNT)
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #include <drivers/flash.h>
@@ -29,7 +43,8 @@ typedef uint32_t storage_addr_t;
 
 typedef struct
 {
-    enctr_entry_counter_t head; // index of most recent encounter
+    //enctr_entry_counter_t tail; // index of oldest stored recent encounter
+    enctr_entry_counter_t head; // index to write next stored encounter
 } _encounter_storage_cursor_;
 
 typedef struct

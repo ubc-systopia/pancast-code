@@ -212,12 +212,6 @@ enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
     return st.encounters.head;
 }
 
-// Reflects the total size of the entry in storage while taking
-// minimum alignment into account.
-#define ENCOUNTER_ENTRY_SIZE (sizeof(beacon_location_id_t) + sizeof(beacon_id_t) + \
-                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
-                              BEACON_EPH_ID_SIZE)
-
 //#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
 #define ENCOUNTER_LOG_OFFSET(j) (st.map.log + (j * ENCOUNTER_ENTRY_SIZE))
 
@@ -271,7 +265,7 @@ void dongle_storage_log_encounter(dongle_storage *sto,
 {
     enctr_entry_counter_t num = dongle_storage_num_encounters(sto);
     storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.encounters.head);
-    if (start + ENCOUNTER_ENTRY_SIZE >= st.map.log_end)
+    if (start == st.map.log_end)
     {
         log_errorf("Cannot log encounter - no space left!\r\n"
                    "    Logged encounters:    %lu\r\n"

@@ -22,7 +22,7 @@
 #endif
 
 // Upper-bound of size of encounter log, in bytes
-#define TARGET_FLASH_LOG_SIZE 0x100
+#define TARGET_FLASH_LOG_SIZE 0x4000
 
 // Maximum number of encounters stored at one time
 #define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)

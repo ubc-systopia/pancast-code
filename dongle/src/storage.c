@@ -323,6 +323,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     st.off = start;
     log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
                (uint32_t)num, st.off);
+    // TODO: save erased into memory in case the cursor has wrapped around
+    // currently reads corrupted data once the max size is reached
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), st.off += size

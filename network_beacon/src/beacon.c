@@ -406,7 +406,7 @@ static int _beacon_advertise_()
     // Start legacy advertising
     sc = sl_bt_advertiser_start(
         legacy_set_handle,
-        advertiser_broadcast,
+        advertiser_user_data,
         advertiser_non_connectable);
     if (sc != 0)
     {

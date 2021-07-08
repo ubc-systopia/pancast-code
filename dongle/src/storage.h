@@ -43,7 +43,7 @@ typedef uint32_t storage_addr_t;
 
 typedef struct
 {
-    //enctr_entry_counter_t tail; // index of oldest stored recent encounter
+    enctr_entry_counter_t tail; // index of oldest stored recent encounter
     enctr_entry_counter_t head; // index to write next stored encounter
 } _encounter_storage_cursor_;
 
@@ -67,6 +67,7 @@ typedef struct
     size_t page_size;
     _dongle_storage_map_ map;
     _encounter_storage_cursor_ encounters;
+    enctr_entry_counter_t total_encounters;
     storage_addr_t off; // flash offset
     uint64_t numErasures;
 } dongle_storage;
@@ -105,7 +106,10 @@ int otp_is_used(dongle_otp_t *otp);
 int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);
 
 // Determine the number of encounters currently logged
-enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto);
+enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto);
+
+// Determine the total number of encounters logged, including those deleted
+enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto);
 
 // LOAD ENCOUNTER
 // API is defined using a callback structure

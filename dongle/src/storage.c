@@ -115,7 +115,7 @@ void dongle_storage_init(dongle_storage *sto)
 {
     log_info("Initializing storage...\r\n");
     st.off = 0;
-    st.map.enctr_entries = 0;
+    st.encounters.head = 0;
     st.numErasures = 0;
     dongle_storage_init_device(sto);
     dongle_storage_get_info(sto);
@@ -208,7 +208,7 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 
 enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto)
 {
-    return st.map.enctr_entries;
+    return st.encounters.head;
 }
 
 // Reflects the total size of the entry in storage while taking
@@ -224,14 +224,14 @@ void dongle_storage_load_encounter(dongle_storage *sto,
                                    enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
     dongle_encounter_entry en;
-    if (i >= st.map.enctr_entries)
+    if (i >= st.encounters.head)
     {
         log_errorf("Starting index for encounter log (%llu) is too large\r\n", i);
     }
     log_debugf("loading log entries starting at index %llu\r\n", i);
     do
     {
-        if (i < st.map.enctr_entries)
+        if (i < st.encounters.head)
         {
             dongle_storage_load_single_encounter(sto, i, &en);
         }
@@ -263,10 +263,10 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                                   dongle_timer_t *dongle_time,
                                   beacon_eph_id_t *eph_id)
 {
-    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.map.enctr_entries);
+    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.encounters.head);
     st.off = start;
     log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
-               (uint32_t)st.map.enctr_entries, st.off);
+               (uint32_t)st.encounters.head, st.off);
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), st.off += size
@@ -277,8 +277,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     write(eph_id, BEACON_EPH_ID_SIZE);
     log_debugf("total size: %u (entry size=%d)\r\n", st.off - start, ENCOUNTER_ENTRY_SIZE);
 #undef write
-    st.map.enctr_entries++;
-    log_debugf("log now contains %lu entries\r\n", (uint32_t)st.map.enctr_entries);
+    st.encounters.head++;
+    log_debugf("log now contains %lu entries\r\n", (uint32_t)st.encounters.head);
 }
 
 int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)

@@ -26,10 +26,14 @@ typedef uint32_t storage_addr_t;
 
 typedef struct
 {
+    enctr_entry_counter_t head; // index of most recent encounter
+} _encounter_storage_cursor_;
+
+typedef struct
+{
     storage_addr_t config;
     storage_addr_t otp;
     storage_addr_t log;
-    enctr_entry_counter_t enctr_entries; // number of entries
 } _dongle_storage_map_;
 
 typedef struct
@@ -43,6 +47,7 @@ typedef struct
     int num_pages;
     size_t page_size;
     _dongle_storage_map_ map;
+    _encounter_storage_cursor_ encounters;
     storage_addr_t off; // flash offset
     uint64_t numErasures;
 } dongle_storage;

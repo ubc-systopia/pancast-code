@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>network_beacon</name>
+	<name>pancast-beacon</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -686,264 +686,264 @@
 			<locationURI>STUDIO_SDK_LOC/hardware/driver/mx25_flash_shutdown/src/sl_mx25_flash_shutdown_usart/sl_mx25_flash_shutdown.c</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_aes.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_aes.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_aes.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_aes.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_agc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_agc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_agc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_agc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_amuxcp.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_amuxcp.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_amuxcp.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_amuxcp.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_bufc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_bufc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_bufc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_bufc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_buram.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_buram.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_buram.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_buram.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_burtc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_burtc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_burtc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_burtc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_cmu.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_cmu.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_cmu.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_cmu.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_cryptoacc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_cryptoacc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_cryptoacc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_cryptoacc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_dcdc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_dcdc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_dcdc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_dcdc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_devinfo.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_devinfo.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_devinfo.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_devinfo.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_dma_descriptor.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_dma_descriptor.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_dma_descriptor.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_dma_descriptor.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_dpll.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_dpll.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_dpll.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_dpll.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_emu.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_emu.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_emu.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_emu.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_eusart.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_eusart.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_eusart.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_eusart.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_frc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_frc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_frc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_frc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_fsrco.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_fsrco.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_fsrco.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_fsrco.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_gpcrc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_gpcrc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_gpcrc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_gpcrc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_gpio.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_gpio.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_gpio.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_gpio.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_gpio_port.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_gpio_port.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_gpio_port.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_gpio_port.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_hfrco.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_hfrco.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_hfrco.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_hfrco.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_hfxo.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_hfxo.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_hfxo.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_hfxo.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_i2c.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_i2c.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_i2c.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_i2c.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_iadc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_iadc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_iadc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_iadc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_icache.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_icache.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_icache.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_icache.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ldma.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ldma.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ldma.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ldma.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ldmaxbar.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ldmaxbar.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ldmaxbar.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ldmaxbar.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ldmaxbar_defines.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ldmaxbar_defines.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ldmaxbar_defines.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ldmaxbar_defines.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_letimer.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_letimer.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_letimer.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_letimer.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_lfrco.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_lfrco.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_lfrco.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_lfrco.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_lfxo.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_lfxo.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_lfxo.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_lfxo.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_mailbox.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_mailbox.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_mailbox.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_mailbox.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_modem.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_modem.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_modem.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_modem.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_msc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_msc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_msc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_msc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_pdm.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_pdm.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_pdm.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_pdm.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_protimer.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_protimer.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_protimer.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_protimer.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_prs.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_prs.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_prs.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_prs.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_prs_signals.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_prs_signals.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_prs_signals.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_prs_signals.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rac.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rac.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rac.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rac.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rfcrc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rfcrc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rfcrc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rfcrc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rfsense.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rfsense.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rfsense.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rfsense.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rtcc.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rtcc.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_rtcc.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_rtcc.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_smu.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_smu.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_smu.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_smu.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_synth.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_synth.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_synth.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_synth.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_syscfg.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_syscfg.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_syscfg.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_syscfg.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_timer.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_timer.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_timer.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_timer.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ulfrco.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ulfrco.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_ulfrco.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_ulfrco.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_usart.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_usart.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_usart.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_usart.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_wdog.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_wdog.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22_wdog.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22_wdog.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22c224f512im40.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22c224f512im40.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/efr32bg22c224f512im40.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/efr32mg22c224f512im40.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/em_device.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/em_device.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/em_device.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/em_device.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Include/system_efr32bg22.h</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Include/system_efr32mg22.h</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Include/system_efr32bg22.h</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Include/system_efr32mg22.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Source/system_efr32bg22.c</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Source/system_efr32mg22.c</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Source/system_efr32bg22.c</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Source/system_efr32mg22.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/radio/rail_lib/autogen/librail_release/librail_efr32xg22_gcc_release.a</name>
@@ -996,9 +996,9 @@
 			<locationURI>STUDIO_SDK_LOC/platform/radio/rail_lib/protocol/zwave/rail_zwave.h</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/protocol/bluetooth/lib/EFR32BG22/GCC/libbluetooth.a</name>
+			<name>gecko_sdk_3.2.0/protocol/bluetooth/lib/EFR32MG22/GCC/libbluetooth.a</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/lib/EFR32BG22/GCC/libbluetooth.a</locationURI>
+			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/lib/EFR32MG22/GCC/libbluetooth.a</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/check_crypto_config.h</name>
@@ -1191,9 +1191,9 @@
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/threading.c</locationURI>
 		</link>
 		<link>
-			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32BG22/Source/GCC/startup_efr32bg22.c</name>
+			<name>gecko_sdk_3.2.0/platform/Device/SiliconLabs/EFR32MG22/Source/GCC/startup_efr32mg22.c</name>
 			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32BG22/Source/GCC/startup_efr32bg22.c</locationURI>
+			<locationURI>STUDIO_SDK_LOC/platform/Device/SiliconLabs/EFR32MG22/Source/GCC/startup_efr32mg22.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/radio/rail_lib/chip/efr32/efr32xg2x/rail_chip_specific.h</name>

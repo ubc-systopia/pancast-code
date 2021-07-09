@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="uc.module.setup.ucTemplate.com.silabs.ss.tool.ide.arm.toolchain.gnu.cdt.debug#com.silabs.ss.tool.ide.arm.toolchain.gnu.cdt:7.2.1.20170904.gcc" propertyScope="project">
+<project name="uc.module.setup.ucTemplate.com.silabs.ss.tool.ide.arm.toolchain.gnu.cdt.debug#com.silabs.ss.tool.ide.arm.toolchain.gnu.cdt:10.2.1.20201103.gcc" propertyScope="project">
   <folder name="autogen">
     <file name="sl_bluetooth.c" builtin="true" generated="true" uri="studio:/project/autogen/sl_bluetooth.c"/>
     <file name="sl_bluetooth.h" builtin="true" generated="true" uri="studio:/project/autogen/sl_bluetooth.h"/>

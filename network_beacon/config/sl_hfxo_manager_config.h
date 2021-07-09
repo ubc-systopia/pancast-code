@@ -29,6 +29,7 @@
  ******************************************************************************/
 
 // <<< Use Configuration Wizard in Context Menu >>>
+
 #ifndef SL_HFXO_MANAGER_CONFIG_H
 #define SL_HFXO_MANAGER_CONFIG_H
 

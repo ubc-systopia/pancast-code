@@ -68,7 +68,7 @@
 
 // <o SL_IOSTREAM_EUSART_VCOM_RX_BUFFER_SIZE> Receive buffer size
 // <i> Default: 32
-#define SL_IOSTREAM_EUSART_VCOM_RX_BUFFER_SIZE    256
+#define SL_IOSTREAM_EUSART_VCOM_RX_BUFFER_SIZE    32
 
 // <q SL_IOSTREAM_EUSART_VCOM_CONVERT_BY_DEFAULT_LF_TO_CRLF> Convert \n to \r\n
 // <i> It can be changed at runtime using the C API.
@@ -98,13 +98,14 @@
 #define SL_IOSTREAM_EUSART_VCOM_RX_PORT          gpioPortA
 #define SL_IOSTREAM_EUSART_VCOM_RX_PIN           6
 
-// EUART0 CTS on PB02
-#define SL_IOSTREAM_EUSART_VCOM_CTS_PORT         gpioPortB
-#define SL_IOSTREAM_EUSART_VCOM_CTS_PIN          2
+// EUART0 CTS on PA08
+#define SL_IOSTREAM_EUSART_VCOM_CTS_PORT         gpioPortA
+#define SL_IOSTREAM_EUSART_VCOM_CTS_PIN          8
 
-// EUART0 RTS on PA00
+// EUART0 RTS on PA07
 #define SL_IOSTREAM_EUSART_VCOM_RTS_PORT         gpioPortA
-#define SL_IOSTREAM_EUSART_VCOM_RTS_PIN          0
+#define SL_IOSTREAM_EUSART_VCOM_RTS_PIN          7
+
 // [EUSART_SL_IOSTREAM_EUSART_VCOM]$
 // <<< sl:end pin_tool >>>
 

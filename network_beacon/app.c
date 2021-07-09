@@ -85,6 +85,8 @@ void update_risk_data(int len, char *data)
 void get_risk_data()
 {
 
+#ifndef BATCH_SIZE
+
     fflush(SL_IOSTREAM_STDIN);
 
     // set ready pin
@@ -95,7 +97,7 @@ void get_risk_data()
 
     read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
 
-    // read until data returned, should do read_len != PER_ADV_SIZE?
+    // read until data returned
     while (read_len < 0)
     {
         read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
@@ -110,8 +112,42 @@ void get_risk_data()
         update_risk_data(PER_ADV_SIZE, buf);
     }
 
-#ifdef BATCH_SIZE
-// add batching
+#else // BATCH_SIZE defined
+    if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
+    {
+        //	get and update new risk data
+        fflush(SL_IOSTREAM_STDIN);
+
+        // set ready pin
+        GPIO_PinOutSet(gpioPortB, 1);
+
+        int read_len = 0;
+        char buf[PER_ADV_SIZE * BATCH_SIZE];
+        read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
+
+        // read until data returned
+        while (read_len < 0)
+        {
+            read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
+        }
+
+        // clear pin once data has been received
+        GPIO_PinOutClear(gpioPortB, 1);
+
+        // update broadcast data
+        if (read_len == PER_ADV_SIZE * BATCH_SIZE)
+        {
+            update_risk_data(PER_ADV_SIZE * BATCH_SIZE, buf);
+        }
+        adv_index = 0;
+    }
+    else
+    {
+        // increase index and set data
+        sl_bt_advertiser_set_data(advertising_set_handle, 8,
+                                  PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
+        adv_index++;
+    }
 #endif
 }
 

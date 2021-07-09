@@ -38,11 +38,11 @@
 /* Timers */
 #define TIMER_1S 1000 // one second in ms, used for timer
 #define RISK_TIMER_HANDLE 1
-#define RISK_UPDATE_FREQ 1 // TODO change to 0.08 * second
+#define RISK_UPDATE_FREQ 1 // TODO change to 0.05 * second
 
 /* Risk Data */
-#define RISK_DATA_SIZE 250
-//#define BATCH_SIZE 2
+#define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
+// #define BATCH_SIZE 2
 
 /***************************************************************************/ /**
  * Initialize application.

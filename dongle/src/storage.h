@@ -142,4 +142,6 @@ void dongle_storage_info(dongle_storage *);
 
 size_t dongle_storage_max_log_count(dongle_storage *sto);
 
+void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time);
+
 #endif

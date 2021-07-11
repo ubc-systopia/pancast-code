@@ -218,16 +218,19 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
     return -1;
 }
 
+#define inc_head(_) (st.encounters.head = (st.encounters.head + 1) % MAX_LOG_COUNT)
+#define inc_tail(_) (st.encounters.tail = (st.encounters.tail + 1) % MAX_LOG_COUNT)
+
 void _log_increment_(dongle_storage *sto)
 {
-    st.encounters.head = (st.encounters.head + 1) % MAX_LOG_COUNT;
+    inc_head();
     // FORCED_DELETION
     // If the head catches, the tail, can either opt to block or delete.
     // We delete since newer records are preferred.
     if (st.encounters.head == st.encounters.tail)
     {
         log_debugf("Head caught up; idx=%lu\r\n", (uint32_t)st.encounters.head);
-        st.encounters.tail = (st.encounters.tail + 1) % MAX_LOG_COUNT;
+        inc_tail();
     }
 }
 
@@ -235,14 +238,17 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
 {
     log_debugf("tail: %lu\r\n", (uint32_t)st.encounters.tail);
     log_debugf("head: %lu\r\n", (uint32_t)st.encounters.head);
+    enctr_entry_counter_t result;
     if (st.encounters.head >= st.encounters.tail)
     {
-        return st.encounters.head - st.encounters.tail;
+       result = st.encounters.head - st.encounters.tail;
     }
     else
     {
-        return MAX_LOG_COUNT;
+        result = MAX_LOG_COUNT;
     }
+    log_debugf("result: %lu\r\n", (uint32_t)result);
+    return result;
 }
 
 enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto)
@@ -250,7 +256,32 @@ enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto)
     return st.total_encounters;
 }
 
-//#define ENCOUNTER_LOG_BASE (ENCOUNTER_BASE + sizeof(flash_check_t))
+// Adjust encounter indexing to ensure that the oldest log entry satisfies the
+// age criteria
+void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
+{
+  log_debug("deleting...\r\n");
+  dongle_encounter_entry en;
+#define age (cur_time - en.dongle_time)
+#define old (age > DONGLE_MAX_LOG_AGE)
+  do {
+      log_debugf("tail: %lu\r\n", (uint32_t)st.encounters.tail);
+      log_debugf("head: %lu\r\n", (uint32_t)st.encounters.head);
+      // tail is updated during loop, so reference first index every time
+      dongle_storage_load_single_encounter(sto, 0, &en);
+      log_debugf("age: %lu\r\n", (uint32_t) age);
+      if (old) {
+          log_debug("incrementing tail\r\n");
+          inc_tail();
+      } else {
+          log_debug("break\r\n");
+          break;
+      }
+  } while (st.encounters.tail != st.encounters.head);
+#undef old
+#undef age
+}
+
 #define ENCOUNTER_LOG_OFFSET(j) \
     (st.map.log +               \
      (((st.encounters.tail + j) % MAX_LOG_COUNT) * ENCOUNTER_ENTRY_SIZE))
@@ -307,6 +338,7 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
     enctr_entry_counter_t j = 0;
     for (enctr_entry_counter_t i = 0; i < num; i++)
     {
+        log_debugf("i = %lu\r\n", (uint32_t) i);
         // Can be optimized to track timestamps and avoid extra loads
         dongle_storage_load_single_encounter(sto, i, &en);
         if (en.dongle_time >= min_time)
@@ -328,7 +360,7 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                                   beacon_eph_id_t *eph_id)
 {
     enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.encounters.head);
+    storage_addr_t start = ENCOUNTER_LOG_OFFSET(st.encounters.head - st.encounters.tail);
     st.off = start;
     log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
                (uint32_t)num, st.off);
@@ -350,6 +382,9 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     _log_increment_(sto);
     num = dongle_storage_num_encounters_current(sto);
     log_debugf("log now contains %lu entries\r\n", (uint32_t)num);
+    _delete_old_encounters_(sto, *dongle_time);
+    num = dongle_storage_num_encounters_current(sto);
+    log_debugf("after deletion, contains %lu entries\r\n", (uint32_t)num);
 }
 
 int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)
@@ -374,6 +409,11 @@ void dongle_storage_info(dongle_storage *sto)
             (uint32_t)FLASH_LOG_SIZE);
   log_infof("    Maximum number of log entries:       %lu\r\n",
               (uint32_t)MAX_LOG_COUNT);
+}
+
+void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time)
+{
+  _delete_old_encounters_(sto, cur_time);
 }
 
 #undef block_align

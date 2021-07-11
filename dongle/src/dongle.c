@@ -643,11 +643,14 @@ void dongle_test()
 
     log_info("    ? Testing that correct number of encounters were logged\r\n");
     int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
-    if (test_encounters != numExpected)
+// Tolerant expectation provided to account for timing differences
+    int tolExpected = numExpected + 1;
+    if (test_encounters != numExpected
+          && test_encounters != tolExpected)
     {
         FAIL("Wrong number of encounters.");
-        log_infof("Encounters logged in window: %d; Expected: %d\r\n",
-                  test_encounters, numExpected);
+        log_infof("Encounters logged in window: %d; Expected: %d or %d\r\n",
+                  test_encounters, numExpected, tolExpected);
     }
 
     log_info("    ? Testing that logged encounters are correct\r\n");

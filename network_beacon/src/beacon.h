@@ -3,6 +3,8 @@
 
 #include <assert.h>
 
+//#define BEACON_MODE__NETWORK // remove to run as non-network beacon
+
 #define BEACON_PLATFORM__GECKO
 
 #define BEACON_NO_OP assert(1);

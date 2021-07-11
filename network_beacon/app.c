@@ -159,11 +159,13 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
         beacon_clock_increment(1);
     }
 
+#ifdef BEACON_MODE__NETWORK
     // handle data updates
     if (user_handle == RISK_TIMER_HANDLE)
     {
         get_risk_data();
     }
+#endif
 #undef user_handle
 }
 

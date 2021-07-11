@@ -10,7 +10,7 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__DEBUG
+#define LOG_LEVEL__INFO
 #define APPL__BEACON
 #define MODE__STAT
 #define MODE__TEST
@@ -220,7 +220,13 @@ static void _form_payload_()
 {
     const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
 #define bt (payload.bt_data)
-    uint8_t tmp = bt->data_len;
+    uint8_t tmp;
+#ifdef BEACON_PLATFORM__GECKO
+    tmp = bt->data_len;
+    bt->data_len = bt->type;
+    bt->type = tmp;
+#endif
+    tmp = bt->data_len;
     bt->data_len = len;
 #define en (payload.en_data)
     en.bytes[MAX_BROADCAST_SIZE - 1] = tmp;
@@ -254,6 +260,7 @@ static void _beacon_encode_()
 {
     // Load broadcast into bluetooth payload
     _encode_encounter_();
+    print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data pre-encode");
     _form_payload_();
 }
 

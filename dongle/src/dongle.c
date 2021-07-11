@@ -470,7 +470,9 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
                    dongle_time, epoch,
                    signal_id,
                    add[0], add[1], add[2], add[3], add[4], add[5], rssi);
+    //print_bytes(dat, data_len, "scan-data pre-decode");
     decode_payload(dat);
+    //print_bytes(dat, data_len, "scan-data decoded");
     encounter_broadcast_t en;
     decode_encounter(&en, (encounter_broadcast_raw_t *)dat);
     dongle_track(&en, rssi, signal_id);

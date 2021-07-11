@@ -28,8 +28,6 @@
 
 #include "../../common/src/pancast.h"
 
-uint64_t sec_clock = 0;
-
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;
 
@@ -153,20 +151,20 @@ void get_risk_data()
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
-    sec_clock++;
-    if (sec_clock == (BEACON_TIMER_RESOLUTION / 1000))
+#define user_handle (*((uint8_t*)(handle->callback_data)))
+
+    // handle main clock
+    if (user_handle == MAIN_TIMER_HANDLE)
     {
         beacon_clock_increment(1);
-        sec_clock = 0;
     }
 
-    sl_status_t sc;
-
     // handle data updates
-    if (sec_clock % RISK_UPDATE_FREQ == 0)
+    if (user_handle == RISK_TIMER_HANDLE)
     {
         get_risk_data();
     }
+#undef user_handle
 }
 
 /* Bluetooth stack event handler.

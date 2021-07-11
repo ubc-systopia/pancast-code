@@ -36,9 +36,13 @@
 #define NO_MAX_EVT 0 // 0 for no max events
 
 /* Timers */
+#define TIMER_1MS 1
 #define TIMER_1S 1000 // one second in ms, used for timer
+#define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1
-#define RISK_UPDATE_FREQ 1 // TODO change to 0.05 * second
+#define MAIN_TIMER_PRIORT 0
+#define RISK_TIMER_PRIORT 1
+#define RISK_UPDATE_FREQ 0.05 // 0.05 * 1s = 50ms
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE

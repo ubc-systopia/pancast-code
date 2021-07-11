@@ -43,14 +43,26 @@ int main(void)
     // Start the kernel. Task(s) created in app_init() will start running.
     sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
-    // Initialize the main timer
-    sl_sleeptimer_timer_handle_t timer;
+    // Set up timers
     sl_status_t sc = sl_sleeptimer_init();
+    uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
+    uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+    // Main timer
+    sl_sleeptimer_timer_handle_t timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-                                               TIMER_1S, // 1s timer
+                               TIMER_1MS * BEACON_TIMER_RESOLUTION,
                                                sl_timer_on_expire,
-                                               (void *)NULL,
-                                               0, 0);
+                                               &main_timer_handle,
+                               MAIN_TIMER_PRIORT, 0);
+    // Risk Timer
+    // Granularity in milliseconds, so frequency division down to 0.001*1s
+    // is supported
+    sl_sleeptimer_timer_handle_t risk_timer;
+    sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
+                               RISK_UPDATE_FREQ * TIMER_1S,
+                                               sl_timer_on_expire,
+                                               &risk_timer_handle,
+                               RISK_TIMER_PRIORT, 0);
     while (1)
     {
         // Do not remove this call: Silicon Labs components process action routine

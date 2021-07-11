@@ -97,6 +97,15 @@ void dongle_storage_get_info(dongle_storage *sto)
     st.min_block_size = FLASH_DEVICE_BLOCK_SIZE;
     st.page_size = FLASH_DEVICE_PAGE_SIZE;
 #endif
+    st.total_size = st.num_pages * st.page_size;
+}
+
+// Upper-bound of size of encounter log, in bytes
+#define TARGET_FLASH_LOG_SIZE (st.total_size - FLASH_OFFSET)
+
+size_t dongle_storage_max_log_count(dongle_storage *sto)
+{
+  return MAX_LOG_COUNT;
 }
 
 void dongle_storage_init_device(dongle_storage *sto)
@@ -325,6 +334,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
                (uint32_t)num, st.off);
     // TODO: save erased into memory in case the cursor has wrapped around
     // currently reads corrupted data once the max size is reached
+    // can probably be done with a page buffer, but may lose up to page
+    // of data if dongle is stopped
     pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
 #define write(data, size) \
     _flash_write_(sto, data, size), st.off += size
@@ -353,6 +364,16 @@ int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)
     _flash_read_(sto, data, len);
     print_bytes(data, len, "Flash data");
     return 0;
+}
+
+void dongle_storage_info(dongle_storage *sto)
+{
+  log_info("\r\n");
+  log_info("Storage Info:\r\n");
+  log_infof("    Total flash space available for log: %lu\r\n",
+            (uint32_t)FLASH_LOG_SIZE);
+  log_infof("    Maximum number of log entries:       %lu\r\n",
+              (uint32_t)MAX_LOG_COUNT);
 }
 
 #undef block_align

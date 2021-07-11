@@ -534,6 +534,7 @@ void dongle_report()
         log_info("***          Begin Report          ***\r\n");
 
         dongle_info();
+        dongle_storage_info(&storage);
         dongle_stats();
         dongle_test();
 
@@ -559,7 +560,9 @@ void dongle_stats()
     log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
 
     log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
-              (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
+              (uint32_t)cur,
+                cur == dongle_storage_max_log_count(&storage) ?
+                    " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);

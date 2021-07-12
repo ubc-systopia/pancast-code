@@ -14,6 +14,7 @@ const sli_bt_gattdb_t gattdb = {0};
 #endif // SL_CATALOG_GATT_CONFIGURATION_PRESENT
 #endif // SL_COMPONENT_CATALOG_PRESENT
 
+#include "sl_bt_dynamic_gattdb_config.h"
 
 static const sl_bt_configuration_t config = SL_BT_CONFIG_DEFAULT;
 
@@ -23,6 +24,9 @@ static const struct sli_bgapi_class * const bt_class_table[] =
   SL_BT_BGAPI_CLASS(advertiser),
   SL_BT_BGAPI_CLASS(scanner),
   SL_BT_BGAPI_CLASS(connection),
+  SL_BT_BGAPI_CLASS(gatt),
+  SL_BT_BGAPI_CLASS(gattdb),
+  SL_BT_BGAPI_CLASS(gatt_server),
   NULL
 };
 #if !defined(SL_CATALOG_KERNEL_PRESENT)
@@ -49,6 +53,7 @@ void sl_bt_init(void)
   // does not return an error code.
   sl_status_t err = sl_bt_init_stack(&config);
   (void) err;
+  sl_bt_dynamic_gattdb_configure();
   sl_bt_init_classes(bt_class_table);
 }
 

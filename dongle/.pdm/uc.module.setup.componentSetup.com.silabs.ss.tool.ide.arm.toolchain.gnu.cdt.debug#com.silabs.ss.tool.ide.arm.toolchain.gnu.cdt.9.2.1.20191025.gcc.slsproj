@@ -303,6 +303,9 @@
     </folder>
     <folder name="protocol">
       <folder name="bluetooth">
+        <folder name="src">
+          <file name="sl_bt_dynamic_gattdb_config.c" uri="studio:/sdk/protocol/bluetooth/src/sl_bt_dynamic_gattdb_config.c"/>
+        </folder>
         <folder name="inc">
           <file name="sl_bt_stack_config.h" uri="studio:/sdk/protocol/bluetooth/inc/sl_bt_stack_config.h"/>
           <file name="sl_bt_ll_config.h" uri="studio:/sdk/protocol/bluetooth/inc/sl_bt_ll_config.h"/>

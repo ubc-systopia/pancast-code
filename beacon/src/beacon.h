@@ -18,7 +18,6 @@
 #include "./sha256/sha-256.h"
 #endif
 
-#define BEACON_REPORT_INTERVAL 2
 
 // Advertising interval settings
 // Zephyr-recommended values are used

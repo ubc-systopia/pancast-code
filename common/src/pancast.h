@@ -5,6 +5,8 @@
 // Including data-type size, timing parameters etc.
 // Some of these may be adjusted for testing purposes.
 
+//#define PANCAST__TEST // uncomment to set global params for testing
+
 #include <stdint.h>
 
 // Constants
@@ -21,11 +23,31 @@
 // number of timer cycles in one epoch - should correspond to 15 min in prod.
 #define BEACON_EPOCH_LENGTH 15
 // Beacon clock resolution in ms - should be 1 min in prod.
-#define BEACON_TIMER_RESOLUTION 60000
+#ifdef PANCAST__TEST
+#define BEACON_TIMER_RESOLUTION 1000 // 1s
+#else
+#define BEACON_TIMER_RESOLUTION 60000 // 1 min
+#endif
 // Dongle clock resolution in ms - should be 1 min in prod.
-#define DONGLE_TIMER_RESOLUTION 60000
+#ifdef PANCAST__TEST
+#define DONGLE_TIMER_RESOLUTION 1000 // 1s
+#else
+#define DONGLE_TIMER_RESOLUTION 60000 // 1 min
+#endif
 // Maximum age of an encounter in the dongle log, in time units. Should correspond to 14 days
-#define DONGLE_MAX_LOG_AGE (14 * 24 * 60)
+#ifdef PANCAST__TEST
+#define DONGLE_MAX_LOG_AGE 15 * 60 // 15 min
+#else
+#define DONGLE_MAX_LOG_AGE (14 * 24 * 60) // 14 days
+#endif
+// (Approx) number of time units between each report written to output
+#ifdef PANCAST__TEST
+#define DONGLE_REPORT_INTERVAL 60 // 1min
+#define BEACON_REPORT_INTERVAL 60 // 1min
+#else
+#define DONGLE_REPORT_INTERVAL 1 // 1min
+#define BEACON_REPORT_INTERVAL 1 // 1min
+#endif
 
 // Simple Data Types
 typedef uint32_t beacon_id_t;

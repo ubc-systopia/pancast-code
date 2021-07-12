@@ -19,8 +19,8 @@ component:
 - {id: sl_system}
 - {id: iostream_retarget_stdio}
 - {id: brd4182a_b03}
-- {id: brd4001a}
 - {id: bluetooth_feature_gatt_server}
+- {id: brd4001a}
 - {id: bluetooth_feature_advertiser}
 - {id: bluetooth_feature_periodic_adv}
 - {id: bluetooth_feature_sm}

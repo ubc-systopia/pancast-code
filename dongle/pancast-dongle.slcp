@@ -18,6 +18,7 @@ toolchain_settings: []
 component:
 - {id: sl_system}
 - {id: iostream_retarget_stdio}
+- {id: bluetooth_feature_connection}
 - {id: bluetooth_feature_advertiser}
 - instance: [vcom]
   id: iostream_usart

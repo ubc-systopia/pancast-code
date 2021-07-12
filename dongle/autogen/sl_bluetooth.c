@@ -22,6 +22,7 @@ static const struct sli_bgapi_class * const bt_class_table[] =
 {
   SL_BT_BGAPI_CLASS(advertiser),
   SL_BT_BGAPI_CLASS(scanner),
+  SL_BT_BGAPI_CLASS(connection),
   NULL
 };
 #if !defined(SL_CATALOG_KERNEL_PRESENT)

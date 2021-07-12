@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
+#else
+#include "sl_bluetooth.h"
 #endif
 
 #include "encounter.h"
@@ -385,7 +387,30 @@ int access_advertise()
 
     log_infof("ACCESS: Bluetooth advertising started with address %s\r\n", addr_s);
 #else
-    DONGLE_NO_OP;
+    sl_status_t sc;
+    uint8_t ad_handle = 0x00;
+#define INTERVAL 160 // 100 ms per the example
+    sc = sl_bt_advertiser_create_set(&ad_handle);
+    if (sc) {
+        log_errorf("error creating advertising set: 0x%x\r\n", sc);
+        return sc;
+    }
+    sc = sl_bt_advertiser_set_timing(ad_handle,
+        INTERVAL,
+        INTERVAL, 0, 0);
+    if (sc) {
+        log_errorf("error setting advertising timing: 0x%x\r\n", sc);
+        return sc;
+    }
+#undef INTERVAL
+    sc = sl_bt_advertiser_start(ad_handle,
+        advertiser_general_discoverable,
+        advertiser_connectable_scannable);
+    if (sc) {
+        log_errorf("error starting advertising: 0x%x\r\n", sc);
+        return sc;
+    }
+    log_info("Advertising started successfully\r\n");
 #endif
 
     return 0;

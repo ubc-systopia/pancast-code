@@ -26,6 +26,8 @@
 #include "sl_system_process_action.h"
 #endif // SL_CATALOG_KERNEL_PRESENT
 
+#include "app_log.h"
+
 #include "../../common/src/pancast.h"
 
 int main(void)
@@ -42,6 +44,8 @@ int main(void)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
+  app_log_info("Kernel start\r\n");
+
   // Initialize the main timer
   sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_init();

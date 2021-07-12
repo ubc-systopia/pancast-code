@@ -77,22 +77,6 @@
 // [USART0]$
 
 // $[USART1]
-// USART1 CTS on PA08
-#define USART1_CTS_PORT                          gpioPortA
-#define USART1_CTS_PIN                           8
-
-// USART1 RTS on PA07
-#define USART1_RTS_PORT                          gpioPortA
-#define USART1_RTS_PIN                           7
-
-// USART1 RX on PA06
-#define USART1_RX_PORT                           gpioPortA
-#define USART1_RX_PIN                            6
-
-// USART1 TX on PA05
-#define USART1_TX_PORT                           gpioPortA
-#define USART1_TX_PIN                            5
-
 // [USART1]$
 
 // $[I2C1]
@@ -114,6 +98,14 @@
 // [EUART0]$
 
 // $[PTI]
+// PTI DFRAME on PC05
+#define PTI_DFRAME_PORT                          gpioPortC
+#define PTI_DFRAME_PIN                           5
+
+// PTI DOUT on PC04
+#define PTI_DOUT_PORT                            gpioPortC
+#define PTI_DOUT_PIN                             4
+
 // [PTI]$
 
 // $[MODEM]

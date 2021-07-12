@@ -29,7 +29,7 @@
 
  MEMORY
  {
-   FLASH   (rx)  : ORIGIN = 0x0, LENGTH = 0x7e000
+   FLASH   (rx)  : ORIGIN = 0x6000, LENGTH = 0x78000
    RAM     (rwx) : ORIGIN = 0x20000000, LENGTH = 0x8000
  }
 
@@ -37,6 +37,14 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
+  .text_apploader :
+  {
+    KEEP(*(.binapploader*))
+  } > FLASH
+  .text_signature :
+  {
+    . = ALIGN(8192);
+  } > FLASH
 
   .text :
   {
@@ -162,7 +170,7 @@ SECTIONS
   } > RAM
 
   __heap_size = __HeapLimit - __HeapBase;
-  __main_flash_end__ = 0x0 + 0x7e000;
+  __main_flash_end__ = 0x6000 + 0x78000;
 
    /* This is where we handle flash storage blocks. We use dummy sections for finding the configured
    * block sizes and then "place" them at the end of flash when the size is known. */

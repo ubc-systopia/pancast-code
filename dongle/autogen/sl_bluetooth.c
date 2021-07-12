@@ -15,18 +15,22 @@ const sli_bt_gattdb_t gattdb = {0};
 #endif // SL_COMPONENT_CATALOG_PRESENT
 
 #include "sl_bt_dynamic_gattdb_config.h"
+#include "sl_ota_dfu.h"
 
 static const sl_bt_configuration_t config = SL_BT_CONFIG_DEFAULT;
 
 /** @brief Table of used BGAPI classes */
 static const struct sli_bgapi_class * const bt_class_table[] =
 {
+  SL_BT_BGAPI_CLASS(system),
   SL_BT_BGAPI_CLASS(advertiser),
   SL_BT_BGAPI_CLASS(scanner),
   SL_BT_BGAPI_CLASS(connection),
   SL_BT_BGAPI_CLASS(gatt),
   SL_BT_BGAPI_CLASS(gattdb),
   SL_BT_BGAPI_CLASS(gatt_server),
+  SL_BT_BGAPI_CLASS(sm),
+  SL_BT_BGAPI_CLASS(sync),
   NULL
 };
 #if !defined(SL_CATALOG_KERNEL_PRESENT)
@@ -64,6 +68,7 @@ SL_WEAK void sl_bt_on_event(sl_bt_msg_t* evt)
 
 void sl_bt_process_event(sl_bt_msg_t *evt)
 {
+  sl_bt_ota_dfu_on_event(evt);
   sl_bt_on_event(evt);
 }
 

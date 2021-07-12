@@ -24,29 +24,29 @@
 #define BEACON_EPOCH_LENGTH 15
 // Beacon clock resolution in ms - should be 1 min in prod.
 #ifdef PANCAST__TEST
-#define BEACON_TIMER_RESOLUTION 1000 // 1s
+#define BEACON_TIMER_RESOLUTION 60000
 #else
 #define BEACON_TIMER_RESOLUTION 60000 // 1 min
 #endif
 // Dongle clock resolution in ms - should be 1 min in prod.
 #ifdef PANCAST__TEST
-#define DONGLE_TIMER_RESOLUTION 1000 // 1s
+#define DONGLE_TIMER_RESOLUTION 60000
 #else
 #define DONGLE_TIMER_RESOLUTION 60000 // 1 min
 #endif
 // Maximum age of an encounter in the dongle log, in time units. Should correspond to 14 days
 #ifdef PANCAST__TEST
-#define DONGLE_MAX_LOG_AGE 15 * 60 // 15 min
+#define DONGLE_MAX_LOG_AGE 60 // 1 hour
 #else
 #define DONGLE_MAX_LOG_AGE (14 * 24 * 60) // 14 days
 #endif
 // (Approx) number of time units between each report written to output
 #ifdef PANCAST__TEST
-#define DONGLE_REPORT_INTERVAL 60 // 1min
-#define BEACON_REPORT_INTERVAL 60 // 1min
+#define DONGLE_REPORT_INTERVAL 2
+#define BEACON_REPORT_INTERVAL 2
 #else
-#define DONGLE_REPORT_INTERVAL 1 // 1min
-#define BEACON_REPORT_INTERVAL 1 // 1min
+#define DONGLE_REPORT_INTERVAL 10
+#define BEACON_REPORT_INTERVAL 10
 #endif
 
 // Simple Data Types

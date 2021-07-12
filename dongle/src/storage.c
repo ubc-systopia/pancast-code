@@ -262,9 +262,14 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 {
   log_debug("deleting...\r\n");
   dongle_encounter_entry en;
+  enctr_entry_counter_t i = 0;
+  enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
 #define age (cur_time - en.dongle_time)
 #define old (age > DONGLE_MAX_LOG_AGE)
   do {
+      if (i >= num) {
+          break;
+      }
       log_debugf("tail: %lu\r\n", (uint32_t)st.encounters.tail);
       log_debugf("head: %lu\r\n", (uint32_t)st.encounters.head);
       // tail is updated during loop, so reference first index every time
@@ -273,6 +278,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
       if (old) {
           log_debug("incrementing tail\r\n");
           inc_tail();
+          i++;
       } else {
           log_debug("break\r\n");
           break;
@@ -318,6 +324,7 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
     if (i >= num)
     {
         log_errorf("Index for encounter log (%lu) is too large\r\n", (uint32_t)i);
+        return;
     }
     st.off = ENCOUNTER_LOG_OFFSET(i);
 #define read(size, dst) _flash_read_(sto, dst, size), st.off += size

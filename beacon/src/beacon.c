@@ -174,6 +174,7 @@ static void _beacon_info_()
     log_infof("    Timer Resolution:                %u ms\r\n", BEACON_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+    log_info("    Advertising Interval:                  \r\n");
     log_infof("        Min:                         %x ms\r\n", BEACON_ADV_MIN_INTERVAL);
     log_infof("        Max:                         %x ms\r\n", BEACON_ADV_MAX_INTERVAL);
 }
@@ -421,6 +422,9 @@ static int _beacon_advertise_()
         return -1;
     }
     err = _set_adv_data_();
+    if (!err) {
+        log_info("Success!\r\n");
+    }
 #endif
     return err;
 }

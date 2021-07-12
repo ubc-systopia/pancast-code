@@ -5,16 +5,16 @@
 // Including data-type size, timing parameters etc.
 // Some of these may be adjusted for testing purposes.
 
-//#define PANCAST__TEST // uncomment to set global params for testing
+#define PANCAST__TEST // uncomment to set global params for testing
 
 #include <stdint.h>
 
 // Constants
 
 // maximum size of a secret key in bytes - used for data containing
-#define SK_MAX_SIZE 360
+#define SK_MAX_SIZE 44
 // maximum size of a public key
-#define PK_MAX_SIZE 96
+#define PK_MAX_SIZE 800
 // number of bytes used from hash for eph. id - should be 15 in prod. (currently not supported)
 #define BEACON_EPH_ID_HASH_LEN 14
 // size of containers used internally

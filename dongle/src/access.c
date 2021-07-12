@@ -179,7 +179,7 @@ void interact_update()
         {
             log_debug("Code checks out\r\n");
             dongle_lock();
-            num_recs = dongle_storage_num_encounters(storage);
+            num_recs = dongle_storage_num_encounters_current(storage);
             if (num_recs == 0)
             {
                 log_debug("No records, re-locking\r\n");

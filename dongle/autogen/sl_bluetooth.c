@@ -20,6 +20,7 @@ static const sl_bt_configuration_t config = SL_BT_CONFIG_DEFAULT;
 /** @brief Table of used BGAPI classes */
 static const struct sli_bgapi_class * const bt_class_table[] =
 {
+  SL_BT_BGAPI_CLASS(advertiser),
   SL_BT_BGAPI_CLASS(scanner),
   NULL
 };

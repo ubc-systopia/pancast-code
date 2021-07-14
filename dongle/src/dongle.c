@@ -12,6 +12,7 @@
 #define LOG_LEVEL__DEBUG
 //#define MODE__TEST
 #define MODE__STAT
+#define MODE__PERIODIC
 
 #include <string.h>
 
@@ -23,6 +24,9 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
 #include <drivers/flash.h>
+#else
+#include "app_assert.h"
+#include "app_log.h"
 #endif
 
 #include "storage.h"
@@ -170,13 +174,38 @@ void dongle_scan(void)
             ),
         dongle_log);
 #else
+    int err = 0;
+#ifdef MODE__PERIODIC
+    sl_status_t sc;
+    // Set scanner timing
+    app_log_info("Setting scanner timing\r\n");
+    sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
+    app_assert_status(sc);
+
+    // Set scanner mode
+    app_log_info("Setting scanner mode\r\n");
+    sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
+    app_assert_status(sc);
+
+    // Set sync parameters
+    app_log_info("Setting sync parameters\r\n");
+    sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
+    app_assert_status(sc);
+
+    // Start scanning
+    app_log_info("Starting scan\r\n");
+    sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
+    app_assert_status(sc);
+
+    err = sc;
+#else
     sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
                              DONGLE_SCAN_INTERVAL,
                              DONGLE_SCAN_WINDOW);
     sl_bt_scanner_set_mode(gap_1m_phy, 0); // passive scan
     sl_bt_scanner_start(gap_1m_phy,
                         sl_bt_scanner_discover_observation); // scan all devices
-    int err = 0;
+#endif
 #endif
     if (err)
     {

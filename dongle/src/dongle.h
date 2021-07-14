@@ -86,6 +86,27 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
+// Periodic Scanning &
+#define SCAN_PHY 1 // 1M PHY
+#define SCAN_WINDOW 320
+#define SCAN_INTERVAL 320
+#define SCAN_MODE 0 // passive scan
+
+#define SYNC_SKIP 0
+#define SYNC_TIMEOUT 500 // Unit: 10 ms
+#define SYNC_FLAGS 0
+
+#define TIMER_1S 32768
+
+#define TEST_DURATION 1800000
+
+typedef struct {
+  uint64_t start_ticks;
+  uint64_t end_ticks;
+  uint64_t diff;
+  uint64_t diff_ms;
+} timertest_t;
+
 // High-level routine structure
 #ifndef DONGLE_PLATFORM__ZEPHYR
 void dongle_start();

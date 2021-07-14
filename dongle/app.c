@@ -52,7 +52,7 @@ void app_process_action(void)
 {
 }
 
-int synced = 0;
+int synced = 0; // no concurrency control but acts as an eventual state signal
 
 void sl_bt_on_event (sl_bt_msg_t *evt)
 {
@@ -98,6 +98,17 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        app_log_info("start_time (ms) = %u\r\n", ms);
         // sl_bt_scanner_stop();
         synced = 1;
+        break;
+      case sl_bt_evt_sync_closed_id:
+        app_log_info("Sync lost...\r\n");
+//        num_sync_lost = num_sync_lost + 1;
+//        app_log_info("num_sync_lost %d\r\n", num_sync_lost);
+//
+//        // Start scanning again
+//        app_log_info("Starting scan...\r\n");
+//        sc = sl_bt_scanner_start(1, scanner_discover_observation);
+//        app_assert_status(sc);
+        synced = 0;
         break;
       case sl_bt_evt_system_soft_timer_id:
       default:

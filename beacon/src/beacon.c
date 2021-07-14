@@ -13,7 +13,7 @@
 #define LOG_LEVEL__DEBUG
 #define APPL__BEACON
 #define MODE__STAT
-//#define MODE__TEST
+#define MODE__TEST
 
 #include <string.h>
 

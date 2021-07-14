@@ -23,8 +23,9 @@
 
 #include "src/dongle.h"
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__DEBUG
 #include "../../common/src/log.h"
+#include "../../common/src/util.h"
 
 // Sync handle
 static uint16_t sync_handle = 0;
@@ -109,6 +110,43 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        sc = sl_bt_scanner_start(1, scanner_discover_observation);
 //        app_assert_status(sc);
         synced = 0;
+        break;
+      case sl_bt_evt_sync_data_id:
+        // Log info
+        app_log_info("Received data, len :%d\r\n",
+                     evt->data.evt_sync_data.data.len);
+        app_log_info("Status: %d\r\n",
+                           evt->data.evt_sync_data.data_status);
+        // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
+
+       //  Print entire byte array
+        for (int i = 0; i < evt->data.evt_sync_data.data.len; i++) {
+           app_log_debug(", %d\r\n", evt->data.evt_sync_data.data.data[i]);
+        }
+        app_log_debug("\r\n");
+
+//        // check if sync data index + evt->data > length
+//        // if it is larger or equal then print and reset length
+//        if ((sync_data_index + evt->data.evt_sync_data.data.len) < SYNC_BUFFER_SIZE) {
+//          memcpy(&sync_rx_buffer[sync_data_index], evt->data.evt_sync_data.data.data, evt->data.evt_sync_data.data.len);
+//            sync_data_index += evt->data.evt_sync_data.data.len;
+//        } else {
+//          // Printf buffer
+//            for (int i = 0; i < SYNC_BUFFER_SIZE; i++) {
+//              app_log_info(", %d", sync_rx_buffer[i]);
+//            }
+//            app_log_info("\r\n");
+//            sync_data_index = 0;
+//
+//          //  memset(&sync_rx_buffer, 0, SYNC_BUFFER_SIZE);
+//            memcpy(&sync_rx_buffer[sync_data_index], evt->data.evt_sync_data.data.data, evt->data.evt_sync_data.data.len);
+//            sync_data_index += evt->data.evt_sync_data.data.len;
+//        }
+//
+//          // Log throughput measurements
+//        byte_count = byte_count + evt->data.evt_sync_data.data.len;
+//        timestamp = sl_sleeptimer_get_tick_count64() - start_time;
+//        sl_sleeptimer_tick64_to_ms(timestamp, &ms);
         break;
       case sl_bt_evt_system_soft_timer_id:
       default:

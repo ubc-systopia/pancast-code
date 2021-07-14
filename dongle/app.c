@@ -52,6 +52,8 @@ void app_process_action(void)
 {
 }
 
+int synced = 0;
+
 void sl_bt_on_event (sl_bt_msg_t *evt)
 {
   sl_status_t sc;
@@ -67,7 +69,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         dongle_log(&report.address,
                    report.rssi, report.data.data, report.data.len);
         // then check for periodic info in packet
-        if (evt->data.evt_scanner_scan_report.periodic_interval != 0) {
+        if (!synced
+            && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
 //         // Start test
 //         sync_test.start_ticks = sl_sleeptimer_get_tick_count64();
            app_log_info("Opening sync\r\n");
@@ -82,6 +85,19 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
            app_assert_status(sc);
        }
 #undef report
+        break;
+      case sl_bt_evt_sync_opened_id:
+        app_log_info("new sync opened!\r\n");
+//        sync_test.end_ticks = sl_sleeptimer_get_tick_count64();
+//        sync_test.diff = sync_test.end_ticks - sync_test.start_ticks;
+//        sl_sleeptimer_tick64_to_ms(timestamp, &sync_test.diff);
+//        if (start_time == 0) {
+//            start_time = sl_sleeptimer_get_tick_count64();
+//            sl_sleeptimer_tick64_to_ms(timestamp, &ms);
+//        }
+//        app_log_info("start_time (ms) = %u\r\n", ms);
+        // sl_bt_scanner_stop();
+        synced = 1;
         break;
       case sl_bt_evt_system_soft_timer_id:
       default:

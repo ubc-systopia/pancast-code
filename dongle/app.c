@@ -30,11 +30,18 @@
 // Sync handle
 static uint16_t sync_handle = 0;
 
+uint32_t per_data_ticks = 0;
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
-  log_debugf("Timer expiration; handle = %p, data = %p\r\n", handle, data);
-  dongle_clock_increment();
+#define user_handle (*((uint8_t*)(handle->callback_data)))
+  if (user_handle == MAIN_TIMER_HANDLE) {
+      dongle_clock_increment();
+  }
+  if (user_handle == PREC_TIMER_HANDLE) {
+        per_data_ticks++;
+    }
+#undef user_handle
 }
 
 /***************************************************************************//**
@@ -113,17 +120,21 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         break;
       case sl_bt_evt_sync_data_id:
         // Log info
-        app_log_info("Received data, len :%d\r\n",
+        app_log_debug("Received data, len :%d\r\n",
                      evt->data.evt_sync_data.data.len);
-        app_log_info("Status: %d\r\n",
+        app_log_debug("Status: %d\r\n",
                            evt->data.evt_sync_data.data_status);
         // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
 
-       //  Print entire byte array
-        for (int i = 0; i < evt->data.evt_sync_data.data.len; i++) {
-           app_log_debug(", %d\r\n", evt->data.evt_sync_data.data.data[i]);
-        }
-        app_log_debug("\r\n");
+//       //  Print entire byte array
+//        for (int i = 0; i < evt->data.evt_sync_data.data.len; i++) {
+//           app_log_debug(", %d\r\n", evt->data.evt_sync_data.data.data[i]);
+//        }
+//        app_log_debug("\r\n");
+
+        dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
+                              evt->data.evt_sync_data.data.len, per_data_ticks);
+        per_data_ticks = 0;
 
 //        // check if sync data index + evt->data > length
 //        // if it is larger or equal then print and reset length

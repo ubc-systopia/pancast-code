@@ -27,6 +27,9 @@
 #endif // SL_CATALOG_KERNEL_PRESENT
 
 #include "app_log.h"
+#include "app_assert.h"
+
+#include "./src/dongle.h"
 
 #include "../../common/src/pancast.h"
 
@@ -46,14 +49,27 @@ int main(void)
 #else // SL_CATALOG_KERNEL_PRESENT
   app_log_info("Kernel start\r\n");
 
-  // Initialize the main timer
-  sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_init();
+  app_assert_status(sc);
+  // Initialize the main timer
+  uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
+  sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
                        DONGLE_TIMER_RESOLUTION,
                        sl_timer_on_expire,
-                       (void*) NULL,
+                       &main_timer_handle,
                        0, 0);
+  app_assert_status(sc);
+
+  // Initialize higher precision timer
+  uint8_t prec_timer_handle = PREC_TIMER_HANDLE;
+  sl_sleeptimer_timer_handle_t precision_timer;
+    sc = sl_sleeptimer_start_periodic_timer_ms(&precision_timer,
+                         PREC_TIMER_TICK_MS,
+                         sl_timer_on_expire,
+                         &prec_timer_handle,
+                         0, 0);
+    app_assert_status(sc);
   while (sc == SL_STATUS_OK) {
     // Do not remove this call: Silicon Labs components process action routine
     // must be called from the super loop.

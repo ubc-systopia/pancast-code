@@ -10,7 +10,7 @@
 #define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__DEBUG
-//#define MODE__TEST
+#define MODE__TEST
 #define MODE__STAT
 #define MODE__PERIODIC
 
@@ -106,6 +106,7 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 int8_t num_obs_ids = 0;
 int8_t avg_rssi = 0;
 int8_t avg_encounter_rssi = 0;
+uint32_t avg_periodic_throughput = 0; // kb / s - not reset on interval
 #endif
 
 //
@@ -279,6 +280,19 @@ void dongle_clock_increment()
     log_debugf("Dongle clock: %lu\r\n", dongle_time);
     dongle_on_clock_update();
     dongle_unlock();
+}
+
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t ticks)
+{
+  app_log_debug("%u bytes, %lu ticks\r\n", data_len, ticks);
+#ifdef MODE__STAT
+  if (ticks > 0) {
+      uint32_t time_ms = ticks * PREC_TIMER_TICK_MS;
+      uint32_t n_bits = data_len * 8;
+      uint32_t this_thrpt = n_bits / time_ms;
+      avg_periodic_throughput = exp_avg(avg_periodic_throughput, this_thrpt);
+  }
+#endif
 }
 
 // UPDATE
@@ -596,6 +610,8 @@ void dongle_stats()
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);
+    log_infof("    Avg. Download throughput (all-time)  %lu kb/s\r\n",
+               avg_periodic_throughput);
 #endif
 }
 

@@ -86,7 +86,12 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
-// Periodic Scanning &
+// Timing Constants
+#define MAIN_TIMER_HANDLE 0x00
+#define PREC_TIMER_HANDLE 0x01 // high-precision timer
+#define PREC_TIMER_TICK_MS 1   // essentially res. of timer
+
+// Periodic Scanning & Synchronization
 #define SCAN_PHY 1 // 1M PHY
 #define SCAN_WINDOW 320
 #define SCAN_INTERVAL 320
@@ -129,5 +134,5 @@ void dongle_stats();
 void dongle_test();
 void dongle_on_clock_update();
 void dongle_clock_increment();
-
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t time);
 #endif

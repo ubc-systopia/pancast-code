@@ -9,10 +9,13 @@ struct req_data {
    size_t size;
 };
 
-struct risk_data {
+struct risk_data {	
     pthread_mutex_t mutex;
-    pthread_cond_t can_update;
-    pthread_cond_t update_ready;
+    pthread_cond_t uart_ready_cond;
+    pthread_cond_t request_ready_cond;
+    int uart_ready;
+    int request_ready;
+    int data_ready;
     struct req_data data;
 };
 

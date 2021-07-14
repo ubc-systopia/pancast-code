@@ -13,20 +13,26 @@
 
 int main(int argc, char *argv[]) {
 
-    pthread_t id[2];
-    struct risk_data r_data;
+  pthread_t id[2];
+  struct risk_data r_data;
 
-    int p = pthread_mutex_init(&r_data.mutex, NULL);
+  pthread_mutex_init(&r_data.mutex, NULL);
+  pthread_cond_init(&r_data.uart_ready_cond, 0);
+  pthread_cond_init(&r_data.request_ready_cond, 0);
 
-    // handle request once at beginning for now, until mutex is implemented
-    handle_request(&r_data.data);
+  // handle request once at beginning for now, until mutex is implemented
+  struct req_data request = {0};
+  int req_err = handle_request(&request);
+  r_data.data = request;
 
-    //  pthread_create(&id[REQ_THREAD_ID], NULL, &request_main, (void*)&r_data);
-    pthread_create(&id[UART_THREAD_ID], NULL,  &uart_main, (void*)&r_data);
+  // printf("size: %d\r\n", r_data.data.size);
 
-    pthread_join(id[REQ_THREAD_ID],NULL);
-    pthread_join(id[UART_THREAD_ID],NULL); 
+  pthread_create(&id[REQ_THREAD_ID], NULL, &request_main, (void*)&r_data);
+  pthread_create(&id[UART_THREAD_ID], NULL,  &uart_main, (void*)&r_data);
 
-    return 0;
+  pthread_join(id[REQ_THREAD_ID],NULL);
+  pthread_join(id[UART_THREAD_ID],NULL); 
+
+  return 0;
 }
 

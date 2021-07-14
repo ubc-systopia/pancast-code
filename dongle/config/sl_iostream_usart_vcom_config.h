@@ -101,6 +101,7 @@
 // USART1 RTS on PA07
 #define SL_IOSTREAM_USART_VCOM_RTS_PORT          gpioPortA
 #define SL_IOSTREAM_USART_VCOM_RTS_PIN           7
+
 // [USART_SL_IOSTREAM_USART_VCOM]$
 // <<< sl:end pin_tool >>>
 

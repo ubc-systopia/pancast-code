@@ -18,12 +18,12 @@
 #include <stdio.h>
 
 #include "sl_bluetooth.h"
+#include "app_log.h"
 
 #include "src/dongle.h"
 
 #define LOG_LEVEL__INFO
 #include "../../common/src/log.h"
-
 
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
@@ -52,6 +52,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 {
   switch (SL_BT_MSG_ID(evt->header)) {
       case sl_bt_evt_system_boot_id:
+        app_log_info("Bluetooth start\r\n");
         log_debug("Bluetooth device booted and ready\r\n");
         dongle_start();
         break;

@@ -9,8 +9,8 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__INFO
-#define MODE__TEST
+#define LOG_LEVEL__DEBUG
+//#define MODE__TEST
 #define MODE__STAT
 
 #include <string.h>
@@ -538,7 +538,9 @@ void dongle_report()
         dongle_info();
         dongle_storage_info(&storage);
         dongle_stats();
+#ifdef MODE__TEST
         dongle_test();
+#endif
 
         log_info("\r\n");
         log_info("***          End Report            ***\r\n");

@@ -91,6 +91,46 @@
 			<locationURI>STUDIO_SDK_LOC/platform/CMSIS/Include/mpu_armv8.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/application_properties.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/application_properties.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_errorcode.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_errorcode.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_interface.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_interface.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_interface.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_interface.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_interface_parser.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_interface_parser.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_interface_storage.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_interface_storage.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_interface_storage.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_interface_storage.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/bootloader/api/btl_reset_info.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/bootloader/api/btl_reset_info.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/common/inc/sl_atomic.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/common/inc/sl_atomic.h</locationURI>
@@ -316,6 +356,46 @@
 			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/inc/sli_bt_gattdb_def.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/protocol/bluetooth/src/sl_bt_dynamic_gattdb_config.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/src/sl_bt_dynamic_gattdb_config.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/bluetooth/common/ota_dfu/sl_ota_dfu.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/bluetooth/common/ota_dfu/sl_ota_dfu.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/bluetooth/common/ota_dfu/sl_ota_dfu.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/bluetooth/common/ota_dfu/sl_ota_dfu.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/common/util/app_assert/app_assert.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/common/util/app_assert/app_assert.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/common/util/app_assert/sl_app_assert.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/common/util/app_assert/sl_app_assert.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/common/util/app_log/app_log.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/common/util/app_log/app_log.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/common/util/app_log/app_log.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/common/util/app_log/app_log.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/app/common/util/app_log/sl_app_log.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/app/common/util/app_log/sl_app_log.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/common/toolchain/inc/sl_gcc_preinclude.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/common/toolchain/inc/sl_gcc_preinclude.h</locationURI>
@@ -334,6 +414,16 @@
 			<name>gecko_sdk_3.2.0/platform/common/toolchain/src/sl_memory.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/common/toolchain/src/sl_memory.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/debug/inc/sl_debug_swo.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/debug/inc/sl_debug_swo.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/debug/src/sl_debug_swo.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/debug/src/sl_debug_swo.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/emdrv/common/inc/ecode.h</name>
@@ -501,6 +591,21 @@
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_debug.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_debug.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_stdlib_config.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_stdlib_config.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_swo_itm_8.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_swo_itm_8.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_uart.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_uart.h</locationURI>
@@ -509,6 +614,11 @@
 			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sl_iostream_usart.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sl_iostream_usart.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sli_iostream_swo_itm_8.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/inc/sli_iostream_swo_itm_8.h</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/service/iostream/inc/sli_iostream_uart.h</name>
@@ -521,9 +631,24 @@
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream.c</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_debug.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_debug.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_retarget_stdio.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_retarget_stdio.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_stdlib_config.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_stdlib_config.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_swo_itm_8.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_swo_itm_8.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_uart.c</name>
@@ -534,6 +659,16 @@
 			<name>gecko_sdk_3.2.0/platform/service/iostream/src/sl_iostream_usart.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/service/iostream/src/sl_iostream_usart.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/mpu/inc/sl_mpu.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/mpu/inc/sl_mpu.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/service/mpu/src/sl_mpu.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/service/mpu/src/sl_mpu.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/service/power_manager/inc/sl_power_manager.h</name>
@@ -951,6 +1086,16 @@
 			<locationURI>STUDIO_SDK_LOC/platform/radio/rail_lib/plugin/pa-conversions/pa_curves_efr32.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/radio/rail_lib/plugin/rail_util_pti/sl_rail_util_pti.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/radio/rail_lib/plugin/rail_util_pti/sl_rail_util_pti.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/radio/rail_lib/plugin/rail_util_pti/sl_rail_util_pti.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/radio/rail_lib/plugin/rail_util_pti/sl_rail_util_pti.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/radio/rail_lib/protocol/ble/rail_ble.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/radio/rail_lib/protocol/ble/rail_ble.h</locationURI>
@@ -969,6 +1114,11 @@
 			<name>gecko_sdk_3.2.0/platform/radio/rail_lib/protocol/zwave/rail_zwave.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/radio/rail_lib/protocol/zwave/rail_zwave.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/protocol/bluetooth/lib/EFR32BG22/GCC/binapploader.o</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/lib/EFR32BG22/GCC/binapploader.o</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/protocol/bluetooth/lib/EFR32BG22/GCC/libbluetooth.a</name>

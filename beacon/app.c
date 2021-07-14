@@ -24,8 +24,6 @@
 #include "sl_iostream.h"
 #include "em_gpio.h"
 
-#include "src/beacon.h"
-
 #include "../../common/src/pancast.h"
 
 // The advertising set handle allocated from Bluetooth stack.
@@ -69,20 +67,26 @@ void update_risk_data(int len, char *data)
     memcpy(&risk_data, data, len);
     risk_data_len = len;
 
-    //  printf ("Setting advertising data...\r\n");
+#ifdef PERIODIC_TEST
+    printf ("Setting advertising data...\r\n");
+#endif
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
                                    PER_ADV_SIZE, &risk_data[0]);
 
     if (sc != 0)
     {
-        //    printf ("Error setting advertising data, sc: 0x%lx", sc);
+        printf ("Error setting advertising data, sc: 0x%lx", sc);
     }
 }
 
 /* Get risk data from raspberry pi client */
 void get_risk_data()
 {
-
+#ifdef PERIODIC_TEST
+  uint8_t test_data[PER_ADV_SIZE];
+  memset(test_data, 22, PER_ADV_SIZE);
+  update_risk_data(PER_ADV_SIZE, test_data);
+#else
 #ifndef BATCH_SIZE
 
     fflush(SL_IOSTREAM_STDIN);
@@ -146,6 +150,7 @@ void get_risk_data()
                                   PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
         adv_index++;
     }
+#endif
 #endif
 }
 

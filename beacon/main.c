@@ -54,6 +54,8 @@ int main(void)
                                                sl_timer_on_expire,
                                                &main_timer_handle,
                                MAIN_TIMER_PRIORT, 0);
+#ifdef BEACON_MODE__NETWORK
+    printf("Starting risk timer\r\n");
     // Risk Timer
     // Granularity in milliseconds, so frequency division down to 0.001*1s
     // is supported
@@ -63,6 +65,10 @@ int main(void)
                                                sl_timer_on_expire,
                                                &risk_timer_handle,
                                RISK_TIMER_PRIORT, 0);
+    if (sc) {
+        printf("Error starting risk timer: 0x%x\r\n", sc);
+    }
+#endif
     while (1)
     {
         // Do not remove this call: Silicon Labs components process action routine

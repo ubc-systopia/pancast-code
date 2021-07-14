@@ -10,10 +10,10 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__INFO
+#define LOG_LEVEL__DEBUG
 #define APPL__BEACON
 #define MODE__STAT
-#define MODE__TEST
+//#define MODE__TEST
 
 #include <string.h>
 
@@ -41,7 +41,7 @@
 // Offset determines a safe point of read/write beyond the pages used by application
 // binaries. For now, determined empirically by doing a compilation pass then adjusting
 // the value
-#define FLASH_OFFSET 0x31fff
+#define FLASH_OFFSET 0x30000
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 void main(void)
@@ -128,12 +128,17 @@ static void _beacon_load_()
     // Read data from flashed storage
     // Format matches the fixed structure which is also used as a protocol when appending non-app
     // data to the device image.
+#ifdef BEACON_PLATFORM__ZEPHYR
     struct device *flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
     off_t off = 0;
 #define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
     flash_read(flash, FLASH_OFFSET, &beacon_id, sizeof(beacon_id_t));
+#else
+    uint32_t off = 0;
+#define read(size, dst) (printf("%lu\r\n", FLASH_OFFSET + off), memcpy(dst, (uint32_t*)(FLASH_OFFSET + off), size), off += size)
+#endif
     read(sizeof(beacon_id_t), &beacon_id);
-    read(sizeof(beacon_location_id_t), &beacon_location_id);
+    read(8, &beacon_location_id);
     read(sizeof(beacon_timer_t), &t_init);
     read(sizeof(key_size_t), &backend_pk_size);
     if (backend_pk_size > PK_MAX_SIZE)
@@ -174,6 +179,7 @@ static void _beacon_info_()
     log_infof("    Timer Resolution:                %u ms\r\n", BEACON_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+    log_info("    Advertising Interval:                  \r\n");
     log_infof("        Min:                         %x ms\r\n", BEACON_ADV_MIN_INTERVAL);
     log_infof("        Max:                         %x ms\r\n", BEACON_ADV_MAX_INTERVAL);
 }
@@ -260,7 +266,7 @@ static void _beacon_encode_()
 {
     // Load broadcast into bluetooth payload
     _encode_encounter_();
-    print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data pre-encode");
+    //print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data pre-encode");
     _form_payload_();
 }
 
@@ -421,6 +427,9 @@ static int _beacon_advertise_()
         return -1;
     }
     err = _set_adv_data_();
+    if (!err) {
+        log_info("Success!\r\n");
+    }
 #endif
     return err;
 }

@@ -67,9 +67,7 @@ void update_risk_data(int len, char *data)
     memcpy(&risk_data, data, len);
     risk_data_len = len;
 
-#ifdef PERIODIC_TEST
-    printf ("Setting advertising data...\r\n");
-#endif
+    //printf ("Setting advertising data...\r\n");
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
                                    PER_ADV_SIZE, &risk_data[0]);
 

@@ -11,7 +11,6 @@
 #define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__DEBUG
-#define APPL__BEACON
 #define MODE__STAT
 #define MODE__TEST
 
@@ -533,7 +532,5 @@ void beacon_broadcast()
 }
 
 #undef MODE__STAT
-#undef APPL__BEACON
-#undef LOG_LEVEL__INFO
 #undef APPL_VERSION
 #undef MODE__TEST

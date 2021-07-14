@@ -1,12 +1,10 @@
 #ifndef BEACON__H
 #define BEACON__H
 
-#define BEACON_MODE__NETWORK
-//#define PERIODIC_TEST
-
 #include <assert.h>
 
-//#define BEACON_MODE__NETWORK // remove to run as non-network beacon
+#define BEACON_MODE__NETWORK // comment to run as non-network beacon
+//#define PERIODIC_TEST
 
 #define BEACON_PLATFORM__GECKO
 

@@ -1,7 +1,7 @@
 #ifndef BEACON__H
 #define BEACON__H
 
-//#define BEACON_MODE__NETWORK
+#define BEACON_MODE__NETWORK
 //#define PERIODIC_TEST
 
 #include <assert.h>

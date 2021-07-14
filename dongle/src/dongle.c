@@ -10,9 +10,14 @@
 #define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__DEBUG
-#define MODE__TEST
-#define MODE__STAT
-#define MODE__PERIODIC
+#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
+//#define MODE__TEST // enables unit tests
+#define MODE__STAT // enables telemetry aggregation
+#define MODE__PERIODIC // enables periodic scanning and syncing
+
+#ifdef MODE__TEST
+#define MODE__TEST_CONFIG
+#endif
 
 #include <string.h>
 
@@ -261,7 +266,7 @@ void dongle_load()
     dongle_storage_init(&storage);
     // Config load is required to properly set up the memory maps
     dongle_storage_load_config(&storage, &config);
-#ifdef MODE__TEST
+#ifdef MODE__TEST_CONFIG
     config.id = TEST_DONGLE_ID;
     config.t_init = TEST_DONGLE_INIT_TIME;
     config.backend_pk_size = TEST_BACKEND_KEY_SIZE;

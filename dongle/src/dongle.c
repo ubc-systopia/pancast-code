@@ -106,6 +106,9 @@ typedef struct {
 } stat_t;
 
 typedef struct {
+
+  uint8_t storage_checksum; // zero for valid stat data
+
   uint32_t num_obs_ids;
   uint32_t num_scan_results;
   uint32_t total_periodic_data_size; // bytes
@@ -271,7 +274,14 @@ void dongle_init()
     non_report_entry_count = 0;
     signal_id = 0;
 
-    dongle_stats_init();
+    // must call dongle_config_load before this
+    dongle_storage_read_stat(&storage, &stats, sizeof(stats_t));
+    if (!stats.storage_checksum) {
+        app_log_info("Existing Statistics Found\r\n");
+        dongle_stats();
+    } else {
+        dongle_stats_init();
+    }
 
     log_info("Dongle initialized\r\n");
 
@@ -664,6 +674,7 @@ void dongle_stats()
     stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
     stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");
 #undef stat_show
+    dongle_storage_save_stat(&storage, &stats, sizeof(stats_t));
     dongle_stats_init(); // reset the stats
 #endif
 }

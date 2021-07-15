@@ -143,9 +143,10 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
     read(sizeof(key_size_t), &cf.dongle_sk_size);
     read(SK_MAX_SIZE, &cf.dongle_sk);
     st.map.otp = st.off;
-    // log start is pushed onto the next blank page
-    st.map.log = next_multiple(st.page_size,
-                               st.map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
+    // push onto the next blank page
+    st.map.stat = next_multiple(st.page_size,
+                             st.map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
+    st.map.log = st.map.stat + st.page_size;
     st.map.log_end = st.map.log + FLASH_LOG_SIZE;
 #undef read
     log_info("Config loaded.\r\n");
@@ -353,6 +354,19 @@ int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)
     _flash_read_(sto, data, len);
     print_bytes(data, len, "Flash data");
     return 0;
+}
+
+void dongle_storage_save_stat(dongle_storage *sto, void * stat, size_t len)
+{
+    dongle_storage_erase(sto, st.map.stat);
+    st.off = st.map.stat;
+    _flash_write_(sto, stat, len);
+}
+
+void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len)
+{
+    st.off = st.map.stat;
+    _flash_read_(sto, stat, len);
 }
 
 #undef block_align

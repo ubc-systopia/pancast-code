@@ -51,6 +51,7 @@ typedef struct
 {
     storage_addr_t config;  // address of device configuration
     storage_addr_t otp;     // address of OTP storage
+    storage_addr_t stat;    // address of saved statistics
     storage_addr_t log;     // address of first log entry
     storage_addr_t log_end; // address of next available space after log
 } _dongle_storage_map_;
@@ -139,5 +140,8 @@ void dongle_storage_log_encounter(dongle_storage *sto,
 #define DONGLE_STORAGE_MAX_PRINT_LEN 64
 
 int dongle_storage_print(dongle_storage *, storage_addr_t, size_t);
+
+void dongle_storage_save_stat(dongle_storage *sto, void * stat, size_t len);
+void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
 
 #endif

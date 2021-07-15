@@ -103,7 +103,7 @@ void *request_main(void *arg) {
       memcpy(r_data->data.response, &request.response, request.size);
 	    
 	    r_data->request_ready = 1;
-
+      r_data->data_ready = 0;
 	    pthread_cond_signal(&r_data->request_ready_cond);
 	    pthread_mutex_unlock(&r_data->mutex);
 	    printf("request released lock\r\n");

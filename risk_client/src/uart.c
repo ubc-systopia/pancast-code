@@ -135,9 +135,9 @@ void* uart_main(void* arg) {
       // wait for ready signal from GPIO
       uint8_t ready = 0;
       while (ready == 0) {
-	ready = 1; // REMOVE
-        // ready = GPIORead(PIN);
+        ready = GPIORead(PIN);
       }
+
       // write data 
       tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
       int wlen = write(fd, &r_data->data.response[data_sent], CHUNK_SIZE);
@@ -150,13 +150,8 @@ void* uart_main(void* arg) {
       data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
       if (data_sent >= r_data->data.size) {
         data_sent = 0; 
-//	printf("uart unlocking \r\n");
-	//pthread_mutex_unlock(&r_data->mutex);
-	//break;
-        // if data_ready is 1 then unlock and signal
-        // can close fd and wait for the data to be copied 
-	// into buffer
         if (r_data->data_ready == 1) {
+          printf("data is ready!\r\n");
 	        r_data->uart_ready = 1;
           pthread_cond_signal(&r_data->uart_ready_cond);
           pthread_mutex_unlock(&r_data->mutex);
@@ -166,7 +161,6 @@ void* uart_main(void* arg) {
     }
 #endif
     pthread_mutex_unlock(&r_data->mutex);
-    // close(fd);
   }
   close(fd); // should move inside while loop
   // should not reach here

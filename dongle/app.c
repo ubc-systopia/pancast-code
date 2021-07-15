@@ -126,6 +126,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                      evt->data.evt_sync_data.data.len);
         app_log_debug("Status: %d\r\n",
                            evt->data.evt_sync_data.data_status);
+
         // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
 
 //       //  Print entire byte array
@@ -134,10 +135,17 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        }
 //        app_log_debug("\r\n");
 
-        dongle_on_periodic_data(
-            evt->data.evt_sync_data.data.data,
-            evt->data.evt_sync_data.data.len,
-            evt->data.evt_sync_data.rssi);
+#define ERROR_STATUS 0x02
+        if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
+
+        }
+#undef ERROR_STATUS
+        else {
+          dongle_on_periodic_data(
+              evt->data.evt_sync_data.data.data,
+              evt->data.evt_sync_data.data.len,
+              evt->data.evt_sync_data.rssi);
+        }
 
 //        // check if sync data index + evt->data > length
 //        // if it is larger or equal then print and reset length

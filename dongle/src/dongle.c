@@ -111,6 +111,8 @@ typedef struct {
 
   uint32_t num_obs_ids;
   uint32_t num_scan_results;
+  uint32_t num_periodic_data;
+  uint32_t num_periodic_data_error;
   uint32_t total_periodic_data_size; // bytes
   double total_periodic_data_time; // seconds
 
@@ -338,7 +340,17 @@ void dongle_on_periodic_data
 {
 #ifdef MODE__STAT
   stats.total_periodic_data_size += data_len;
+  stats.num_periodic_data++;
   stat_add(data_len, stats.periodic_data_size);
+  stat_add(rssi, stats.periodic_data_rssi);
+#endif
+}
+
+void dongle_on_periodic_data_error
+(int8_t rssi)
+{
+#ifdef MODE__STAT
+  stats.num_periodic_data_error++;
   stat_add(rssi, stats.periodic_data_rssi);
 #endif
 }
@@ -556,6 +568,7 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #endif
     // Filter mis-sized packets
     if (len != ENCOUNTER_BROADCAST_SIZE + 1)
+// TODO: should check for a periodic packet identifier
     {
         return;
     }
@@ -649,6 +662,11 @@ void dongle_stats()
     enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
     enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 #ifdef MODE__STAT
+#define stat_show(stat, name, unit) \
+    log_infof("    %s (%s):                               \r\n", name, unit); \
+    log_infof("         μ:                              %f\r\n", stat.mu); \
+    log_infof("         σ:                              %f\r\n", stat.sigma)
+
     log_info("\r\n");
     log_info("Statistics:\r\n");
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
@@ -661,15 +679,13 @@ void dongle_stats()
               (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
     log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
+    log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
+    stat_show(stats.periodic_data_size, "Periodic Pkt. Size", "bytes");
+    log_infof("    Periodic Pkts. Received (error):     %lu\r\n", stats.num_periodic_data_error);
     log_infof("    Total Bytes Transferred:             %lu\r\n", stats.total_periodic_data_size);
     log_infof("    Total Time (s):                      %f\r\n", stats.total_periodic_data_time);
     stat_compute_thrpt(&stats);
     log_infof("    Avg. Throughput (kb/s)               %f\r\n", stats.periodic_data_avg_thrpt);
-#define stat_show(stat, name, unit) \
-    log_infof("    %s (%s):                               \r\n", name, unit); \
-    log_infof("         μ:                              %f\r\n", stat.mu); \
-    log_infof("         σ:                              %f\r\n", stat.sigma)
-
     stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
     stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
     stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");

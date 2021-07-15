@@ -30,8 +30,6 @@
 // Sync handle
 static uint16_t sync_handle = 0;
 
-uint32_t per_data_ticks = 0;
-
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
 #define user_handle (*((uint8_t*)(handle->callback_data)))
@@ -39,7 +37,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
       dongle_clock_increment();
   }
   if (user_handle == PREC_TIMER_HANDLE) {
-        per_data_ticks++;
+        dongle_hp_timer_add(1);
     }
 #undef user_handle
 }
@@ -138,9 +136,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
         dongle_on_periodic_data(
             evt->data.evt_sync_data.data.data,
-            evt->data.evt_sync_data.data.len, per_data_ticks,
+            evt->data.evt_sync_data.data.len,
             evt->data.evt_sync_data.rssi);
-        per_data_ticks = 0;
 
 //        // check if sync data index + evt->data > length
 //        // if it is larger or equal then print and reset length

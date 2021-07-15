@@ -317,14 +317,17 @@ void dongle_clock_increment()
     dongle_unlock();
 }
 
-void dongle_on_periodic_data
-(uint8_t *data, uint8_t data_len, uint32_t ticks, int8_t rssi)
+void dongle_hp_timer_add(uint32_t ticks)
 {
-  app_log_debug("%u bytes, %lu ticks\r\n", data_len, ticks);
+  stats.total_periodic_data_time +=
+        ((double) ticks * PREC_TIMER_TICK_MS) / 1000.0;
+}
+
+void dongle_on_periodic_data
+(uint8_t *data, uint8_t data_len, int8_t rssi)
+{
 #ifdef MODE__STAT
   stats.total_periodic_data_size += data_len;
-  stats.total_periodic_data_time +=
-      ((double) ticks * PREC_TIMER_TICK_MS) / 1000.0;
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
 #endif

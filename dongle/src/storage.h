@@ -18,7 +18,7 @@
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #define FLASH_OFFSET 0x2D000
 #else
-#define FLASH_OFFSET 0x4a000
+#define FLASH_OFFSET 0x50000
 #endif
 
 // Upper-bound of size of encounter log, in bytes

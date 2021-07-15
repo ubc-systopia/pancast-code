@@ -108,10 +108,42 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
 
 #ifdef MODE__STAT
-int8_t num_obs_ids = 0;
-int8_t avg_rssi = 0;
-int8_t avg_encounter_rssi = 0;
-uint32_t avg_periodic_throughput = 0; // kb / s - not reset on interval
+
+#include <math.h>
+
+typedef struct {
+  double mu;
+  double sigma;
+  double n;
+} stat_t;
+
+typedef struct {
+  uint32_t num_obs_ids;
+  uint32_t num_scan_results;
+  uint32_t total_periodic_data_size; // bytes
+  double total_periodic_data_time; // seconds
+
+  stat_t scan_rssi;
+  stat_t encounter_rssi;
+  stat_t periodic_data_size;
+
+  double periodic_data_avg_thrpt;
+} stats_t;
+
+stats_t stats;
+
+#define stat_add(val,stat) \
+  stat.mu = ((stat.mu * stat.n) + val) / (stat.n + 1), \
+  stat.sigma = ((stat.sigma * stat.n) + pow((val - stat.mu), 2.0)) / (stat.n + 1), \
+  stat.n++
+
+void stat_compute_thrpt(stats_t *st)
+{
+  st->periodic_data_avg_thrpt =
+      ((double) st->total_periodic_data_size * 0.008) /
+      st->total_periodic_data_time;
+}
+
 #endif
 
 //
@@ -137,8 +169,6 @@ void dongle_start()
 #endif
 #ifdef MODE__STAT
     log_info("Statistics enabled\r\n");
-#define alpha 0.1
-#define exp_avg(a, x) !a ? x : (alpha * x) + ((1 - alpha) * a);
 #endif
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
@@ -229,6 +259,12 @@ void dongle_scan(void)
 // INIT
 // Call load routine, and set variables to their
 // initial value. Also initialize timing structs
+#ifdef MODE__STAT
+void dongle_stats_init()
+{
+    memset(&stats, 0, sizeof(stat_t));
+}
+#endif
 void dongle_init()
 {
 #ifdef DONGLE_PLATFORM__ZEPHYR
@@ -243,6 +279,8 @@ void dongle_init()
     epoch = 0;
     non_report_entry_count = 0;
     signal_id = 0;
+
+    dongle_stats_init();
 
     log_info("Dongle initialized\r\n");
 
@@ -292,12 +330,10 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t ticks)
 {
   app_log_debug("%u bytes, %lu ticks\r\n", data_len, ticks);
 #ifdef MODE__STAT
-  if (ticks > 0) {
-      uint32_t time_ms = ticks * PREC_TIMER_TICK_MS;
-      uint32_t n_bits = data_len * 8;
-      uint32_t this_thrpt = n_bits / time_ms;
-      avg_periodic_throughput = exp_avg(avg_periodic_throughput, this_thrpt);
-  }
+  stats.total_periodic_data_size += data_len;
+  stats.total_periodic_data_time +=
+      ((double) ticks * PREC_TIMER_TICK_MS) / 1000.0;
+  stat_add(data_len, stats.periodic_data_size);
 #endif
 }
 
@@ -432,6 +468,11 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
         return signal_id;
     }
 
+#ifdef MODE__STAT
+        stats.num_scan_results++;
+        stat_add(rssi, stats.scan_rssi);
+#endif
+
     // determine which tracked id, if any, is a match
     size_t i = DONGLE_MAX_BC_TRACKED;
     for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++)
@@ -454,8 +495,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
         obs_time[i] = dongle_time;
 
 #ifdef MODE__STAT
-        num_obs_ids++;
-        avg_rssi = exp_avg(avg_rssi, rssi);
+        stats.num_obs_ids++;
 #endif
         log_telemf("%02x,%u,%u,%lu,%u,%u\r\n",
                    TELEM_TYPE_BROADCAST_TRACK_NEW,
@@ -477,7 +517,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
         {
             _dongle_encounter_(&en, i);
 #ifdef MODE__STAT
-            avg_encounter_rssi = exp_avg(avg_encounter_rssi, rssi);
+            stat_add(rssi, stats.encounter_rssi);
 #endif
             log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n",
                        TELEM_TYPE_ENCOUNTER,
@@ -613,11 +653,21 @@ void dongle_stats()
 
     log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
               (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
-    log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
-    log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
-    log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);
-    log_infof("    Avg. Download throughput (all-time)  %lu kb/s\r\n",
-               avg_periodic_throughput);
+    log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
+    log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
+    log_infof("    Total Bytes Transferred:             %lu\r\n", stats.total_periodic_data_size);
+    log_infof("    Total Time (s):                      %f\r\n", stats.total_periodic_data_time);
+    stat_compute_thrpt(&stats);
+    log_infof("    Avg. Throughput (kb/s)               %f\r\n", stats.periodic_data_avg_thrpt);
+#define stat_show(stat, name, unit) \
+    log_infof("    %s (%s):                               \r\n", name, unit); \
+    log_infof("         μ:                              %f\r\n", stat.mu); \
+    log_infof("         σ:                              %f\r\n", stat.sigma)
+
+    stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
+    stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
+#undef stat_show
+    dongle_stats_init(); // reset the stats
 #endif
 }
 

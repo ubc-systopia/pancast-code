@@ -12,9 +12,11 @@
 #include "sl_device_init_emu.h"
 #include "pa_conversions_efr32.h"
 #include "sl_sleeptimer.h"
+#include "app_log.h"
 #include "sl_bluetooth.h"
 #include "sl_iostream_init_instances.h"
 #include "sl_iostream_init_eusart_instances.h"
+#include "sl_iostream_stdlib_config.h"
 #include "sl_mbedtls.h"
 #include "nvm3_default.h"
 #include "sl_power_manager.h"
@@ -50,6 +52,7 @@ void sl_service_init(void)
   sl_sleeptimer_init();
   sl_hfxo_manager_init();
   sl_iostream_init_instances();
+  sl_iostream_stdlib_disable_buffering();
   sl_mbedtls_init();
 }
 
@@ -61,6 +64,7 @@ void sl_stack_init(void)
 
 void sl_internal_app_init(void)
 {
+  app_log_init();
 }
 
 void sl_platform_process_action(void)

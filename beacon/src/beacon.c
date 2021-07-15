@@ -10,9 +10,8 @@
 
 #define APPL_VERSION "0.1.1"
 
-#define LOG_LEVEL__DEBUG
 #define MODE__STAT
-#define MODE__TEST
+#define MODE__TEST_CONFIG
 
 #include <string.h>
 
@@ -26,6 +25,7 @@
 #include <drivers/flash.h>
 #else
 #include "sl_bluetooth.h"
+#include "app_log.h"
 #endif
 
 #include "../../common/src/pancast.h"
@@ -48,7 +48,8 @@ void main(void)
 void beacon_start()
 #endif
 {
-    log_info("\r\n"), log_info("Starting Beacon...\r\n");
+    log_info("\r\n");
+    log_info("Starting Beacon...\r\n");
 #ifdef MODE__STAT
     log_info("Statistics mode enabled\r\n");
 #endif
@@ -115,7 +116,7 @@ static beacon_timer_t stat_epochs;
 static void _beacon_load_()
 {
 // Load data
-#ifdef MODE__TEST
+#ifdef MODE__TEST_CONFIG
     beacon_id = TEST_BEACON_ID;
     beacon_location_id = TEST_BEACON_LOC_ID;
     t_init = TEST_BEACON_INIT_TIME;
@@ -206,7 +207,7 @@ static void _beacon_report_()
     else
     {
         report_time = beacon_time;
-        log_info("\r\n"), log_info("***          Begin Report          ***\r\n");
+        log_info("\r\n"); log_info("***          Begin Report          ***\r\n");
         _beacon_info_();
 #ifdef MODE__STAT
         _beacon_stats_();
@@ -214,7 +215,7 @@ static void _beacon_report_()
         stat_cycles = 0;
         stat_epochs = 0;
 #endif
-        log_info("\r\n"), log_info("***          End Report            ***\r\n");
+        log_info("\r\n"); log_info("***          End Report            ***\r\n");
     }
 }
 
@@ -533,4 +534,4 @@ void beacon_broadcast()
 
 #undef MODE__STAT
 #undef APPL_VERSION
-#undef MODE__TEST
+#undef MODE__TEST_CONFIG

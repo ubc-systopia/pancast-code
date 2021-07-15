@@ -129,7 +129,8 @@ void main(void)
 void dongle_start()
 #endif
 {
-    log_info("\r\n"), log_info("Starting Dongle...\r\n");
+    log_info("\r\n");
+    log_info("Starting Dongle...\r\n");
 
 #ifdef MODE__TEST
     log_info("Test mode enabled\r\n");

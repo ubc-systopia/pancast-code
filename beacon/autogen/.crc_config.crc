@@ -1,5 +1,6 @@
 #CRC Codes for initially generated config files -- do not modify!
 app_assert_config.h=-318633211
+app_log_config.h=-1264766225
 emlib_core_debug_config.h=171843933
 mbedtls_config.h=384290189
 nvm3_default_config.h=-1865878923

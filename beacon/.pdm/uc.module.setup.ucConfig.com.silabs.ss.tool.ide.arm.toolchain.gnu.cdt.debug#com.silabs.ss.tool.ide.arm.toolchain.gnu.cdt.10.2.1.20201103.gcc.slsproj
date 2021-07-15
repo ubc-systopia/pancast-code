@@ -12,6 +12,7 @@
     <file name="nvm3_default_config.h" generated="true" linked="false" uri="studio:/project/config/nvm3_default_config.h"/>
     <file name="sl_board_control_config.h" generated="true" linked="false" uri="studio:/project/config/sl_board_control_config.h"/>
     <file name="sl_power_manager_config.h" generated="true" linked="false" uri="studio:/project/config/sl_power_manager_config.h"/>
+    <file name="app_log_config.h" generated="true" linked="false" uri="studio:/project/config/app_log_config.h"/>
     <file name="sl_bluetooth_advertiser_config.h" generated="true" linked="false" uri="studio:/project/config/sl_bluetooth_advertiser_config.h"/>
     <file name="sl_device_init_emu_config.h" generated="true" linked="false" uri="studio:/project/config/sl_device_init_emu_config.h"/>
     <file name="sl_device_init_hfxo_config.h" generated="true" linked="false" uri="studio:/project/config/sl_device_init_hfxo_config.h"/>
@@ -19,8 +20,8 @@
     <file name="mbedtls_config.h" generated="true" linked="false" uri="studio:/project/config/mbedtls_config.h"/>
     <file name="app_assert_config.h" generated="true" linked="false" uri="studio:/project/config/app_assert_config.h"/>
     <file name="emlib_core_debug_config.h" generated="true" linked="false" uri="studio:/project/config/emlib_core_debug_config.h"/>
-    <file name="sl_sleeptimer_config.h" generated="true" linked="false" uri="studio:/project/config/sl_sleeptimer_config.h"/>
     <file name="psa_crypto_config.h" generated="true" linked="false" uri="studio:/project/config/psa_crypto_config.h"/>
+    <file name="sl_sleeptimer_config.h" generated="true" linked="false" uri="studio:/project/config/sl_sleeptimer_config.h"/>
   </folder>
   <includePath uri="studio:/project/config/"/>
 </project>

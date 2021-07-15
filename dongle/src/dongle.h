@@ -3,11 +3,18 @@
 
 // Dongle Application
 
-#include <assert.h>
-
-#define DONGLE_NO_OP assert(1);
-
+// Application Config
+#define APPL_VERSION "0.1.1"
 #define DONGLE_PLATFORM__GECKO
+#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
+//#define MODE__TEST // enables unit tests
+#define MODE__STAT // enables telemetry aggregation
+#define MODE__PERIODIC // enables periodic scanning and syncing
+#define MODE__LEGACY_LOG
+
+#ifdef MODE__TEST
+#define MODE__TEST_CONFIG
+#endif
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #include <bluetooth/bluetooth.h>
@@ -17,6 +24,9 @@
 #else
 #include "sl_bt_api.h"
 #endif
+
+#include <assert.h>
+#define DONGLE_NO_OP assert(1);
 
 #include "../../common/src/pancast.h"
 

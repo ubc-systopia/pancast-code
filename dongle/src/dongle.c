@@ -7,18 +7,6 @@
 
 #include "./dongle.h"
 
-#define APPL_VERSION "0.1.1"
-
-#define LOG_LEVEL__DEBUG
-#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
-//#define MODE__TEST // enables unit tests
-#define MODE__STAT // enables telemetry aggregation
-#define MODE__PERIODIC // enables periodic scanning and syncing
-
-#ifdef MODE__TEST
-#define MODE__TEST_CONFIG
-#endif
-
 #include <string.h>
 
 #ifdef DONGLE_PLATFORM__ZEPHYR

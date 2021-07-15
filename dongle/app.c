@@ -73,9 +73,12 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         break;
       case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
+#ifdef MODE__LEGACY_LOG
         // First, log into the legacy decode pipeline
         dongle_log(&report.address,
                    report.rssi, report.data.data, report.data.len);
+#endif
+#ifdef MODE__PERIODIC
         // then check for periodic info in packet
         if (!synced
             && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
@@ -92,6 +95,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
            }
            app_assert_status(sc);
        }
+#endif
 #undef report
         break;
       case sl_bt_evt_sync_opened_id:

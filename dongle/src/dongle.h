@@ -134,5 +134,6 @@ void dongle_stats();
 void dongle_test();
 void dongle_on_clock_update();
 void dongle_clock_increment();
-void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t time);
+void dongle_on_periodic_data
+(uint8_t *data, uint8_t data_len, uint32_t ticks, int8_t rssi);
 #endif

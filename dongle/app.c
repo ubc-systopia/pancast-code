@@ -132,8 +132,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        }
 //        app_log_debug("\r\n");
 
-        dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
-                              evt->data.evt_sync_data.data.len, per_data_ticks);
+        dongle_on_periodic_data(
+            evt->data.evt_sync_data.data.data,
+            evt->data.evt_sync_data.data.len, per_data_ticks,
+            evt->data.evt_sync_data.rssi);
         per_data_ticks = 0;
 
 //        // check if sync data index + evt->data > length

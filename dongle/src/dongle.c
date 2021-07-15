@@ -126,6 +126,7 @@ typedef struct {
   stat_t scan_rssi;
   stat_t encounter_rssi;
   stat_t periodic_data_size;
+  stat_t periodic_data_rssi;
 
   double periodic_data_avg_thrpt;
 } stats_t;
@@ -326,7 +327,8 @@ void dongle_clock_increment()
     dongle_unlock();
 }
 
-void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t ticks)
+void dongle_on_periodic_data
+(uint8_t *data, uint8_t data_len, uint32_t ticks, int8_t rssi)
 {
   app_log_debug("%u bytes, %lu ticks\r\n", data_len, ticks);
 #ifdef MODE__STAT
@@ -334,6 +336,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t ticks)
   stats.total_periodic_data_time +=
       ((double) ticks * PREC_TIMER_TICK_MS) / 1000.0;
   stat_add(data_len, stats.periodic_data_size);
+  stat_add(rssi, stats.periodic_data_rssi);
 #endif
 }
 
@@ -666,6 +669,7 @@ void dongle_stats()
 
     stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
     stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
+    stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");
 #undef stat_show
     dongle_stats_init(); // reset the stats
 #endif

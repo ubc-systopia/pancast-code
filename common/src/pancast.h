@@ -42,7 +42,7 @@
 #endif
 // (Approx) number of time units between each report written to output
 #ifdef PANCAST__TEST
-#define DONGLE_REPORT_INTERVAL 1
+#define DONGLE_REPORT_INTERVAL 5
 #define BEACON_REPORT_INTERVAL 5
 #else
 #define DONGLE_REPORT_INTERVAL 10

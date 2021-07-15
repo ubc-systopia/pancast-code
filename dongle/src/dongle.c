@@ -135,7 +135,9 @@ stats_t stats;
 
 #define stat_add(val,stat) \
   stat.mu = ((stat.mu * stat.n) + val) / (stat.n + 1), \
-  stat.sigma = ((stat.sigma * stat.n) + pow((val - stat.mu), 2.0)) / (stat.n + 1), \
+  stat.sigma =                                                         \
+    sqrt(((pow(stat.sigma, 2.0) * stat.n) + pow((val - stat.mu), 2.0)) \
+           / (stat.n + 1)),                                            \
   stat.n++
 
 void stat_compute_thrpt(stats_t *st)

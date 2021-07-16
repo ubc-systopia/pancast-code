@@ -99,7 +99,7 @@ typedef struct
 // Timing Constants
 #define MAIN_TIMER_HANDLE 0x00
 #define PREC_TIMER_HANDLE 0x01 // high-precision timer
-#define PREC_TIMER_TICK_MS 1   // essentially res. of timer
+#define PREC_TIMER_TICK_MS 1000   // essentially res. of timer
 
 // Periodic Scanning & Synchronization
 #define SCAN_PHY 1 // 1M PHY
@@ -147,4 +147,6 @@ void dongle_clock_increment();
 void dongle_hp_timer_add(uint32_t ticks);
 void dongle_on_periodic_data
 (uint8_t *data, uint8_t data_len, int8_t rssi);
+void dongle_on_periodic_data_error
+(int8_t rssi);
 #endif

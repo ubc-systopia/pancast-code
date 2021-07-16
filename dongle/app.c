@@ -37,8 +37,8 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
       dongle_clock_increment();
   }
   if (user_handle == PREC_TIMER_HANDLE) {
-        dongle_hp_timer_add(1);
-    }
+      dongle_hp_timer_add(1);
+  }
 #undef user_handle
 }
 
@@ -137,7 +137,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
 #define ERROR_STATUS 0x02
         if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
-
+            dongle_on_periodic_data_error(evt->data.evt_sync_data.rssi);
         }
 #undef ERROR_STATUS
         else {

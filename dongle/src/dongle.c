@@ -259,6 +259,7 @@ void dongle_scan(void)
 void dongle_stats_init()
 {
     memset(&stats, 0, sizeof(stat_t));
+    stats.total_periodic_data_time = 0.0;
 }
 #endif
 void dongle_init()
@@ -332,7 +333,7 @@ void dongle_clock_increment()
 void dongle_hp_timer_add(uint32_t ticks)
 {
   stats.total_periodic_data_time +=
-        ((double) ticks * PREC_TIMER_TICK_MS) / 1000.0;
+      (((double) ticks * PREC_TIMER_TICK_MS) / 1000.0);
 }
 
 void dongle_on_periodic_data

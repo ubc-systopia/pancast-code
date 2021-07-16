@@ -206,6 +206,11 @@
 			<locationURI>STUDIO_SDK_LOC/platform/emlib/inc/em_gpio.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/emlib/inc/em_iadc.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/emlib/inc/em_iadc.h</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/emlib/inc/em_msc.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/emlib/inc/em_msc.h</locationURI>
@@ -279,6 +284,11 @@
 			<name>gecko_sdk_3.2.0/platform/emlib/src/em_gpio.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/emlib/src/em_gpio.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/emlib/src/em_iadc.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/emlib/src/em_iadc.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/emlib/src/em_msc.c</name>

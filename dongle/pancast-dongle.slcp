@@ -20,6 +20,7 @@ include:
 sdk: {id: gecko_sdk, version: 3.2.0}
 toolchain_settings: []
 component:
+- {id: emlib_iadc}
 - {id: app_log}
 - {id: bluetooth_feature_sync}
 - {id: bluetooth_feature_connection}

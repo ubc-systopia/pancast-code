@@ -1,10 +1,10 @@
 #define LOG_LEVEL__INFO
 
 #include "storage.h"
-#include "gecko.h"
 
 #include <string.h>
 
+#include "../../common/src/gecko.h"
 #include "../../common/src/log.h"
 #include "../../common/src/util.h"
 

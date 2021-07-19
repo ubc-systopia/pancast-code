@@ -19,6 +19,16 @@
 #include "./sha256/sha-256.h"
 #endif
 
+typedef struct {
+  beacon_id_t beacon_id;                   // Beacon ID
+  beacon_location_id_t beacon_location_id; // Location ID
+  beacon_timer_t t_init;      // Beacon Clock Start
+  key_size_t backend_pk_size; // size of backend public key
+  pubkey_t backend_pk;        // Backend public key
+  key_size_t beacon_sk_size;  // size of secret key
+  beacon_sk_t beacon_sk;      // Secret Key
+} beacon_config_t;
+
 
 // Advertising interval settings
 // Zephyr-recommended values are used

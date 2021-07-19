@@ -645,6 +645,7 @@ void dongle_report()
         log_info("***          Begin Report          ***\r\n");
 
         dongle_info();
+        dongle_storage_info(&storage);
         dongle_stats();
 #ifdef MODE__TEST
         dongle_test();
@@ -797,13 +798,16 @@ void dongle_test()
     }
 
     log_info("    ? Testing that old encounters are deleted\r\n");
-    if (dongle_time > DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
-    {
-        dongle_storage_load_all_encounter(&storage, test_check_entry_age);
-    }
-    else
+    dongle_storage_clean_log(&storage, dongle_time);
+    num = dongle_storage_num_encounters_current(&storage);
+    if (dongle_time <= DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
     {
         log_error("Cannot test, not enough time has elapsed.\r\n");
+    } else if (num < 1)
+    {
+        log_error("Cannot test, no encounters stored.\r\n");
+    } else {
+        dongle_storage_load_all_encounter(&storage, test_check_entry_age);
     }
 
     if (test_errors)

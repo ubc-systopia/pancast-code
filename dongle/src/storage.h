@@ -21,9 +21,6 @@
 #define FLASH_OFFSET 0x50000
 #endif
 
-// Upper-bound of size of encounter log, in bytes
-#define TARGET_FLASH_LOG_SIZE 0x4000
-
 // Maximum number of encounters stored at one time
 #define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)
 
@@ -66,6 +63,7 @@ typedef struct
     size_t min_block_size;
     int num_pages;
     size_t page_size;
+    storage_addr_t total_size;
     _dongle_storage_map_ map;
     _encounter_storage_cursor_ encounters;
     enctr_entry_counter_t total_encounters;
@@ -141,7 +139,13 @@ void dongle_storage_log_encounter(dongle_storage *sto,
 
 int dongle_storage_print(dongle_storage *, storage_addr_t, size_t);
 
+<<<<<<< HEAD
 void dongle_storage_save_stat(dongle_storage *sto, void * stat, size_t len);
 void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
+void dongle_storage_info(dongle_storage *);
+
+size_t dongle_storage_max_log_count(dongle_storage *sto);
+
+void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time);
 
 #endif

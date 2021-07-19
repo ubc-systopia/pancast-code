@@ -678,7 +678,9 @@ void dongle_stats()
     log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
 
     log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
-              (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
+              (uint32_t)cur,
+                     cur == dongle_storage_max_log_count(&storage) ?
+                         " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
     log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
     log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);

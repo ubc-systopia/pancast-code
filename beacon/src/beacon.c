@@ -28,6 +28,8 @@
 #include "app_log.h"
 #endif
 
+#include "storage.h"
+
 #include "../../common/src/pancast.h"
 #include "../../common/src/util.h"
 #include "../../common/src/log.h"
@@ -36,11 +38,6 @@
 //
 // ENTRY POINT
 //
-
-// Offset determines a safe point of read/write beyond the pages used by application
-// binaries. For now, determined empirically by doing a compilation pass then adjusting
-// the value
-#define FLASH_OFFSET 0x30000
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 void main(void)
@@ -70,15 +67,10 @@ void beacon_start()
 //
 
 // Config
-static beacon_timer_t t_init;      // Beacon Clock Start
-static key_size_t backend_pk_size; // size of backend public key
-static pubkey_t backend_pk;        // Backend public key
-static key_size_t beacon_sk_size;  // size of secret key
-static beacon_sk_t beacon_sk;      // Secret Key
+beacon_config_t config;
 
 // Default Operation
-static beacon_id_t beacon_id;                   // Beacon ID
-static beacon_location_id_t beacon_location_id; // Location ID
+beacon_storage storage;
 static beacon_timer_t beacon_time;              // Beacon Clock
 static beacon_eph_id_t beacon_eph_id;           // Ephemeral ID
 static beacon_epoch_counter_t epoch;            // track the current time epoch
@@ -115,46 +107,18 @@ static beacon_timer_t stat_epochs;
 
 static void _beacon_load_()
 {
+  beacon_storage_init(&storage);
 // Load data
 #ifdef MODE__TEST_CONFIG
-    beacon_id = TEST_BEACON_ID;
-    beacon_location_id = TEST_BEACON_LOC_ID;
-    t_init = TEST_BEACON_INIT_TIME;
-    backend_pk_size = TEST_BEACON_BACKEND_KEY_SIZE;
-    memcpy(&backend_pk, &TEST_BACKEND_PK, backend_pk_size);
-    beacon_sk_size = TEST_BEACON_SK_SIZE;
-    memcpy(&beacon_sk, &TEST_BEACON_SK, beacon_sk_size);
+    config.beacon_id = TEST_BEACON_ID;
+    config.beacon_location_id = TEST_BEACON_LOC_ID;
+    config.t_init = TEST_BEACON_INIT_TIME;
+    config.backend_pk_size = TEST_BEACON_BACKEND_KEY_SIZE;
+    memcpy(&config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
+    config.beacon_sk_size = TEST_BEACON_SK_SIZE;
+    memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
 #else
-    // Read data from flashed storage
-    // Format matches the fixed structure which is also used as a protocol when appending non-app
-    // data to the device image.
-#ifdef BEACON_PLATFORM__ZEPHYR
-    struct device *flash = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
-    off_t off = 0;
-#define read(size, dst) (flash_read(flash, FLASH_OFFSET + off, dst, size), off += size)
-    flash_read(flash, FLASH_OFFSET, &beacon_id, sizeof(beacon_id_t));
-#else
-    uint32_t off = 0;
-#define read(size, dst) (printf("%lu\r\n", FLASH_OFFSET + off), memcpy(dst, (uint32_t*)(FLASH_OFFSET + off), size), off += size)
-#endif
-    read(sizeof(beacon_id_t), &beacon_id);
-    read(8, &beacon_location_id);
-    read(sizeof(beacon_timer_t), &t_init);
-    read(sizeof(key_size_t), &backend_pk_size);
-    if (backend_pk_size > PK_MAX_SIZE)
-    {
-        log_errorf("Key size read for public key (%u bytes) is larger than max (%u)\r\n",
-                   backend_pk_size, PK_MAX_SIZE);
-    }
-    read(backend_pk_size, &backend_pk);
-    read(sizeof(key_size_t), &beacon_sk_size);
-    if (beacon_sk_size > SK_MAX_SIZE)
-    {
-        log_errorf("Key size read for secret key (%u bytes) is larger than max (%u)\r\n",
-                   beacon_sk_size, SK_MAX_SIZE);
-    }
-    read(beacon_sk_size, &beacon_sk);
-#undef read
+    beacon_storage_load_config(&storage, &config);
 #endif
 }
 
@@ -171,11 +135,11 @@ static void _beacon_info_()
     log_infof("    Board:                           %s\r\n", CONFIG_BOARD);
     log_infof("    Bluetooth device name:           %s\r\n", CONFIG_BT_DEVICE_NAME);
     log_infof("    Application Version:             %s\r\n", APPL_VERSION);
-    log_infof("    Beacon ID:                       %u\r\n", beacon_id);
-    log_infof("    Location ID:                     %lu\r\n", (uint32_t)beacon_location_id);
-    log_infof("    Initial clock:                   %u\r\n", t_init);
-    log_infof("    Backend public key size:         %u bytes\r\n", backend_pk_size);
-    log_infof("    Secret key size:                 %u bytes\r\n", beacon_sk_size);
+    log_infof("    Beacon ID:                       %u\r\n", config.beacon_id);
+    log_infof("    Location ID:                     %lu\r\n", (uint32_t)config.beacon_location_id);
+    log_infof("    Initial clock:                   %u\r\n", config.t_init);
+    log_infof("    Backend public key size:         %u bytes\r\n", config.backend_pk_size);
+    log_infof("    Secret key size:                 %u bytes\r\n", config.beacon_sk_size);
     log_infof("    Timer Resolution:                %u ms\r\n", BEACON_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
@@ -185,16 +149,46 @@ static void _beacon_info_()
 }
 
 #ifdef MODE__STAT
+typedef struct {
+  uint8_t storage_checksum; // zero for valid stat data
+  beacon_timer_t duration;
+  beacon_timer_t start;
+  beacon_timer_t end;
+  uint32_t cycles;
+  uint32_t epochs;
+} beacon_stats_t;
+
+beacon_stats_t stats;
+
+void beacon_stats_init()
+{
+  memset(&stats, 0, sizeof(beacon_stats_t));
+}
+
+void beacon_stat_update()
+{
+  // Copy data
+    // TODO use the stats containers from the start
+      stats.duration = beacon_time - stat_start;
+      stats.start = stat_start;
+      stats.end = beacon_time;
+      stats.cycles = stat_cycles;
+      stats.epochs = stat_epochs;
+}
+
 static void _beacon_stats_()
 {
     log_info("\r\n");
     log_info("Statistics: \r\n");
-    log_infof("     Time since last report:         %d ms\r\n", beacon_time - stat_start);
+    log_infof("     Time since last report:         %d ms\r\n", stats.duration);
     log_info("     Timer:\r\n");
-    log_infof("         Start:                      %u\r\n", stat_start);
-    log_infof("         End:                        %u\r\n", beacon_time);
-    log_infof("     Cycles:                         %u\r\n", stat_cycles);
-    log_infof("     Completed Epochs:               %u\r\n", stat_epochs);
+    log_infof("         Start:                      %u\r\n", stats.start);
+    log_infof("         End:                        %u\r\n", stats.end);
+    log_infof("     Cycles:                         %u\r\n", stats.cycles);
+    log_infof("     Completed Epochs:               %u\r\n", stats.epochs);
+
+    beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+    beacon_stats_init();
 }
 #endif
 
@@ -210,6 +204,7 @@ static void _beacon_report_()
         log_info("\r\n"); log_info("***          Begin Report          ***\r\n");
         _beacon_info_();
 #ifdef MODE__STAT
+        beacon_stat_update();
         _beacon_stats_();
         stat_start = beacon_time;
         stat_cycles = 0;
@@ -256,8 +251,8 @@ static void _encode_encounter_()
     memcpy(dst + pos, src, size); \
     pos += size
     copy(&beacon_time, sizeof(beacon_timer_t));
-    copy(&beacon_id, sizeof(beacon_id_t));
-    copy(&beacon_location_id, sizeof(beacon_location_id_t));
+    copy(&config.beacon_id, sizeof(beacon_id_t));
+    copy(&config.beacon_location_id, sizeof(beacon_location_id_t));
     copy(&beacon_eph_id, sizeof(beacon_eph_id_t));
 #undef copy
 }
@@ -286,8 +281,8 @@ static void _gen_ephid_()
     // Initialize hash
     init();
     // Add relevant data
-    add(&beacon_sk, beacon_sk_size);
-    add(&beacon_location_id, sizeof(beacon_location_id_t));
+    add(&config.beacon_sk, config.beacon_sk_size);
+    add(&config.beacon_location_id, sizeof(beacon_location_id_t));
     add(&epoch, sizeof(beacon_epoch_counter_t));
     // finalize and copy to id
     complete();
@@ -304,11 +299,18 @@ static void _beacon_init_()
     epoch = 0;
     cycles = 0;
 
-    beacon_time = t_init;
+    beacon_time = config.t_init;
     report_time = beacon_time;
 
 #ifdef MODE__STAT
     stat_epochs = 0;
+    beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
+    if (!stats.storage_checksum) {
+        app_log_info("Existing Statistics Found\r\n");
+        _beacon_stats_();
+    } else {
+        beacon_stats_init();
+    }
 #endif
 
     _beacon_info_();
@@ -330,7 +332,7 @@ static void _beacon_epoch_()
 {
     static beacon_epoch_counter_t old_epoch;
     old_epoch = epoch;
-    epoch = epoch_i(beacon_time, t_init);
+    epoch = epoch_i(beacon_time, config.t_init);
     if (!cycles || epoch != old_epoch)
     {
         log_debugf("EPOCH STARTED: %u\r\n", epoch);

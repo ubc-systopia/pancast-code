@@ -645,6 +645,7 @@ void dongle_report()
         log_info("***          Begin Report          ***\r\n");
 
         dongle_info();
+        dongle_storage_info(&storage);
         dongle_stats();
 #ifdef MODE__TEST
         dongle_test();
@@ -677,7 +678,9 @@ void dongle_stats()
     log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
 
     log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
-              (uint32_t)cur, cur == MAX_LOG_COUNT ? " (MAX)" : "");
+              (uint32_t)cur,
+                     cur == dongle_storage_max_log_count(&storage) ?
+                         " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
     log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
     log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
@@ -747,7 +750,7 @@ void dongle_test()
     log_info("\r\n");
     log_info("Tests:\r\n");
     test_errors = 0;
-#define FAIL(msg) (log_infof("    FAILURE: %s\r\n", msg), test_errors++)
+#define FAIL(msg) log_infof("    FAILURE: %s\r\n", msg); test_errors++
 
     log_info("    ? Testing that OTPs are loaded\r\n");
     int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
@@ -797,13 +800,16 @@ void dongle_test()
     }
 
     log_info("    ? Testing that old encounters are deleted\r\n");
-    if (dongle_time > DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
-    {
-        dongle_storage_load_all_encounter(&storage, test_check_entry_age);
-    }
-    else
+    dongle_storage_clean_log(&storage, dongle_time);
+    num = dongle_storage_num_encounters_current(&storage);
+    if (dongle_time <= DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
     {
         log_error("Cannot test, not enough time has elapsed.\r\n");
+    } else if (num < 1)
+    {
+        log_error("Cannot test, no encounters stored.\r\n");
+    } else {
+        dongle_storage_load_all_encounter(&storage, test_check_entry_age);
     }
 
     if (test_errors)

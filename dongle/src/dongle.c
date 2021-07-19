@@ -10,8 +10,9 @@
 #define APPL_VERSION "0.1.1"
 
 #define LOG_LEVEL__DEBUG
-//#define MODE__TEST
+#define MODE__TEST
 #define MODE__STAT
+#define MODE__PERIODIC
 
 #include <string.h>
 
@@ -23,6 +24,9 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
 #include <drivers/flash.h>
+#else
+#include "app_assert.h"
+#include "app_log.h"
 #endif
 
 #include "storage.h"
@@ -102,6 +106,7 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 int8_t num_obs_ids = 0;
 int8_t avg_rssi = 0;
 int8_t avg_encounter_rssi = 0;
+uint32_t avg_periodic_throughput = 0; // kb / s - not reset on interval
 #endif
 
 //
@@ -170,13 +175,38 @@ void dongle_scan(void)
             ),
         dongle_log);
 #else
+    int err = 0;
+#ifdef MODE__PERIODIC
+    sl_status_t sc;
+    // Set scanner timing
+    app_log_info("Setting scanner timing\r\n");
+    sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
+    app_assert_status(sc);
+
+    // Set scanner mode
+    app_log_info("Setting scanner mode\r\n");
+    sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
+    app_assert_status(sc);
+
+    // Set sync parameters
+    app_log_info("Setting sync parameters\r\n");
+    sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
+    app_assert_status(sc);
+
+    // Start scanning
+    app_log_info("Starting scan\r\n");
+    sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
+    app_assert_status(sc);
+
+    err = sc;
+#else
     sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
                              DONGLE_SCAN_INTERVAL,
                              DONGLE_SCAN_WINDOW);
     sl_bt_scanner_set_mode(gap_1m_phy, 0); // passive scan
     sl_bt_scanner_start(gap_1m_phy,
                         sl_bt_scanner_discover_observation); // scan all devices
-    int err = 0;
+#endif
 #endif
     if (err)
     {
@@ -250,6 +280,19 @@ void dongle_clock_increment()
     log_debugf("Dongle clock: %lu\r\n", dongle_time);
     dongle_on_clock_update();
     dongle_unlock();
+}
+
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t ticks)
+{
+  app_log_debug("%u bytes, %lu ticks\r\n", data_len, ticks);
+#ifdef MODE__STAT
+  if (ticks > 0) {
+      uint32_t time_ms = ticks * PREC_TIMER_TICK_MS;
+      uint32_t n_bits = data_len * 8;
+      uint32_t this_thrpt = n_bits / time_ms;
+      avg_periodic_throughput = exp_avg(avg_periodic_throughput, this_thrpt);
+  }
+#endif
 }
 
 // UPDATE
@@ -567,6 +610,8 @@ void dongle_stats()
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", num_obs_ids);
     log_infof("    Avg. Broadcast RSSI:                 %d\r\n", avg_rssi);
     log_infof("    Avg. Encounter RSSI (logged):        %d\r\n", avg_encounter_rssi);
+    log_infof("    Avg. Download throughput (all-time)  %lu kb/s\r\n",
+               avg_periodic_throughput);
 #endif
 }
 

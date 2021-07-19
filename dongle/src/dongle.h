@@ -86,6 +86,32 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
+// Timing Constants
+#define MAIN_TIMER_HANDLE 0x00
+#define PREC_TIMER_HANDLE 0x01 // high-precision timer
+#define PREC_TIMER_TICK_MS 1   // essentially res. of timer
+
+// Periodic Scanning & Synchronization
+#define SCAN_PHY 1 // 1M PHY
+#define SCAN_WINDOW 320
+#define SCAN_INTERVAL 320
+#define SCAN_MODE 0 // passive scan
+
+#define SYNC_SKIP 0
+#define SYNC_TIMEOUT 500 // Unit: 10 ms
+#define SYNC_FLAGS 0
+
+#define TIMER_1S 32768
+
+#define TEST_DURATION 1800000
+
+typedef struct {
+  uint64_t start_ticks;
+  uint64_t end_ticks;
+  uint64_t diff;
+  uint64_t diff_ms;
+} timertest_t;
+
 // High-level routine structure
 #ifndef DONGLE_PLATFORM__ZEPHYR
 void dongle_start();
@@ -108,5 +134,5 @@ void dongle_stats();
 void dongle_test();
 void dongle_on_clock_update();
 void dongle_clock_increment();
-
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, uint32_t time);
 #endif

@@ -750,7 +750,7 @@ void dongle_test()
     log_info("\r\n");
     log_info("Tests:\r\n");
     test_errors = 0;
-#define FAIL(msg) (log_infof("    FAILURE: %s\r\n", msg), test_errors++)
+#define FAIL(msg) log_infof("    FAILURE: %s\r\n", msg); test_errors++
 
     log_info("    ? Testing that OTPs are loaded\r\n");
     int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);

@@ -651,11 +651,6 @@ void dongle_stats()
     enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
     enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 #ifdef MODE__STAT
-#define stat_show(stat, name, unit) \
-    log_infof("    %s (%s):                               \r\n", name, unit); \
-    log_infof("         μ:                              %f\r\n", stat.mu); \
-    log_infof("         σ:                              %f\r\n", stat.sigma)
-
     log_info("\r\n");
     log_info("Statistics:\r\n");
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);

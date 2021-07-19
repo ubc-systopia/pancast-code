@@ -27,4 +27,10 @@ typedef struct {
   stat.sigma = sqrt(stat.var),                                            \
   stat.n++
 
+#define stat_show(stat, name, unit) \
+    log_infof("    %s (%s):                               \r\n", name, unit); \
+    log_infof("         N:                              .0f\r\n", stat.n);    \
+    log_infof("         μ:                              %f\r\n", stat.mu);    \
+    log_infof("         σ:                              %f\r\n", stat.sigma)
+
 #endif

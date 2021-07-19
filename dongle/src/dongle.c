@@ -101,6 +101,8 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 
 typedef struct {
   double mu;
+  double mu_0; // for computation
+  double var; // variance
   double sigma;
   double n;
 } stat_t;
@@ -126,11 +128,20 @@ typedef struct {
 
 stats_t stats;
 
-#define stat_add(val,stat) \
-  stat.mu = ((stat.mu * stat.n) + val) / (stat.n + 1), \
-  stat.sigma =                                                         \
-    sqrt(((pow(stat.sigma, 2.0) * stat.n) + pow((val - stat.mu), 2.0)) \
-           / (stat.n + 1)),                                            \
+// Update mean and (sample) variance in-place
+// Variance incremental update is based on this derivation:
+// https://math.stackexchange.com/a/103025
+// which leverages an "orthogonality trick"
+#define stat_add(val,stat)                                                \
+  stat.mu_0 = stat.mu,                                                    \
+  stat.mu = ((stat.mu * stat.n) + val) / (stat.n + 1),                    \
+  stat.var =                                                              \
+  stat.n > 0 ?                                                            \
+  (((stat.n - 1) * stat.var)                                              \
+    + (stat.n * pow(stat.mu_0 - stat.mu, 2.0))                            \
+    + pow(val - stat.mu, 2.0)) / stat.n                                   \
+    : pow(val - stat.mu, 2.0) / (stat.n + 1),                             \
+  stat.sigma = sqrt(stat.var),                                            \
   stat.n++
 
 void stat_compute_thrpt(stats_t *st)

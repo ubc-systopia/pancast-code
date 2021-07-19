@@ -130,6 +130,7 @@ void beacon_storage_init(beacon_storage *sto)
     {
         log_error("Start address of storage area is not a page-multiple!\r\n");
     }
+    st.map.stat = st.map.config + st.page_size;
 }
 
 #define cf (*cfg)
@@ -159,8 +160,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
                    cf.beacon_sk_size, SK_MAX_SIZE);
     }
     read(cf.beacon_sk_size, &cf.beacon_sk);
-    // push onto the next blank page
-    st.map.stat = next_multiple(st.page_size, st.off);
 #undef read
     log_info("Config loaded.\r\n");
 }

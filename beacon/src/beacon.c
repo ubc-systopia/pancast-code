@@ -107,6 +107,7 @@ static beacon_timer_t stat_epochs;
 
 static void _beacon_load_()
 {
+  beacon_storage_init(&storage);
 // Load data
 #ifdef MODE__TEST_CONFIG
     config.beacon_id = TEST_BEACON_ID;
@@ -148,16 +149,46 @@ static void _beacon_info_()
 }
 
 #ifdef MODE__STAT
+typedef struct {
+  uint8_t storage_checksum; // zero for valid stat data
+  beacon_timer_t duration;
+  beacon_timer_t start;
+  beacon_timer_t end;
+  uint32_t cycles;
+  uint32_t epochs;
+} beacon_stats_t;
+
+beacon_stats_t stats;
+
+void beacon_stats_init()
+{
+  memset(&stats, 0, sizeof(beacon_stats_t));
+}
+
+void beacon_stat_update()
+{
+  // Copy data
+    // TODO use the stats containers from the start
+      stats.duration = beacon_time - stat_start;
+      stats.start = stat_start;
+      stats.end = beacon_time;
+      stats.cycles = stat_cycles;
+      stats.epochs = stat_epochs;
+}
+
 static void _beacon_stats_()
 {
     log_info("\r\n");
     log_info("Statistics: \r\n");
-    log_infof("     Time since last report:         %d ms\r\n", beacon_time - stat_start);
+    log_infof("     Time since last report:         %d ms\r\n", stats.duration);
     log_info("     Timer:\r\n");
-    log_infof("         Start:                      %u\r\n", stat_start);
-    log_infof("         End:                        %u\r\n", beacon_time);
-    log_infof("     Cycles:                         %u\r\n", stat_cycles);
-    log_infof("     Completed Epochs:               %u\r\n", stat_epochs);
+    log_infof("         Start:                      %u\r\n", stats.start);
+    log_infof("         End:                        %u\r\n", stats.end);
+    log_infof("     Cycles:                         %u\r\n", stats.cycles);
+    log_infof("     Completed Epochs:               %u\r\n", stats.epochs);
+
+    beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+    beacon_stats_init();
 }
 #endif
 
@@ -173,6 +204,7 @@ static void _beacon_report_()
         log_info("\r\n"); log_info("***          Begin Report          ***\r\n");
         _beacon_info_();
 #ifdef MODE__STAT
+        beacon_stat_update();
         _beacon_stats_();
         stat_start = beacon_time;
         stat_cycles = 0;
@@ -272,6 +304,13 @@ static void _beacon_init_()
 
 #ifdef MODE__STAT
     stat_epochs = 0;
+    beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
+    if (!stats.storage_checksum) {
+        app_log_info("Existing Statistics Found\r\n");
+        _beacon_stats_();
+    } else {
+        beacon_stats_init();
+    }
 #endif
 
     _beacon_info_();

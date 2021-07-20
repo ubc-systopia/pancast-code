@@ -27,6 +27,7 @@
 #endif // SL_CATALOG_KERNEL_PRESENT
 
 #include "../../common/src/pancast.h"
+#include "../../common/src/log.h"
 
 int main(void)
 {
@@ -66,7 +67,7 @@ int main(void)
                                                &risk_timer_handle,
                                RISK_TIMER_PRIORT, 0);
     if (sc) {
-        printf("Error starting risk timer: 0x%x\r\n", sc);
+        log_errorf("Error starting risk timer: 0x%x\r\n", sc);
     }
 #endif
     while (1)

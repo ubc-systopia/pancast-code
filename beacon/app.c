@@ -25,6 +25,7 @@
 #include "em_gpio.h"
 
 #include "../../common/src/pancast.h"
+#include "../../common/src/log.h"
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;
@@ -154,6 +155,8 @@ void get_risk_data()
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
+  log_debugf("Expire - Handle data: %p\r\n", handle->callback_data);
+  log_debugf("Expire - data: %p\r\n", data);
 #define user_handle (*((uint8_t*)(handle->callback_data)))
 
     // handle main clock

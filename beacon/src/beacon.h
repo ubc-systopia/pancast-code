@@ -83,7 +83,8 @@ static void _beacon_broadcast_(int);
 #else
 void beacon_broadcast();
 #endif
-static void _beacon_info_();
+void _beacon_info_();
 int _set_adv_data_();
+int beacon_clock_increment(beacon_timer_t time);
 
 #endif

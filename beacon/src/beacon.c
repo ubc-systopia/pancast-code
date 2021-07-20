@@ -122,7 +122,7 @@ static void _beacon_load_()
 #endif
 }
 
-static void _beacon_info_()
+void _beacon_info_()
 {
     log_info("\r\n");
     log_info("Info: \r\n");

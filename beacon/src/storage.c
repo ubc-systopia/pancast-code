@@ -8,11 +8,6 @@
 #include "../../common/src/log.h"
 #include "../../common/src/util.h"
 
-// Offset determines a safe point of read/write beyond the pages used by application
-// binaries. For now, determined empirically by doing a compilation pass then adjusting
-// the value
-#define FLASH_OFFSET 0x30000
-
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 

@@ -9,11 +9,10 @@
 
 #include <stddef.h>
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-#define FLASH_OFFSET 0x2D000
-#else
-#define FLASH_OFFSET 0x50000
-#endif
+// Offset determines a safe point of read/write beyond the pages used by application
+// binaries. For now, determined empirically by doing a compilation pass then adjusting
+// the value
+#define FLASH_OFFSET 0x30000
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #include <drivers/flash.h>

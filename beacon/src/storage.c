@@ -11,7 +11,7 @@
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
 static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 {
 #define sto ((beacon_storage *)data)
@@ -35,7 +35,7 @@ static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 void beacon_storage_erase(beacon_storage *sto, storage_addr_t offset)
 {
     log_debugf("erasing page at 0x%x\r\n", (offset));
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
     flash_erase(st.dev, (offset), st.page_size);
 #else
     MSC_ErasePage((uint32_t *)offset);
@@ -64,7 +64,7 @@ void pre_erase(beacon_storage *sto, size_t write_size)
 int _flash_read_(beacon_storage *sto, void *data, size_t size)
 {
     log_debugf("reading %d bytes from flash at address 0x%x\r\n", size, st.off);
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
     return flash_read(st.dev, st.off, data, size);
 #else
     memcpy(data, (uint32_t *)st.off, size);
@@ -75,7 +75,7 @@ int _flash_read_(beacon_storage *sto, void *data, size_t size)
 int _flash_write_(beacon_storage *sto, void *data, size_t size)
 {
     log_debugf("writing %d bytes to flash at address 0x%x\r\n", size, st.off);
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
     return flash_write(st.dev, st.off, data, size)
            ? log_error("Error writing flash\r\n"),
            1 : 0;
@@ -87,7 +87,7 @@ int _flash_write_(beacon_storage *sto, void *data, size_t size)
 
 void beacon_storage_get_info(beacon_storage *sto)
 {
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
     log_info("Getting flash information...\r\n");
     st.num_pages = 0;
     st.min_block_size = flash_get_write_block_size(st.dev);
@@ -102,7 +102,7 @@ void beacon_storage_get_info(beacon_storage *sto)
 
 void beacon_storage_init_device(beacon_storage *sto)
 {
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
     st.dev = device_get_binding(DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL);
 #else
     MSC_ExecConfig_TypeDef execConfig = MSC_EXECCONFIG_DEFAULT;
@@ -161,14 +161,14 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 
 #undef cf
 
-void beacon_storage_save_stat(beacon_storage *sto, void * stat, size_t len)
+void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)
 {
     beacon_storage_erase(sto, st.map.stat);
     st.off = st.map.stat;
     _flash_write_(sto, stat, len);
 }
 
-void beacon_storage_read_stat(beacon_storage *sto, void * stat, size_t len)
+void beacon_storage_read_stat(beacon_storage *sto, void *stat, size_t len)
 {
     st.off = st.map.stat;
     _flash_read_(sto, stat, len);

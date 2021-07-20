@@ -306,7 +306,7 @@ static void _beacon_init_()
     stat_epochs = 0;
     beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
     if (!stats.storage_checksum) {
-        app_log_info("Existing Statistics Found\r\n");
+        log_info("Existing Statistics Found\r\n");
         _beacon_stats_();
     } else {
         beacon_stats_init();

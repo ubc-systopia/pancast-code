@@ -14,7 +14,7 @@
 // the value
 #define FLASH_OFFSET 0x30000
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
 #include <drivers/flash.h>
 typedef off_t storage_addr_t;
 typedef const struct device flash_device_t;
@@ -31,7 +31,7 @@ typedef struct
 
 typedef struct
 {
-#ifdef DONGLE_PLATFORM__ZEPHYR
+#ifdef BEACON_PLATFORM__ZEPHYR
     flash_device_t *dev;
 #else
     MSC_ExecConfig_TypeDef mscExecConfig;

@@ -548,8 +548,8 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 #else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
-//    print_bytes(addr->addr, 6, "address");
-//    print_bytes(data, data_len, "adv_data");
+      log_debugf("Packet Address: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
+                 addr[0], addr[1], addr[2], addr[3], addr[4], addr[4]);
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)

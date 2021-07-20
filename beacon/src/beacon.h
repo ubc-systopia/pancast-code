@@ -15,6 +15,7 @@
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>
 #include <bluetooth/bluetooth.h>
+#define LOG_LEVEL__INFO
 #else
 #include "./sha256/sha-256.h"
 #endif
@@ -79,7 +80,7 @@ void main(void);
 void beacon_start();
 #endif
 #ifdef BEACON_PLATFORM__ZEPHYR
-static void _beacon_broadcast_(int);
+void _beacon_broadcast_(int);
 #else
 void beacon_broadcast();
 #endif

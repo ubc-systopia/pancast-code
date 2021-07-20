@@ -71,10 +71,10 @@ beacon_config_t config;
 
 // Default Operation
 beacon_storage storage;
-static beacon_timer_t beacon_time;              // Beacon Clock
-static beacon_eph_id_t beacon_eph_id;           // Ephemeral ID
-static beacon_epoch_counter_t epoch;            // track the current time epoch
-static beacon_timer_t cycles;                   // total number of updates.
+static beacon_timer_t beacon_time;    // Beacon Clock
+static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
+static beacon_epoch_counter_t epoch;  // track the current time epoch
+static beacon_timer_t cycles;         // total number of updates.
 #ifdef BEACON_PLATFORM__ZEPHYR
 static struct k_timer kernel_time_lp; // low-precision kernel timer
 static struct k_timer kernel_time_hp; // high-precision kernel timer
@@ -107,7 +107,7 @@ static beacon_timer_t stat_epochs;
 
 static void _beacon_load_()
 {
-  beacon_storage_init(&storage);
+    beacon_storage_init(&storage);
 // Load data
 #ifdef MODE__TEST_CONFIG
     config.beacon_id = TEST_BEACON_ID;
@@ -149,31 +149,32 @@ void _beacon_info_()
 }
 
 #ifdef MODE__STAT
-typedef struct {
-  uint8_t storage_checksum; // zero for valid stat data
-  beacon_timer_t duration;
-  beacon_timer_t start;
-  beacon_timer_t end;
-  uint32_t cycles;
-  uint32_t epochs;
+typedef struct
+{
+    uint8_t storage_checksum; // zero for valid stat data
+    beacon_timer_t duration;
+    beacon_timer_t start;
+    beacon_timer_t end;
+    uint32_t cycles;
+    uint32_t epochs;
 } beacon_stats_t;
 
 beacon_stats_t stats;
 
 void beacon_stats_init()
 {
-  memset(&stats, 0, sizeof(beacon_stats_t));
+    memset(&stats, 0, sizeof(beacon_stats_t));
 }
 
 void beacon_stat_update()
 {
-  // Copy data
+    // Copy data
     // TODO use the stats containers from the start
-      stats.duration = beacon_time - stat_start;
-      stats.start = stat_start;
-      stats.end = beacon_time;
-      stats.cycles = stat_cycles;
-      stats.epochs = stat_epochs;
+    stats.duration = beacon_time - stat_start;
+    stats.start = stat_start;
+    stats.end = beacon_time;
+    stats.cycles = stat_cycles;
+    stats.epochs = stat_epochs;
 }
 
 static void _beacon_stats_()
@@ -201,7 +202,8 @@ static void _beacon_report_()
     else
     {
         report_time = beacon_time;
-        log_info("\r\n"); log_info("***          Begin Report          ***\r\n");
+        log_info("\r\n");
+        log_info("***          Begin Report          ***\r\n");
         _beacon_info_();
 #ifdef MODE__STAT
         beacon_stat_update();
@@ -210,7 +212,8 @@ static void _beacon_report_()
         stat_cycles = 0;
         stat_epochs = 0;
 #endif
-        log_info("\r\n"); log_info("***          End Report            ***\r\n");
+        log_info("\r\n");
+        log_info("***          End Report            ***\r\n");
     }
 }
 
@@ -305,10 +308,13 @@ static void _beacon_init_()
 #ifdef MODE__STAT
     stat_epochs = 0;
     beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
-    if (!stats.storage_checksum) {
+    if (!stats.storage_checksum)
+    {
         log_info("Existing Statistics Found\r\n");
         _beacon_stats_();
-    } else {
+    }
+    else
+    {
         beacon_stats_init();
     }
 #endif
@@ -429,7 +435,8 @@ static int _beacon_advertise_()
         return -1;
     }
     err = _set_adv_data_();
-    if (!err) {
+    if (!err)
+    {
         log_info("Success!\r\n");
     }
 #endif
@@ -479,7 +486,7 @@ int beacon_loop()
 
     uint32_t lp_timer_status = 0, hp_timer_status = 0;
 
-    int err;
+    int err = 0;
     while (!err)
     {
         // get most updated time
@@ -498,13 +505,14 @@ int beacon_loop()
         // time has elapsed. timer status is reset here
         lp_timer_status = k_timer_status_sync(&kernel_time_lp);
     }
+    return err;
 }
 #endif
 
 // Primary broadcasting routine
 // Non-zero argument indicates an error setting up the procedure for BT advertising
 #ifdef BEACON_PLATFORM__ZEPHYR
-static void _beacon_broadcast_(int err)
+void _beacon_broadcast_(int err)
 {
     // check initialization
     if (err)
@@ -518,18 +526,20 @@ static void _beacon_broadcast_(int err)
 void beacon_broadcast()
 {
     log_info("Starting broadcast\r\n");
+    int err = 0;
 #endif
 
     _beacon_load_(), _beacon_init_();
 
+    err = _beacon_advertise_();
+    if (err)
+    {
+        log_errorf("Broadcasting failed (err %d)\r\n", err);
+        return;
+    }
 #ifdef BEACON_PLATFORM__ZEPHYR
     beacon_loop();
 #else
-    int err = _beacon_advertise_();
-    if (err)
-    {
-        return;
-    }
     _beacon_update_();
 #endif
 }

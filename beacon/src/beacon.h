@@ -6,7 +6,7 @@
 #define BEACON_MODE__NETWORK // comment to run as non-network beacon
 //#define PERIODIC_TEST // uncomment to send test data
 
-#define BEACON_PLATFORM__GECKO
+#define BEACON_PLATFORM__ZEPHYR
 
 #define BEACON_NO_OP assert(1);
 

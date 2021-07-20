@@ -155,9 +155,7 @@ void get_risk_data()
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
-  log_debugf("Expire - Handle data: %p\r\n", handle->callback_data);
-  log_debugf("Expire - data: %p\r\n", data);
-#define user_handle (*((uint8_t*)(handle->callback_data)))
+#define user_handle (*((uint8_t*)data))
 
     // handle main clock
     if (user_handle == MAIN_TIMER_HANDLE)
@@ -169,6 +167,9 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
     // handle data updates
     if (user_handle == RISK_TIMER_HANDLE)
     {
+        if (handle->priority != RISK_TIMER_PRIORT) {
+            log_error("Timer mismatch\r\n");
+        }
         get_risk_data();
     }
 #endif

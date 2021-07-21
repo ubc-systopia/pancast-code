@@ -247,8 +247,7 @@ void dongle_scan(void)
 #ifdef MODE__STAT
 void dongle_stats_init()
 {
-    memset(&stats, 0, sizeof(stat_t));
-    stats.total_periodic_data_time = 0.0;
+    memset(&stats, 0, sizeof(stats_t));
 }
 #endif
 void dongle_init()

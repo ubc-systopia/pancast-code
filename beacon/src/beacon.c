@@ -156,6 +156,7 @@ typedef struct {
   beacon_timer_t end;
   uint32_t cycles;
   uint32_t epochs;
+  uint16_t tx_packets;
 } beacon_stats_t;
 
 beacon_stats_t stats;
@@ -174,6 +175,7 @@ void beacon_stat_update()
       stats.end = beacon_time;
       stats.cycles = stat_cycles;
       stats.epochs = stat_epochs;
+      sl_bt_system_get_counters(1, &stats.tx_packets, 0, 0, 0);
 }
 
 static void _beacon_stats_()
@@ -186,6 +188,7 @@ static void _beacon_stats_()
     log_infof("         End:                        %u\r\n", stats.end);
     log_infof("     Cycles:                         %u\r\n", stats.cycles);
     log_infof("     Completed Epochs:               %u\r\n", stats.epochs);
+    log_infof("     Transmitted Packets:               %u\r\n", stats.tx_packets);
 
     beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
     beacon_stats_init();

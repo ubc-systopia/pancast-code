@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <curl/curl.h>
 
-#define REQUEST_INTERVAL 5
+#define REQUEST_INTERVAL 86400 // request to server once per day
 #define DOMAIN_LEN 31
 #define REQUEST_LEN 7
 

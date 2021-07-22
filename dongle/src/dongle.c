@@ -153,7 +153,9 @@ void dongle_start()
 #ifdef MODE__STAT
     log_info("Statistics enabled\r\n");
 #endif
-
+#ifdef MODE__PERIODIC
+    log_info("Periodic synchronization enabled\r\n");
+#endif
 #ifdef DONGLE_PLATFORM__ZEPHYR
     int err;
 
@@ -245,8 +247,7 @@ void dongle_scan(void)
 #ifdef MODE__STAT
 void dongle_stats_init()
 {
-    memset(&stats, 0, sizeof(stat_t));
-    stats.total_periodic_data_time = 0.0;
+    memset(&stats, 0, sizeof(stats_t));
 }
 #endif
 void dongle_init()
@@ -548,8 +549,6 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 #else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
-      log_debugf("Packet Address: %02x:%02x:%02x:%02x:%02x:%02x\r\n",
-                 addr[0], addr[1], addr[2], addr[3], addr[4], addr[4]);
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)

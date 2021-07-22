@@ -98,11 +98,11 @@ void get_risk_data()
 
     read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
 
-    // read until data returned
-    while (read_len < 0)
-    {
-        read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
-    }
+//    // read until data returned
+//    while (read_len < 0)
+//    {
+//        read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
+//    }
 
     // clear pin once data has been received
     GPIO_PinOutClear(gpioPortB, 1);

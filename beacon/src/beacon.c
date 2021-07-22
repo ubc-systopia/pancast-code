@@ -408,6 +408,13 @@ static int _beacon_advertise_()
         log_errorf("Error, sc: 0x%lx\r\n", sc);
         return -1;
     }
+
+    // Set Power Level
+    int16_t set_power;
+    sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, set_power);
+
+    log_debug("Set tx power to: %d\r\n", set_power);
+
     printf("Starting legacy advertising...\r\n");
     // Set advertising interval to 100ms.
     sc = sl_bt_advertiser_set_timing(

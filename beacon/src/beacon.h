@@ -50,6 +50,7 @@ typedef struct bt_data bt_data_t;
 #else
 #define BEACON_ADV_MIN_INTERVAL 0x30
 #define BEACON_ADV_MAX_INTERVAL 0x60
+#define LEGACY_TX_POWER 10
 
 typedef struct
 {

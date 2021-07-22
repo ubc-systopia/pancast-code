@@ -38,6 +38,9 @@ int risk_data_len;
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
 int adv_index;
 
+sl_sleeptimer_timer_handle_t risk_timer;
+uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+
 /* Initialize application */
 void app_init(void)
 {
@@ -61,7 +64,7 @@ void update_risk_data(int len, char *data)
     }
 
     // reset data
-    memset(&risk_data, 0, risk_data_len);
+   // memset(&risk_data, 0, risk_data_len);
 
     // copy data from risk buffer
     memcpy(&risk_data, data, len);
@@ -87,6 +90,10 @@ void get_risk_data()
 #else
 #ifndef BATCH_SIZE
 
+    sl_status_t sc;
+
+    sl_sleeptimer_stop_timer(&risk_timer);
+
     fflush(SL_IOSTREAM_STDIN);
 
     // set ready pin
@@ -95,22 +102,24 @@ void get_risk_data()
     int read_len = 0;
     char buf[PER_ADV_SIZE];
 
+    // TODO: add partial read case
     read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
-
-    // read until data returned
-    while (read_len < 0)
-    {
-        read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
-    }
 
     // clear pin once data has been received
     GPIO_PinOutClear(gpioPortB, 1);
 
     // update broadcast data
-    if (read_len == PER_ADV_SIZE)
+
+    uint8_t new_risk_data[RISK_DATA_SIZE];
+    memcpy(&new_risk_data, buf, PER_ADV_SIZE);
+    sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
+    	                                   PER_ADV_SIZE, &new_risk_data[0]);
+
+    if (sc != 0)
     {
-        update_risk_data(PER_ADV_SIZE, buf);
-    }
+        printf ("Error setting advertising data, sc: 0x%lx", sc);
+   	}
+
 
 #else // BATCH_SIZE defined
     if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
@@ -124,12 +133,6 @@ void get_risk_data()
         int read_len = 0;
         char buf[PER_ADV_SIZE * BATCH_SIZE];
         read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
-
-        // read until data returned
-        while (read_len < 0)
-        {
-            read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
-        }
 
         // clear pin once data has been received
         GPIO_PinOutClear(gpioPortB, 1);
@@ -149,6 +152,9 @@ void get_risk_data()
         adv_index++;
     }
 #endif
+    sc = sl_sleeptimer_start_timer_ms(&risk_timer, RISK_UPDATE_FREQ * TIMER_1S,
+       	                                   sl_timer_on_expire, &risk_timer_handle,
+										   RISK_TIMER_PRIORT, 0);
 #endif
 }
 

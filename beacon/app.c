@@ -57,6 +57,9 @@ void update_risk_data(int len, char *data)
 {
     sl_status_t sc;
 
+    // reset data
+    memset(&risk_data, 0, risk_data_len);
+
     // copy data from risk buffer
     memcpy(((uint8_t *) &risk_data + sizeof(uint32_t)), data, len);
 
@@ -138,7 +141,6 @@ void get_risk_data()
         adv_index++;
     }
 #endif
-
 #endif
 }
 

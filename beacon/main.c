@@ -61,7 +61,7 @@ int main(void)
     // Granularity in milliseconds, so frequency division down to 0.001*1s
     // is supported
     sl_sleeptimer_timer_handle_t risk_timer;
-    sc = sl_sleeptimer_start_timer_ms(&risk_timer,
+    sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
                                RISK_UPDATE_FREQ * TIMER_1S,
                                                sl_timer_on_expire,
                                                &risk_timer_handle,

@@ -46,7 +46,7 @@
 #define RISK_TIMER_HANDLE 1
 #define MAIN_TIMER_PRIORT 0
 #define RISK_TIMER_PRIORT 1
-#define RISK_UPDATE_FREQ 0.005 // 0.005 * 1s = 5ms
+#define RISK_UPDATE_FREQ 0.05 // 0.05 * 1s = 50ms
 
 /* Risk Data */
 #define RISK_DATA_SIZE PER_ADV_SIZE // PER_ADV_SIZE * BATCH_SIZE

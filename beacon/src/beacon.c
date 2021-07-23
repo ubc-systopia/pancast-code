@@ -13,6 +13,8 @@
 #define MODE__STAT
 #define MODE__TEST_CONFIG
 
+#define LOG_LEVEL__ERROR
+
 #include <string.h>
 
 #ifdef BEACON_PLATFORM__ZEPHYR
@@ -85,6 +87,15 @@ static struct k_timer kernel_time_hp; // high-precision kernel timer
 static bt_data_t adv_res[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME,
             sizeof(CONFIG_BT_DEVICE_NAME) - 1)}; // Advertising response
+
+static struct bt_le_ext_adv *adv_pancast; // advertising set for pancast advertisements
+static struct bt_le_ext_adv *adv_gaen;    // advertisement set for gaen advertisements
+
+static struct bt_le_ext_adv_start_param ext_adv_start_param = {
+    // advertising start parameters
+    .timeout = 0,
+    .num_events = 0,
+};
 #else
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
@@ -318,7 +329,6 @@ static void _beacon_init_()
         beacon_stats_init();
     }
 #endif
-
     _beacon_info_();
 
 // Timer Start
@@ -376,23 +386,133 @@ static int _beacon_advertise_()
 {
     int err = 0;
 #ifdef BEACON_PLATFORM__ZEPHYR
-    // Start advertising
+    // Create pancast advertising set
+    // err = bt_le_ext_adv_create(
+    //     BT_LE_ADV_PARAM(
+    //         BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
+    //         BEACON_ADV_MIN_INTERVAL,
+    //         BEACON_ADV_MAX_INTERVAL,
+    //         NULL // undirected advertising
+    //         ),
+    //     NULL, // non-scannable
+    //     &adv_pancast);
+
+    // if (err)
+    // {
+    //     log_errorf("Pancast advertising set failed to create (err %d)\n", err);
+    //     return err;
+    // }
+
+    // // Create GAEN advertising set
+    // err = bt_le_ext_adv_create(
+    //     BT_LE_ADV_PARAM(
+    //         BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
+    //         BEACON_ADV_MIN_INTERVAL,
+    //         BEACON_ADV_MAX_INTERVAL,
+    //         NULL // undirected advertising
+    //         ),
+    //     NULL, // non-scannable
+    //     &adv_gaen);
+
+    // if (err)
+    // {
+    //     log_errorf("Gaen advertising set failed to create (err %d)\n", err);
+    //     return err;
+    // }
+
+    // // Set pancast advertising set data
+    // log_debug("HERE IS SUM DATA\r\n");
+    // log_debug(payload.bt_data);
+    // log_debug("DATA END\r\n");
+    // err = bt_le_ext_adv_set_data(
+    //     adv_pancast,
+    //     payload.bt_data,
+    //     ARRAY_SIZE(payload.bt_data),
+    //     adv_res,
+    //     ARRAY_SIZE(adv_res));
+
+    // if (err)
+    // {
+    //     log_errorf("Advertising set failed to set data (err %d)\n", err);
+    //     return err;
+    // }
+
+    // // Start advertising pancast advertisements
+    // err = bt_le_ext_adv_start(
+    //     adv_pancast,
+    //     &ext_adv_start_param);
+
+    // if (err)
+    // {
+    //     log_errorf("Advertising set failed to start (err %d)\n", err);
+    //     return err;
+    // }
+    char ENS_identifier[2] = "\x6f\xfd";
+    char flag_value[] = "\x1A";
+    uint8_t flags_length = 0x01;
+    uint8_t flags_type = 0x01;
+    uint8_t service_UUID_length = 0x03;
+    uint8_t service_UUID_type = 0x03;
+    uint8_t service_data_length = 0x16;
+    uint8_t service_data_type = 0x16;
+    char rolling_proximity_identifier[16] = "\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef";
+    char associated_encrypted_metadata[4] = "\xaa\xaa\xaa\xaa";
+    char service_data_internals[22];
+    for (int i = 0; i < 22; i++)
+    {
+        if (i < 2)
+        {
+            service_data_internals[i] = ENS_identifier[i];
+        }
+        else if (i >= 18)
+        {
+            service_data_internals[i] = associated_encrypted_metadata[i - 18];
+        }
+        else
+        {
+            service_data_internals[i] = rolling_proximity_identifier[i - 2];
+        }
+    }
+
+    // strcat(service_data_internals, ENS_identifier);
+    // strcat(service_data_internals, rolling_proximity_identifier);
+    // strcat(service_data_internals, associated_encrypted_metadata);
+
+    // bt_data_t flags = {
+    //     flags_type,
+    //     flags_length,
+    //     flag_value};
+
+    // bt_data_t serviceUUID = {
+    //     service_UUID_type,
+    //     service_UUID_length,
+    //     ENS_identifier}; // little endian byte order
+    bt_data_t flags = BT_DATA_BYTES(flags_type, 0x1a);
+    bt_data_t serviceUUID = BT_DATA_BYTES(service_UUID_type, 0x6f, 0xfd);
+    bt_data_t serviceData = BT_DATA(service_data_type, service_data_internals, ARRAY_SIZE(service_data_internals));
+
+    // bt_data_t serviceData = {
+    //     service_data_type,
+    //     service_data_length,
+    //     service_data_internals};
+
+    bt_data_t data[] = {flags, serviceUUID, serviceData};
+
     err = bt_le_adv_start(
         BT_LE_ADV_PARAM(
             BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
-            BEACON_ADV_MIN_INTERVAL,
-            BEACON_ADV_MAX_INTERVAL,
+            BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
             NULL // undirected advertising
             ),
-        payload.bt_data, ARRAY_SIZE(payload.bt_data),
-        adv_res, ARRAY_SIZE(adv_res));
+        data, ARRAY_SIZE(data), NULL, 0);
     if (err)
     {
         log_errorf("Advertising failed to start (err %d)\r\n", err);
     }
+
     else
     {
-        // obtain and report adverisement address
+        // obtain and report advertisement address
         char addr_s[BT_ADDR_LE_STR_LEN];
         bt_addr_le_t addr = {0};
         size_t count = 1;
@@ -531,16 +651,17 @@ void beacon_broadcast()
 
     _beacon_load_(), _beacon_init_();
 
+#ifdef BEACON_PLATFORM__ZEPHYR
+    // beacon_loop();
     err = _beacon_advertise_();
     if (err)
     {
         log_errorf("Broadcasting failed (err %d)\r\n", err);
         return;
     }
-#ifdef BEACON_PLATFORM__ZEPHYR
-    beacon_loop();
-#else
     _beacon_update_();
+#else
+
 #endif
 }
 

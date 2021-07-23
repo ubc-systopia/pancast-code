@@ -51,10 +51,10 @@ int main(void)
     // Main timer
     sl_sleeptimer_timer_handle_t timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-                               TIMER_1MS * BEACON_TIMER_RESOLUTION,
+                                               TIMER_1MS * BEACON_TIMER_RESOLUTION,
                                                sl_timer_on_expire,
                                                &main_timer_handle,
-                               MAIN_TIMER_PRIORT, 0);
+                                               MAIN_TIMER_PRIORT, 0);
 #ifdef BEACON_MODE__NETWORK
     printf("Starting risk timer\r\n");
     // Risk Timer
@@ -62,11 +62,12 @@ int main(void)
     // is supported
     sl_sleeptimer_timer_handle_t risk_timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                               RISK_UPDATE_FREQ * TIMER_1S,
+                                               RISK_UPDATE_FREQ * TIMER_1S,
                                                sl_timer_on_expire,
                                                &risk_timer_handle,
-                               RISK_TIMER_PRIORT, 0);
-    if (sc) {
+                                               RISK_TIMER_PRIORT, 0);
+    if (sc)
+    {
         log_errorf("Error starting risk timer: 0x%x\r\n", sc);
     }
 #endif

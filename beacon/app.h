@@ -30,8 +30,9 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 0x06 // 7.5 ms
+#define PER_ADV_INTERVAL 40 // 50 ms (synced to update freq)
 #define PER_ADV_SIZE 250
+#define UART_CHUNK_SIZE 246
 #define PER_FLAGS 0 // no periodic advertising flags
 
 #define NO_MAX_DUR 0 // 0 for no duration limit
@@ -47,7 +48,7 @@
 #define RISK_UPDATE_FREQ 0.05 // 0.05 * 1s = 50ms
 
 /* Risk Data */
-#define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
+#define RISK_DATA_SIZE PER_ADV_SIZE // PER_ADV_SIZE * BATCH_SIZE
 // #define BATCH_SIZE 2
 
 /***************************************************************************/ /**

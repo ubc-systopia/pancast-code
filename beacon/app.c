@@ -37,7 +37,9 @@ int risk_data_len;
 // Current index of periodic data broadcast
 // Periodic advertising data to transmit is
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
-int adv_index;
+int adv_index = 0;
+
+uint32_t seq = 0;
 
 /* Initialize application */
 void app_init(void)
@@ -55,22 +57,23 @@ void update_risk_data(int len, char *data)
 {
     sl_status_t sc;
 
-    if (len > RISK_DATA_SIZE)
-    {
-        //    printf ("len: %d larger than current risk size\r\n", len);
-        return;
-    }
-
     // reset data
     memset(&risk_data, 0, risk_data_len);
 
     // copy data from risk buffer
-    memcpy(&risk_data, data, len);
-    risk_data_len = len;
+    memcpy(((uint8_t *) &risk_data + sizeof(uint32_t)), data, len);
+
+    log_infof("sequence: %lu\r\n", seq);
+
+    memcpy(&risk_data, &seq, sizeof(uint32_t));
+
+    risk_data_len = len + sizeof(uint32_t);
 
     //printf ("Setting advertising data...\r\n");
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   PER_ADV_SIZE, &risk_data[0]);
+                                   PER_ADV_SIZE, &risk_data);
+
+    seq++;
 
     if (sc != 0)
     {
@@ -94,9 +97,9 @@ void get_risk_data()
     GPIO_PinOutSet(gpioPortB, 1);
 
     int read_len = 0;
-    char buf[PER_ADV_SIZE];
+    char buf[UART_CHUNK_SIZE];
 
-    read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
+    read_len = read(SL_IOSTREAM_STDIN, &buf, UART_CHUNK_SIZE);
 
 //    // read until data returned
 //    while (read_len < 0)
@@ -108,9 +111,9 @@ void get_risk_data()
     GPIO_PinOutClear(gpioPortB, 1);
 
     // update broadcast data
-    if (read_len == PER_ADV_SIZE)
+    if (read_len == UART_CHUNK_SIZE)
     {
-        update_risk_data(PER_ADV_SIZE, buf);
+        update_risk_data(UART_CHUNK_SIZE, buf);
     }
 
 #else // BATCH_SIZE defined
@@ -220,10 +223,13 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
         app_assert_status(sc);
 
+        log_infof("sequence: %lu\r\n", seq);
+        memcpy(&risk_data, &seq, sizeof(uint32_t));
         // printf("Setting advertising data...\r\n");
         sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
-                                       &risk_data[adv_index * PER_ADV_SIZE]);
+                                       &risk_data);
         app_assert_status(sc);
+        seq++;
 
         beacon_start();
         break;

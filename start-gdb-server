@@ -1,0 +1,3 @@
+#!/bin/bash
+
+JLinkGDBServerCL -device nrf52832_xxaa -if swd -port 1338 -nolocalhostonly

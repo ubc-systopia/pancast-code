@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder:Zephyr}/build/zephyr/zephyr.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "serverpath": "/opt/JLinkGDBServerCL",
+            "runToMain": true,
+            "device": "nrf52832_xxaa",
+            "serverArgs": [
+                "nolocalhostonly"
+            ],
+            "gdbTarget": "172.17.112.1:50000"
+        }
+    ]
+}

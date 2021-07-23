@@ -463,9 +463,14 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             // end previous data
             if (lat_test.download.is_active)
             {
-                if (lat_test.download.n_bytes - RISK_BROADCAST_LEN_SIZE
-                    == PERIODIC_FIXED_DATA_LEN)
+                uint32_t n_good = lat_test.download.n_bytes
+                                      - RISK_BROADCAST_LEN_SIZE;
+                if (n_good >= PERIODIC_FIXED_DATA_LEN)
                 {
+                    if (n_good > PERIODIC_FIXED_DATA_LEN) {
+                        log_info(
+                            "WARNING: more data downloaded than expected\r\n");
+                    }
                     log_info("Download complete!\r\n");
                     lat_test.payloads_complete++;
                     // compute latency

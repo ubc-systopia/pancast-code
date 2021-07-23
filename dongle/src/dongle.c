@@ -381,6 +381,7 @@ void dongle_download_start(uint32_t seq)
   lat_test.download.is_active = 1;
   lat_test.download.seq = seq;
   log_info("Download started!\r\n");
+  lat_test.payloads_started++;
 }
 
 void dongle_download_fail()
@@ -484,7 +485,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                 }
             }
 
-            lat_test.payloads_started++;
             // set the first sequence no. to this packet
             // TODO: sequence numbers should reset on a new payload (see beacon)
             dongle_download_start(seq);

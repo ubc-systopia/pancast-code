@@ -122,4 +122,7 @@ typedef struct
 #define BROADCAST_SERVICE_ID 0x2222
 static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
+// Risk Broadcast
+#define RISK_BROADCAST_LEN_SIZE 8 // number of bytes used to indicate data len
+
 #endif

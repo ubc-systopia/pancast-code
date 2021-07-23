@@ -151,11 +151,11 @@ void* uart_main(void* arg) {
       while (wlen < CHUNK_SIZE) {
         if (wlen == -1) {
           fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
-	  return -1;
+	  return 0;
 	}
 	printf("%d bytes written\r\n", wlen);
 	chunk_size = chunk_size - wlen;
-	new_wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
+        int new_wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
 	wlen = wlen + new_wlen;
       }
 

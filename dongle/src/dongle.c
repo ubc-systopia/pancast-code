@@ -97,13 +97,7 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 
 #ifdef MODE__STAT
 
-#include <math.h>
-
-typedef struct {
-  double mu;
-  double sigma;
-  double n;
-} stat_t;
+#include "../../common/src/stats.h"
 
 typedef struct {
 
@@ -125,13 +119,6 @@ typedef struct {
 } stats_t;
 
 stats_t stats;
-
-#define stat_add(val,stat) \
-  stat.mu = ((stat.mu * stat.n) + val) / (stat.n + 1), \
-  stat.sigma =                                                         \
-    sqrt(((pow(stat.sigma, 2.0) * stat.n) + pow((val - stat.mu), 2.0)) \
-           / (stat.n + 1)),                                            \
-  stat.n++
 
 void stat_compute_thrpt(stats_t *st)
 {
@@ -166,7 +153,9 @@ void dongle_start()
 #ifdef MODE__STAT
     log_info("Statistics enabled\r\n");
 #endif
-
+#ifdef MODE__PERIODIC
+    log_info("Periodic synchronization enabled\r\n");
+#endif
 #ifdef DONGLE_PLATFORM__ZEPHYR
     int err;
 
@@ -258,8 +247,7 @@ void dongle_scan(void)
 #ifdef MODE__STAT
 void dongle_stats_init()
 {
-    memset(&stats, 0, sizeof(stat_t));
-    stats.total_periodic_data_time = 0.0;
+    memset(&stats, 0, sizeof(stats_t));
 }
 #endif
 void dongle_init()
@@ -561,8 +549,6 @@ void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 #else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
-//    print_bytes(addr->addr, 6, "address");
-//    print_bytes(data, data_len, "adv_data");
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)
@@ -664,11 +650,6 @@ void dongle_stats()
     enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
     enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 #ifdef MODE__STAT
-#define stat_show(stat, name, unit) \
-    log_infof("    %s (%s):                               \r\n", name, unit); \
-    log_infof("         μ:                              %f\r\n", stat.mu); \
-    log_infof("         σ:                              %f\r\n", stat.sigma)
-
     log_info("\r\n");
     log_info("Statistics:\r\n");
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);

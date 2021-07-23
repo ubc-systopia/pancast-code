@@ -15,20 +15,21 @@
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>
 #include <bluetooth/bluetooth.h>
+#define LOG_LEVEL__INFO
 #else
 #include "./sha256/sha-256.h"
 #endif
 
-typedef struct {
-  beacon_id_t beacon_id;                   // Beacon ID
-  beacon_location_id_t beacon_location_id; // Location ID
-  beacon_timer_t t_init;      // Beacon Clock Start
-  key_size_t backend_pk_size; // size of backend public key
-  pubkey_t backend_pk;        // Backend public key
-  key_size_t beacon_sk_size;  // size of secret key
-  beacon_sk_t beacon_sk;      // Secret Key
+typedef struct
+{
+    beacon_id_t beacon_id;                   // Beacon ID
+    beacon_location_id_t beacon_location_id; // Location ID
+    beacon_timer_t t_init;                   // Beacon Clock Start
+    key_size_t backend_pk_size;              // size of backend public key
+    pubkey_t backend_pk;                     // Backend public key
+    key_size_t beacon_sk_size;               // size of secret key
+    beacon_sk_t beacon_sk;                   // Secret Key
 } beacon_config_t;
-
 
 // Advertising interval settings
 // Zephyr-recommended values are used
@@ -80,11 +81,12 @@ void main(void);
 void beacon_start();
 #endif
 #ifdef BEACON_PLATFORM__ZEPHYR
-static void _beacon_broadcast_(int);
+void _beacon_broadcast_(int);
 #else
 void beacon_broadcast();
 #endif
-static void _beacon_info_();
+void _beacon_info_();
 int _set_adv_data_();
+int beacon_clock_increment(beacon_timer_t time);
 
 #endif

@@ -10,7 +10,7 @@
 //#define MODE__TEST // enables unit tests
 #define MODE__STAT // enables telemetry aggregation
 #define MODE__PERIODIC // enables periodic scanning and syncing
-//#define MODE__LEGACY_LOG
+#define MODE__LEGACY_LOG
 
 #ifdef MODE__TEST
 #define MODE__TEST_CONFIG

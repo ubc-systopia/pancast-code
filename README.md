@@ -3,16 +3,16 @@ Code for some components of the PanCast system, including an implementation of t
 
 ## Features
 ### Critical Functionality
-| Name                                         | Completion | Notes                                                      |
-| -------------------------------------------- | ---------- | ---------------------------------------------------------- |
-| Bluetooth LE Broadcast/Recieve               | 90 %       | Zephyr OS suppors 30 byte payload. SiLabs will support 31. |
-| Ephemeral ID Generation                      | 100 %      |                                                            |
-| Encounter Logging                            | 100 %      |                                                            |
-| Device Configuration Load from Flash         | 100 %      |                                                            |
-| OTP Storage                                  | 100 %      |                                                            |
-| Terminal Connection - Delayed Release Upload | 100 %      |                                                            |
-| Log Deletion (e.g. past 14 Days)             | 0%         |                                                            |
-| Terminal Data Encryption                     | 0%         | Need to develop a data protocol with backend.              |
+| Name                                         | Completion | Notes                                             |
+| -------------------------------------------- | ---------- | ------------------------------------------------- |
+| Bluetooth LE Broadcast/Receive               | 95 %       | Supports 30 byte payload using Legacy Advertising |
+| Ephemeral ID Generation                      | 100 %      |                                                   |
+| Encounter Logging                            | 100 %      |                                                   |
+| Device Configuration Load from Flash         | 100 %      |                                                   |
+| OTP Storage                                  | 100 %      |                                                   |
+| Terminal Connection - Delayed Release Upload | 100 %      |                                                   |
+| Log Deletion (e.g. past 14 Days)             | 100%       |                                                   |
+| Terminal Data Encryption                     | 0%         | Need to develop a data protocol with backend.     |
 
 ## Structure
 Application code is found in the various directories of the project.

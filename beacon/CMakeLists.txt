@@ -8,3 +8,4 @@ project(pancast_beacon)
 # find_package(Zephyr) which defines the target.
 target_sources(app PRIVATE src/beacon.h)
 target_sources(app PRIVATE src/beacon.c)
+target_sources(app PRIVATE src/storage.c)

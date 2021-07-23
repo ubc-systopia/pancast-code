@@ -833,6 +833,7 @@ void dongle_download_test_info()
     log_info("Risk Broadcast:\r\n");
     log_infof("Downloads Started: %d\r\n", lat_test.payloads_started);
     log_infof("Downloads Completed: %d\r\n", lat_test.payloads_complete);
+    log_infof("Downloads Failed: %d\r\n", lat_test.payloads_failed);
     stat_show(lat_test.periodic_data_avg_payload_lat,
               "Download time", "ms");
     stat_show(lat_test.duplicates,

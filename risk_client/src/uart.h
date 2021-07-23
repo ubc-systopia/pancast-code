@@ -3,12 +3,7 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
 #include <fcntl.h>  
-#include <errno.h>
 #include <string.h>
 #include <termios.h>
 
@@ -21,7 +16,7 @@
 #define PIN  24 /* P1-18 */
 #define POUT 4  /* P1-07 */
 
-#define TERMINAL    "/dev/ttyACM0"
+#define TERMINAL "/dev/ttyACM0"
 
 #define CHUNK_SIZE 250
 

@@ -41,9 +41,6 @@ int adv_index = 0;
 
 uint32_t seq = 0;
 
-sl_sleeptimer_timer_handle_t risk_timer;
-uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-
 /* Initialize application */
 void app_init(void)
 {
@@ -59,9 +56,6 @@ void app_init(void)
 void update_risk_data(int len, char *data)
 {
     sl_status_t sc;
-
-    // reset data
-   // memset(&risk_data, 0, risk_data_len);
 
     // copy data from risk buffer
     memcpy(((uint8_t *) &risk_data + sizeof(uint32_t)), data, len);
@@ -93,8 +87,6 @@ void get_risk_data()
   update_risk_data(PER_ADV_SIZE, test_data);
 #else
 #ifndef BATCH_SIZE
-
-    sl_status_t sc;
 
     fflush(SL_IOSTREAM_STDIN);
 

@@ -150,6 +150,7 @@ typedef struct
     int payloads_failed;
     download_t download;
     stat_t periodic_data_avg_payload_lat;
+    stat_t packets;
     stat_t duplicates;
     stat_t n_bytes;
 } fixed_data_test_t;
@@ -386,7 +387,11 @@ void dongle_download_fail()
 {
   if (lat_test.download.is_active) {
     lat_test.payloads_failed++;
+    stat_add(lat_test.download.n_duplicate_packets,
+                                 lat_test.duplicates);
     stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
+    stat_add(lat_test.download.n_received_packets,
+             lat_test.packets);
     dongle_download_info();
     dongle_download_reset();
   }
@@ -430,6 +435,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             dongle_download_fail();
         }
         lat_test.download.seq = seq;
+        lat_test.download.n_received_packets++;
     }
 
     // Determine if the buffer contains the known length quantity
@@ -467,6 +473,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                     stat_add(lat_test.download.n_duplicate_packets,
                              lat_test.duplicates);
                     stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
+                    stat_add(lat_test.download.n_received_packets,
+                                 lat_test.packets);
                 }
                 else
                 {
@@ -841,6 +849,8 @@ void dongle_download_test_info()
               "Download time", "ms");
     stat_show(lat_test.duplicates,
               "Duplicated Packets", "packets");
+    stat_show(lat_test.n_bytes,
+                  "Bytes Received", "bytes");
     dongle_download_init();
 #endif
 }

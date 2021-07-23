@@ -124,6 +124,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        app_log_info("Starting scan...\r\n");
 //        sc = sl_bt_scanner_start(1, scanner_discover_observation);
 //        app_assert_status(sc);
+        dongle_download_fail();
         synced = 0;
         break;
       case sl_bt_evt_sync_data_id:
@@ -132,6 +133,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                      evt->data.evt_sync_data.data.len);
         app_log_debug("Status: %d\r\n",
                            evt->data.evt_sync_data.data_status);
+//        evt->data.evt_sync_data.
 
         // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
 

@@ -11,6 +11,7 @@
 #define MODE__STAT // enables telemetry aggregation
 #define MODE__PERIODIC // enables periodic scanning and syncing
 #define MODE__LEGACY_LOG
+#define MODE__PERIODIC_FIXED_DATA
 
 #ifdef MODE__TEST
 #define MODE__TEST_CONFIG
@@ -122,6 +123,10 @@ typedef struct {
   uint64_t diff_ms;
 } timertest_t;
 
+#ifdef MODE__PERIODIC_FIXED_DATA
+#define PERIODIC_FIXED_DATA_LEN 0x023456 // must be <= sizeof(uint32)
+#endif
+
 // High-level routine structure
 #ifndef DONGLE_PLATFORM__ZEPHYR
 void dongle_start();
@@ -142,6 +147,9 @@ void dongle_unlock();
 void dongle_info();
 void dongle_stats();
 void dongle_test();
+void dongle_download_info();
+void dongle_download_test_info();
+void dongle_download_fail();
 void dongle_on_clock_update();
 void dongle_clock_increment();
 void dongle_hp_timer_add(uint32_t ticks);

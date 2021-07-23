@@ -151,6 +151,7 @@ typedef struct
     download_t download;
     stat_t periodic_data_avg_payload_lat;
     stat_t duplicates;
+    stat_t n_bytes;
 } fixed_data_test_t;
 
 fixed_data_test_t lat_test;
@@ -385,6 +386,7 @@ void dongle_download_fail()
 {
   if (lat_test.download.is_active) {
     lat_test.payloads_failed++;
+    stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
     dongle_download_info();
     dongle_download_reset();
   }
@@ -464,6 +466,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                     stat_add(lat, lat_test.periodic_data_avg_payload_lat);
                     stat_add(lat_test.download.n_duplicate_packets,
                              lat_test.duplicates);
+                    stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
                 }
                 else
                 {

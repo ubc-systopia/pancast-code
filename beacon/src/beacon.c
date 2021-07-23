@@ -416,7 +416,7 @@ static int _beacon_advertise_()
 
     // Set Power Level
     int16_t set_power;
-    sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, set_power);
+    sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, &set_power);
 
     log_debug("Set tx power to: %d\r\n", set_power);
 

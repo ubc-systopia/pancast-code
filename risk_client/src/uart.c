@@ -144,9 +144,19 @@ void* uart_main(void* arg) {
 
       // write data
       tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
-      int wlen = write(fd, &r_data->data.response[data_sent], CHUNK_SIZE);
-      if (wlen != CHUNK_SIZE) {
-        fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
+      int chunk_size = CHUNK_SIZE;
+      int wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
+
+      // write until entire chunk transferred
+      while (wlen < CHUNK_SIZE) {
+        if (wlen == -1) {
+          fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
+	  return -1;
+	}
+	printf("%d bytes written\r\n", wlen);
+	chunk_size = chunk_size - wlen;
+	new_wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
+	wlen = wlen + new_wlen;
       }
 
       printf("uart sent %d bytes\r\n", wlen);

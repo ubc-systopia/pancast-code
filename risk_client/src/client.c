@@ -19,8 +19,6 @@ int main(int argc, char *argv[]) {
 
   r_data.data = request;
 
-  // printf("size: %d\r\n", r_data.data.size);
-
   pthread_create(&id[REQ_THREAD_ID], NULL, &request_main, (void*)&r_data);
   pthread_create(&id[UART_THREAD_ID], NULL,  &uart_main, (void*)&r_data);
 

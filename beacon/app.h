@@ -33,6 +33,7 @@
 #define PER_ADV_INTERVAL 6 // 7.5 ms
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
+#define PER_TX_POWER 10
 
 #define NO_MAX_DUR 0 // 0 for no duration limit
 #define NO_MAX_EVT 0 // 0 for no max events

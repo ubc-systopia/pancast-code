@@ -212,6 +212,10 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         sc = sl_bt_advertiser_set_phy(advertising_set_handle, sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
         app_assert_status(sc);
 
+        // Set Power Level
+        int16_t set_power;
+        sc = sl_bt_advertiser_set_tx_power(advertising_set_handle, PER_TX_POWER, &set_power);
+
         // Set advertising interval to 100ms.
         sc = sl_bt_advertiser_set_timing(advertising_set_handle,
                                          MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)

@@ -83,6 +83,7 @@ int handle_request(struct req_data *data) {
 // To be started at a thread in client main
 void *request_main(void *arg) { 
   struct risk_data *r_data = (struct risk_data *) arg;
+  int err = 0;
 
   printf("Starting request main\r\n");
 
@@ -93,9 +94,15 @@ void *request_main(void *arg) {
     int req = handle_request(&request); 
     if (req == 0) {
       r_data->data_ready = 1;
-      pthread_mutex_lock(&r_data->mutex);
+      err = pthread_mutex_lock(&r_data->mutex);
+      if (err != 0) {
+        fprintf(stderr, "pthread_mutex_lock error\r\n");
+      }
       while (!r_data->uart_ready) {
-        pthread_cond_wait(&r_data->uart_ready_cond, &r_data->mutex);
+        err = pthread_cond_wait(&r_data->uart_ready_cond, &r_data->mutex);
+        if (err != 0) {
+          fprintf(stderr, "pthread_cond_wait error\r\n");
+	}
       }
       r_data->uart_ready = 0; 
       printf("Request copying data...\r\n");
@@ -107,10 +114,16 @@ void *request_main(void *arg) {
 
       printf("Copy complete!\r\n");
 	    
-      pthread_cond_signal(&r_data->request_ready_cond);	    
-      pthread_mutex_unlock(&r_data->mutex);
+      err = pthread_cond_signal(&r_data->request_ready_cond);
+      if (err != 0) {
+        fprintf(stderr, "pthread_cond_signal error\r\n");
+      }
+
+      err = pthread_mutex_unlock(&r_data->mutex);
+      if (err != 0) {
+        fprintf(stderr, "pthread_mutex_unlock error\r\n");
+      }
     }
-  
   sleep(REQUEST_INTERVAL);
   }
 }

@@ -99,34 +99,61 @@ dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 
 #include "../../common/src/stats.h"
 
-typedef struct {
+typedef struct
+{
 
-  uint8_t storage_checksum; // zero for valid stat data
+    uint8_t storage_checksum; // zero for valid stat data
 
-  uint32_t num_obs_ids;
-  uint32_t num_scan_results;
-  uint32_t num_periodic_data;
-  uint32_t num_periodic_data_error;
-  uint32_t total_periodic_data_size; // bytes
-  double total_periodic_data_time; // seconds
+    uint32_t num_obs_ids;
+    uint32_t num_scan_results;
+    uint32_t num_periodic_data;
+    uint32_t num_periodic_data_error;
+    uint32_t total_periodic_data_size; // bytes
+    double total_periodic_data_time;   // seconds
 
-  stat_t scan_rssi;
-  stat_t encounter_rssi;
-  stat_t periodic_data_size;
-  stat_t periodic_data_rssi;
+    stat_t scan_rssi;
+    stat_t encounter_rssi;
+    stat_t periodic_data_size;
+    stat_t periodic_data_rssi;
 
-  double periodic_data_avg_thrpt;
+    double periodic_data_avg_thrpt;
 } stats_t;
 
 stats_t stats;
 
 void stat_compute_thrpt(stats_t *st)
 {
-  st->periodic_data_avg_thrpt =
-      ((double) st->total_periodic_data_size * 0.008) /
-      st->total_periodic_data_time;
+    st->periodic_data_avg_thrpt =
+        ((double)st->total_periodic_data_size * 0.008) /
+        st->total_periodic_data_time;
 }
 
+#endif
+
+#ifdef MODE__PERIODIC_FIXED_DATA
+
+typedef struct
+{
+    int is_active;
+    double time;
+    uint32_t seq; // packet sequence number
+    uint32_t n_received_packets;
+    uint32_t n_duplicate_packets;
+    uint32_t n_bytes;
+} download_t;
+
+typedef struct
+{
+    uint8_t periodic_data[RISK_BROADCAST_LEN_SIZE];
+    int payloads_started;
+    int payloads_complete;
+    int payloads_failed;
+    download_t download;
+    stat_t periodic_data_avg_payload_lat;
+    stat_t duplicates;
+} fixed_data_test_t;
+
+fixed_data_test_t lat_test;
 #endif
 
 //
@@ -249,6 +276,16 @@ void dongle_stats_init()
 {
     memset(&stats, 0, sizeof(stats_t));
 }
+#ifdef MODE__PERIODIC_FIXED_DATA
+void dongle_download_init()
+{
+    memset(&lat_test, 0, sizeof(fixed_data_test_t));
+}
+void dongle_download_reset()
+{
+    memset(&lat_test.download, 0, sizeof(download_t));
+}
+#endif
 #endif
 void dongle_init()
 {
@@ -265,14 +302,23 @@ void dongle_init()
     non_report_entry_count = 0;
     signal_id = 0;
 
+#ifdef MODE__STAT
     // must call dongle_config_load before this
     dongle_storage_read_stat(&storage, &stats, sizeof(stats_t));
-    if (!stats.storage_checksum) {
+    if (!stats.storage_checksum)
+    {
         app_log_info("Existing Statistics Found\r\n");
         dongle_stats();
-    } else {
+    }
+    else
+    {
         dongle_stats_init();
     }
+#endif
+
+#ifdef MODE__PERIODIC_FIXED_DATA
+    dongle_download_init();
+#endif
 
     log_info("Dongle initialized\r\n");
 
@@ -320,28 +366,129 @@ void dongle_clock_increment()
 
 void dongle_hp_timer_add(uint32_t ticks)
 {
-  stats.total_periodic_data_time +=
-      (((double) ticks * PREC_TIMER_TICK_MS) / 1000.0);
+    double ms = ((double)ticks * PREC_TIMER_TICK_MS);
+    stats.total_periodic_data_time += (ms / 1000.0);
+    if (lat_test.download.is_active)
+    {
+        lat_test.download.time += ms;
+    }
 }
 
-void dongle_on_periodic_data
-(uint8_t *data, uint8_t data_len, int8_t rssi)
+void dongle_download_start(uint32_t seq)
 {
+  lat_test.download.is_active = 1;
+  lat_test.download.seq = seq;
+  log_info("Download started!\r\n");
+}
+
+void dongle_download_fail()
+{
+  if (lat_test.download.is_active) {
+    lat_test.payloads_failed++;
+    dongle_download_info();
+    dongle_download_reset();
+  }
+}
+
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
+{
+    if (data_len < sizeof(uint32_t)) {
+        log_error("not enough data to read sequence number\r\n");
+        log_error("len: %d\r\n", data_len);
+        dongle_download_fail();
+    }
+    uint32_t seq;
+    memcpy(&seq, data, sizeof(uint32_t));
+//    printf("sequence: %lu\r\n", seq);
+//    log_bytes(printf, printf, data, data_len, "data");
 #ifdef MODE__STAT
-  stats.total_periodic_data_size += data_len;
-  stats.num_periodic_data++;
-  stat_add(data_len, stats.periodic_data_size);
-  stat_add(rssi, stats.periodic_data_rssi);
+    stats.total_periodic_data_size += data_len;
+    stats.num_periodic_data++;
+    stat_add(data_len, stats.periodic_data_size);
+    stat_add(rssi, stats.periodic_data_rssi);
+#endif
+#ifdef MODE__PERIODIC_FIXED_DATA
+
+    if (lat_test.download.is_active)
+    {
+        if (seq < lat_test.download.seq)
+        {
+            log_infof("Warning: Old Packet: %lu\r\n", seq);
+            return;
+        }
+        else if (seq == lat_test.download.seq)
+        {
+            log_debug("Duplicate packet: %lu\r\n", seq);
+            lat_test.download.n_duplicate_packets++;
+            return;
+        }
+        else if (seq != lat_test.download.seq + 1)
+        {
+            log_info("Download failed - missed packets!\r\n");
+            dongle_download_fail();
+        }
+        lat_test.download.seq = seq;
+    }
+
+    // Determine if the buffer contains the known length quantity
+    uint8_t length[RISK_BROADCAST_LEN_SIZE];
+    memset(length, 0, RISK_BROADCAST_LEN_SIZE);
+    uint32_t known_len = PERIODIC_FIXED_DATA_LEN;
+    memcpy(length, &known_len, sizeof(uint32_t));
+
+    for (uint8_t i = sizeof(uint32_t); i < data_len; i++)
+    {
+        // shift
+        memcpy(lat_test.periodic_data, &lat_test.periodic_data[1],
+               RISK_BROADCAST_LEN_SIZE - 1);
+        // append
+        lat_test.periodic_data[RISK_BROADCAST_LEN_SIZE - 1] = data[i];
+        if (lat_test.download.is_active)
+        {
+            lat_test.download.n_bytes++;
+        }
+        // check
+        if (!memcmp(lat_test.periodic_data, length, RISK_BROADCAST_LEN_SIZE))
+        {
+            log_info("Data length match!\r\n");
+            // end previous data
+            if (lat_test.download.is_active)
+            {
+                if (lat_test.download.n_bytes - RISK_BROADCAST_LEN_SIZE
+                    == PERIODIC_FIXED_DATA_LEN)
+                {
+                    log_info("Download complete!\r\n");
+                    lat_test.payloads_complete++;
+                    // compute latency
+                    double lat = lat_test.download.time;
+                    stat_add(lat, lat_test.periodic_data_avg_payload_lat);
+                    stat_add(lat_test.download.n_duplicate_packets,
+                             lat_test.duplicates);
+                }
+                else
+                {
+                    log_infof("Download Failed - not enough data"
+                        "(expected %lu)\r\n", PERIODIC_FIXED_DATA_LEN);
+                    dongle_download_fail();
+                }
+            }
+
+            lat_test.payloads_started++;
+            // set the first sequence no. to this packet
+            // TODO: sequence numbers should reset on a new payload (see beacon)
+            dongle_download_start(seq);
+        }
+    }
 #endif
 }
 
-void dongle_on_periodic_data_error
-(int8_t rssi)
+void dongle_on_periodic_data_error(int8_t rssi)
 {
 #ifdef MODE__STAT
-  stats.num_periodic_data_error++;
-  stat_add(rssi, stats.periodic_data_rssi);
+    stats.num_periodic_data_error++;
+    stat_add(rssi, stats.periodic_data_rssi);
 #endif
+    dongle_download_fail();
 }
 
 // UPDATE
@@ -476,8 +623,8 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     }
 
 #ifdef MODE__STAT
-        stats.num_scan_results++;
-        stat_add(rssi, stats.scan_rssi);
+    stats.num_scan_results++;
+    stat_add(rssi, stats.scan_rssi);
 #endif
 
     // determine which tracked id, if any, is a match
@@ -555,7 +702,7 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #endif
     // Filter mis-sized packets
     if (len != ENCOUNTER_BROADCAST_SIZE + 1)
-// TODO: should check for a periodic packet identifier
+    // TODO: should check for a periodic packet identifier
     {
         return;
     }
@@ -633,6 +780,7 @@ void dongle_report()
         dongle_info();
         dongle_storage_info(&storage);
         dongle_stats();
+        dongle_download_test_info();
 #ifdef MODE__TEST
         dongle_test();
 #endif
@@ -660,8 +808,7 @@ void dongle_stats()
 
     log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
               (uint32_t)cur,
-                     cur == dongle_storage_max_log_count(&storage) ?
-                         " (MAX)" : "");
+              cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
     log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
     log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
@@ -674,9 +821,35 @@ void dongle_stats()
     stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
     stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
     stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");
-#undef stat_show
     dongle_storage_save_stat(&storage, &stats, sizeof(stats_t));
     dongle_stats_init(); // reset the stats
+#endif
+}
+
+void dongle_download_test_info()
+{
+#ifdef MODE__PERIODIC_FIXED_DATA
+    log_info("\r\n");
+    log_info("Risk Broadcast:\r\n");
+    log_infof("Downloads Started: %d\r\n", lat_test.payloads_started);
+    log_infof("Downloads Completed: %d\r\n", lat_test.payloads_complete);
+    stat_show(lat_test.periodic_data_avg_payload_lat,
+              "Download time", "ms");
+    stat_show(lat_test.duplicates,
+              "Duplicated Packets", "packets");
+    dongle_download_init();
+#endif
+}
+
+void dongle_download_info()
+{
+#ifdef MODE__PERIODIC_FIXED_DATA
+    log_infof("Total time: %.0f ms\r\n", lat_test.download.time);
+    log_info("Packets Received: %lu\r\n", lat_test.download.n_received_packets);
+    log_infof("Duplicate packets: %lu\r\n",
+              lat_test.download.n_duplicate_packets);
+    log_infof("Data bytes downloaded: %lu\r\n",
+              lat_test.download.n_bytes);
 #endif
 }
 
@@ -731,7 +904,9 @@ void dongle_test()
     log_info("\r\n");
     log_info("Tests:\r\n");
     test_errors = 0;
-#define FAIL(msg) log_infof("    FAILURE: %s\r\n", msg); test_errors++
+#define FAIL(msg)                          \
+    log_infof("    FAILURE: %s\r\n", msg); \
+    test_errors++
 
     log_info("    ? Testing that OTPs are loaded\r\n");
     int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
@@ -757,10 +932,9 @@ void dongle_test()
 
     log_info("    ? Testing that correct number of encounters were logged\r\n");
     int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
-// Tolerant expectation provided to account for timing differences
+    // Tolerant expectation provided to account for timing differences
     int tolExpected = numExpected + 1;
-    if (test_encounters != numExpected
-          && test_encounters != tolExpected)
+    if (test_encounters != numExpected && test_encounters != tolExpected)
     {
         FAIL("Wrong number of encounters.");
         log_infof("Encounters logged in window: %d; Expected: %d or %d\r\n",
@@ -786,10 +960,13 @@ void dongle_test()
     if (dongle_time <= DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
     {
         log_error("Cannot test, not enough time has elapsed.\r\n");
-    } else if (num < 1)
+    }
+    else if (num < 1)
     {
         log_error("Cannot test, no encounters stored.\r\n");
-    } else {
+    }
+    else
+    {
         dongle_storage_load_all_encounter(&storage, test_check_entry_age);
     }
 

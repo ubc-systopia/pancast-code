@@ -37,7 +37,9 @@ int risk_data_len;
 // Current index of periodic data broadcast
 // Periodic advertising data to transmit is
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
-int adv_index;
+int adv_index = 0;
+
+uint32_t seq = 0;
 
 sl_sleeptimer_timer_handle_t risk_timer;
 uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
@@ -58,22 +60,23 @@ void update_risk_data(int len, char *data)
 {
     sl_status_t sc;
 
-    if (len > RISK_DATA_SIZE)
-    {
-        //    printf ("len: %d larger than current risk size\r\n", len);
-        return;
-    }
-
     // reset data
    // memset(&risk_data, 0, risk_data_len);
 
     // copy data from risk buffer
-    memcpy(&risk_data, data, len);
-    risk_data_len = len;
+    memcpy(((uint8_t *) &risk_data + sizeof(uint32_t)), data, len);
+
+    log_infof("sequence: %lu\r\n", seq);
+
+    memcpy(&risk_data, &seq, sizeof(uint32_t));
+
+    risk_data_len = len + sizeof(uint32_t);
 
     //printf ("Setting advertising data...\r\n");
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   PER_ADV_SIZE, &risk_data[0]);
+                                   PER_ADV_SIZE, &risk_data);
+
+    seq++;
 
     if (sc != 0)
     {
@@ -93,34 +96,24 @@ void get_risk_data()
 
     sl_status_t sc;
 
-    sl_sleeptimer_stop_timer(&risk_timer);
-
     fflush(SL_IOSTREAM_STDIN);
 
     // set ready pin
     GPIO_PinOutSet(gpioPortB, 1);
 
     int read_len = 0;
-    char buf[PER_ADV_SIZE];
+    char buf[UART_CHUNK_SIZE];
 
-    // TODO: add partial read case
-    read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
+    read_len = read(SL_IOSTREAM_STDIN, &buf, UART_CHUNK_SIZE);
 
     // clear pin once data has been received
     GPIO_PinOutClear(gpioPortB, 1);
 
     // update broadcast data
-
-    uint8_t new_risk_data[RISK_DATA_SIZE];
-    memcpy(&new_risk_data, buf, PER_ADV_SIZE);
-    sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-    	                                   PER_ADV_SIZE, &new_risk_data[0]);
-
-    if (sc != 0)
+    if (read_len == UART_CHUNK_SIZE)
     {
-        printf ("Error setting advertising data, sc: 0x%lx", sc);
-   	}
-
+        update_risk_data(UART_CHUNK_SIZE, buf);
+    }
 
 #else // BATCH_SIZE defined
     if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
@@ -153,9 +146,7 @@ void get_risk_data()
         adv_index++;
     }
 #endif
-    sc = sl_sleeptimer_start_timer_ms(&risk_timer, RISK_UPDATE_FREQ * TIMER_1S,
-       	                                   sl_timer_on_expire, &risk_timer_handle,
-										   RISK_TIMER_PRIORT, 0);
+
 #endif
 }
 
@@ -230,10 +221,13 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
         app_assert_status(sc);
 
+        log_infof("sequence: %lu\r\n", seq);
+        memcpy(&risk_data, &seq, sizeof(uint32_t));
         // printf("Setting advertising data...\r\n");
         sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
-                                       &risk_data[adv_index * PER_ADV_SIZE]);
+                                       &risk_data);
         app_assert_status(sc);
+        seq++;
 
         beacon_start();
         break;

@@ -30,7 +30,7 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 20 // 25 ms
+#define PER_ADV_INTERVAL 6 // 7.5 ms
 #define PER_ADV_SIZE 250
 #define UART_CHUNK_SIZE 246
 #define PER_FLAGS 0 // no periodic advertising flags

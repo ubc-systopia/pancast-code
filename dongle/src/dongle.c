@@ -398,6 +398,34 @@ void dongle_download_fail()
   }
 }
 
+void dongle_download_complete()
+{
+  log_info("Download complete!\r\n");
+  lat_test.payloads_complete++;
+  // compute latency
+  double lat = lat_test.download.time;
+  stat_add(lat, lat_test.periodic_data_avg_payload_lat);
+  stat_add(lat_test.download.n_duplicate_packets,
+           lat_test.duplicates);
+  stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
+  stat_add(lat_test.download.n_received_packets,
+               lat_test.packets);
+}
+
+int dongle_download_check(uint32_t n_bytes)
+{
+  if (n_bytes >= PERIODIC_FIXED_DATA_LEN)
+  {
+      if (n_bytes > PERIODIC_FIXED_DATA_LEN) {
+          log_info(
+              "WARNING: more data downloaded than expected\r\n");
+      }
+      dongle_download_complete();
+      return 1;
+  }
+  return 0;
+}
+
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
     if (data_len < sizeof(uint32_t)) {
@@ -463,36 +491,22 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             // end previous data
             if (lat_test.download.is_active)
             {
-                uint32_t n_good = lat_test.download.n_bytes
-                                      - RISK_BROADCAST_LEN_SIZE;
-                if (n_good >= PERIODIC_FIXED_DATA_LEN)
-                {
-                    if (n_good > PERIODIC_FIXED_DATA_LEN) {
-                        log_info(
-                            "WARNING: more data downloaded than expected\r\n");
-                    }
-                    log_info("Download complete!\r\n");
-                    lat_test.payloads_complete++;
-                    // compute latency
-                    double lat = lat_test.download.time;
-                    stat_add(lat, lat_test.periodic_data_avg_payload_lat);
-                    stat_add(lat_test.download.n_duplicate_packets,
-                             lat_test.duplicates);
-                    stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
-                    stat_add(lat_test.download.n_received_packets,
-                                 lat_test.packets);
-                }
-                else
+                uint32_t n_good = lat_test.download.n_bytes - RISK_BROADCAST_LEN_SIZE;
+                if (!dongle_download_check(n_good))
                 {
                     log_infof("Download Failed - not enough data"
                         "(expected %lu)\r\n", PERIODIC_FIXED_DATA_LEN);
                     dongle_download_fail();
+                } else {
+                    dongle_download_reset();
                 }
             }
 
             // set the first sequence no. to this packet
             // TODO: sequence numbers should reset on a new payload (see beacon)
             dongle_download_start(seq);
+        } else if (dongle_download_check(lat_test.download.n_bytes)) {
+            dongle_download_reset();
         }
     }
 #endif

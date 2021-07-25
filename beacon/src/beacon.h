@@ -8,6 +8,8 @@
 
 #define BEACON_PLATFORM__GECKO
 
+#define BEACON_GAEN_ENABLED
+
 #define BEACON_NO_OP assert(1);
 
 #include "../../common/src/pancast.h"

@@ -13,7 +13,7 @@
 #define MODE__STAT
 #define MODE__TEST_CONFIG
 
-#define LOG_LEVEL__ERROR
+#define LOG_LEVEL__DEBUG
 
 #include <string.h>
 
@@ -78,8 +78,9 @@ static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
 static beacon_epoch_counter_t epoch;  // track the current time epoch
 static beacon_timer_t cycles;         // total number of updates.
 #ifdef BEACON_PLATFORM__ZEPHYR
-static struct k_timer kernel_time_lp; // low-precision kernel timer
-static struct k_timer kernel_time_hp; // high-precision kernel timer
+static struct k_timer kernel_time_lp;         // low-precision kernel timer
+static struct k_timer kernel_time_hp;         // high-precision kernel timer
+static struct k_timer kernel_time_alternater; // low-precision kernel timer used to alternate packet generation
 #endif
 //
 // Bluetooth
@@ -87,15 +88,13 @@ static struct k_timer kernel_time_hp; // high-precision kernel timer
 static bt_data_t adv_res[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME,
             sizeof(CONFIG_BT_DEVICE_NAME) - 1)}; // Advertising response
-
-static struct bt_le_ext_adv *adv_pancast; // advertising set for pancast advertisements
-static struct bt_le_ext_adv *adv_gaen;    // advertisement set for gaen advertisements
-
-static struct bt_le_ext_adv_start_param ext_adv_start_param = {
-    // advertising start parameters
-    .timeout = 0,
-    .num_events = 0,
-};
+// #ifdef BEACON_GAEN_ENABLED
+static int *transmit_state = 0; // keeps track of what we're advertising rn
+// fields for constructing packet
+static uint8_t flags_type = 0x01;
+static uint8_t service_UUID_type = 0x03;
+static uint8_t service_data_type = 0x16;
+// #endif
 #else
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
@@ -233,6 +232,7 @@ static void _beacon_report_()
 // routine supports a full raw payload
 static void _form_payload_()
 {
+    log_debug("_form_payload_\r\n");
     const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
 #define bt (payload.bt_data)
     uint8_t tmp;
@@ -259,6 +259,7 @@ static void _form_payload_()
 // receiver side
 static void _encode_encounter_()
 {
+    log_debug("_encode_encounter_\r\n");
     uint8_t *dst = (uint8_t *)&payload.en_data;
     size_t pos = 0;
 #define copy(src, size)           \
@@ -273,6 +274,7 @@ static void _encode_encounter_()
 
 static void _beacon_encode_()
 {
+    log_debug("_beacon_encode_\r\n");
     // Load broadcast into bluetooth payload
     _encode_encounter_();
     //print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data pre-encode");
@@ -307,6 +309,91 @@ static void _gen_ephid_()
     print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 }
 
+static int _set_adv_data_gaen_(bt_data_t *flags_param, bt_data_t *uuid, bt_data_t *data)
+{
+#ifdef BEACON_PLATFORM__ZEPHYR
+    char ENS_identifier[2] = "\x6f\xfd";
+    char rolling_proximity_identifier[16] = "\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef";
+    char associated_encrypted_metadata[4] = "\xaa\xaa\xaa\xaa";
+    char service_data_internals[22];
+    for (int i = 0; i < 22; i++)
+    {
+        if (i < 2)
+        {
+            service_data_internals[i] = ENS_identifier[i];
+        }
+        else if (i >= 18)
+        {
+            service_data_internals[i] = associated_encrypted_metadata[i - 18];
+        }
+        else
+        {
+            service_data_internals[i] = rolling_proximity_identifier[i - 2];
+        }
+    }
+    bt_data_t flags = BT_DATA_BYTES(flags_type, 0x1a);
+    bt_data_t serviceUUID = BT_DATA_BYTES(service_UUID_type, 0x6f, 0xfd);
+    bt_data_t serviceData = BT_DATA(service_data_type, service_data_internals, ARRAY_SIZE(service_data_internals));
+    memcpy(flags_param, &flags, sizeof(bt_data_t));
+    memcpy(uuid, &serviceUUID, sizeof(bt_data_t));
+    memcpy(data, &serviceData, sizeof(bt_data_t));
+    return 0;
+#endif
+    return -1;
+}
+
+static int _alternate_advertisement_content_()
+{
+    int err = bt_le_adv_stop();
+    if (err)
+    {
+        log_errorf("Advertising failed to stop (err %d)\r\n", err);
+        return err;
+    }
+    if (*transmit_state == 0)
+    {
+        // currently transmitting pancast data, switch to gaen data
+        bt_data_t data[3];
+        err = _set_adv_data_gaen_(&data[0], &data[1], &data[2]);
+        if (err)
+        {
+            log_error("Failed to obtain gaen advertisement data");
+            return -1;
+        }
+        err = bt_le_adv_start(
+            BT_LE_ADV_PARAM(
+                BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
+                BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
+                NULL // undirected advertising
+                ),
+            data, ARRAY_SIZE(data), NULL, 0); // has 3 fields
+        if (err)
+        {
+            log_errorf("Advertising failed to stop (err %d)\r\n", err);
+            return err;
+        }
+        *transmit_state = 1;
+    }
+    else
+    {
+        // currently transmitting gaen data, switch to pancast data
+        err = bt_le_adv_start(
+            BT_LE_ADV_PARAM(
+                BT_LE_ADV_OPT_USE_IDENTITY,
+                BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
+                NULL),
+            payload.bt_data, ARRAY_SIZE(payload.bt_data),
+            adv_res, ARRAY_SIZE(adv_res));
+        if (err)
+        {
+            log_errorf("Second attempt at advertising failed to start (err %d)\r\n", err);
+            return -1;
+        }
+        *transmit_state = 0;
+    }
+    return 0;
+}
+
 static void _beacon_init_()
 {
 
@@ -335,6 +422,7 @@ static void _beacon_init_()
 #ifdef BEACON_PLATFORM__ZEPHYR
     k_timer_init(&kernel_time_lp, NULL, NULL);
     k_timer_init(&kernel_time_hp, NULL, NULL);
+    k_timer_init(&kernel_time_alternater, _alternate_advertisement_content_, NULL);
 #define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
 #define DUR_HP K_MSEC(1)
     k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
@@ -346,6 +434,7 @@ static void _beacon_init_()
 
 static void _beacon_epoch_()
 {
+    log_debug("_beacon_epoch_\r\n");
     static beacon_epoch_counter_t old_epoch;
     old_epoch = epoch;
     epoch = epoch_i(beacon_time, config.t_init);
@@ -386,130 +475,18 @@ static int _beacon_advertise_()
 {
     int err = 0;
 #ifdef BEACON_PLATFORM__ZEPHYR
-    // Create pancast advertising set
-    // err = bt_le_ext_adv_create(
-    //     BT_LE_ADV_PARAM(
-    //         BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
-    //         BEACON_ADV_MIN_INTERVAL,
-    //         BEACON_ADV_MAX_INTERVAL,
-    //         NULL // undirected advertising
-    //         ),
-    //     NULL, // non-scannable
-    //     &adv_pancast);
-
-    // if (err)
-    // {
-    //     log_errorf("Pancast advertising set failed to create (err %d)\n", err);
-    //     return err;
-    // }
-
-    // // Create GAEN advertising set
-    // err = bt_le_ext_adv_create(
-    //     BT_LE_ADV_PARAM(
-    //         BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
-    //         BEACON_ADV_MIN_INTERVAL,
-    //         BEACON_ADV_MAX_INTERVAL,
-    //         NULL // undirected advertising
-    //         ),
-    //     NULL, // non-scannable
-    //     &adv_gaen);
-
-    // if (err)
-    // {
-    //     log_errorf("Gaen advertising set failed to create (err %d)\n", err);
-    //     return err;
-    // }
-
-    // // Set pancast advertising set data
-    // log_debug("HERE IS SUM DATA\r\n");
-    // log_debug(payload.bt_data);
-    // log_debug("DATA END\r\n");
-    // err = bt_le_ext_adv_set_data(
-    //     adv_pancast,
-    //     payload.bt_data,
-    //     ARRAY_SIZE(payload.bt_data),
-    //     adv_res,
-    //     ARRAY_SIZE(adv_res));
-
-    // if (err)
-    // {
-    //     log_errorf("Advertising set failed to set data (err %d)\n", err);
-    //     return err;
-    // }
-
-    // // Start advertising pancast advertisements
-    // err = bt_le_ext_adv_start(
-    //     adv_pancast,
-    //     &ext_adv_start_param);
-
-    // if (err)
-    // {
-    //     log_errorf("Advertising set failed to start (err %d)\n", err);
-    //     return err;
-    // }
-    char ENS_identifier[2] = "\x6f\xfd";
-    char flag_value[] = "\x1A";
-    uint8_t flags_length = 0x01;
-    uint8_t flags_type = 0x01;
-    uint8_t service_UUID_length = 0x03;
-    uint8_t service_UUID_type = 0x03;
-    uint8_t service_data_length = 0x16;
-    uint8_t service_data_type = 0x16;
-    char rolling_proximity_identifier[16] = "\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef";
-    char associated_encrypted_metadata[4] = "\xaa\xaa\xaa\xaa";
-    char service_data_internals[22];
-    for (int i = 0; i < 22; i++)
-    {
-        if (i < 2)
-        {
-            service_data_internals[i] = ENS_identifier[i];
-        }
-        else if (i >= 18)
-        {
-            service_data_internals[i] = associated_encrypted_metadata[i - 18];
-        }
-        else
-        {
-            service_data_internals[i] = rolling_proximity_identifier[i - 2];
-        }
-    }
-
-    // strcat(service_data_internals, ENS_identifier);
-    // strcat(service_data_internals, rolling_proximity_identifier);
-    // strcat(service_data_internals, associated_encrypted_metadata);
-
-    // bt_data_t flags = {
-    //     flags_type,
-    //     flags_length,
-    //     flag_value};
-
-    // bt_data_t serviceUUID = {
-    //     service_UUID_type,
-    //     service_UUID_length,
-    //     ENS_identifier}; // little endian byte order
-    bt_data_t flags = BT_DATA_BYTES(flags_type, 0x1a);
-    bt_data_t serviceUUID = BT_DATA_BYTES(service_UUID_type, 0x6f, 0xfd);
-    bt_data_t serviceData = BT_DATA(service_data_type, service_data_internals, ARRAY_SIZE(service_data_internals));
-
-    // bt_data_t serviceData = {
-    //     service_data_type,
-    //     service_data_length,
-    //     service_data_internals};
-
-    bt_data_t data[] = {flags, serviceUUID, serviceData};
-
     err = bt_le_adv_start(
         BT_LE_ADV_PARAM(
-            BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
+            BT_LE_ADV_OPT_USE_IDENTITY,
             BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
-            NULL // undirected advertising
-            ),
-        data, ARRAY_SIZE(data), NULL, 0);
+            NULL),
+        payload.bt_data, ARRAY_SIZE(payload.bt_data),
+        adv_res, ARRAY_SIZE(adv_res));
     if (err)
     {
-        log_errorf("Advertising failed to start (err %d)\r\n", err);
+        log_errorf("Second attempt at advertising failed to start (err %d)\r\n", err);
+        return -1;
     }
-
     else
     {
         // obtain and report advertisement address
@@ -521,6 +498,8 @@ static int _beacon_advertise_()
         bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
         log_debugf("advertising started with address %s\r\n", addr_s);
+
+        k_timer_start(&kernel_time_alternater, K_SECONDS(1), K_SECONDS(1));
     }
 #else
     sl_status_t sc;
@@ -585,6 +564,7 @@ static int _beacon_pause_()
 
 void _beacon_update_()
 {
+    log_debug("_beacon_update_\r\n");
     _beacon_epoch_();
     _beacon_encode_();
     _set_adv_data_();
@@ -592,6 +572,7 @@ void _beacon_update_()
 
 int beacon_clock_increment(beacon_timer_t time)
 {
+    log_debug("beacon_clock_increment\r\n");
     beacon_time += time;
     log_debugf("beacon timer: %u\r\n", beacon_time);
     _beacon_update_();
@@ -602,6 +583,7 @@ int beacon_clock_increment(beacon_timer_t time)
 #ifdef BEACON_PLATFORM__ZEPHYR
 int beacon_loop()
 {
+    log_debug("beacon_loop\r\n");
     _beacon_update_();
 
     uint32_t lp_timer_status = 0, hp_timer_status = 0;
@@ -634,6 +616,7 @@ int beacon_loop()
 #ifdef BEACON_PLATFORM__ZEPHYR
 void _beacon_broadcast_(int err)
 {
+    log_debug("_beacon_broadcast_\r\n");
     // check initialization
     if (err)
     {
@@ -652,7 +635,7 @@ void beacon_broadcast()
     _beacon_load_(), _beacon_init_();
 
 #ifdef BEACON_PLATFORM__ZEPHYR
-    // beacon_loop();
+    // beacon_loop(); // can't get this to work somehow :/
     err = _beacon_advertise_();
     if (err)
     {

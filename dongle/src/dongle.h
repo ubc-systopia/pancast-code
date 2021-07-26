@@ -124,7 +124,7 @@ typedef struct {
 } timertest_t;
 
 #ifdef MODE__PERIODIC_FIXED_DATA
-#define PERIODIC_FIXED_DATA_LEN 0x023456 // must be <= sizeof(uint32)
+#define PERIODIC_FIXED_DATA_LEN (246 * PERIODIC_TEST_NUM_PACKETS) // must be <= sizeof(uint32)
 #endif
 
 // High-level routine structure

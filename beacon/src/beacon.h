@@ -8,7 +8,7 @@
 
 #define BEACON_PLATFORM__ZEPHYR
 
-#define BEACON_GAEN_ENABLED
+// #define BEACON_GAEN_ENABLED
 
 #define BEACON_NO_OP assert(1);
 

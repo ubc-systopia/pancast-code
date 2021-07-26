@@ -68,9 +68,15 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         app_log_info("Bluetooth start\r\n");
         log_debug("Bluetooth device booted and ready\r\n");
         dongle_start();
+        log_debug("Dongle started\r\n");
         break;
       case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
+//        log_debug("Scan result\r\n");
+//#define addr (report.address.addr)
+//        log_debugf("Packet Address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\r\n",
+//                         addr[0], addr[1], addr[2], addr[3], addr[4], addr[4]);
+//#undef addr
 #ifdef MODE__LEGACY_LOG
         // First, log into the legacy decode pipeline
         dongle_log(&report.address,
@@ -118,6 +124,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        app_log_info("Starting scan...\r\n");
 //        sc = sl_bt_scanner_start(1, scanner_discover_observation);
 //        app_assert_status(sc);
+        dongle_download_fail();
         synced = 0;
         break;
       case sl_bt_evt_sync_data_id:
@@ -126,6 +133,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                      evt->data.evt_sync_data.data.len);
         app_log_debug("Status: %d\r\n",
                            evt->data.evt_sync_data.data_status);
+//        evt->data.evt_sync_data.
 
         // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
 

@@ -588,7 +588,7 @@ int beacon_loop()
 
     uint32_t lp_timer_status = 0, hp_timer_status = 0, alt_timer_status = 0;
 
-    int err;
+    int err = 0;
     while (!err)
     {
 
@@ -628,13 +628,14 @@ int beacon_loop()
         // // time has elapsed. timer status is reset here
         // lp_timer_status = k_timer_status_sync(&kernel_time_lp);
     }
+    return err;
 }
 #endif
 
 // Primary broadcasting routine
 // Non-zero argument indicates an error setting up the procedure for BT advertising
 #ifdef BEACON_PLATFORM__ZEPHYR
-static void _beacon_broadcast_(int err)
+void _beacon_broadcast_(int err)
 {
     // check initialization
     if (err)
@@ -648,6 +649,7 @@ static void _beacon_broadcast_(int err)
 void beacon_broadcast()
 {
     log_info("Starting broadcast\r\n");
+    int err = 0;
 #endif
 
     _beacon_load_(), _beacon_init_();
@@ -656,6 +658,7 @@ void beacon_broadcast()
     err = _beacon_advertise_();
     if (err)
     {
+        log_errorf("Broadcasting failed (err %d)\r\n", err);
         return;
     }
     beacon_loop();

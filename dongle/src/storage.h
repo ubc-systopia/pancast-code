@@ -18,7 +18,7 @@
 #ifdef DONGLE_PLATFORM__ZEPHYR
 #define FLASH_OFFSET 0x2D000
 #else
-#define FLASH_OFFSET 0x50000
+#define FLASH_OFFSET 0x60000
 #endif
 
 // Maximum number of encounters stored at one time

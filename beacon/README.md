@@ -1,4 +1,4 @@
-# PanCast Dongle
+# PanCast Beacon
 
 PanCast Beacon / Network Beacon Implementation based on the Silicon Labs Gecko SDK platform. Currently compatible with the `EFR32BG22` system - tested on `Wireless Starter Kit Mainboard (BRD4001A Rev A01)` with
 `EFR32xG22 2.4 GHz 6 dBm Radio Board (BRD4182A Rev B03)`.

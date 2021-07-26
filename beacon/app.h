@@ -30,7 +30,7 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 0x06 // 7.5 ms
+#define PER_ADV_INTERVAL 1000
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
 
@@ -44,7 +44,7 @@
 #define RISK_TIMER_HANDLE 1
 #define MAIN_TIMER_PRIORT 0
 #define RISK_TIMER_PRIORT 1
-#define RISK_UPDATE_FREQ 0.05 // 0.05 * 1s = 50ms
+#define RISK_UPDATE_FREQ 5
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE

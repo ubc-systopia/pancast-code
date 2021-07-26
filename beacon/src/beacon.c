@@ -333,12 +333,7 @@ static int _set_adv_data_gaen_()
 
 void _alternate_advertisement_content_(uint32_t timer)
 {
-    int err = bt_le_adv_stop();
-    if (err)
-    {
-        log_errorf("Advertising failed to stop (err %d)\r\n", err);
-        return;
-    }
+    int err = 0;
     if (timer % 2 == 1)
     {
         // currently transmitting pancast data, switch to gaen data
@@ -353,35 +348,12 @@ void _alternate_advertisement_content_(uint32_t timer)
         bt_data_t flags = BT_DATA_BYTES(0x01, 0x1a);
         bt_data_t serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd);
         bt_data_t data[3] = {flags, serviceUUID, serviceData};
-
-        err = bt_le_adv_start(
-            BT_LE_ADV_PARAM(
-                BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
-                BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
-                NULL // undirected advertising
-                ),
-            data, ARRAY_SIZE(data), NULL, 0); // has 3 fields
-        if (err)
-        {
-            log_errorf("Advertising failed to start (err %d)\r\n", err);
-            return;
-        }
+        err = bt_le_adv_update_data(data, ARRAY_SIZE(data), NULL, 0);
     }
     else
     {
-        // currently transmitting gaen data, switch to pancast data
-        err = bt_le_adv_start(
-            BT_LE_ADV_PARAM(
-                BT_LE_ADV_OPT_USE_IDENTITY,
-                BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
-                NULL),
-            payload.bt_data, ARRAY_SIZE(payload.bt_data),
-            adv_res, ARRAY_SIZE(adv_res));
-        if (err)
-        {
-            log_errorf("Advertising failed to start (err %d)\r\n", err);
-            return;
-        }
+        err = bt_le_adv_update_data(payload.bt_data, ARRAY_SIZE(payload.bt_data),
+                                    adv_res, ARRAY_SIZE(adv_res));
     }
     return;
 }
@@ -442,38 +414,6 @@ static void _beacon_epoch_()
         }
         // TODO: log time to flash
     }
-}
-
-int _set_adv_data_()
-{
-#ifdef BEACON_PLATFORM__GECKO
-    log_debug("Setting legacy adv data...\r\n");
-    print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
-    sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
-                                               0, 31,
-                                               payload.en_data.bytes);
-    if (sc != 0)
-    {
-        log_errorf("Error, sc: 0x%lx\r\n", sc);
-        return -1;
-    }
-    log_debug("Success!\r\n");
-#else
-    // bt_le_adv_stop();
-    // int err = bt_le_adv_start(
-    //     BT_LE_ADV_PARAM(
-    //         BT_LE_ADV_OPT_USE_IDENTITY,
-    //         BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
-    //         NULL),
-    //     payload.bt_data, ARRAY_SIZE(payload.bt_data),
-    //     adv_res, ARRAY_SIZE(adv_res));
-    // if (err)
-    // {
-    //     log_errorf("Advertising failed to start (err %d)\r\n", err);
-    //     return -1;
-    // }
-#endif
-    return 0;
 }
 
 static int _beacon_advertise_()
@@ -547,16 +487,6 @@ static int _beacon_advertise_()
 
 static int _beacon_pause_()
 {
-    // stop current advertising cycle
-#ifdef BEACON_PLATFORM__ZEPHYR
-    int err = bt_le_adv_stop();
-    if (err)
-    {
-        log_errorf("Advertising failed to stop (err %d)\r\n", err);
-        return err;
-    }
-    log_debug("advertising stopped\r\n");
-#endif
     cycles++;
 #ifdef MODE__STAT
     stat_cycles++;
@@ -569,7 +499,6 @@ void _beacon_update_()
 {
     _beacon_epoch_();
     _beacon_encode_();
-    _set_adv_data_();
 }
 
 int beacon_clock_increment(beacon_timer_t time)
@@ -577,7 +506,7 @@ int beacon_clock_increment(beacon_timer_t time)
     beacon_time += time;
     log_debugf("beacon timer: %u\r\n", beacon_time);
     _beacon_update_();
-    // _beacon_pause_();
+    _beacon_pause_();
     return 0;
 }
 

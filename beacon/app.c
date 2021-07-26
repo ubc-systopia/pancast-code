@@ -26,6 +26,7 @@
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/log.h"
+#include "../../common/src/test.h"
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;
@@ -78,12 +79,23 @@ void update_risk_data(int len, char *data)
     }
 }
 
+#ifdef PERIODIC_TEST
+#define NUM_PACKETS PERIODIC_TEST_NUM_PACKETS
+  uint32_t seq_num;
+  uint8_t test_data[PER_ADV_SIZE];
+#endif
+
 /* Get risk data from raspberry pi client */
 void get_risk_data()
 {
 #ifdef PERIODIC_TEST
-  uint8_t test_data[PER_ADV_SIZE];
-  memset(test_data, 22, PER_ADV_SIZE);
+  memcpy(test_data, &seq_num, sizeof(uint32_t)); // sequence number
+  seq_num++;
+  if (seq_num == NUM_PACKETS) {
+      seq_num = 0;
+  }
+  // then a bunch of 22
+  memset(&test_data[ sizeof(uint32_t)], 22, PER_ADV_SIZE - sizeof(uint32_t));
   update_risk_data(PER_ADV_SIZE, test_data);
 #else
 #ifndef BATCH_SIZE

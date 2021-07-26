@@ -380,6 +380,7 @@ void dongle_download_start(uint32_t seq)
 {
   lat_test.download.is_active = 1;
   lat_test.download.seq = seq;
+  lat_test.download.n_received_packets = 1;
   log_info("Download started!\r\n");
   lat_test.payloads_started++;
 }
@@ -434,9 +435,9 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         dongle_download_fail();
     }
     uint32_t seq;
-    memcpy(&seq, data, sizeof(uint32_t));
-    printf("sequence: %lu\r\n", seq);
-    log_bytes(printf, printf, data, data_len, "data");
+    memcpy(&seq, data, sizeof(uint32_t)); // extract sequence number
+//    printf("sequence: %lu\r\n", seq);
+//    log_bytes(printf, printf, data, data_len, "data");
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;
     stats.num_periodic_data++;
@@ -444,8 +445,27 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     stat_add(rssi, stats.periodic_data_rssi);
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
-
-    if (lat_test.download.is_active)
+#define START_SEQ 0 // starting sequence number
+    // check if this is the start of a new download
+    if (seq ==  START_SEQ &&
+        (!lat_test.download.is_active || lat_test.download.seq > START_SEQ)) {
+        // deal with in progress download, if any
+        if (lat_test.download.is_active) {
+            uint32_t n_good = lat_test.download.n_bytes;
+            if (!dongle_download_check(n_good))
+            {
+                log_infof("Download Failed - not enough data"
+                    "(expected %lu, got %lu)\r\n",
+                    PERIODIC_FIXED_DATA_LEN,
+                    n_good);
+                dongle_download_fail();
+            } else {
+                dongle_download_reset();
+            }
+        }
+        // set the first sequence no. to this packet
+        dongle_download_start(seq);
+    } else if (lat_test.download.is_active)
     {
         if (seq < lat_test.download.seq)
         {
@@ -467,14 +487,9 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         lat_test.download.n_received_packets++;
     }
 
-    // Determine if the buffer contains the known length quantity
-    uint8_t length[RISK_BROADCAST_LEN_SIZE];
-    memset(length, 0, RISK_BROADCAST_LEN_SIZE);
-    uint32_t known_len = PERIODIC_FIXED_DATA_LEN;
-    memcpy(length, &known_len, sizeof(uint32_t));
-
     for (uint8_t i = sizeof(uint32_t); i < data_len; i++)
     {
+        // dongle_on_byte_received
         // shift
         memcpy(lat_test.periodic_data, &lat_test.periodic_data[1],
                RISK_BROADCAST_LEN_SIZE - 1);
@@ -483,30 +498,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         if (lat_test.download.is_active)
         {
             lat_test.download.n_bytes++;
-        }
-        // check
-        if (!memcmp(lat_test.periodic_data, length, RISK_BROADCAST_LEN_SIZE))
-        {
-            log_info("Data length match!\r\n");
-            // end previous data
-            if (lat_test.download.is_active)
-            {
-                uint32_t n_good = lat_test.download.n_bytes - RISK_BROADCAST_LEN_SIZE;
-                if (!dongle_download_check(n_good))
-                {
-                    log_infof("Download Failed - not enough data"
-                        "(expected %lu)\r\n", PERIODIC_FIXED_DATA_LEN);
-                    dongle_download_fail();
-                } else {
-                    dongle_download_reset();
-                }
-            }
-
-            // set the first sequence no. to this packet
-            // TODO: sequence numbers should reset on a new payload (see beacon)
-            dongle_download_start(seq);
-        } else if (dongle_download_check(lat_test.download.n_bytes)) {
-            dongle_download_reset();
         }
     }
 #endif

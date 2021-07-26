@@ -157,4 +157,5 @@ void dongle_on_periodic_data
 (uint8_t *data, uint8_t data_len, int8_t rssi);
 void dongle_on_periodic_data_error
 (int8_t rssi);
+void dongle_on_sync_lost();
 #endif

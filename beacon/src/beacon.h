@@ -76,6 +76,13 @@ typedef union
     bt_data_t bt_data[1];
 } bt_wrapper_t;
 
+typedef union
+{
+    bt_data_t flags;
+    bt_data_t serviceUUID;
+    char service_data_internals[22];
+} bt_gaen_wrapper_t;
+
 #ifdef BEACON_PLATFORM__ZEPHYR
 void main(void);
 #else

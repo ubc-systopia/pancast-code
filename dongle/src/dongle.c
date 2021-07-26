@@ -435,7 +435,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     }
     uint32_t seq;
     memcpy(&seq, data, sizeof(uint32_t));
-//    printf("sequence: %lu\r\n", seq);
+    printf("sequence: %lu\r\n", seq);
 //    log_bytes(printf, printf, data, data_len, "data");
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;

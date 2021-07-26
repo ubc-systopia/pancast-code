@@ -124,7 +124,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        app_log_info("Starting scan...\r\n");
 //        sc = sl_bt_scanner_start(1, scanner_discover_observation);
 //        app_assert_status(sc);
-        dongle_download_fail();
+        dongle_on_sync_lost();
         synced = 0;
         break;
       case sl_bt_evt_sync_data_id:

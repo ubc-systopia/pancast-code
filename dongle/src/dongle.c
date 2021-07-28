@@ -140,6 +140,7 @@ typedef struct
     uint32_t n_received_packets;
     uint32_t n_duplicate_packets;
     uint32_t n_bytes;
+    uint32_t n_syncs_lost;
 } download_t;
 
 typedef struct
@@ -153,6 +154,7 @@ typedef struct
     stat_t packets;
     stat_t duplicates;
     stat_t n_bytes;
+    stat_t syncs_lost;
 } fixed_data_test_t;
 
 fixed_data_test_t lat_test;
@@ -394,6 +396,7 @@ void dongle_download_fail()
     stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
     stat_add(lat_test.download.n_received_packets,
              lat_test.packets);
+    stat_add(lat_test.download.n_syncs_lost, lat_test.syncs_lost);
     dongle_download_info();
     dongle_download_reset();
   }
@@ -411,6 +414,7 @@ void dongle_download_complete()
   stat_add(lat_test.download.n_bytes, lat_test.n_bytes);
   stat_add(lat_test.download.n_received_packets,
                lat_test.packets);
+  stat_add(lat_test.download.n_syncs_lost, lat_test.syncs_lost);
 }
 
 int dongle_download_check(uint32_t n_bytes)
@@ -425,6 +429,15 @@ int dongle_download_check(uint32_t n_bytes)
       return 1;
   }
   return 0;
+}
+
+void dongle_on_sync_lost()
+{
+  if (lat_test.download.is_active) {
+      log_info("Download failed - lost sync.\r\n");
+      lat_test.download.n_syncs_lost++;
+      dongle_download_fail();
+  }
 }
 
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
@@ -861,6 +874,8 @@ void dongle_download_test_info()
               "Duplicated Packets", "packets");
     stat_show(lat_test.n_bytes,
                   "Bytes Received", "bytes");
+    stat_show(lat_test.syncs_lost,
+                "Syncs Lost", "syncs");
     dongle_download_init();
 #endif
 }

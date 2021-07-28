@@ -492,19 +492,6 @@ int _set_adv_data_()
     }
     log_debug("Success!\r\n");
 #else
-    // bt_le_adv_stop();
-    // int err = bt_le_adv_start(
-    //     BT_LE_ADV_PARAM(
-    //         BT_LE_ADV_OPT_USE_IDENTITY,
-    //         BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
-    //         NULL),
-    //     payload.bt_data, ARRAY_SIZE(payload.bt_data),
-    //     adv_res, ARRAY_SIZE(adv_res));
-    // if (err)
-    // {
-    //     log_errorf("Advertising failed to start (err %d)\r\n", err);
-    //     return -1;
-    // }
 #endif
     return 0;
 }

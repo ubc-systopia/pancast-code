@@ -124,7 +124,7 @@ typedef struct {
 } timertest_t;
 
 #ifdef MODE__PERIODIC_FIXED_DATA
-#define PERIODIC_FIXED_DATA_LEN 0x023456 // must be <= sizeof(uint32)
+#define PERIODIC_FIXED_DATA_LEN (246 * PERIODIC_TEST_NUM_PACKETS) // must be <= sizeof(uint32)
 #endif
 
 // High-level routine structure
@@ -157,4 +157,5 @@ void dongle_on_periodic_data
 (uint8_t *data, uint8_t data_len, int8_t rssi);
 void dongle_on_periodic_data_error
 (int8_t rssi);
+void dongle_on_sync_lost();
 #endif

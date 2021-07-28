@@ -146,6 +146,16 @@ void* uart_main(void* arg) {
       tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
       int chunk_size = CHUNK_SIZE;
       int wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
+#define chunk ((uint8_t *)(&r_data->data.response[data_sent]))
+      printf("data : 0x\r\n");
+      for (int i = 0; i < CHUNK_SIZE; i++){
+      	printf("%.2x ", chunk[i]);
+	if (i % 16 == 15) {
+		printf("\r\n");
+	}
+      }
+      printf("\r\n");
+      printf("%d bytes written\r\n", wlen);
 
       // write until entire chunk transferred
       while (wlen < CHUNK_SIZE) {

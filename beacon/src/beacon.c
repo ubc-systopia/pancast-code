@@ -149,14 +149,15 @@ void _beacon_info_()
 }
 
 #ifdef MODE__STAT
-typedef struct {
-  uint8_t storage_checksum; // zero for valid stat data
-  beacon_timer_t duration;
-  beacon_timer_t start;
-  beacon_timer_t end;
-  uint32_t cycles;
-  uint32_t epochs;
-  uint16_t tx_packets;
+typedef struct
+{
+    uint8_t storage_checksum; // zero for valid stat data
+    beacon_timer_t duration;
+    beacon_timer_t start;
+    beacon_timer_t end;
+    uint32_t cycles;
+    uint32_t epochs;
+    uint16_t tx_packets;
 } beacon_stats_t;
 
 beacon_stats_t stats;
@@ -170,12 +171,12 @@ void beacon_stat_update()
 {
     // Copy data
     // TODO use the stats containers from the start
-      stats.duration = beacon_time - stat_start;
-      stats.start = stat_start;
-      stats.end = beacon_time;
-      stats.cycles = stat_cycles;
-      stats.epochs = stat_epochs;
-      sl_bt_system_get_counters(1, &stats.tx_packets, 0, 0, 0);
+    stats.duration = beacon_time - stat_start;
+    stats.start = stat_start;
+    stats.end = beacon_time;
+    stats.cycles = stat_cycles;
+    stats.epochs = stat_epochs;
+    sl_bt_system_get_counters(1, &stats.tx_packets, 0, 0, 0);
 }
 
 static void _beacon_stats_()

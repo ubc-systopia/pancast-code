@@ -98,6 +98,7 @@ static uint8_t service_data_type = 0x16;
 static bt_gaen_wrapper_t gaen_payload = {
     .flags = BT_DATA_BYTES(0x01, 0x1a),
     .serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd)}; // container for gaen broadcast data
+static uint32_t num_ms_in_min = 60000;
 static uint32_t alt_time_in_ms = 1000;
 #else
 // Advertising handle
@@ -579,16 +580,6 @@ static int _beacon_advertise_()
 
 static int _beacon_pause_()
 {
-    // stop current advertising cycle
-#ifdef BEACON_PLATFORM__ZEPHYR
-    int err = bt_le_adv_stop();
-    if (err)
-    {
-        log_errorf("Advertising failed to stop (err %d)\r\n", err);
-        return err;
-    }
-    log_debug("advertising stopped\r\n");
-#endif
     cycles++;
 #ifdef MODE__STAT
     stat_cycles++;
@@ -601,7 +592,6 @@ void _beacon_update_()
 {
     _beacon_epoch_();
     _beacon_encode_();
-    _set_adv_data_();
 }
 
 int beacon_clock_increment(beacon_timer_t time)
@@ -609,7 +599,7 @@ int beacon_clock_increment(beacon_timer_t time)
     beacon_time += time;
     log_debugf("beacon timer: %u\r\n", beacon_time);
     _beacon_update_();
-    // _beacon_pause_();
+    _beacon_pause_();
     return 0;
 }
 
@@ -626,7 +616,7 @@ int beacon_loop()
 
 #ifdef BEACON_GAEN_ENABLED
         alt_timer_status += k_timer_status_get(&kernel_time_alternater);
-        if (alt_timer_status % 6 == 0)
+        if (alt_timer_status % (num_ms_in_min / alt_time_in_ms) == 0)
         {
 #endif
             // get most updated time
@@ -653,22 +643,6 @@ int beacon_loop()
         lp_timer_status = k_timer_status_sync(&kernel_time_lp);
 
 #endif
-
-        // // get most updated time
-        // // Low-precision timer is synced, so accumulate status here
-        // lp_timer_status += k_timer_status_get(&kernel_time_lp);
-
-        // // update beacon clock using kernel. The addition is the number of
-        // // periods elapsed in the internal timer
-        // beacon_clock_increment(lp_timer_status);
-
-        // // high-precision collects the raw number of expirations
-        // hp_timer_status = k_timer_status_get(&kernel_time_hp);
-
-        // // Wait for a clock update, this blocks until the internal timer
-        // // period expires, indicating that at least one unit of relevant beacon
-        // // time has elapsed. timer status is reset here
-        // lp_timer_status = k_timer_status_sync(&kernel_time_lp);
     }
     return err;
 }
@@ -697,7 +671,7 @@ void beacon_broadcast()
     _beacon_load_(), _beacon_init_();
 
 #ifdef BEACON_PLATFORM__ZEPHYR
-    int8_t tx_power = -40; // has a range of [-40, 4]
+    int8_t tx_power = 4; // has a range of [-40, 4]
     _beacon_update_();
     err = _beacon_advertise_();
     if (err)

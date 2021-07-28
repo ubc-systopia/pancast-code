@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #define BEACON_MODE__NETWORK // comment to run as non-network beacon
-#define PERIODIC_TEST // uncomment to send test data
+#define PERIODIC_TEST        // uncomment to send test data
 
 #define BEACON_PLATFORM__ZEPHYR
 

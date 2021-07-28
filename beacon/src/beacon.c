@@ -99,7 +99,7 @@ static bt_gaen_wrapper_t gaen_payload = {
     .flags = BT_DATA_BYTES(0x01, 0x1a),
     .serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd)}; // container for gaen broadcast data
 static uint32_t num_ms_in_min = 60000;
-static uint32_t alt_time_in_ms = 1000;
+static uint32_t alt_time_in_ms = 1000; // alt clock tick time (currently 1s)
 #else
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
@@ -352,6 +352,7 @@ static void _gen_ephid_()
     print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 }
 
+// populates gaen_payload.service_data_internals with procotol specific data fields
 static int _set_adv_data_gaen_()
 {
 #ifdef BEACON_PLATFORM__ZEPHYR
@@ -378,6 +379,7 @@ static int _set_adv_data_gaen_()
     return -1;
 }
 
+// procedure to change the type of packet being transmitted
 void _alternate_advertisement_content_(uint32_t timer)
 {
     if (timer % 2 == 1)
@@ -502,10 +504,10 @@ static int _beacon_advertise_()
 #ifdef BEACON_PLATFORM__ZEPHYR
     err = bt_le_adv_start(
         BT_LE_ADV_PARAM(
-            BT_LE_ADV_OPT_USE_IDENTITY,
+            BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address,
             BEACON_ADV_MIN_INTERVAL,
             BEACON_ADV_MAX_INTERVAL,
-            NULL),
+            NULL), // undirected advertising
         payload.bt_data, ARRAY_SIZE(payload.bt_data),
         adv_res, ARRAY_SIZE(adv_res));
     if (err)

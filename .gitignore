@@ -7,3 +7,4 @@ modules
 bootloader
 tools
 zephyr
+tests/scripts

@@ -2,3 +2,8 @@
 *.hex
 pkg
 .DS_Store
+.west
+modules
+bootloader
+tools
+zephyr

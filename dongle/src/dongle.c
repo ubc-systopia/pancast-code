@@ -442,7 +442,7 @@ void dongle_on_sync_lost()
 
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
-    log_bytes(printf, printf, data, data_len, "data");
+//    log_bytes(printf, printf, data, data_len, "data");
     if (data_len < sizeof(uint32_t)) {
         log_error("not enough data to read sequence number\r\n");
         log_error("len: %d\r\n", data_len);
@@ -452,7 +452,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     }
     uint32_t seq;
     memcpy(&seq, data, sizeof(uint32_t)); // extract sequence number
-    printf("sequence: %lu\r\n", seq);
+    //printf("sequence: %lu\r\n", seq);
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;
     stats.num_periodic_data++;

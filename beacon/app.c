@@ -71,7 +71,7 @@ void update_risk_data(int len, char *data)
 
     //printf ("Setting advertising data...\r\n");
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   PER_ADV_SIZE, &risk_data[0]);
+                                   risk_data_len, &risk_data[0]);
 
     if (sc != 0)
     {
@@ -116,6 +116,11 @@ void get_risk_data()
     // update broadcast data
     if (read_len == PER_ADV_SIZE)
     {
+        update_risk_data(PER_ADV_SIZE, buf);
+    } else if (read_len > 0){
+        update_risk_data(read_len, buf);
+    } else {
+        memset(buf, 0x11, PER_ADV_SIZE);
         update_risk_data(PER_ADV_SIZE, buf);
     }
 

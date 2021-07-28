@@ -503,7 +503,8 @@ static int _beacon_advertise_()
     err = bt_le_adv_start(
         BT_LE_ADV_PARAM(
             BT_LE_ADV_OPT_USE_IDENTITY,
-            BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL,
+            BEACON_ADV_MIN_INTERVAL,
+            BEACON_ADV_MAX_INTERVAL,
             NULL),
         payload.bt_data, ARRAY_SIZE(payload.bt_data),
         adv_res, ARRAY_SIZE(adv_res));

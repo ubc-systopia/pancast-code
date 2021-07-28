@@ -100,8 +100,6 @@ void get_risk_data()
 #else
 #ifndef BATCH_SIZE
 
-    fflush(SL_IOSTREAM_STDIN);
-
     // set ready pin
     GPIO_PinOutSet(gpioPortB, 1);
 
@@ -127,8 +125,6 @@ void get_risk_data()
 #else // BATCH_SIZE defined
     if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
     {
-        //	get and update new risk data
-        fflush(SL_IOSTREAM_STDIN);
 
         // set ready pin
         GPIO_PinOutSet(gpioPortB, 1);

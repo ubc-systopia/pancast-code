@@ -115,12 +115,23 @@ void get_risk_data()
     if (read_len == PER_ADV_SIZE)
     {
         update_risk_data(PER_ADV_SIZE, buf);
-    } else if (read_len > 0){
-        update_risk_data(read_len, buf);
-    } else {
-        memset(buf, 0x11, PER_ADV_SIZE);
+    }
+#define MISSING_DATA_BYTE 0x22
+#ifdef BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
+    else {
+        // fill with bytes for missing data
+        memset(&buf[read_len], MISSING_DATA_BYTE, PER_ADV_SIZE - read_len);
         update_risk_data(PER_ADV_SIZE, buf);
     }
+#else
+    else if (read_len > 0) {
+        update_risk_data(read_len, buf);
+    } else {
+        // fill with bytes for no data
+        memset(buf, MISSING_DATA_BYTE, PER_ADV_SIZE);
+        update_risk_data(PER_ADV_SIZE, buf);
+    }
+#endif
 
 #else // BATCH_SIZE defined
     if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)

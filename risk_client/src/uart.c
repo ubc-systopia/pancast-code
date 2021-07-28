@@ -26,8 +26,8 @@ static int GPIORead(int pin) {
   return(atoi(value_str));
 }
 
-/* Set attributes for serial communication, 
-    from https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c 
+/* Set attributes for serial communication,
+    from https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c
  */
 int set_interface_attribs(int fd, int speed) {
   struct termios tty;
@@ -64,29 +64,30 @@ int set_interface_attribs(int fd, int speed) {
 }
 
 /* Main function for data transfer over UART
- */ 
+ */
 void* uart_main(void* arg) {
-  int fd; 
+  int fd;
   char* portname = TERMINAL;
   struct risk_data* r_data = (struct risk_data*)arg;
- 
+
+  printf("Starting uart main loop\r\n");
+
   // open port for write only
   fd = open(portname, O_WRONLY);
 
   if (fd == -1) {
     fprintf(stderr, "Error opening %s: %s\n", portname, strerror(errno));
+    fprintf(stderr, "Is broadcast device connected?\r\n");
+    return 0;
   }
 
   // baudrate 115200, 8 bits, no parity, 1 stop bit
   set_interface_attribs(fd, B115200);
 
   while (1) {
-    printf("uart waiting for lock\r\n");	  
     pthread_mutex_lock(&r_data->mutex);
-    printf("uart got lock\r\n");
-    while (!r_data->request_ready) {  
+    while (!r_data->request_ready) {
       pthread_cond_wait(&r_data->request_ready_cond, &r_data->mutex);
-      printf("uart got cond\r\n");
     }
     r_data->request_ready = 0;
 
@@ -112,18 +113,21 @@ void* uart_main(void* arg) {
         ready = GPIORead(PIN);
       }
 
-      // write data 
+      // write data
       tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
       int wlen = write(fd, &testarray[data_sent], CHUNK_SIZE);
       if (wlen != CHUNK_SIZE) {
         fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
       }
+
+      printf("uart sent %d bytes\r\n", wlen);
+
       tcdrain(fd); // ensure all bytes are trasnmitted before continue
       // prepare next chunk of data to send
       data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
       if (data_sent >= TEST_SIZE) {
         data_sent = 0;
-      }     
+      }
     }
 #else
 
@@ -138,24 +142,46 @@ void* uart_main(void* arg) {
         ready = GPIORead(PIN);
       }
 
-      // write data 
+      // write data
       tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
-      int wlen = write(fd, &r_data->data.response[data_sent], CHUNK_SIZE);
-      if (wlen != CHUNK_SIZE) {
-        //fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
+      int chunk_size = CHUNK_SIZE;
+      int wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
+#define chunk ((uint8_t *)(&r_data->data.response[data_sent]))
+      printf("data : 0x\r\n");
+      for (int i = 0; i < CHUNK_SIZE; i++){
+      	printf("%.2x ", chunk[i]);
+	if (i % 16 == 15) {
+		printf("\r\n");
+	}
       }
+      printf("\r\n");
+      printf("%d bytes written\r\n", wlen);
+
+      // write until entire chunk transferred
+      while (wlen < CHUNK_SIZE) {
+        if (wlen == -1) {
+          fprintf(stderr, "Error from write: %d, %d\n", wlen, errno);
+	  return 0;
+	}
+	printf("%d bytes written\r\n", wlen);
+	chunk_size = chunk_size - wlen;
+        int new_wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
+	wlen = wlen + new_wlen;
+      }
+
+      printf("uart sent %d bytes\r\n", wlen);
       tcdrain(fd);
 
       // prepare next chunk of data to send
       data_sent = data_sent + CHUNK_SIZE; // assumption: b_data_size mod CHUNK_SIZE = 0
       if (data_sent >= r_data->data.size) {
-        data_sent = 0; 
+        data_sent = 0;
         if (r_data->data_ready == 1) {
-          printf("data is ready!\r\n");
-	        r_data->uart_ready = 1;
+          printf("Data ready, uart releasing lock\r\n");
+	  r_data->uart_ready = 1;
           pthread_cond_signal(&r_data->uart_ready_cond);
           pthread_mutex_unlock(&r_data->mutex);
-	        break;
+	  break;
         }
       }
     }
@@ -165,4 +191,4 @@ void* uart_main(void* arg) {
   close(fd); // should move inside while loop
   // should not reach here
   return 0;
-}
+}  

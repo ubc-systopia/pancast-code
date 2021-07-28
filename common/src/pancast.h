@@ -5,14 +5,16 @@
 // Including data-type size, timing parameters etc.
 // Some of these may be adjusted for testing purposes.
 
+#define PANCAST__TEST // uncomment to set global params for testing
+
 #include <stdint.h>
 
 // Constants
 
 // maximum size of a secret key in bytes - used for data containing
-#define SK_MAX_SIZE 360
+#define SK_MAX_SIZE 44
 // maximum size of a public key
-#define PK_MAX_SIZE 96
+#define PK_MAX_SIZE 800
 // number of bytes used from hash for eph. id - should be 15 in prod. (currently not supported)
 #define BEACON_EPH_ID_HASH_LEN 14
 // size of containers used internally
@@ -21,9 +23,31 @@
 // number of timer cycles in one epoch - should correspond to 15 min in prod.
 #define BEACON_EPOCH_LENGTH 15
 // Beacon clock resolution in ms - should be 1 min in prod.
+#ifdef PANCAST__TEST
 #define BEACON_TIMER_RESOLUTION 60000
+#else
+#define BEACON_TIMER_RESOLUTION 60000 // 1 min
+#endif
 // Dongle clock resolution in ms - should be 1 min in prod.
+#ifdef PANCAST__TEST
 #define DONGLE_TIMER_RESOLUTION 60000
+#else
+#define DONGLE_TIMER_RESOLUTION 60000 // 1 min
+#endif
+// Maximum age of an encounter in the dongle log, in time units. Should correspond to 14 days
+#ifdef PANCAST__TEST
+#define DONGLE_MAX_LOG_AGE 60 // 1 hour
+#else
+#define DONGLE_MAX_LOG_AGE (14 * 24 * 60) // 14 days
+#endif
+// (Approx) number of time units between each report written to output
+#ifdef PANCAST__TEST
+#define DONGLE_REPORT_INTERVAL 10
+#define BEACON_REPORT_INTERVAL 5
+#else
+#define DONGLE_REPORT_INTERVAL 10
+#define BEACON_REPORT_INTERVAL 10
+#endif
 
 // Simple Data Types
 typedef uint32_t beacon_id_t;
@@ -97,5 +121,8 @@ typedef struct
 // received during operation.
 #define BROADCAST_SERVICE_ID 0x2222
 static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
+
+// Risk Broadcast
+#define RISK_BROADCAST_LEN_SIZE 8 // number of bytes used to indicate data len
 
 #endif

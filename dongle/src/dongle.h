@@ -3,19 +3,49 @@
 
 // Dongle Application
 
+// Application Config
+#define APPL_VERSION "0.1.1"
+#define DONGLE_PLATFORM__GECKO
+#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
+//#define MODE__TEST // enables unit tests
+#define MODE__STAT // enables telemetry aggregation
+#define MODE__PERIODIC // enables periodic scanning and syncing
+#define MODE__LEGACY_LOG
+#define MODE__PERIODIC_FIXED_DATA
+
+#ifdef MODE__TEST
+#define MODE__TEST_CONFIG
+#endif
+
+#ifdef DONGLE_PLATFORM__ZEPHYR
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/conn.h>
+#else
+#include "sl_bt_api.h"
+#endif
+
+#include <assert.h>
+#define DONGLE_NO_OP assert(1);
 
 #include "../../common/src/pancast.h"
 
 // STATIC PARAMETERS
-// (Approx) number of time units between each report written to output
-#define DONGLE_REPORT_INTERVAL 2
 
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
+
+// Bluetooth Scanning Parameters
+#ifdef DONGLE_PLATFORM__ZEPHYR
+// These are defined constants
+#define DONGLE_SCAN_INTERVAL BT_GAP_SCAN_FAST_INTERVAL
+#define DONGLE_SCAN_WINDOW BT_GAP_SCAN_FAST_WINDOW
+#else
+// These are hard-coded, in ms
+#define DONGLE_SCAN_INTERVAL 0x30
+#define DONGLE_SCAN_WINDOW 0x60
+#endif
 
 // Data Structures
 
@@ -67,19 +97,64 @@ typedef struct
     beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
 
+// Timing Constants
+#define MAIN_TIMER_HANDLE 0x00
+#define PREC_TIMER_HANDLE 0x01 // high-precision timer
+#define PREC_TIMER_TICK_MS 1000   // essentially res. of timer
+
+// Periodic Scanning & Synchronization
+#define SCAN_PHY 1 // 1M PHY
+#define SCAN_WINDOW 320
+#define SCAN_INTERVAL 320
+#define SCAN_MODE 0 // passive scan
+
+#define SYNC_SKIP 0
+#define SYNC_TIMEOUT 500 // Unit: 10 ms
+#define SYNC_FLAGS 0
+
+#define TIMER_1S 32768
+
+#define TEST_DURATION 1800000
+
+typedef struct {
+  uint64_t start_ticks;
+  uint64_t end_ticks;
+  uint64_t diff;
+  uint64_t diff_ms;
+} timertest_t;
+
+#ifdef MODE__PERIODIC_FIXED_DATA
+#define PERIODIC_FIXED_DATA_LEN 0x023456 // must be <= sizeof(uint32)
+#endif
+
 // High-level routine structure
+#ifndef DONGLE_PLATFORM__ZEPHYR
+void dongle_start();
+#endif
 void dongle_scan(void);
 void dongle_init();
 void dongle_load();
 void dongle_loop();
 void dongle_report();
+#ifdef DONGLE_PLATFORM__ZEPHYR
 void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
                 struct net_buf_simple *ad);
-
+#else
+void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
+#endif
 void dongle_lock();
 void dongle_unlock();
 void dongle_info();
 void dongle_stats();
 void dongle_test();
-
+void dongle_download_info();
+void dongle_download_test_info();
+void dongle_download_fail();
+void dongle_on_clock_update();
+void dongle_clock_increment();
+void dongle_hp_timer_add(uint32_t ticks);
+void dongle_on_periodic_data
+(uint8_t *data, uint8_t data_len, int8_t rssi);
+void dongle_on_periodic_data_error
+(int8_t rssi);
 #endif

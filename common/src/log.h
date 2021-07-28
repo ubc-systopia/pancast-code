@@ -1,6 +1,12 @@
 #ifndef COMMON_LOG__H
 #define COMMON_LOG__H
 
+#include <stdio.h>
+#include <assert.h>
+#define LOG_NA assert(1)
+
+#ifdef BEACON_PLATFORM__ZEPHYR
+
 // Simple logging Macros provided mostly as placeholders for a
 // more robust logging mechanism, and to differentiate between
 // the types of outputs.
@@ -28,10 +34,6 @@
 #define TAG_ERROR "ERROR"
 #define TAG_TELEM "TELEM"
 
-#define LOG_SHOW_TAGS
-
-#define LOG_NA NULL
-
 // // If telemetry is enabled, show tags always
 #ifdef LOG_LEVEL__TELEM
 #ifndef LOG_SHOW_TAGS
@@ -39,9 +41,9 @@
 #endif
 #endif
 #ifdef LOG_SHOW_TAGS
-#define logf(tag, fmtstr, args...) (printk("[%s] ", tag), printk(fmtstr, args))
+#define logf(tag, fmtstr, args...) (printf("[%s] ", tag), printf(fmtstr, args))
 #else
-#define logf(tag, fmtstr, args...) printk(fmtstr, args)
+#define logf(tag, fmtstr, args...) printf(fmtstr, args)
 #endif
 
 #define log(tag, str) logf(tag, "%s", str)
@@ -105,4 +107,22 @@
 #define log_telemf(_...) LOG_NA
 #endif
 
+#else
+
+#include "app_log.h"
+
+#define log_error app_log_error
+#define log_errorf app_log_error
+
+#define log_info app_log_info
+#define log_infof app_log_info
+
+#define log_debug app_log_debug
+#define log_debugf app_log_debug
+
+#define log_telemf(fmtstr, args...) LOG_NA
+#define log_telem(str) LOG_NA
+
+
+#endif
 #endif

@@ -1,7 +1,9 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#define CHUNK_SIZE 250 /* Size of data chunk to send to broadcast device */
+#include "request.h"
+#include "uart.h"
+#include "common.h"
 
 #define UART_THREAD_ID 0
 #define REQ_THREAD_ID 1

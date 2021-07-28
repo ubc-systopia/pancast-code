@@ -5,29 +5,70 @@
 // Defines a simple API to read and write specific data structures
 // with minimal coupling the underlying drivers.
 
-#include "./dongle.h"
+#include "dongle.h"
 
-#include <drivers/flash.h>
+#include <stddef.h>
 
+// Reflects the total size of the entry in storage while taking
+// minimum alignment into account.
+#define ENCOUNTER_ENTRY_SIZE (sizeof(beacon_location_id_t) + sizeof(beacon_id_t) + \
+                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
+                              BEACON_EPH_ID_SIZE)
+
+#ifdef DONGLE_PLATFORM__ZEPHYR
 #define FLASH_OFFSET 0x2D000
+#else
+#define FLASH_OFFSET 0x60000
+#endif
 
+// Maximum number of encounters stored at one time
+#define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)
+
+// Maximum number of bytes used to store encounters
+// This is multiple of the encounter size
+// And assumes the size is block-aligned
+#define FLASH_LOG_SIZE (ENCOUNTER_ENTRY_SIZE * MAX_LOG_COUNT)
+
+#ifdef DONGLE_PLATFORM__ZEPHYR
+#include <drivers/flash.h>
 typedef off_t storage_addr_t;
+typedef const struct device flash_device_t;
+#else
+#include "em_msc.h"
+typedef uint32_t storage_addr_t;
+#endif
 
 typedef struct
 {
-    storage_addr_t config;
-    storage_addr_t otp;
-    storage_addr_t log;
-    enctr_entry_counter_t enctr_entries; // number of entries
+    enctr_entry_counter_t tail; // index of oldest stored recent encounter
+    enctr_entry_counter_t head; // index to write next stored encounter
+} _encounter_storage_cursor_;
+
+typedef struct
+{
+    storage_addr_t config;  // address of device configuration
+    storage_addr_t otp;     // address of OTP storage
+    storage_addr_t stat;    // address of saved statistics
+    storage_addr_t log;     // address of first log entry
+    storage_addr_t log_end; // address of next available space after log
 } _dongle_storage_map_;
 
 typedef struct
 {
-    const struct device *dev;
+#ifdef DONGLE_PLATFORM__ZEPHYR
+    flash_device_t *dev;
+#else
+    MSC_ExecConfig_TypeDef mscExecConfig;
+#endif
     size_t min_block_size;
     int num_pages;
     size_t page_size;
+    storage_addr_t total_size;
     _dongle_storage_map_ map;
+    _encounter_storage_cursor_ encounters;
+    enctr_entry_counter_t total_encounters;
+    storage_addr_t off; // flash offset
+    uint64_t numErasures;
 } dongle_storage;
 
 // STORAGE INIT
@@ -64,7 +105,10 @@ int otp_is_used(dongle_otp_t *otp);
 int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);
 
 // Determine the number of encounters currently logged
-enctr_entry_counter_t dongle_storage_num_encounters(dongle_storage *sto);
+enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto);
+
+// Determine the total number of encounters logged, including those deleted
+enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto);
 
 // LOAD ENCOUNTER
 // API is defined using a callback structure
@@ -75,8 +119,13 @@ typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i, dongle_encounter_ent
 void dongle_storage_load_encounter(dongle_storage *sto,
                                    enctr_entry_counter_t i, dongle_encounter_cb cb);
 
+void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb);
+
 void dongle_storage_load_single_encounter(dongle_storage *sto,
                                           enctr_entry_counter_t i, dongle_encounter_entry *);
+
+void dongle_storage_load_encounters_from_time(dongle_storage *sto,
+                                              dongle_timer_t min_time, dongle_encounter_cb cb);
 
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto,
@@ -89,5 +138,13 @@ void dongle_storage_log_encounter(dongle_storage *sto,
 #define DONGLE_STORAGE_MAX_PRINT_LEN 64
 
 int dongle_storage_print(dongle_storage *, storage_addr_t, size_t);
+
+void dongle_storage_save_stat(dongle_storage *sto, void * stat, size_t len);
+void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
+void dongle_storage_info(dongle_storage *);
+
+size_t dongle_storage_max_log_count(dongle_storage *sto);
+
+void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time);
 
 #endif

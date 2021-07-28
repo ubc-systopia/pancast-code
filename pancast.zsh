@@ -44,3 +44,14 @@ deploy () {
 	ssh "$remote_user@$remote_ip" "'$nrfjprog' --program '$remote_dir/$1.hex' --sectoranduicrerase -f NRF52 --snr $sn && '$nrfjprog' --snr $sn --reset	"
 }
 
+flash () {
+	if 		[[ "$1" == "beacon" ]]; then
+			sn=682013321
+	elif	[[ "$1" == "terminal" ]]; then
+			sn=682013321
+	elif	[[ "$1" == "dongle" ]]; then
+			sn=682213153
+	fi
+   nrfjprog --program $1.hex --sectoranduicrerase -f NRF52 --snr $sn && nrfjprog --snr $sn --reset 
+}
+

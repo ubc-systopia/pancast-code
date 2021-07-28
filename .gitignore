@@ -1,3 +1,4 @@
 *.swp
 *.hex
 pkg
+.DS_Store

@@ -10,8 +10,8 @@
 
 #include <stdint.h>
 
-#include "./dongle.h"
-#include "./storage.h"
+#include "dongle.h"
+#include "storage.h"
 
 // SERVICE UUID: e7f72a03-803b-410a-98d4-4be5fad8e217
 #define DONGLE_INTERACT_SERVICE_ID_0 0xe7f72a03
@@ -24,12 +24,16 @@
 // These are based on the primary service ID (index 0) and support
 // a large number of IDs - assuming that the 6-byte part of the base
 // UUID is well below the max val.
+#ifdef DONGLE_PLATFORM__ZEPHYR
 #define DONGLE_INTERACT_UUID(i) BT_UUID_128_ENCODE( \
     DONGLE_INTERACT_SERVICE_ID_0,                   \
     DONGLE_INTERACT_SERVICE_ID_1,                   \
     DONGLE_INTERACT_SERVICE_ID_2,                   \
     DONGLE_INTERACT_SERVICE_ID_3,                   \
     DONGLE_INTERACT_SERVICE_ID_4 + i)
+#else
+#define DONGLE_INTERACT_UUID(i) DONGLE_NO_OP, 0;
+#endif
 
 #define DONGLE_SERVICE_UUID DONGLE_INTERACT_UUID(0)
 

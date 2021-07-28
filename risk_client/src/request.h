@@ -3,13 +3,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <fcntl.h>  
-#include <errno.h>
 #include <curl/curl.h>
 
 #define REQUEST_INTERVAL 86400 // request to server once per day
@@ -19,8 +12,8 @@
 const char domain[DOMAIN_LEN];
 const char request[REQUEST_LEN];
 
-int handle_request(struct req_data *data);
+int handle_request(struct req_data* chunk);
 
-void *request_main(void *arg);
+void* request_main(void* arg);
 
 #endif // REQUEST_H

@@ -1,0 +1,40 @@
+# Silicon Labs Project Configuration Tools: slcp, v0, Component selection file.
+project_name: pancast-beacon
+label: pancast-beacon
+description: |
+  This example project shows an empty configuration that can be used as a starting point to add components and functionality.
+category: Example|Platform
+package: platform
+quality: production
+source:
+- {path: app.c}
+- {path: main.c}
+include:
+- path: ''
+  file_list:
+  - {path: app.h}
+sdk: {id: gecko_sdk, version: 3.2.0}
+toolchain_settings: []
+component:
+- {id: app_log}
+- {id: sl_system}
+- {id: iostream_retarget_stdio}
+- {id: brd4182a_b03}
+- {id: bluetooth_feature_gatt_server}
+- {id: brd4001a}
+- {id: bluetooth_feature_advertiser}
+- {id: bluetooth_feature_periodic_adv}
+- {id: bluetooth_feature_sm}
+- {id: bluetooth_feature_system}
+- {id: emlib_eusart}
+- {id: bluetooth_stack}
+- {id: EFR32MG22C224F512IM40}
+- {id: device_init}
+- instance: [vcom]
+  id: iostream_eusart
+- {id: app_assert}
+- {id: bluetooth_feature_gatt}
+define:
+- {name: DEBUG_EFM}
+ui_hints: {}
+

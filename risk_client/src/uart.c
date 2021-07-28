@@ -135,15 +135,17 @@ void* uart_main(void* arg) {
 
     // write data to serial port in CHUNK_SIZE increments
     while (data_sent < r_data->data.size) {
-      tcflush(fd, TCIOFLUSH);
+      //tcflush(fd, TCIOFLUSH);
       // wait for ready signal from GPIO
       uint8_t ready = 0;
+      ready = GPIORead(PIN);
+
       while (ready == 0) {
         ready = GPIORead(PIN);
       }
 
       // write data
-      tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
+      //tcflush(fd, TCIOFLUSH); // clear anything that might be in the buffer
       int chunk_size = CHUNK_SIZE;
       int wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
 #define chunk ((uint8_t *)(&r_data->data.response[data_sent]))
@@ -168,7 +170,11 @@ void* uart_main(void* arg) {
         int new_wlen = write(fd, &r_data->data.response[data_sent], chunk_size);
 	wlen = wlen + new_wlen;
       }
-
+      ready = GPIORead(PIN);
+      
+      while (ready != 0) {
+        ready = GPIORead(PIN);
+      }
       printf("uart sent %d bytes\r\n", wlen);
       tcdrain(fd);
 

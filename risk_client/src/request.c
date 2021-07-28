@@ -1,6 +1,6 @@
 #include "request.h"
 
-const char domain[] = "https://pancast.cs.ubc.ca:443/";
+const char domain[] = "https://10.0.0.117:8081/";
 const char request[] = "update";
 
 /* Write data from stream, from CURLOPT_WRITEFUNCTION example 

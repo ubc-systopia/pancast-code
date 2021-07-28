@@ -15,7 +15,7 @@
             "cStandard": "c99",
             "cppStandard": "gnu++17",
             "intelliSenseMode": "${default}",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            "compileCommands": "${workspaceFolder:Zephyr}/build/compile_commands.json"
         },
         {
             "name": "PanCast-WSL",

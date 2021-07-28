@@ -6,7 +6,7 @@
         },
         {
             "name": "Zephyr",
-            "path": "../zephyrproject/zephyr"
+            "path": "/Users/rowan/Work/pancast" // "../zephyrproject/zephyr" on WSL platform
         }
     ],
     "settings": {

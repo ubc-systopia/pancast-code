@@ -1,1 +1,1 @@
-#define GLOBAL_TX_POWER 10
+#define GLOBAL_TX_POWER 100

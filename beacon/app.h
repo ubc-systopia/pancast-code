@@ -22,6 +22,8 @@
 
 #include "src/beacon.h"
 
+#include "../common/src/settings.h"
+
 /***************************************************************************/ /**
  * Macros
  ******************************************************************************/
@@ -33,7 +35,7 @@
 #define PER_ADV_INTERVAL 6 // 7.5 ms
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
-#define PER_TX_POWER 100
+#define PER_TX_POWER GLOBAL_TX_POWER
 
 #define NO_MAX_DUR 0 // 0 for no duration limit
 #define NO_MAX_EVT 0 // 0 for no max events
@@ -45,7 +47,7 @@
 #define RISK_TIMER_HANDLE 1
 #define MAIN_TIMER_PRIORT 0
 #define RISK_TIMER_PRIORT 1
-#define RISK_UPDATE_FREQ 0.05 // 50 ms
+#define RISK_UPDATE_FREQ 0.05 // * 1 s
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE

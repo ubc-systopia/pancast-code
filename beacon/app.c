@@ -71,7 +71,7 @@ void update_risk_data(int len, char *data)
 
     //printf ("Setting advertising data...\r\n");
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   PER_ADV_SIZE, &risk_data[0]);
+                                   risk_data_len, &risk_data[0]);
 
     if (sc != 0)
     {
@@ -100,8 +100,6 @@ void get_risk_data()
 #else
 #ifndef BATCH_SIZE
 
-    fflush(SL_IOSTREAM_STDIN);
-
     // set ready pin
     GPIO_PinOutSet(gpioPortB, 1);
 
@@ -118,12 +116,26 @@ void get_risk_data()
     {
         update_risk_data(PER_ADV_SIZE, buf);
     }
+#define MISSING_DATA_BYTE 0x22
+#ifdef BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
+    else {
+        // fill with bytes for missing data
+        memset(&buf[read_len], MISSING_DATA_BYTE, PER_ADV_SIZE - read_len);
+        update_risk_data(PER_ADV_SIZE, buf);
+    }
+#else
+    else if (read_len > 0) {
+        update_risk_data(read_len, buf);
+    } else {
+        // fill with bytes for no data
+        memset(buf, MISSING_DATA_BYTE, PER_ADV_SIZE);
+        update_risk_data(PER_ADV_SIZE, buf);
+    }
+#endif
 
 #else // BATCH_SIZE defined
     if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
     {
-        //	get and update new risk data
-        fflush(SL_IOSTREAM_STDIN);
 
         // set ready pin
         GPIO_PinOutSet(gpioPortB, 1);

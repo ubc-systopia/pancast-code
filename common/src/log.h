@@ -111,8 +111,8 @@
 
 #include "app_log.h"
 
-#define log_error app_log_error
-#define log_errorf app_log_error
+#define log_error app_log_critical
+#define log_errorf app_log_critical
 
 #define log_info app_log_info
 #define log_infof app_log_info
@@ -120,8 +120,9 @@
 #define log_debug app_log_debug
 #define log_debugf app_log_debug
 
-#define log_telemf(fmtstr, args...) LOG_NA
-#define log_telem(str) LOG_NA
+#define log_telem_tag log_error("[TELEM]")
+#define log_telemf(fmtstr, args...) log_telem_tag; log_error(fmtstr, args)
+#define log_telem(str) LOG_NA log_telem_tag; log_error(str)
 
 
 #endif

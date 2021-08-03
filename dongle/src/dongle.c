@@ -95,6 +95,10 @@ int total_test_encounters = 0;
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
 
+// 5. Telemetry
+// Global high-precision timer, in milliseconds
+float dongle_hp_timer = 0.0;
+
 #ifdef MODE__STAT
 
 #include "../../common/src/stats.h"
@@ -348,7 +352,7 @@ void dongle_init()
 
     dongle_info();
 
-    log_telemf("%02x", TELEM_TYPE_RESTART);
+    log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
     k_timer_init(&kernel_time, NULL, NULL);
@@ -396,6 +400,7 @@ void dongle_hp_timer_add(uint32_t ticks)
     {
         lat_test.download.time += ms;
     }
+    dongle_hp_timer += ms;
 }
 
 void dongle_download_start(uint32_t seq)
@@ -458,6 +463,7 @@ int dongle_download_check(uint32_t n_bytes)
 
 void dongle_on_sync_lost()
 {
+  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_SYNC_LOST, dongle_hp_timer);
   if (lat_test.download.is_active) {
       log_info("Download failed - lost sync.\r\n");
       lat_test.download.n_syncs_lost++;
@@ -469,6 +475,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
 //    log_bytes(printf, printf, data, data_len, "data");
     if (data_len < sizeof(uint32_t)) {
+        log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
+                   dongle_hp_timer, rssi, data_len);
         log_error("not enough data to read sequence number\r\n");
         log_error("len: %d\r\n", data_len);
         log_info("Download Failed - coult not extract sequence number\r\n");
@@ -478,6 +486,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     uint32_t seq;
     memcpy(&seq, data, sizeof(uint32_t)); // extract sequence number
     //printf("sequence: %lu\r\n", seq);
+    log_telemf("%02x,%.0f,%d,%d,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
+                       dongle_hp_timer, rssi, data_len, seq);
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;
     stats.num_periodic_data++;
@@ -545,6 +555,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
 void dongle_on_periodic_data_error(int8_t rssi)
 {
+  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_PKT_ERROR, dongle_hp_timer);
 #ifdef MODE__STAT
     stats.num_periodic_data_error++;
     stat_add(rssi, stats.periodic_data_rssi);

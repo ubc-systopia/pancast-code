@@ -73,4 +73,37 @@
 // - duration is the number of device time units for which the
 //   ID was observed.
 
+//
+// Download Telemetry
+//
+
+// Periodic Synchronization Lost
+#define TELEM_TYPE_PERIODIC_SYNC_LOST 0x06
+// Schema:
+//
+//          <t>
+//
+// where t is a non-persistent time-stamp for when the loss was
+// detected
+
+// Truncated Periodic Packet
+#define TELEM_TYPE_PERIODIC_PKT_ERROR 0x07
+// Schema:
+//
+//          <t>
+//
+// where t is a non-persistent time-stamp for the packet
+
+#define TELEM_TYPE_PERIODIC_PKT_DATA 0x08
+// Schema:
+//
+//          <t>,<rssi>,<len>,<seq?>
+//
+// where
+// - t is a non-persistent time-stamp for the packet
+// - rssi is the receiver RSSI value for the packet
+// - len is the length of the packet in bytes
+// - seq is the sequence number decoded from the packet, provided
+//   that enough data is present
+
 #endif

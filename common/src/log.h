@@ -120,9 +120,9 @@
 #define log_debug app_log_debug
 #define log_debugf app_log_debug
 
-#define log_telem_tag log_error("[TELEM]")
-#define log_telemf(fmtstr, args...) log_telem_tag; log_error(fmtstr, args)
-#define log_telem(str) LOG_NA log_telem_tag; log_error(str)
+#define log_telem_tag printf("TELEM ")
+#define log_telemf(fmtstr, args...) log_telem_tag; printf(fmtstr, args)
+#define log_telem(str) LOG_NA log_telem_tag; printf(str)
 
 
 #endif

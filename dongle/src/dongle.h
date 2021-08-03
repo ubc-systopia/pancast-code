@@ -100,7 +100,7 @@ typedef struct
 // Timing Constants
 #define MAIN_TIMER_HANDLE 0x00
 #define PREC_TIMER_HANDLE 0x01 // high-precision timer
-#define PREC_TIMER_TICK_MS 1000   // essentially res. of timer
+#define PREC_TIMER_TICK_MS 1   // essentially res. of timer
 
 // Periodic Scanning & Synchronization
 #define SCAN_PHY 1 // 1M PHY

@@ -89,6 +89,7 @@ void update_risk_data(int len, char *data)
 void get_risk_data()
 {
 #ifdef PERIODIC_TEST
+  log_debug("get risk data\r\n");
   memcpy(test_data, &seq_num, sizeof(uint32_t)); // sequence number
   seq_num++;
   if (seq_num == NUM_PACKETS) {
@@ -165,20 +166,61 @@ void get_risk_data()
 #endif
 }
 
-uint64_t hp_time_now  = 0;
-uint64_t hp_time_adv_start;
+float hp_time_now  = 0;
+float hp_time_adv_start;
 
-#define now() hp_time_now;
+#define now() hp_time_now
+
+int risk_timer_started = 0;
+
+sl_sleeptimer_timer_handle_t hp_timer;
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
 #define user_handle (*((uint8_t*)data))
 
   if (user_handle == HP_TIMER_HANDLE) {
+          if (risk_timer_started) {
+              return;
+          }
           hp_time_now++;
+          // start timer when time delta is a multiple of I/2
+          // add an additional wait time to prevent problems at start
+          if (hp_time_now > TIMER_1S &&
+              (((int)(now() - hp_time_adv_start))
+                       % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0) {
+              log_debug("I/2 = %d\r\n",
+                        (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0));
+              // start the risk update timer
+#ifdef BEACON_MODE__NETWORK
+              // Risk Timer
+              uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+              log_info("Starting risk timer\r\n");
+              // Interval is the same as the advertising interval
+              sl_sleeptimer_timer_handle_t risk_timer;
+              sl_status_t sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
+                                                         PER_ADV_INTERVAL,
+                                                         sl_timer_on_expire,
+                                                         &risk_timer_handle,
+                                         RISK_TIMER_PRIORT, 0);
+              risk_timer_started = 1;
+              if (sc) {
+                  log_errorf("Error starting risk timer: 0x%x\r\n", sc);
+                  return;
+              }
+              log_info("Started\r\n");
+              log_info("stopping HP timer\r\n");
+              sc = sl_sleeptimer_stop_timer(&hp_timer);
+              if (sc) {
+                  log_errorf("Error stopping HP timer: 0x%x\r\n", sc);
+                  return;
+              }
+              log_info("Stopped\r\n");
+#endif
+          }
       }
     // handle main clock
-  else if (user_handle == MAIN_TIMER_HANDLE)
+  if (user_handle == MAIN_TIMER_HANDLE)
     {
         beacon_clock_increment(1);
     }
@@ -237,7 +279,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                          NO_MAX_EVT);      // max. num. adv. events
         app_assert_status(sc);
 
-        printf("Starting periodic advertising...\r\n");
+        log_info("Starting periodic advertising...\r\n");
 
         hp_time_adv_start = now();
         sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,

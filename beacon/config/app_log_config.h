@@ -28,7 +28,7 @@
 
 // <e APP_LOG_ENABLE> Application Logging
 // <i> Enables Logging.
-#define APP_LOG_ENABLE            0
+#define APP_LOG_ENABLE            1
 
 // <h> General
 

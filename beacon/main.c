@@ -29,6 +29,8 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/log.h"
 
+extern sl_sleeptimer_timer_handle_t hp_timer;
+
 int main(void)
 {
     // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
@@ -44,12 +46,12 @@ int main(void)
     // Start the kernel. Task(s) created in app_init() will start running.
     sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
+
     // Set up timers
     sl_status_t sc = sl_sleeptimer_init();
 
     // High-Precision clock
     uint8_t hp_timer_handle = HP_TIMER_HANDLE;
-    sl_sleeptimer_timer_handle_t hp_timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&hp_timer,
                                      TIMER_1MS,
                                      sl_timer_on_expire,
@@ -64,22 +66,6 @@ int main(void)
                                                sl_timer_on_expire,
                                                &main_timer_handle,
                                MAIN_TIMER_PRIORT, 0);
-#ifdef BEACON_MODE__NETWORK
-    // Risk Timer
-    uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-//    printf("Starting risk timer\r\n");
-    // Granularity in milliseconds, so frequency division down to 0.001*1s
-    // is supported
-    sl_sleeptimer_timer_handle_t risk_timer;
-    sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                               RISK_UPDATE_FREQ * TIMER_1S,
-                                               sl_timer_on_expire,
-                                               &risk_timer_handle,
-                               RISK_TIMER_PRIORT, 0);
-    if (sc) {
-        log_errorf("Error starting risk timer: 0x%x\r\n", sc);
-    }
-#endif
     while (1)
     {
         // Do not remove this call: Silicon Labs components process action routine

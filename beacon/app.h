@@ -45,8 +45,10 @@
 #define TIMER_1S 1000 // one second in ms, used for timer
 #define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1
+#define HP_TIMER_HANDLE   2
 #define MAIN_TIMER_PRIORT 0
 #define RISK_TIMER_PRIORT 1
+#define HP_TIMER_PRIORT   0
 #define RISK_UPDATE_FREQ 0.05 // * 1 s
 
 /* Risk Data */

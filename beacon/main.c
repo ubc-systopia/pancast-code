@@ -46,9 +46,18 @@ int main(void)
 #else // SL_CATALOG_KERNEL_PRESENT
     // Set up timers
     sl_status_t sc = sl_sleeptimer_init();
+
+    // High-Precision clock
+    uint8_t hp_timer_handle = HP_TIMER_HANDLE;
+    sl_sleeptimer_timer_handle_t hp_timer;
+    sc = sl_sleeptimer_start_periodic_timer_ms(&hp_timer,
+                                     TIMER_1MS,
+                                     sl_timer_on_expire,
+                                     &hp_timer_handle,
+                                   HP_TIMER_PRIORT, 0);
+
+    // Main timer (for main clock)
     uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
-    uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-    // Main timer
     sl_sleeptimer_timer_handle_t timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
                                TIMER_1MS * BEACON_TIMER_RESOLUTION,
@@ -56,8 +65,9 @@ int main(void)
                                                &main_timer_handle,
                                MAIN_TIMER_PRIORT, 0);
 #ifdef BEACON_MODE__NETWORK
-    printf("Starting risk timer\r\n");
     // Risk Timer
+    uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+//    printf("Starting risk timer\r\n");
     // Granularity in milliseconds, so frequency division down to 0.001*1s
     // is supported
     sl_sleeptimer_timer_handle_t risk_timer;

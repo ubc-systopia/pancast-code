@@ -165,20 +165,27 @@ void get_risk_data()
 #endif
 }
 
+uint64_t hp_time_now  = 0;
+uint64_t hp_time_adv_start;
+
+#define now() hp_time_now;
+
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
 #define user_handle (*((uint8_t*)data))
 
+  if (user_handle == HP_TIMER_HANDLE) {
+          hp_time_now++;
+      }
     // handle main clock
-    if (user_handle == MAIN_TIMER_HANDLE)
+  else if (user_handle == MAIN_TIMER_HANDLE)
     {
         beacon_clock_increment(1);
     }
 
 #ifdef BEACON_MODE__NETWORK
     // handle data updates
-    if (user_handle == RISK_TIMER_HANDLE)
-    {
+    else if (user_handle == RISK_TIMER_HANDLE) {
         if (handle->priority != RISK_TIMER_PRIORT) {
             log_error("Timer mismatch\r\n");
         }
@@ -232,6 +239,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
         printf("Starting periodic advertising...\r\n");
 
+        hp_time_adv_start = now();
         sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
         app_assert_status(sc);

@@ -32,7 +32,7 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 800 //8 // 10 ms - even no. of ms for ease of halving
+#define PER_ADV_INTERVAL 8 // 10 ms - even no. of ms for ease of halving
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
 #define PER_TX_POWER GLOBAL_TX_POWER

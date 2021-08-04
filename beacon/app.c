@@ -89,7 +89,6 @@ void update_risk_data(int len, char *data)
 void get_risk_data()
 {
 #ifdef PERIODIC_TEST
-  log_debug("get risk data\r\n");
   memcpy(test_data, &seq_num, sizeof(uint32_t)); // sequence number
   seq_num++;
   if (seq_num == NUM_PACKETS) {
@@ -169,29 +168,13 @@ void get_risk_data()
 float hp_time_now  = 0;
 float hp_time_adv_start;
 
-sl_sleeptimer_timer_handle_t hp_timer;
-
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
   sl_status_t sc;
 #define user_handle (*((uint8_t*)data))
 
-  //log_info("handle: 0x%02x\r\n", user_handle);
-
   if (user_handle == HP_TIMER_HANDLE) {
-//          if (risk_timer_started) {
-//              return;
-//          }
           hp_time_now++;
-
-//          if (hp_time_now > TIMER_1S &&
-//              (((int)(now() - hp_time_adv_start))
-//                       % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0) {
-//              log_debug("I/2 = %d\r\n",
-//                        (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0));
-//
-//              risk_timer_started = 1;
-//
       }
     // handle main clock
   if (user_handle == MAIN_TIMER_HANDLE)

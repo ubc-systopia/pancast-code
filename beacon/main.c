@@ -29,8 +29,6 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/log.h"
 
-extern sl_sleeptimer_timer_handle_t hp_timer;
-
 int main(void)
 {
     // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
@@ -51,6 +49,7 @@ int main(void)
     sl_status_t sc = sl_sleeptimer_init();
 
     // High-Precision clock
+    sl_sleeptimer_timer_handle_t hp_timer;
     log_info("Starting high-precision clock\r\n");
     uint8_t hp_timer_handle = HP_TIMER_HANDLE;
     sc = sl_sleeptimer_start_periodic_timer_ms(&hp_timer,

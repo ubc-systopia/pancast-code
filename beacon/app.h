@@ -32,7 +32,7 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 8 // 10 ms - even no. of ms for ease of halving
+#define PER_ADV_INTERVAL 800 //8 // 10 ms - even no. of ms for ease of halving
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
 #define PER_TX_POWER GLOBAL_TX_POWER
@@ -46,13 +46,19 @@
 #define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1
 #define HP_TIMER_HANDLE   2
-#define MAIN_TIMER_PRIORT 0
+#define MAIN_TIMER_PRIORT 2
 #define RISK_TIMER_PRIORT 1
 #define HP_TIMER_PRIORT   0
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
 // #define BATCH_SIZE 2
+
+extern float hp_time_now;
+extern float hp_time_adv_start;
+
+#define now() hp_time_now
+#define HP_TIME_ADV_START hp_time_adv_start
 
 /***************************************************************************/ /**
  * Initialize application.

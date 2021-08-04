@@ -75,7 +75,7 @@ void update_risk_data(int len, char *data)
 
     if (sc != 0)
     {
-        printf ("Error setting advertising data, sc: 0x%lx", sc);
+        log_error("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
     }
 }
 
@@ -169,55 +169,29 @@ void get_risk_data()
 float hp_time_now  = 0;
 float hp_time_adv_start;
 
-#define now() hp_time_now
-
-int risk_timer_started = 0;
-
 sl_sleeptimer_timer_handle_t hp_timer;
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
+  sl_status_t sc;
 #define user_handle (*((uint8_t*)data))
 
+  //log_info("handle: 0x%02x\r\n", user_handle);
+
   if (user_handle == HP_TIMER_HANDLE) {
-          if (risk_timer_started) {
-              return;
-          }
+//          if (risk_timer_started) {
+//              return;
+//          }
           hp_time_now++;
-          // start timer when time delta is a multiple of I/2
-          // add an additional wait time to prevent problems at start
-          if (hp_time_now > TIMER_1S &&
-              (((int)(now() - hp_time_adv_start))
-                       % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0) {
-              log_debug("I/2 = %d\r\n",
-                        (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0));
-              // start the risk update timer
-#ifdef BEACON_MODE__NETWORK
-              // Risk Timer
-              uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-              log_info("Starting risk timer\r\n");
-              // Interval is the same as the advertising interval
-              sl_sleeptimer_timer_handle_t risk_timer;
-              sl_status_t sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                                                         PER_ADV_INTERVAL,
-                                                         sl_timer_on_expire,
-                                                         &risk_timer_handle,
-                                         RISK_TIMER_PRIORT, 0);
-              risk_timer_started = 1;
-              if (sc) {
-                  log_errorf("Error starting risk timer: 0x%x\r\n", sc);
-                  return;
-              }
-              log_info("Started\r\n");
-              log_info("stopping HP timer\r\n");
-              sc = sl_sleeptimer_stop_timer(&hp_timer);
-              if (sc) {
-                  log_errorf("Error stopping HP timer: 0x%x\r\n", sc);
-                  return;
-              }
-              log_info("Stopped\r\n");
-#endif
-          }
+
+//          if (hp_time_now > TIMER_1S &&
+//              (((int)(now() - hp_time_adv_start))
+//                       % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0) {
+//              log_debug("I/2 = %d\r\n",
+//                        (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0));
+//
+//              risk_timer_started = 1;
+//
       }
     // handle main clock
   if (user_handle == MAIN_TIMER_HANDLE)
@@ -227,7 +201,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 
 #ifdef BEACON_MODE__NETWORK
     // handle data updates
-    else if (user_handle == RISK_TIMER_HANDLE) {
+    if (user_handle == RISK_TIMER_HANDLE) {
         if (handle->priority != RISK_TIMER_PRIORT) {
             log_error("Timer mismatch\r\n");
         }
@@ -286,10 +260,16 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
         app_assert_status(sc);
 
+        log_info("periodic advertising started\r\n");
+
+        log_info("setting periodic advertising data...\r\n");
+
         // printf("Setting advertising data...\r\n");
         sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
                                        &risk_data[adv_index * PER_ADV_SIZE]);
+
         app_assert_status(sc);
+        log_info("periodic advertising data set.\r\n");
 
         beacon_start();
         break;

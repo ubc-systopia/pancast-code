@@ -70,6 +70,10 @@ void update_risk_data(int len, char *data)
     risk_data_len = len;
 
     //printf ("Setting advertising data...\r\n");
+
+    // Advertising data update
+    // data provided is copied into a 'next' buffer by the API,
+    // so risk_data can be overwritten following this
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
                                    risk_data_len, &risk_data[0]);
 

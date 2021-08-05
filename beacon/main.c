@@ -77,41 +77,40 @@ int main(void)
     {
 
 #ifdef BEACON_MODE__NETWORK
-        if (adv_start >= 0) {
+        if (adv_start >= 0 && !risk_timer_started) {
             time = now();
             delta = time - ADV_START;
-            if (wait < 0) {
-              // bluetooth advertising was started
-#define half_I (((float)PER_ADV_INTERVAL) / 2)
+#define half_I ((((float)PER_ADV_INTERVAL)*1.25) / 2)
               int num_intervals = ((delta - 1)
                             / half_I) + 1;
-              int next_interval = num_intervals + num_intervals % 2 == 0 ? 1: 2;
+              int next_interval = num_intervals
+                                    + (num_intervals % 2 == 0 ? 1: 2);
               wait = next_interval * half_I;
 #undef half_I
-            } else if (time >= wait && !risk_timer_started) {
-                risk_timer_started = 1;
-                // start the risk update timer
-                // start timer when time delta is a multiple of I/2
-                // add an additional wait time to prevent problems at start
-                // Risk Timer
-                uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-                log_info("Starting risk timer\r\n");
-                // Interval is the same as the advertising interval
-                sl_sleeptimer_timer_handle_t risk_timer;
-                sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                                                           PER_ADV_INTERVAL,
-                                                           sl_timer_on_expire,
-                                                           &risk_timer_handle,
-                                           RISK_TIMER_PRIORT, 0);
-                if (sc) {
-                    log_errorf("Error starting risk timer: 0x%x\r\n", sc);
-                } else {
-                    log_info("Risk timer started at %f ms."
-                              "delta=%f ms; "
-                              "handle=0x%02x\r\n",
-                             time, delta, risk_timer);
-                }
-            }
+              while (time = now(), (delta = time - ADV_START), delta < wait) {
+                  continue; // spin
+              }
+              risk_timer_started = 1;
+              // start the risk update timer
+              // start timer when time delta is a multiple of I/2
+              // add an additional wait time to prevent problems at start
+              // Risk Timer
+              uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+              // Interval is the same as the advertising interval
+              sl_sleeptimer_timer_handle_t risk_timer;
+              sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
+                                                         PER_ADV_INTERVAL,
+                                                         sl_timer_on_expire,
+                                                         &risk_timer_handle,
+                                         RISK_TIMER_PRIORT, 0);
+              if (sc) {
+                  log_errorf("Error starting risk timer: 0x%x\r\n", sc);
+              } else {
+                  log_info("Risk timer started at %f ms."
+                            "delta=%f ms; "
+                            "handle=0x%02x\r\n",
+                           time, delta, risk_timer);
+              }
         }
 #endif
 

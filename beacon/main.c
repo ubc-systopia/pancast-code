@@ -99,17 +99,19 @@ int main(void)
               // Interval is the same as the advertising interval
               sl_sleeptimer_timer_handle_t risk_timer;
               sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                                                         PER_ADV_INTERVAL,
+                                                 PER_ADV_INTERVAL * 1.25,
                                                          sl_timer_on_expire,
                                                          &risk_timer_handle,
                                          RISK_TIMER_PRIORT, 0);
               if (sc) {
                   log_errorf("Error starting risk timer: 0x%x\r\n", sc);
               } else {
-                  log_info("Risk timer started at %f ms."
-                            "delta=%f ms; "
+                  log_info("Risk timer started at %f ms.\r\n"
+                            "delta=%f ms; \r\n"
+                            "interval: %lu ms\r\n"
                             "handle=0x%02x\r\n",
-                           time, delta, risk_timer);
+                           time, delta, (uint32_t)(PER_ADV_INTERVAL * 1.25),
+                           risk_timer);
               }
         }
 #endif

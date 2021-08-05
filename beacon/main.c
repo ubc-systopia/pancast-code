@@ -83,9 +83,13 @@ int main(void)
     while (1)
     {
         if (!risk_timer_started &&
-            hp_time_now > TIMER_1S &&
+            // multiple
             (((int)(now() - HP_TIME_ADV_START))
-                     % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0)
+                   % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0
+                     &&
+            // odd multiple
+           ((((int)(now() - HP_TIME_ADV_START))
+              / (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) % 2) == 1)
           {
 #ifdef BEACON_MODE__NETWORK
             risk_timer_started = 1;

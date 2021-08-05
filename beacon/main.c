@@ -48,21 +48,6 @@ int main(void)
     // Set up timers
     sl_status_t sc = sl_sleeptimer_init();
 
-    // High-Precision clock
-    sl_sleeptimer_timer_handle_t hp_timer;
-    log_info("Starting high-precision clock\r\n");
-    uint8_t hp_timer_handle = HP_TIMER_HANDLE;
-    sc = sl_sleeptimer_start_periodic_timer_ms(&hp_timer,
-                                     TIMER_1MS,
-                                     sl_timer_on_expire,
-                                     &hp_timer_handle,
-                                   HP_TIMER_PRIORT, 0);
-    if (sc != SL_STATUS_OK) {
-        log_error("Error starting HP timer \r\n", hp_timer);
-    } else {
-        log_info("HP Timer Started. handle=0x%02x\r\n", hp_timer);
-    }
-
     // Main timer (for main clock)
     log_info("Starting main clock\r\n");
     uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
@@ -80,47 +65,55 @@ int main(void)
 
     int risk_timer_started = 0;
 
+    extern float adv_start;
+    float wait = -1; // wait time
+    float time;      // cur time
+    float delta;
+
+    extern uint32_t timer_freq;
+    extern uint64_t timer_ticks;
+
     while (1)
     {
-        if (!risk_timer_started &&
-            // multiple
-            (((int)(now() - HP_TIME_ADV_START))
-                   % (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) == 0
-                     &&
-            // odd multiple
-           ((((int)(now() - HP_TIME_ADV_START))
-              / (int)((((float)PER_ADV_INTERVAL) * 1.25) / 2.0)) % 2) == 1)
-          {
-#ifdef BEACON_MODE__NETWORK
-            risk_timer_started = 1;
-            // start the risk update timer
-            // start timer when time delta is a multiple of I/2
-            // add an additional wait time to prevent problems at start
-            // Risk Timer
-            uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-            log_info("Starting risk timer\r\n");
-            // Interval is the same as the advertising interval
-            sl_sleeptimer_timer_handle_t risk_timer;
-            sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                                                       PER_ADV_INTERVAL,
-                                                       sl_timer_on_expire,
-                                                       &risk_timer_handle,
-                                       RISK_TIMER_PRIORT, 0);
-            if (sc) {
-                log_errorf("Error starting risk timer: 0x%x\r\n", sc);
-            } else {
-                log_info("Risk timer started.  handle=0x%02x\r\n", risk_timer);
-            }
 
-            log_info("stopping HP timer (handle=0x%02x)\r\n", hp_timer);
-            sc = sl_sleeptimer_stop_timer(&hp_timer);
-            if (sc) {
-                log_errorf("Error stopping HP timer: 0x%x\r\n", sc);
-            } else {
-                log_info("Stopped\r\n");
+#ifdef BEACON_MODE__NETWORK
+        if (adv_start >= 0) {
+            time = now();
+            delta = time - ADV_START;
+            if (wait < 0) {
+              // bluetooth advertising was started
+#define half_I (((float)PER_ADV_INTERVAL) / 2)
+              int num_intervals = ((delta - 1)
+                            / half_I) + 1;
+              int next_interval = num_intervals + num_intervals % 2 == 0 ? 1: 2;
+              wait = next_interval * half_I;
+#undef half_I
+            } else if (time >= wait && !risk_timer_started) {
+                risk_timer_started = 1;
+                // start the risk update timer
+                // start timer when time delta is a multiple of I/2
+                // add an additional wait time to prevent problems at start
+                // Risk Timer
+                uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+                log_info("Starting risk timer\r\n");
+                // Interval is the same as the advertising interval
+                sl_sleeptimer_timer_handle_t risk_timer;
+                sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
+                                                           PER_ADV_INTERVAL,
+                                                           sl_timer_on_expire,
+                                                           &risk_timer_handle,
+                                           RISK_TIMER_PRIORT, 0);
+                if (sc) {
+                    log_errorf("Error starting risk timer: 0x%x\r\n", sc);
+                } else {
+                    log_info("Risk timer started at %f ms."
+                              "delta=%f ms; "
+                              "handle=0x%02x\r\n",
+                             time, delta, risk_timer);
+                }
             }
+        }
 #endif
-          }
 
         // Do not remove this call: Silicon Labs components process action routine
         // must be called from the super loop.

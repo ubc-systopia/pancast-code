@@ -40,6 +40,9 @@ int risk_data_len;
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
 int adv_index;
 
+uint32_t timer_freq;
+uint64_t timer_ticks;
+
 /* Initialize application */
 void app_init(void)
 {
@@ -49,6 +52,8 @@ void app_init(void)
 
     // Set pin PB01 for output
     GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
+
+    timer_freq = sl_sleeptimer_get_timer_frequency(); // Hz
 }
 
 /* Update risk data after receive from raspberry pi client */
@@ -169,17 +174,10 @@ void get_risk_data()
 #endif
 }
 
-float hp_time_now  = 0;
-float hp_time_adv_start;
-
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
   sl_status_t sc;
 #define user_handle (*((uint8_t*)data))
-
-  if (user_handle == HP_TIMER_HANDLE) {
-          hp_time_now++;
-      }
     // handle main clock
   if (user_handle == MAIN_TIMER_HANDLE)
     {
@@ -197,6 +195,8 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 #endif
 #undef user_handle
 }
+
+float adv_start = -1;
 
 /* Bluetooth stack event handler.
   This overrides the dummy weak implementation.
@@ -242,12 +242,13 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
         log_info("Starting periodic advertising...\r\n");
 
-        hp_time_adv_start = now();
+        adv_start = now();
         sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
+
         app_assert_status(sc);
 
-        log_info("periodic advertising started\r\n");
+        log_infof("periodic advertising started at %f ms\r\n", adv_start);
 
         log_info("setting periodic advertising data...\r\n");
 

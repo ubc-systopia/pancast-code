@@ -32,7 +32,7 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 8 // 10 ms - even no. of ms for ease of halving
+#define PER_ADV_INTERVAL 6 // 7.5 ms
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
 #define PER_TX_POWER GLOBAL_TX_POWER
@@ -45,20 +45,19 @@
 #define TIMER_1S 1000 // one second in ms, used for timer
 #define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1
-#define HP_TIMER_HANDLE   2
-#define MAIN_TIMER_PRIORT 2
-#define RISK_TIMER_PRIORT 1
-#define HP_TIMER_PRIORT   0
+#define MAIN_TIMER_PRIORT 1
+#define RISK_TIMER_PRIORT 0
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
 // #define BATCH_SIZE 2
 
-extern float hp_time_now;
-extern float hp_time_adv_start;
+// compute the current time as a float in ms
+#define now() (timer_ticks = sl_sleeptimer_get_tick_count64(), \
+                (((float)timer_ticks)/((float)timer_freq)) * 1000)
 
-#define now() hp_time_now
-#define HP_TIME_ADV_START hp_time_adv_start
+// stands for the time at which advertising started
+#define ADV_START adv_start
 
 /***************************************************************************/ /**
  * Initialize application.

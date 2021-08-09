@@ -98,7 +98,11 @@ void update_risk_data(int len, char *data)
 void get_risk_data()
 {
 #ifdef PERIODIC_TEST
-  memcpy(test_data, &seq_num, sizeof(uint32_t)); // sequence number
+  float time = now();
+  // sequence number
+  memcpy(test_data, &seq_num, sizeof(uint32_t));
+  // time stamp
+  memcpy(&test_data[sizeof(uint32_t)], &time, sizeof(float));
   // create a checksum byte
   uint8_t check =  (seq_num & 0xff000000) >> 24
                   ^(seq_num & 0x00ff0000) >> 16
@@ -109,7 +113,8 @@ void get_risk_data()
       seq_num = 0;
   }
   // then filler bytes
-  memset(&test_data[ sizeof(uint32_t)], check, PER_ADV_SIZE - sizeof(uint32_t));
+  memset(&test_data[ sizeof(uint32_t) + sizeof(float)],
+         check, PER_ADV_SIZE - sizeof(uint32_t) - sizeof(float));
   // set
   update_risk_data(PER_ADV_SIZE, test_data);
 #else

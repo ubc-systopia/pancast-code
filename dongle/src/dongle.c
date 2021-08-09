@@ -485,9 +485,16 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     }
     uint32_t seq;
     memcpy(&seq, data, sizeof(uint32_t)); // extract sequence number
-    //printf("sequence: %lu\r\n", seq);
-    log_telemf("%02x,%.0f,%d,%d,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                       dongle_hp_timer, rssi, data_len, seq);
+    if (data_len - sizeof(uint32_t) >= sizeof(float)) {
+      float tx_time;
+      memcpy(&tx_time, &data[sizeof(uint32_t)], sizeof(float)); // time stamp
+      log_telemf("%02x,%.0f,%d,%d,%lu,%f\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
+                               dongle_hp_timer, rssi, data_len, seq, tx_time);
+      }
+    else {
+      log_telemf("%02x,%.0f,%d,%d,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
+                         dongle_hp_timer, rssi, data_len, seq);
+    }
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;
     stats.num_periodic_data++;
@@ -500,7 +507,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                           ^(seq & 0x00ff0000) >> 16
                           ^(seq & 0x0000ff00) >> 8
                           ^(seq & 0x000000ff) >> 0;
-    for (int i = sizeof(uint32_t); i < data_len; i++) {
+    for (int i = sizeof(uint32_t) + sizeof(float); i < data_len; i++) {
         if (data[i] != check) {
             log_errorf("WARNING: packet data mismatch at index %d"
                         "expected 0x%02x, saw 0x%02x\r\n", i, check, data[i]);

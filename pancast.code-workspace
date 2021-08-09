@@ -32,7 +32,9 @@
             "string": "c",
             "string_view": "c",
             "ranges": "c",
-            "*.inc": "c"
+            "*.inc": "c",
+            "optional": "c",
+            "pancast.h": "c"
         }
     },
     "tasks": {

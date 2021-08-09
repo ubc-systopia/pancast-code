@@ -495,6 +495,18 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     stat_add(rssi, stats.periodic_data_rssi);
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
+    // check the content
+    uint8_t check =  (seq & 0xff000000) >> 24
+                          ^(seq & 0x00ff0000) >> 16
+                          ^(seq & 0x0000ff00) >> 8
+                          ^(seq & 0x000000ff) >> 0;
+    for (int i = sizeof(uint32_t); i < data_len; i++) {
+        if (data[i] != check) {
+            log_errorf("WARNING: packet data mismatch at index %d"
+                        "expected 0x%02x, saw 0x%02x\r\n", i, check, data[i]);
+            break;
+        }
+    }
 #define START_SEQ 0 // starting sequence number
     // check if this is the start of a new download
     if (seq ==  START_SEQ &&

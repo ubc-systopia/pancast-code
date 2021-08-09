@@ -99,12 +99,18 @@ void get_risk_data()
 {
 #ifdef PERIODIC_TEST
   memcpy(test_data, &seq_num, sizeof(uint32_t)); // sequence number
+  // create a checksum byte
+  uint8_t check =  (seq_num & 0xff000000) >> 24
+                  ^(seq_num & 0x00ff0000) >> 16
+                  ^(seq_num & 0x0000ff00) >> 8
+                  ^(seq_num & 0x000000ff) >> 0;
   seq_num++;
   if (seq_num == NUM_PACKETS) {
       seq_num = 0;
   }
-  // then a bunch of 22
-  memset(&test_data[ sizeof(uint32_t)], 22, PER_ADV_SIZE - sizeof(uint32_t));
+  // then filler bytes
+  memset(&test_data[ sizeof(uint32_t)], check, PER_ADV_SIZE - sizeof(uint32_t));
+  // set
   update_risk_data(PER_ADV_SIZE, test_data);
 #else
 #ifndef BATCH_SIZE

@@ -889,9 +889,9 @@
                                     								
                                 </option>
                                 								
-                                <option id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.printffloat.1158974609" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.printffloat" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.printffloat.1158974609" name="Printf float" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.printffloat" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
-                                <option id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.scanffloat.461718432" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.scanffloat" useByScannerDiscovery="false" value="true" valueType="boolean"/>
+                                <option id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.scanffloat.461718432" name="Scanf float" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.linker.scanffloat" useByScannerDiscovery="false" value="true" valueType="boolean"/>
                                 								
                                 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1538580713" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
                                     									

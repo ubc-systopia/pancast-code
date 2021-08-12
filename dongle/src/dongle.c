@@ -179,6 +179,14 @@ typedef struct
     download_stats_t all_download_stats;
     download_stats_t failed_download_stats;
     complete_download_stats_t complete_download_stats;
+    struct {
+      // map of sequence number to packet count for that number
+      // used to track completion of the download
+      uint32_t counts[PERIODIC_TEST_NUM_PACKETS];
+
+      // number of unique packets seen
+      int num_distinct;
+    } packet_buffer;
 } fixed_data_test_t;
 
 fixed_data_test_t lat_test;
@@ -512,6 +520,27 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             log_errorf("WARNING: packet data mismatch at index %d"
                         "expected 0x%02x, saw 0x%02x\r\n", i, check, data[i]);
             break;
+        }
+    }
+    // manage packet buffer
+//    for (int i = 0; i < PERIODIC_TEST_NUM_PACKETS; i++) {
+//        printf("%d ", lat_test.packet_buffer.counts[i]);
+//    }
+//    printf("\r\n");
+    if (seq < 0 || seq >= PERIODIC_TEST_NUM_PACKETS) {
+        log_errorf("Error: sequence number out of bounds\r\n");
+    } else {
+        int prev = lat_test.packet_buffer.counts[seq];
+        lat_test.packet_buffer.counts[seq]++;
+        if (prev == 0) {
+            lat_test.packet_buffer.num_distinct++;
+            log_infof("download progress: %.0f%%\r\n",
+                      ((float) lat_test.packet_buffer.num_distinct
+                       / PERIODIC_TEST_NUM_PACKETS) * 100);
+            if (lat_test.packet_buffer.num_distinct
+                  == PERIODIC_TEST_NUM_PACKETS) {
+                log_info("Buffered download complete!\r\n");
+            }
         }
     }
 #define START_SEQ 0 // starting sequence number

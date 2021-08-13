@@ -661,7 +661,7 @@ void beacon_broadcast()
     _beacon_load_(), _beacon_init_();
 
 #ifdef BEACON_PLATFORM__ZEPHYR
-    int8_t tx_power = 4; // has a range of [-40, 4]
+    int8_t tx_power = -20; // has a range of [-40, 4]
     _beacon_update_();
     err = _beacon_advertise_();
     if (err)

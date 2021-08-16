@@ -27,6 +27,7 @@
 #include "access.h"
 #include "encounter.h"
 #include "telemetry.h"
+#include "cuckoofilter-gadget/cf-gadget.h"
 
 #include "../../common/src/log.h"
 #include "../../common/src/pancast.h"
@@ -186,6 +187,7 @@ struct
     download_stats_t all_download_stats;
     download_stats_t failed_download_stats;
     complete_download_stats_t complete_download_stats;
+    cf_t cf;
 } lat_test;
 #endif
 
@@ -448,6 +450,28 @@ void dongle_download_complete()
   dongle_update_download_stats(lat_test.complete_download_stats.download_stats,
                                    lat_test.download);
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
+
+
+  // check the content
+  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.buf,
+                 lat_test.download.packet_buffer.received);
+
+  int status = 0;
+
+  // these should exist
+  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1);
+  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2);
+
+  // these shouldn't
+  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1);
+  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2);
+
+  if (status) {
+      log_errorf("Cuckoofilter lookup failed\r\n");
+  } else {
+      log_info("Cuckoofilter tests passed.\r\n");
+  }
+
   dongle_download_reset();
 }
 

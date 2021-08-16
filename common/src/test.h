@@ -48,10 +48,10 @@ typedef struct {
 #define TEST_NUM_PACKETS (1 + ((TEST_PAYLOAD_SIZE - 1) / TEST_PACKET_SIZE)) // N
 
 // Ephemeral IDs known to be in the test filter
-static char *exist1 = "1dad8ea6111f7db";
-static char *exist2 = "5f8465db3b720c8";
+static char *TEST_ID_EXIST_1 = "1dad8ea6111f7db";
+static char *TEST_ID_EXIST_2 = "5f8465db3b720c8";
 // not in filter
-static char *nexist1 = "blablablablabla";
-static char *nexist2 = "tralalalalalala";
+static char *TEST_ID_NEXIST_1 = "blablablablabla";
+static char *TEST_ID_NEXIST_2 = "tralalalalalala";
 
 #endif

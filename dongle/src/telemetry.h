@@ -97,15 +97,13 @@
 #define TELEM_TYPE_PERIODIC_PKT_DATA 0x08
 // Schema:
 //
-//          <t>,<rssi>,<len>,<seq?>,<t_tx>
+//          <t>,<rssi>,<len>,<seq?>
 //
 // where
 // - t is a non-persistent time-stamp for the packet
 // - rssi is the receiver RSSI value for the packet
 // - len is the length of the packet in bytes
 // - seq is the sequence number decoded from the packet, provided
-//   that enough data is present
-// - transmit time decoded from the packet, provided
 //   that enough data is present
 
 #endif

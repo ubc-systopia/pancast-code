@@ -37,15 +37,15 @@ static beacon_sk_t TEST_DONGLE_SK = {{0xdc, 0x34, 0x6a, 0xdd, 0xa3, 0x41, 0xf4,
 
 typedef uint32_t test_filter_size_t;
 
-#define TEST_FILTER_LEN 55304
+#define TEST_FILTER_LEN 1736
 
 #define TEST_PAYLOAD_SIZE TEST_FILTER_LEN                                   // P
 #define TEST_PACKET_SIZE 246                                                // S
 #define TEST_NUM_PACKETS (1 + ((TEST_PAYLOAD_SIZE - 1) / TEST_PACKET_SIZE)) // N
 
 // Ephemeral IDs known to be in the test filter
-static char *TEST_ID_EXIST_1 = "1dad8ea6111f7db";
-static char *TEST_ID_EXIST_2 = "5f8465db3b720c8";
+static char *TEST_ID_EXIST_1 = "\x67\xd1\x05\x49\x39\x36\xe9\x34\x31\xc7\xe4\x2f\xf6\x0e\x7c";
+static char *TEST_ID_EXIST_2 = "\x81\x40\x5a\x4f\xe2\xe6\x87\x79\x93\x99\x61\x22\xfe\x07\x83";
 // not in filter
 static char *TEST_ID_NEXIST_1 = "blablablablabla";
 static char *TEST_ID_NEXIST_2 = "tralalalalalala";

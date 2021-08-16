@@ -88,7 +88,10 @@ void update_risk_data(int len, char *data)
     }
 }
 
+#define PACKET_REPLICATION 1
+
 #ifdef PERIODIC_TEST
+  uint8_t pkt_rep_count = 0;
   uint32_t seq_num = 0;
   uint32_t pkt_len;
   uint8_t test_data[PER_ADV_SIZE];
@@ -111,9 +114,13 @@ void get_risk_data()
   update_risk_data(sizeof(uint32_t) + pkt_len, test_data);
 
   // update sequence
-  seq_num++;
-  if (seq_num == TEST_NUM_PACKETS) {
-      seq_num = 0;
+  pkt_rep_count++;
+  if (pkt_rep_count == PACKET_REPLICATION) {
+      pkt_rep_count = 0;
+      seq_num++;
+      if (seq_num == TEST_NUM_PACKETS) {
+          seq_num = 0;
+      }
   }
 #else
 #ifndef BATCH_SIZE

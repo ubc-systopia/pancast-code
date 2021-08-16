@@ -140,45 +140,9 @@ typedef struct
 {
     int is_active;
     double time;
-    uint32_t seq; // packet sequence number
-    uint32_t n_received_packets;
-    uint32_t n_duplicate_packets;
-    uint32_t n_bytes;
     uint32_t n_syncs_lost;
-} download_t;
-
-typedef struct
-{
-  stat_t packets;
-  stat_t duplicates;
-  stat_t duplicate_rate;
-  stat_t n_bytes;
-  stat_t syncs_lost;
-} download_stats_t;
-
-typedef struct
-{
-  download_stats_t download_stats;
-  stat_t periodic_data_avg_payload_lat; // download time
-} complete_download_stats_t;
-
-typedef int download_fail_reason;
-
-typedef struct
-{
-    uint8_t periodic_data[RISK_BROADCAST_LEN_SIZE];
-    int payloads_started;
-    int payloads_complete;
-    int payloads_failed;
-    download_fail_reason fail_packet_corrupt;
-    download_fail_reason fail_sync_lost;
-    download_fail_reason fail_packet_no_seq;
-    download_fail_reason fail_missing_data;
-    download_fail_reason fail_packet_skipped;
-    download_t download;
-    download_stats_t all_download_stats;
-    download_stats_t failed_download_stats;
-    complete_download_stats_t complete_download_stats;
+    uint32_t n_total_packets;
+    uint32_t n_corrupt_packets;
     struct {
       // map of sequence number to packet count for that number
       // used to track completion of the download
@@ -194,9 +158,35 @@ typedef struct
       uint8_t buf[TEST_PAYLOAD_SIZE];
 
     } packet_buffer;
-} fixed_data_test_t;
+} download_t;
 
-fixed_data_test_t lat_test;
+typedef struct
+{
+//  stat_t packets;
+//  stat_t duplicates;
+//  stat_t duplicate_rate;
+  stat_t n_bytes;
+  stat_t syncs_lost;
+} download_stats_t;
+
+typedef int download_fail_reason;
+
+typedef struct
+{
+  download_stats_t download_stats;
+  stat_t periodic_data_avg_payload_lat; // download time
+} complete_download_stats_t;
+
+struct
+{
+    int payloads_started;
+    int payloads_complete;
+    int payloads_failed;
+    download_t download;
+    download_stats_t all_download_stats;
+    download_stats_t failed_download_stats;
+    complete_download_stats_t complete_download_stats;
+} lat_test;
 #endif
 
 //
@@ -322,7 +312,7 @@ void dongle_stats_init()
 #ifdef MODE__PERIODIC_FIXED_DATA
 void dongle_download_init()
 {
-    memset(&lat_test, 0, sizeof(fixed_data_test_t));
+    memset(&lat_test, 0, sizeof(lat_test));
 }
 void dongle_download_reset()
 {
@@ -418,22 +408,20 @@ void dongle_hp_timer_add(uint32_t ticks)
     dongle_hp_timer += ms;
 }
 
-void dongle_download_start(uint32_t seq)
+void dongle_download_start()
 {
   lat_test.download.is_active = 1;
-  lat_test.download.seq = seq;
-  lat_test.download.n_received_packets = 1;
   log_info("Download started!\r\n");
   lat_test.payloads_started++;
 }
 
 #define dongle_update_download_stats(s, d) \
-  stat_add(d.n_duplicate_packets, s.duplicates); \
-  stat_add(d.n_bytes, s.n_bytes); \
-  stat_add(d.n_received_packets, s.packets); \
-  stat_add(d.n_duplicate_packets / d.n_received_packets, \
-           s.duplicate_rate); \
-  stat_add(d.n_syncs_lost, s.syncs_lost);
+  stat_add(d.packet_buffer.received, s.n_bytes); \
+  stat_add(d.n_syncs_lost, s.syncs_lost); \
+//  stat_add(d.n_duplicate_packets, s.duplicates); \
+//  stat_add(d.n_received_packets, s.packets); \
+//  stat_add(d.n_duplicate_packets / d.n_received_packets, \
+//           s.duplicate_rate); \
 
 void dongle_download_fail(download_fail_reason *reason)
 {
@@ -460,20 +448,7 @@ void dongle_download_complete()
   dongle_update_download_stats(lat_test.complete_download_stats.download_stats,
                                    lat_test.download);
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
-}
-
-int dongle_download_check(uint32_t n_bytes)
-{
-  if (n_bytes >= PERIODIC_FIXED_DATA_LEN)
-  {
-      if (n_bytes > PERIODIC_FIXED_DATA_LEN) {
-          log_info(
-              "WARNING: more data downloaded than expected\r\n");
-      }
-      dongle_download_complete();
-      return 1;
-  }
-  return 0;
+  dongle_download_reset();
 }
 
 void dongle_on_sync_lost()
@@ -482,8 +457,17 @@ void dongle_on_sync_lost()
   if (lat_test.download.is_active) {
       log_info("Download failed - lost sync.\r\n");
       lat_test.download.n_syncs_lost++;
-      dongle_download_fail(&lat_test.fail_sync_lost);
   }
+}
+
+void dongle_on_periodic_data_error(int8_t rssi)
+{
+  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_PKT_ERROR, dongle_hp_timer);
+#ifdef MODE__STAT
+    stats.num_periodic_data_error++;
+    stat_add(rssi, stats.periodic_data_rssi);
+    lat_test.download.n_corrupt_packets++;
+#endif
 }
 
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
@@ -495,7 +479,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         log_error("not enough data to read sequence number\r\n");
         log_error("len: %d\r\n", data_len);
         log_info("Download Failed - coult not extract sequence number\r\n");
-        dongle_download_fail(&lat_test.fail_packet_no_seq);
+        lat_test.download.n_corrupt_packets++;
         return;
     }
     uint32_t seq;
@@ -509,93 +493,31 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     stat_add(rssi, stats.periodic_data_rssi);
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
-    // manage packet buffer
     if (seq < 0 || seq >= PERIODIC_TEST_NUM_PACKETS) {
         log_errorf("Error: sequence number out of bounds\r\n");
     } else {
-        int prev = lat_test.packet_buffer.counts[seq];
-        lat_test.packet_buffer.counts[seq]++;
+        if (!lat_test.download.is_active) {
+            dongle_download_start();
+        }
+        lat_test.download.n_total_packets++;
+        int prev = lat_test.download.packet_buffer.counts[seq];
+        lat_test.download.packet_buffer.counts[seq]++;
         if (prev == 0) {
             // this is an unseen packet
 //            lat_test.packet_buffer.num_distinct++;
             uint8_t len = data_len - sizeof(uint32_t);
-            memcpy(lat_test.packet_buffer.buf + (seq * TEST_PACKET_SIZE),
+            memcpy(lat_test.download.packet_buffer.buf + (seq * TEST_PACKET_SIZE),
                    data + sizeof(uint32_t), len);
-            lat_test.packet_buffer.received += len;
+            lat_test.download.packet_buffer.received += len;
             log_infof("download progress: %.0f%%\r\n",
-                      ((float) lat_test.packet_buffer.received
+                      ((float) lat_test.download.packet_buffer.received
                        / TEST_PAYLOAD_SIZE) * 100);
-            if (lat_test.packet_buffer.received == TEST_PAYLOAD_SIZE) {
-                log_info("Buffered download complete!\r\n");
+            if (lat_test.download.packet_buffer.received == TEST_PAYLOAD_SIZE) {
+                dongle_download_complete();
             }
         }
     }
-#define START_SEQ 0 // starting sequence number
-    // check if this is the start of a new download
-    if (seq ==  START_SEQ &&
-        (!lat_test.download.is_active || lat_test.download.seq > START_SEQ)) {
-        // deal with in progress download, if any
-        if (lat_test.download.is_active) {
-            uint32_t n_good = lat_test.download.n_bytes;
-            if (!dongle_download_check(n_good))
-            {
-                log_infof("Download Failed - not enough data"
-                    "(expected %lu, got %lu)\r\n",
-                    PERIODIC_FIXED_DATA_LEN,
-                    n_good);
-                dongle_download_fail(&lat_test.fail_missing_data);
-            } else {
-                dongle_download_reset();
-            }
-        }
-        // set the first sequence no. to this packet
-        dongle_download_start(seq);
-    } else if (lat_test.download.is_active)
-    {
-        if (seq < lat_test.download.seq)
-        {
-            log_infof("Warning: Old Packet: %lu\r\n", seq);
-            return;
-        }
-        else if (seq == lat_test.download.seq)
-        {
-            log_debug("Duplicate packet: %lu\r\n", seq);
-            lat_test.download.n_duplicate_packets++;
-            return;
-        }
-        else if (seq != lat_test.download.seq + 1)
-        {
-            log_info("Download failed - missed packets!\r\n");
-            dongle_download_fail(&lat_test.fail_packet_skipped);
-        }
-        lat_test.download.seq = seq;
-        lat_test.download.n_received_packets++;
-    }
-
-    for (uint8_t i = sizeof(uint32_t); i < data_len; i++)
-    {
-        // dongle_on_byte_received
-        // shift
-        memcpy(lat_test.periodic_data, &lat_test.periodic_data[1],
-               RISK_BROADCAST_LEN_SIZE - 1);
-        // append
-        lat_test.periodic_data[RISK_BROADCAST_LEN_SIZE - 1] = data[i];
-        if (lat_test.download.is_active)
-        {
-            lat_test.download.n_bytes++;
-        }
-    }
 #endif
-}
-
-void dongle_on_periodic_data_error(int8_t rssi)
-{
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_PKT_ERROR, dongle_hp_timer);
-#ifdef MODE__STAT
-    stats.num_periodic_data_error++;
-    stat_add(rssi, stats.periodic_data_rssi);
-#endif
-    dongle_download_fail(&lat_test.fail_packet_corrupt);
 }
 
 // UPDATE
@@ -936,12 +858,12 @@ void dongle_stats()
 void dongle_download_show_stats(download_stats_t * stats, char *name)
 {
   log_infof("Download Statistics (%s):\r\n", name);
-  stat_show(stats->packets,
-            "    Received Packets", "packets");
-  stat_show(stats->duplicates,
-            "    Duplicated Packets", "packets");
-  stat_show(stats->duplicate_rate,
-            "    Duplicate rate", "duplicate/received");
+//  stat_show(stats->packets,
+//            "    Received Packets", "packets");
+//  stat_show(stats->duplicates,
+//            "    Duplicated Packets", "packets");
+//  stat_show(stats->duplicate_rate,
+//            "    Duplicate rate", "duplicate/received");
   stat_show(stats->n_bytes,
             "    Bytes Received", "bytes");
   stat_show(stats->syncs_lost,
@@ -956,12 +878,12 @@ void dongle_download_test_info()
     log_infof("    Downloads Started: %d\r\n", lat_test.payloads_started);
     log_infof("    Downloads Completed: %d\r\n", lat_test.payloads_complete);
     log_infof("    Downloads Failed: %d\r\n", lat_test.payloads_failed);
-    log_infof("        missing data: %d\r\n", lat_test.fail_missing_data);
-    log_infof("        packet corrupt: %d\r\n", lat_test.fail_packet_corrupt);
-    log_infof("        no sequence number (pkt too short): %d\r\n",
-              lat_test.fail_packet_no_seq);
-    log_infof("        skipped packet: %d\r\n", lat_test.fail_packet_skipped);
-    log_infof("        sync lost: %d\r\n", lat_test.fail_sync_lost);
+//    log_infof("        missing data: %d\r\n", lat_test.fail_missing_data);
+//    log_infof("        packet corrupt: %d\r\n", lat_test.fail_packet_corrupt);
+//    log_infof("        no sequence number (pkt too short): %d\r\n",
+//              lat_test.fail_packet_no_seq);
+//    log_infof("        skipped packet: %d\r\n", lat_test.fail_packet_skipped);
+//    log_infof("        sync lost: %d\r\n", lat_test.fail_sync_lost);
     dongle_download_show_stats(&lat_test.complete_download_stats.download_stats,
                                "completed");
     stat_show(lat_test.complete_download_stats.periodic_data_avg_payload_lat,
@@ -979,11 +901,9 @@ void dongle_download_info()
 {
 #ifdef MODE__PERIODIC_FIXED_DATA
     log_infof("Total time: %.0f ms\r\n", lat_test.download.time);
-    log_info("Packets Received: %lu\r\n", lat_test.download.n_received_packets);
-    log_infof("Duplicate packets: %lu\r\n",
-              lat_test.download.n_duplicate_packets);
+    log_info("Packets Received: %lu\r\n", lat_test.download.n_total_packets);
     log_infof("Data bytes downloaded: %lu\r\n",
-              lat_test.download.n_bytes);
+              lat_test.download.packet_buffer.received);
 #endif
 }
 

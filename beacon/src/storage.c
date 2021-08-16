@@ -63,7 +63,9 @@ void pre_erase(beacon_storage *sto, size_t write_size)
 
 int _flash_read_(beacon_storage *sto, void *data, size_t size)
 {
+#ifdef VERBOSE_DEBUG_LOGGING
     log_debugf("reading %d bytes from flash at address 0x%x\r\n", size, st.off);
+#endif
 #ifdef BEACON_PLATFORM__ZEPHYR
     return flash_read(st.dev, st.off, data, size);
 #else
@@ -74,7 +76,9 @@ int _flash_read_(beacon_storage *sto, void *data, size_t size)
 
 int _flash_write_(beacon_storage *sto, void *data, size_t size)
 {
+#ifdef VERBOSE_DEBUG_LOGGING
     log_debugf("writing %d bytes to flash at address 0x%x\r\n", size, st.off);
+#endif
 #ifdef BEACON_PLATFORM__ZEPHYR
     return flash_write(st.dev, st.off, data, size)
            ? log_error("Error writing flash\r\n"),

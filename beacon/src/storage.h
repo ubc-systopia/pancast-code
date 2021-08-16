@@ -1,6 +1,8 @@
 #ifndef STORAGE__H
 #define STORAGE__H
 
+//#define VERBOSE_DEBUG_LOGGING
+
 // Non-Volatile storage
 // Defines a simple API to read and write specific data structures
 // with minimal coupling the underlying drivers.

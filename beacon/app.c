@@ -89,7 +89,6 @@ void update_risk_data(int len, char *data)
 }
 
 #ifdef PERIODIC_TEST
-#define TEST_PAYLOAD ((uint8_t*)(beacon_config()->test_filter.bytes))
   uint32_t seq_num = 0;
   uint32_t pkt_len;
   uint8_t test_data[PER_ADV_SIZE];
@@ -104,15 +103,9 @@ void get_risk_data()
   // sequence number
   memcpy(test_data, &seq_num, sizeof(uint32_t));
 
-  // packet length
-#define min(a,b) (b < a ? b : a)
-  pkt_len = min(TEST_PACKET_SIZE,
-                  TEST_PAYLOAD_SIZE - (seq_num * TEST_PACKET_SIZE));
-#undef max
-
   // data
-  memcpy(test_data  + sizeof(uint32_t),
-         TEST_PAYLOAD + (seq_num * TEST_PACKET_SIZE), pkt_len);
+  pkt_len = beacon_storage_read_test_filter(get_beacon_storage(),
+        seq_num, test_data  + sizeof(uint32_t));
 
   // set
   update_risk_data(sizeof(uint32_t) + pkt_len, test_data);

@@ -37,14 +37,10 @@ static beacon_sk_t TEST_DONGLE_SK = {{0xdc, 0x34, 0x6a, 0xdd, 0xa3, 0x41, 0xf4,
 
 typedef uint32_t test_filter_size_t;
 
-#define TEST_FILTER_LEN 116
-
-typedef struct {
-    char bytes[TEST_FILTER_LEN];
-} test_filter_t;
+#define TEST_FILTER_LEN 55304
 
 #define TEST_PAYLOAD_SIZE TEST_FILTER_LEN                                   // P
-#define TEST_PACKET_SIZE 8                                                  // S
+#define TEST_PACKET_SIZE 246                                                // S
 #define TEST_NUM_PACKETS (1 + ((TEST_PAYLOAD_SIZE - 1) / TEST_PACKET_SIZE)) // N
 
 // Ephemeral IDs known to be in the test filter

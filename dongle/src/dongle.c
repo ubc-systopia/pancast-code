@@ -147,7 +147,7 @@ typedef struct
     struct {
       // map of sequence number to packet count for that number
       // used to track completion of the download
-      uint32_t counts[PERIODIC_TEST_NUM_PACKETS];
+      uint32_t counts[TEST_NUM_PACKETS];
 
       // number of unique packets seen
       int num_distinct;
@@ -155,8 +155,8 @@ typedef struct
       // number of bytes received
       uint32_t received;
 
-      // actual received payload
-      uint8_t buf[TEST_PAYLOAD_SIZE];
+//      // actual received payload
+//      uint8_t buf[TEST_PAYLOAD_SIZE];
 
     } packet_buffer;
 } download_t;
@@ -452,25 +452,25 @@ void dongle_download_complete()
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
 
 
-  // check the content
-  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.buf,
-                 lat_test.download.packet_buffer.received);
-
-  int status = 0;
-
-  // these should exist
-  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1);
-  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2);
-
-  // these shouldn't
-  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1);
-  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2);
-
-  if (status) {
-      log_errorf("Cuckoofilter lookup failed\r\n");
-  } else {
-      log_info("Cuckoofilter tests passed.\r\n");
-  }
+//  // check the content
+//  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.buf,
+//                 lat_test.download.packet_buffer.received);
+//
+//  int status = 0;
+//
+//  // these should exist
+//  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1);
+//  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2);
+//
+//  // these shouldn't
+//  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1);
+//  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2);
+//
+//  if (status) {
+//      log_errorf("Cuckoofilter lookup failed\r\n");
+//  } else {
+//      log_info("Cuckoofilter tests passed.\r\n");
+//  }
 
   dongle_download_reset();
 }
@@ -517,7 +517,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     stat_add(rssi, stats.periodic_data_rssi);
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
-    if (seq < 0 || seq >= PERIODIC_TEST_NUM_PACKETS) {
+    if (seq < 0 || seq >= TEST_NUM_PACKETS) {
         log_errorf("Error: sequence number out of bounds\r\n");
     } else {
         if (!lat_test.download.is_active) {
@@ -530,8 +530,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             // this is an unseen packet
 //            lat_test.packet_buffer.num_distinct++;
             uint8_t len = data_len - sizeof(uint32_t);
-            memcpy(lat_test.download.packet_buffer.buf + (seq * TEST_PACKET_SIZE),
-                   data + sizeof(uint32_t), len);
+//            memcpy(lat_test.download.packet_buffer.buf + (seq * TEST_PACKET_SIZE),
+//                   data + sizeof(uint32_t), len);
             lat_test.download.packet_buffer.received += len;
             log_infof("download progress: %.0f%%\r\n",
                       ((float) lat_test.download.packet_buffer.received

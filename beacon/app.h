@@ -21,6 +21,7 @@
 #include "sl_sleeptimer.h"
 
 #include "src/beacon.h"
+#include "src/storage.h"
 
 #include "../common/src/settings.h"
 
@@ -58,6 +59,8 @@
 
 // stands for the time at which advertising started
 #define ADV_START adv_start
+
+beacon_storage *get_beacon_storage();
 
 /***************************************************************************/ /**
  * Initialize application.

@@ -32,8 +32,6 @@ typedef struct
     pubkey_t backend_pk;                     // Backend public key
     key_size_t beacon_sk_size;               // size of secret key
     beacon_sk_t beacon_sk;                   // Secret Key
-    test_filter_size_t test_filter_size;
-    test_filter_t test_filter;
 } beacon_config_t;
 
 // Advertising interval settings
@@ -93,5 +91,4 @@ void beacon_broadcast();
 void _beacon_info_();
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
-beacon_config_t *beacon_config();
 #endif

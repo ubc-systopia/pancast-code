@@ -6,6 +6,7 @@
 // with minimal coupling the underlying drivers.
 
 #include "beacon.h"
+#include "../../common/src/test.h"
 
 #include <stddef.h>
 
@@ -13,6 +14,8 @@
 // binaries. For now, determined empirically by doing a compilation pass then adjusting
 // the value
 #define FLASH_OFFSET 0x40000
+
+#define TEST_FILTER_CHUNK_SIZE TEST_PACKET_SIZE
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <drivers/flash.h>
@@ -26,6 +29,7 @@ typedef uint32_t storage_addr_t;
 typedef struct
 {
     storage_addr_t config;  // address of device configuration
+    storage_addr_t test_filter; // test cuckoo filter
     storage_addr_t stat;    // address of saved statistics
 } _beacon_storage_map_;
 
@@ -43,6 +47,7 @@ typedef struct
     _beacon_storage_map_ map;
     storage_addr_t off; // flash offset
     uint64_t numErasures;
+    test_filter_size_t test_filter_size;
 } beacon_storage;
 
 // STORAGE INIT
@@ -59,5 +64,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg);
 
 void beacon_storage_save_stat(beacon_storage *sto, void * stat, size_t len);
 void beacon_storage_read_stat(beacon_storage *sto, void * stat, size_t len);
+int beacon_storage_read_test_filter(beacon_storage *sto, int i, uint8_t *buf);
 
 #endif

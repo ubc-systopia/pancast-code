@@ -125,7 +125,7 @@ void beacon_storage_init(beacon_storage *sto)
     {
         log_error("Start address of storage area is not a page-multiple!\r\n");
     }
-    st.map.stat = st.map.config + st.page_size;
+    st.map.stat = st.total_size - (3*st.page_size);
 }
 
 #define cf (*cfg)
@@ -155,14 +155,11 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
                    cf.beacon_sk_size, SK_MAX_SIZE);
     }
     read(cf.beacon_sk_size, &cf.beacon_sk);
-    read(sizeof(test_filter_size_t), &cf.test_filter_size);
-    if (cf.test_filter_size > 0) {
-        if (cf.test_filter_size == sizeof(test_filter_t)) {
-            read(sizeof(test_filter_t), &cf.test_filter);
-        } else {
-            log_errorf("Warning: test filter length mismatch\r\n");
-        }
+    read(sizeof(test_filter_size_t), &st.test_filter_size);
+    if (st.test_filter_size != TEST_FILTER_LEN) {
+        log_errorf("Warning: test filter length mismatch\r\n");
     }
+    st.map.test_filter = st.off;
 #undef read
     log_info("Config loaded.\r\n");
 }
@@ -180,6 +177,17 @@ void beacon_storage_read_stat(beacon_storage *sto, void *stat, size_t len)
 {
     st.off = st.map.stat;
     _flash_read_(sto, stat, len);
+}
+
+int beacon_storage_read_test_filter(beacon_storage *sto, int i, uint8_t *buf)
+{
+  st.off = st.map.test_filter + (i*TEST_FILTER_CHUNK_SIZE);
+#define min(a,b) (b < a ? b : a)
+  int len = min(TEST_FILTER_CHUNK_SIZE,
+                st.test_filter_size - (i * TEST_FILTER_CHUNK_SIZE));
+#undef min
+  _flash_read_(sto, buf, len);
+  return len;
 }
 
 #undef block_align

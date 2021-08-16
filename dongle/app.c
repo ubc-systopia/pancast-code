@@ -95,9 +95,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                            evt->data.evt_scanner_scan_report.adv_sid,
                            &sync_handle);
            if (sc != 0) {
-               app_log_info("sc: 0x%x\r\n", sc);
+               log_errorf("sync not opened: sc: 0x%x\r\n", sc);
            }
-           app_assert_status(sc);
        }
 #endif
 #undef report

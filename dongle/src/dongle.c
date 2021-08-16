@@ -186,6 +186,13 @@ typedef struct
 
       // number of unique packets seen
       int num_distinct;
+
+      // number of bytes received
+      uint32_t received;
+
+      // actual received payload
+      uint8_t buf[TEST_PAYLOAD_SIZE];
+
     } packet_buffer;
 } fixed_data_test_t;
 
@@ -493,16 +500,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     }
     uint32_t seq;
     memcpy(&seq, data, sizeof(uint32_t)); // extract sequence number
-    if (data_len - sizeof(uint32_t) >= sizeof(float)) {
-      float tx_time;
-      memcpy(&tx_time, &data[sizeof(uint32_t)], sizeof(float)); // time stamp
-      log_telemf("%02x,%.0f,%d,%d,%lu,%f\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                               dongle_hp_timer, rssi, data_len, seq, tx_time);
-      }
-    else {
-      log_telemf("%02x,%.0f,%d,%d,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                         dongle_hp_timer, rssi, data_len, seq);
-    }
+    log_telemf("%02x,%.0f,%d,%d,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
+                       dongle_hp_timer, rssi, data_len, seq);
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;
     stats.num_periodic_data++;
@@ -510,35 +509,23 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     stat_add(rssi, stats.periodic_data_rssi);
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
-    // check the content
-    uint8_t check =  (seq & 0xff000000) >> 24
-                          ^(seq & 0x00ff0000) >> 16
-                          ^(seq & 0x0000ff00) >> 8
-                          ^(seq & 0x000000ff) >> 0;
-    for (int i = sizeof(uint32_t) + sizeof(float); i < data_len; i++) {
-        if (data[i] != check) {
-            log_errorf("WARNING: packet data mismatch at index %d"
-                        "expected 0x%02x, saw 0x%02x\r\n", i, check, data[i]);
-            break;
-        }
-    }
     // manage packet buffer
-//    for (int i = 0; i < PERIODIC_TEST_NUM_PACKETS; i++) {
-//        printf("%d ", lat_test.packet_buffer.counts[i]);
-//    }
-//    printf("\r\n");
     if (seq < 0 || seq >= PERIODIC_TEST_NUM_PACKETS) {
         log_errorf("Error: sequence number out of bounds\r\n");
     } else {
         int prev = lat_test.packet_buffer.counts[seq];
         lat_test.packet_buffer.counts[seq]++;
         if (prev == 0) {
-            lat_test.packet_buffer.num_distinct++;
+            // this is an unseen packet
+//            lat_test.packet_buffer.num_distinct++;
+            uint8_t len = data_len - sizeof(uint32_t);
+            memcpy(lat_test.packet_buffer.buf + (seq * TEST_PACKET_SIZE),
+                   data + sizeof(uint32_t), len);
+            lat_test.packet_buffer.received += len;
             log_infof("download progress: %.0f%%\r\n",
-                      ((float) lat_test.packet_buffer.num_distinct
-                       / PERIODIC_TEST_NUM_PACKETS) * 100);
-            if (lat_test.packet_buffer.num_distinct
-                  == PERIODIC_TEST_NUM_PACKETS) {
+                      ((float) lat_test.packet_buffer.received
+                       / TEST_PAYLOAD_SIZE) * 100);
+            if (lat_test.packet_buffer.received == TEST_PAYLOAD_SIZE) {
                 log_info("Buffered download complete!\r\n");
             }
         }

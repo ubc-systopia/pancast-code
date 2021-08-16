@@ -558,6 +558,11 @@ void beacon_broadcast()
 #endif
 }
 
+beacon_config_t *beacon_config()
+{
+  return &config;
+}
+
 #undef MODE__STAT
 #undef APPL_VERSION
 #undef MODE__TEST_CONFIG

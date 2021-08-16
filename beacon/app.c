@@ -89,8 +89,9 @@ void update_risk_data(int len, char *data)
 }
 
 #ifdef PERIODIC_TEST
-#define NUM_PACKETS PERIODIC_TEST_NUM_PACKETS
-  uint32_t seq_num;
+#define TEST_PAYLOAD ((uint8_t*)(beacon_config()->test_filter.bytes))
+  uint32_t seq_num = 0;
+  uint32_t pkt_len;
   uint8_t test_data[PER_ADV_SIZE];
 #endif
 
@@ -99,24 +100,28 @@ void get_risk_data()
 {
 #ifdef PERIODIC_TEST
   float time = now();
+
   // sequence number
   memcpy(test_data, &seq_num, sizeof(uint32_t));
-  // time stamp
-  memcpy(&test_data[sizeof(uint32_t)], &time, sizeof(float));
-  // create a checksum byte
-  uint8_t check =  (seq_num & 0xff000000) >> 24
-                  ^(seq_num & 0x00ff0000) >> 16
-                  ^(seq_num & 0x0000ff00) >> 8
-                  ^(seq_num & 0x000000ff) >> 0;
+
+  // packet length
+#define min(a,b) (b < a ? b : a)
+  pkt_len = min(TEST_PACKET_SIZE,
+                  TEST_PAYLOAD_SIZE - (seq_num * TEST_PACKET_SIZE));
+#undef max
+
+  // data
+  memcpy(test_data  + sizeof(uint32_t),
+         TEST_PAYLOAD + (seq_num * TEST_PACKET_SIZE), pkt_len);
+
+  // set
+  update_risk_data(sizeof(uint32_t) + pkt_len, test_data);
+
+  // update sequence
   seq_num++;
-  if (seq_num == NUM_PACKETS) {
+  if (seq_num == TEST_NUM_PACKETS) {
       seq_num = 0;
   }
-  // then filler bytes
-  memset(&test_data[ sizeof(uint32_t) + sizeof(float)],
-         check, PER_ADV_SIZE - sizeof(uint32_t) - sizeof(float));
-  // set
-  update_risk_data(PER_ADV_SIZE, test_data);
 #else
 #ifndef BATCH_SIZE
 

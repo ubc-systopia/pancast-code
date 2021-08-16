@@ -43,6 +43,10 @@ typedef struct {
     char bytes[TEST_FILTER_LEN];
 } test_filter_t;
 
+#define TEST_PAYLOAD_SIZE TEST_FILTER_LEN                                   // P
+#define TEST_PACKET_SIZE 8                                                  // S
+#define TEST_NUM_PACKETS (1 + ((TEST_PAYLOAD_SIZE - 1) / TEST_PACKET_SIZE)) // N
+
 // Ephemeral IDs known to be in the test filter
 static char *exist1 = "1dad8ea6111f7db";
 static char *exist2 = "5f8465db3b720c8";

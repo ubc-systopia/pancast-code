@@ -93,5 +93,5 @@ void beacon_broadcast();
 void _beacon_info_();
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
-
+beacon_config_t *beacon_config();
 #endif

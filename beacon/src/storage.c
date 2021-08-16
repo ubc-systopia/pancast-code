@@ -155,6 +155,14 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
                    cf.beacon_sk_size, SK_MAX_SIZE);
     }
     read(cf.beacon_sk_size, &cf.beacon_sk);
+    read(sizeof(test_filter_size_t), &cf.test_filter_size);
+    if (cf.test_filter_size > 0) {
+        if (cf.test_filter_size == sizeof(test_filter_t)) {
+            read(sizeof(test_filter_t), &cf.test_filter);
+        } else {
+            log_errorf("Warning: test filter length mismatch\r\n");
+        }
+    }
 #undef read
     log_info("Config loaded.\r\n");
 }

@@ -11,7 +11,7 @@
 #define APPL_VERSION "0.1.1"
 
 #define MODE__STAT
-#define MODE__TEST_CONFIG
+//#define MODE__TEST_CONFIG
 #define MODE__DISABLE_LEGACY_DATA
 
 #include <string.h>
@@ -147,6 +147,7 @@ void _beacon_info_()
     log_info("    Advertising Interval:                  \r\n");
     log_infof("        Min:                         %x ms\r\n", BEACON_ADV_MIN_INTERVAL);
     log_infof("        Max:                         %x ms\r\n", BEACON_ADV_MAX_INTERVAL);
+    log_infof("    Test Filter Length:              %lu\r\n", config.test_filter_size);
 }
 
 #ifdef MODE__STAT

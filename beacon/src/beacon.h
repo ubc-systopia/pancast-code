@@ -13,6 +13,7 @@
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/settings.h"
+#include "../../common/src/test.h"
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>
@@ -31,6 +32,8 @@ typedef struct
     pubkey_t backend_pk;                     // Backend public key
     key_size_t beacon_sk_size;               // size of secret key
     beacon_sk_t beacon_sk;                   // Secret Key
+    test_filter_size_t test_filter_size;
+    test_filter_t test_filter;
 } beacon_config_t;
 
 // Advertising interval settings

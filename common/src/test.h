@@ -3,7 +3,9 @@
 
 // TEST DATA
 
+#include <stdint.h>
 #include "./pancast.h"
+
 
 #define TEST_BEACON_ID ((BROADCAST_SERVICE_ID << 16) + 1)
 #define TEST_BEACON_LOC_ID 12345678987654321
@@ -30,5 +32,22 @@ static beacon_sk_t TEST_DONGLE_SK = {{0xdc, 0x34, 0x6a, 0xdd, 0xa3, 0x41, 0xf4,
                                       0xd6, 0xd5}};
 
 #define PERIODIC_TEST_NUM_PACKETS 50
+
+// Cuckoo filter testing
+
+typedef uint32_t test_filter_size_t;
+
+#define TEST_FILTER_LEN 116
+
+typedef struct {
+    char bytes[TEST_FILTER_LEN];
+} test_filter_t;
+
+// Ephemeral IDs known to be in the test filter
+static char *exist1 = "1dad8ea6111f7db";
+static char *exist2 = "5f8465db3b720c8";
+// not in filter
+static char *nexist1 = "blablablablabla";
+static char *nexist2 = "tralalalalalala";
 
 #endif

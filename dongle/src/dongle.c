@@ -147,7 +147,7 @@ typedef struct
     struct {
       // map of sequence number to packet count for that number
       // used to track completion of the download
-      uint32_t counts[TEST_NUM_PACKETS];
+      uint32_t counts[TEST_NUM_PACKETS_PER_FILTER];
 
       // number of unique packets seen
       int num_distinct;
@@ -155,8 +155,10 @@ typedef struct
       // number of bytes received
       uint32_t received;
 
+      uint32_t chunk_num; // the current chunk being downloaded
+
       // actual received payload
-      uint8_t buf[TEST_FILTER_LEN];
+      uint8_t buf[MAX_FILTER_SIZE];
 
     } packet_buffer;
 } download_t;
@@ -497,19 +499,23 @@ void dongle_on_periodic_data_error(int8_t rssi)
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
 //    log_bytes(printf, printf, data, data_len, "data");
-    if (data_len < sizeof(uint32_t)) {
+    if (data_len < 2*sizeof(uint32_t)) {
         log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
                    dongle_hp_timer, rssi, data_len);
-        log_error("not enough data to read sequence number\r\n");
+        log_error("not enough data to read sequence numbers\r\n");
         log_error("len: %d\r\n", data_len);
-        log_info("Download Failed - coult not extract sequence number\r\n");
         lat_test.download.n_corrupt_packets++;
         return;
     }
-    uint32_t seq;
-    memcpy(&seq, data, sizeof(uint32_t)); // extract sequence number
-    log_telemf("%02x,%.0f,%d,%d,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                       dongle_hp_timer, rssi, data_len, seq);
+
+    // extract sequence numbers
+    uint32_t seq, chunk;
+    memcpy(&chunk, data, sizeof(uint32_t));
+    memcpy(&seq, data + sizeof(uint32_t), sizeof(uint32_t));
+
+    log_telemf("%02x,%.0f,%d,%d,%lu,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
+                       dongle_hp_timer, rssi, data_len, seq, chunk);
+
 #ifdef MODE__STAT
     stats.total_periodic_data_size += data_len;
     stats.num_periodic_data++;
@@ -517,7 +523,17 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     stat_add(rssi, stats.periodic_data_rssi);
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
-    if (seq < 0 || seq >= TEST_NUM_PACKETS) {
+    if (seq < 0 || chunk >= TEST_N_FILTERS_PER_PAYLOAD) {
+        if (lat_test.download.is_active
+              && chunk != lat_test.download.packet_buffer.chunk_num) {
+            // forced to switch chunks
+
+            log_infof("Switched to chunk %lu\r\n", chunk);
+            dongle_download_reset();
+            lat_test.download.packet_buffer.chunk_num = chunk;
+        }
+    }
+    if (seq < 0 || seq >= TEST_NUM_PACKETS_PER_FILTER) {
         log_errorf("Error: sequence number out of bounds\r\n");
     } else {
         if (!lat_test.download.is_active) {
@@ -529,14 +545,14 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         if (prev == 0) {
             // this is an unseen packet
 //            lat_test.packet_buffer.num_distinct++;
-            uint8_t len = data_len - sizeof(uint32_t);
+            uint8_t len = data_len - 2*sizeof(uint32_t);
             memcpy(lat_test.download.packet_buffer.buf + (seq * TEST_PACKET_SIZE),
-                   data + sizeof(uint32_t), len);
+                   data + 2*sizeof(uint32_t), len);
             lat_test.download.packet_buffer.received += len;
-            log_infof("download progress: %.0f%%\r\n",
+            log_infof("download progress: %.2f%%\r\n",
                       ((float) lat_test.download.packet_buffer.received
-                       / TEST_PAYLOAD_SIZE) * 100);
-            if (lat_test.download.packet_buffer.received == TEST_PAYLOAD_SIZE) {
+                       / TEST_FILTER_LEN) * 100);
+            if (lat_test.download.packet_buffer.received == TEST_FILTER_LEN) {
                 dongle_download_complete();
             }
         }

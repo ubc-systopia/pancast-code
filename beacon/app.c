@@ -89,8 +89,11 @@ void update_risk_data(int len, char *data)
 }
 
 #define PACKET_REPLICATION 1
+#define CHUNK_REPLICATION 2
 
 #ifdef PERIODIC_TEST
+  uint8_t chunk_rep_count = 0;
+  uint32_t chunk_num = 0;
   uint8_t pkt_rep_count = 0;
   uint32_t seq_num = 0;
   uint32_t pkt_len;
@@ -103,23 +106,38 @@ void get_risk_data()
 #ifdef PERIODIC_TEST
   float time = now();
 
+  // chunk number
+  memcpy(test_data, &chunk_num, sizeof(uint32_t));
+
   // sequence number
-  memcpy(test_data, &seq_num, sizeof(uint32_t));
+  memcpy(test_data + sizeof(uint32_t), &seq_num, sizeof(uint32_t));
 
   // data
   pkt_len = beacon_storage_read_test_filter(get_beacon_storage(),
-        seq_num, test_data  + sizeof(uint32_t));
+        seq_num, test_data  + 2*sizeof(uint32_t));
 
   // set
-  update_risk_data(sizeof(uint32_t) + pkt_len, test_data);
+  update_risk_data(2*sizeof(uint32_t) + pkt_len, test_data);
 
   // update sequence
   pkt_rep_count++;
   if (pkt_rep_count == PACKET_REPLICATION) {
+      // all packet retransmissions complete
       pkt_rep_count = 0;
       seq_num++;
-      if (seq_num == TEST_NUM_PACKETS) {
+      if (seq_num == TEST_NUM_PACKETS_PER_FILTER) {
+          // one filter retransmission complete
           seq_num = 0;
+          chunk_rep_count++;
+          if (chunk_rep_count == CHUNK_REPLICATION) {
+              // all filter retransmissions complete
+              chunk_rep_count = 0;
+              chunk_num++;
+              if (chunk_num == N_FILTERS_PER_PAYLOAD) {
+                  // payload transmission complete
+                  chunk_num = 0;
+              }
+          }
       }
   }
 #else

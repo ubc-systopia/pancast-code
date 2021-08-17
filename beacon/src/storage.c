@@ -183,15 +183,10 @@ void beacon_storage_read_stat(beacon_storage *sto, void *stat, size_t len)
     _flash_read_(sto, stat, len);
 }
 
-int beacon_storage_read_test_filter(beacon_storage *sto, int i, uint8_t *buf)
+void beacon_storage_read_test_filter(beacon_storage *sto, uint8_t *buf)
 {
-  st.off = st.map.test_filter + (i*TEST_FILTER_CHUNK_SIZE);
-#define min(a,b) (b < a ? b : a)
-  int len = min(TEST_FILTER_CHUNK_SIZE,
-                st.test_filter_size - (i * TEST_FILTER_CHUNK_SIZE));
-#undef min
-  _flash_read_(sto, buf, len);
-  return len;
+  st.off = st.map.test_filter;
+  _flash_read_(sto, buf, st.test_filter_size);
 }
 
 #undef block_align

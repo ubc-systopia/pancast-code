@@ -17,8 +17,6 @@
 // the value
 #define FLASH_OFFSET 0x40000
 
-#define TEST_FILTER_CHUNK_SIZE TEST_PACKET_SIZE
-
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <drivers/flash.h>
 typedef off_t storage_addr_t;
@@ -66,6 +64,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg);
 
 void beacon_storage_save_stat(beacon_storage *sto, void * stat, size_t len);
 void beacon_storage_read_stat(beacon_storage *sto, void * stat, size_t len);
-int beacon_storage_read_test_filter(beacon_storage *sto, int i, uint8_t *buf);
+void beacon_storage_read_test_filter(beacon_storage *sto, uint8_t *buf);
 
 #endif

@@ -98,6 +98,7 @@ void update_risk_data(int len, char *data)
   uint32_t seq_num = 0;
   uint32_t pkt_len;
   uint8_t test_data[PER_ADV_SIZE];
+  uint8_t test_filter[MAX_FILTER_SIZE];
 #endif
 
 /* Get risk data from raspberry pi client */
@@ -106,6 +107,10 @@ void get_risk_data()
 #ifdef PERIODIC_TEST
   float time = now();
 
+  if (seq_num == 0) {
+      beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
+  }
+
   // chunk number
   memcpy(test_data, &chunk_num, sizeof(uint32_t));
 
@@ -113,8 +118,13 @@ void get_risk_data()
   memcpy(test_data + sizeof(uint32_t), &seq_num, sizeof(uint32_t));
 
   // data
-  pkt_len = beacon_storage_read_test_filter(get_beacon_storage(),
-        seq_num, test_data  + 2*sizeof(uint32_t));
+#define min(a,b) (b < a ? b : a)
+   pkt_len = min(TEST_PACKET_SIZE,
+                   TEST_FILTER_LEN - (seq_num * TEST_PACKET_SIZE));
+#undef min
+
+  memcpy(test_data  + 2*sizeof(uint32_t),
+         test_filter + (seq_num*TEST_PACKET_SIZE), pkt_len);
 
   // set
   update_risk_data(2*sizeof(uint32_t) + pkt_len, test_data);

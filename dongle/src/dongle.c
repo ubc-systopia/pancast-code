@@ -159,6 +159,7 @@ typedef struct
 
       // actual received payload
       uint8_t buf[MAX_FILTER_SIZE];
+      uint8_t copy[MAX_FILTER_SIZE];
 
     } packet_buffer;
 } download_t;
@@ -453,25 +454,42 @@ void dongle_download_complete()
                                    lat_test.download);
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
 
+  // copy payload to copy buffer to avoid concurrent modification
+  memcpy(lat_test.download.packet_buffer.copy, lat_test.download.packet_buffer.buf,
+         lat_test.download.packet_buffer.received);
 
   // check the content
-  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.buf,
+  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.copy,
                  lat_test.download.packet_buffer.received);
 
   int status = 0;
 
   // these should exist
-  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1);
-  status |= !cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2);
+  if (!cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1)) {
+      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+                 TEST_ID_EXIST_1);
+      status += 1;
+  }
+  if (!cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2)) {
+      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+                 TEST_ID_EXIST_2);
+      status += 1;
+  }
 
   // these shouldn't
-  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1);
-  status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2);
+  if (cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1)) {
+      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
+                 TEST_ID_NEXIST_1);
+      status += 1;
+  }
+  if (cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2)) {
+      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
+                 TEST_ID_NEXIST_2);
+      status += 1;
+  }
 
-  if (status) {
-      log_errorf("Cuckoofilter tests failed\r\n");
-  } else {
-      log_info("Cuckoofilter tests passed.\r\n");
+  if (!status) {
+      log_infof("Cuckoofilter test passed\r\n");
   }
 
   dongle_download_reset();

@@ -531,7 +531,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
           && chunk != lat_test.download.packet_buffer.chunk_num) {
         // forced to switch chunks
 
-        log_infof("Switched to chunk %lu\r\n", chunk);
+        log_infof("Downloading chunk %lu\r\n", chunk);
         dongle_download_reset();
         lat_test.download.packet_buffer.chunk_num = chunk;
     }

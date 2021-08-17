@@ -133,10 +133,11 @@ void get_risk_data()
               // all filter retransmissions complete
               chunk_rep_count = 0;
               chunk_num++;
-              if (chunk_num == N_FILTERS_PER_PAYLOAD) {
+              if (chunk_num == TEST_N_FILTERS_PER_PAYLOAD) {
                   // payload transmission complete
                   chunk_num = 0;
               }
+              log_infof("switched to transmit chunk %lu\r\n", chunk_num);
           }
       }
   }

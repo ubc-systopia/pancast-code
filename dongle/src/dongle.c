@@ -524,14 +524,16 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 #endif
 #ifdef MODE__PERIODIC_FIXED_DATA
     if (seq < 0 || chunk >= TEST_N_FILTERS_PER_PAYLOAD) {
-        if (lat_test.download.is_active
-              && chunk != lat_test.download.packet_buffer.chunk_num) {
-            // forced to switch chunks
+        log_errorf("Error: chunk number out of bounds: %lu\r\n", chunk);
+        return;
+    }
+    if (lat_test.download.is_active
+          && chunk != lat_test.download.packet_buffer.chunk_num) {
+        // forced to switch chunks
 
-            log_infof("Switched to chunk %lu\r\n", chunk);
-            dongle_download_reset();
-            lat_test.download.packet_buffer.chunk_num = chunk;
-        }
+        log_infof("Switched to chunk %lu\r\n", chunk);
+        dongle_download_reset();
+        lat_test.download.packet_buffer.chunk_num = chunk;
     }
     if (seq < 0 || seq >= TEST_NUM_PACKETS_PER_FILTER) {
         log_errorf("Error: sequence number out of bounds\r\n");

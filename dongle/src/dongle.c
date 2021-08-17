@@ -469,7 +469,7 @@ void dongle_download_complete()
   status |= cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2);
 
   if (status) {
-      log_errorf("Cuckoofilter lookup failed\r\n");
+      log_errorf("Cuckoofilter tests failed\r\n");
   } else {
       log_info("Cuckoofilter tests passed.\r\n");
   }

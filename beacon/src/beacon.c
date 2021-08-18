@@ -14,15 +14,22 @@
 #define MODE__TEST_CONFIG
 #define MODE__DISABLE_LEGACY_DATA
 
+#define LOG_LEVEL__DEBUG
+
 #include <string.h>
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <zephyr.h>
 #include <stddef.h>
+
 #include <sys/printk.h>
 #include <sys/util.h>
+#include <sys/byteorder.h>
+
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+#include <bluetooth/hci_vs.h>
+
 #include <drivers/flash.h>
 #else
 #include "sl_bluetooth.h"
@@ -77,8 +84,9 @@ static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
 static beacon_epoch_counter_t epoch;  // track the current time epoch
 static beacon_timer_t cycles;         // total number of updates.
 #ifdef BEACON_PLATFORM__ZEPHYR
-static struct k_timer kernel_time_lp; // low-precision kernel timer
-static struct k_timer kernel_time_hp; // high-precision kernel timer
+static struct k_timer kernel_time_lp;         // low-precision kernel timer
+static struct k_timer kernel_time_hp;         // high-precision kernel timer
+static struct k_timer kernel_time_alternater; // medium-precision kernel timer used to alternate packet generation
 #endif
 //
 // Bluetooth
@@ -86,6 +94,13 @@ static struct k_timer kernel_time_hp; // high-precision kernel timer
 static bt_data_t adv_res[] = {
     BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME,
             sizeof(CONFIG_BT_DEVICE_NAME) - 1)}; // Advertising response
+// fields for constructing packet
+static uint8_t service_data_type = 0x16;
+static bt_gaen_wrapper_t gaen_payload = {
+    .flags = BT_DATA_BYTES(0x01, 0x1a),
+    .serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd)}; // container for gaen broadcast data
+static uint32_t num_ms_in_min = 60000;
+static uint32_t alt_time_in_ms = 1000; // alt clock tick time (currently 1s)
 #else
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
@@ -158,7 +173,6 @@ typedef struct
     beacon_timer_t end;
     uint32_t cycles;
     uint32_t epochs;
-    uint16_t tx_packets;
 } beacon_stats_t;
 
 beacon_stats_t stats;
@@ -177,7 +191,6 @@ void beacon_stat_update()
     stats.end = beacon_time;
     stats.cycles = stat_cycles;
     stats.epochs = stat_epochs;
-    sl_bt_system_get_counters(1, &stats.tx_packets, 0, 0, 0);
 }
 
 static void _beacon_stats_()
@@ -190,7 +203,6 @@ static void _beacon_stats_()
     log_infof("         End:                        %u\r\n", stats.end);
     log_infof("     Cycles:                         %u\r\n", stats.cycles);
     log_infof("     Completed Epochs:               %u\r\n", stats.epochs);
-    log_infof("     Transmitted Packets:               %u\r\n", stats.tx_packets);
 
     beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
     beacon_stats_init();
@@ -219,6 +231,46 @@ static void _beacon_report_()
         log_info("\r\n");
         log_info("***          End Report            ***\r\n");
     }
+}
+
+// Set transmission power.
+// Yoinked from (https://github.com/zephyrproject-rtos/zephyr/blob/main/samples/bluetooth/hci_pwr_ctrl/src/main.c)
+static void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
+{
+    struct bt_hci_cp_vs_write_tx_power_level *cp;
+    struct bt_hci_rp_vs_write_tx_power_level *rp;
+    struct net_buf *buf, *rsp = NULL;
+    int err;
+
+    buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+                            sizeof(*cp));
+    if (!buf)
+    {
+        printk("Unable to allocate command buffer\n");
+        return;
+    }
+
+    cp = net_buf_add(buf, sizeof(*cp));
+    cp->handle = sys_cpu_to_le16(handle);
+    cp->handle_type = handle_type;
+    cp->tx_power_level = tx_pwr_lvl;
+
+    err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+                               buf, &rsp);
+    if (err)
+    {
+        uint8_t reason = rsp ? ((struct bt_hci_rp_vs_write_tx_power_level *)
+                                    rsp->data)
+                                   ->status
+                             : 0;
+        printk("Set Tx power err: %d reason 0x%02x\n", err, reason);
+        return;
+    }
+
+    rp = (void *)rsp->data;
+    printk("Actual Tx Power: %d\n", rp->selected_tx_power);
+
+    net_buf_unref(rsp);
 }
 
 // Intermediary transformer to create a well-formed BT data type
@@ -266,6 +318,7 @@ static void _encode_encounter_()
 
 static void _beacon_encode_()
 {
+
     // Load broadcast into bluetooth payload
     _encode_encounter_();
     //print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data pre-encode");
@@ -300,9 +353,76 @@ static void _gen_ephid_()
     print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 }
 
+// populates gaen_payload.service_data_internals with procotol specific data fields
+static int _set_adv_data_gaen_()
+{
+#ifdef BEACON_PLATFORM__ZEPHYR
+    char ENS_identifier[2] = "\x6f\xfd";
+    char rolling_proximity_identifier[16] = "\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef";
+    char associated_encrypted_metadata[4] = "\xaa\xaa\xaa\xaa";
+    for (int i = 0; i < 22; i++)
+    {
+        if (i < 2)
+        {
+            gaen_payload.service_data_internals[i] = ENS_identifier[i];
+        }
+        else if (i >= 18)
+        {
+            gaen_payload.service_data_internals[i] = associated_encrypted_metadata[i - 18];
+        }
+        else
+        {
+            gaen_payload.service_data_internals[i] = rolling_proximity_identifier[i - 2];
+        }
+    }
+    return 0;
+#endif
+    return -1;
+}
+
+// procedure to change the type of packet being transmitted
+void _alternate_advertisement_content_(uint32_t timer)
+{
+    if (timer % 2 == 1)
+    {
+        // currently transmitting pancast data, switch to gaen data
+        int err = _set_adv_data_gaen_();
+        if (err)
+        {
+            log_error("Failed to obtain gaen advertisement data");
+            return;
+        }
+        bt_data_t serviceData = BT_DATA(service_data_type,
+                                        gaen_payload.service_data_internals, ARRAY_SIZE(gaen_payload.service_data_internals));
+        bt_data_t flags = BT_DATA_BYTES(0x01, 0x1a);
+        bt_data_t serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd);
+        bt_data_t data[3] = {flags, serviceUUID, serviceData};
+
+        err = bt_le_adv_update_data(
+            data, ARRAY_SIZE(data), NULL, 0); // has 3 fields
+        if (err)
+        {
+            log_errorf("Advertising failed to start (err %d)\r\n", err);
+            return;
+        }
+    }
+    else
+    {
+        // currently transmitting gaen data, switch to pancast data
+        int err = bt_le_adv_update_data(
+            payload.bt_data, ARRAY_SIZE(payload.bt_data),
+            adv_res, ARRAY_SIZE(adv_res));
+        if (err)
+        {
+            log_errorf("Advertising failed to start (err %d)\r\n", err);
+            return;
+        }
+    }
+    return;
+}
+
 static void _beacon_init_()
 {
-
     epoch = 0;
     cycles = 0;
 
@@ -322,17 +442,19 @@ static void _beacon_init_()
         beacon_stats_init();
     }
 #endif
-
     _beacon_info_();
 
 // Timer Start
 #ifdef BEACON_PLATFORM__ZEPHYR
     k_timer_init(&kernel_time_lp, NULL, NULL);
     k_timer_init(&kernel_time_hp, NULL, NULL);
+    k_timer_init(&kernel_time_alternater, NULL, NULL);
 #define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
 #define DUR_HP K_MSEC(1)
+#define DUR_ALT K_MSEC(alt_time_in_ms)
     k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
     k_timer_start(&kernel_time_hp, DUR_HP, DUR_HP);
+    k_timer_start(&kernel_time_alternater, DUR_ALT, DUR_ALT);
 #undef DUR_HP
 #undef DUR_LP
 #endif
@@ -373,6 +495,7 @@ int _set_adv_data_()
         return -1;
     }
     log_debug("Success!\r\n");
+#else
 #endif
 #endif
     return 0;
@@ -382,23 +505,22 @@ static int _beacon_advertise_()
 {
     int err = 0;
 #ifdef BEACON_PLATFORM__ZEPHYR
-    // Start advertising
     err = bt_le_adv_start(
         BT_LE_ADV_PARAM(
-            BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address
+            BT_LE_ADV_OPT_USE_IDENTITY | BT_LE_ADV_OPT_DISABLE_CHAN_38 | BT_LE_ADV_OPT_DISABLE_CHAN_39, // use random identity address,
             BEACON_ADV_MIN_INTERVAL,
             BEACON_ADV_MAX_INTERVAL,
-            NULL // undirected advertising
-            ),
+            NULL), // undirected advertising
         payload.bt_data, ARRAY_SIZE(payload.bt_data),
         adv_res, ARRAY_SIZE(adv_res));
     if (err)
     {
         log_errorf("Advertising failed to start (err %d)\r\n", err);
+        return -1;
     }
     else
     {
-        // obtain and report adverisement address
+        // obtain and report advertisement address
         char addr_s[BT_ADDR_LE_STR_LEN];
         bt_addr_le_t addr = {0};
         size_t count = 1;
@@ -458,16 +580,6 @@ static int _beacon_advertise_()
 
 static int _beacon_pause_()
 {
-    // stop current advertising cycle
-#ifdef BEACON_PLATFORM__ZEPHYR
-    int err = bt_le_adv_stop();
-    if (err)
-    {
-        log_errorf("Advertising failed to stop (err %d)\r\n", err);
-        return err;
-    }
-    log_debug("advertising stopped\r\n");
-#endif
     cycles++;
 #ifdef MODE__STAT
     stat_cycles++;
@@ -480,7 +592,6 @@ void _beacon_update_()
 {
     _beacon_epoch_();
     _beacon_encode_();
-    _set_adv_data_();
 }
 
 int beacon_clock_increment(beacon_timer_t time)
@@ -497,26 +608,41 @@ int beacon_loop()
 {
     _beacon_update_();
 
-    uint32_t lp_timer_status = 0, hp_timer_status = 0;
+    uint32_t lp_timer_status = 0, hp_timer_status = 0, alt_timer_status = 0;
 
     int err = 0;
     while (!err)
     {
-        // get most updated time
-        // Low-precision timer is synced, so accumulate status here
-        lp_timer_status += k_timer_status_get(&kernel_time_lp);
 
-        // update beacon clock using kernel. The addition is the number of
-        // periods elapsed in the internal timer
-        beacon_clock_increment(lp_timer_status);
+#ifdef BEACON_GAEN_ENABLED
+        alt_timer_status += k_timer_status_get(&kernel_time_alternater);
+        if (alt_timer_status % (num_ms_in_min / alt_time_in_ms) == 0)
+        {
+#endif
+            // get most updated time
+            // Low-precision timer is synced, so accumulate status here
+            lp_timer_status += k_timer_status_get(&kernel_time_lp);
 
-        // high-precision collects the raw number of expirations
-        hp_timer_status = k_timer_status_get(&kernel_time_hp);
+            // update beacon clock using kernel. The addition is the number of
+            // periods elapsed in the internal timer
+            beacon_clock_increment(lp_timer_status);
 
-        // Wait for a clock update, this blocks until the internal timer
-        // period expires, indicating that at least one unit of relevant beacon
-        // time has elapsed. timer status is reset here
+            // high-precision collects the raw number of expirations
+            hp_timer_status = k_timer_status_get(&kernel_time_hp);
+#ifdef BEACON_GAEN_ENABLED
+        }
+
+        _alternate_advertisement_content_(alt_timer_status);
+        alt_timer_status += k_timer_status_sync(&kernel_time_alternater);
+
+#else
+
+        // // Wait for a clock update, this blocks until the internal timer
+        // // period expires, indicating that at least one unit of relevant beacon
+        // // time has elapsed. timer status is reset here
         lp_timer_status = k_timer_status_sync(&kernel_time_lp);
+
+#endif
     }
     return err;
 }
@@ -544,16 +670,20 @@ void beacon_broadcast()
 
     _beacon_load_(), _beacon_init_();
 
+#ifdef BEACON_PLATFORM__ZEPHYR
+    int8_t tx_power = 4; // has a range of [-40, 4]
+    _beacon_update_();
     err = _beacon_advertise_();
     if (err)
     {
         log_errorf("Broadcasting failed (err %d)\r\n", err);
         return;
     }
-#ifdef BEACON_PLATFORM__ZEPHYR
+    set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV,
+                 0, tx_power);
     beacon_loop();
 #else
-    _beacon_update_();
+
 #endif
 }
 

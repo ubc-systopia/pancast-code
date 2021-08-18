@@ -1,14 +1,14 @@
 {
     "folders": [
-		{
-			"name": "Apps",
-			"path": "."
-		},
-		{
-			"name": "Zephyr",
-			"path": "/Users/rowan/Work/pancast/zephyrproject/zephyr"
-		}
-	],
+        {
+            "name": "Apps",
+            "path": "."
+        },
+        {
+            "name": "Zephyr",
+            "path": "/Users/rowan/Work/pancast" // "../zephyrproject/zephyr" on WSL platform
+        }
+    ],
     "settings": {
         "cSpell.words": [
             "OTPs",
@@ -25,6 +25,16 @@
         "editor.formatOnSave": true,
         "[c,cpp]": {
             "editor.defaultFormatter": "ms-vscode.cpptools"
+        },
+        "files.associations": {
+            "regex": "c",
+            "array": "c",
+            "string": "c",
+            "string_view": "c",
+            "ranges": "c",
+            "*.inc": "c",
+            "optional": "c",
+            "pancast.h": "c"
         }
     },
     "tasks": {

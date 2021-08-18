@@ -4,10 +4,14 @@
 #include <assert.h>
 
 #define BEACON_MODE__NETWORK // comment to run as non-network beacon
+
 #define PERIODIC_TEST // uncomment to send test data
 //#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
 
-#define BEACON_PLATFORM__GECKO
+
+#define BEACON_PLATFORM__ZEPHYR
+
+// #define BEACON_GAEN_ENABLED
 
 #define BEACON_NO_OP assert(1);
 
@@ -76,6 +80,13 @@ typedef union
     encounter_broadcast_raw_t en_data;
     bt_data_t bt_data[1];
 } bt_wrapper_t;
+
+typedef union
+{
+    bt_data_t flags;
+    bt_data_t serviceUUID;
+    char service_data_internals[22];
+} bt_gaen_wrapper_t;
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 void main(void);

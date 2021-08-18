@@ -413,11 +413,11 @@ void dongle_hp_timer_add(uint32_t ticks)
 
 void dongle_download_start(uint32_t seq)
 {
-  lat_test.download.is_active = 1;
-  lat_test.download.seq = seq;
-  lat_test.download.n_received_packets = 1;
-  log_info("Download started!\r\n");
-  lat_test.payloads_started++;
+    lat_test.download.is_active = 1;
+    lat_test.download.seq = seq;
+    lat_test.download.n_received_packets = 1;
+    log_info("Download started!\r\n");
+    lat_test.payloads_started++;
 }
 
 #define dongle_update_download_stats(s, d) \
@@ -430,6 +430,7 @@ void dongle_download_start(uint32_t seq)
 
 void dongle_download_fail(download_fail_reason *reason)
 {
+
   if (lat_test.download.is_active) {
     lat_test.payloads_failed++;
     dongle_update_download_stats(lat_test.all_download_stats,
@@ -444,6 +445,7 @@ void dongle_download_fail(download_fail_reason *reason)
 
 void dongle_download_complete()
 {
+
   log_info("Download complete!\r\n");
   lat_test.payloads_complete++;
   // compute latency
@@ -453,38 +455,44 @@ void dongle_download_complete()
   dongle_update_download_stats(lat_test.complete_download_stats.download_stats,
                                    lat_test.download);
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
+
 }
 
 int dongle_download_check(uint32_t n_bytes)
 {
-  if (n_bytes >= PERIODIC_FIXED_DATA_LEN)
-  {
-      if (n_bytes > PERIODIC_FIXED_DATA_LEN) {
-          log_info(
-              "WARNING: more data downloaded than expected\r\n");
-      }
-      dongle_download_complete();
-      return 1;
-  }
-  return 0;
+    if (n_bytes >= PERIODIC_FIXED_DATA_LEN)
+    {
+        if (n_bytes > PERIODIC_FIXED_DATA_LEN)
+        {
+            log_info(
+                "WARNING: more data downloaded than expected\r\n");
+        }
+        dongle_download_complete();
+        return 1;
+    }
+    return 0;
 }
 
 void dongle_on_sync_lost()
 {
+
   log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_SYNC_LOST, dongle_hp_timer);
   if (lat_test.download.is_active) {
       log_info("Download failed - lost sync.\r\n");
       lat_test.download.n_syncs_lost++;
       dongle_download_fail(&lat_test.fail_sync_lost);
   }
+
 }
 
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
+
 //    log_bytes(printf, printf, data, data_len, "data");
     if (data_len < sizeof(uint32_t)) {
         log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
                    dongle_hp_timer, rssi, data_len);
+
         log_error("not enough data to read sequence number\r\n");
         log_error("len: %d\r\n", data_len);
         log_info("Download Failed - coult not extract sequence number\r\n");
@@ -545,25 +553,30 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     }
 #define START_SEQ 0 // starting sequence number
     // check if this is the start of a new download
-    if (seq ==  START_SEQ &&
-        (!lat_test.download.is_active || lat_test.download.seq > START_SEQ)) {
+    if (seq == START_SEQ &&
+        (!lat_test.download.is_active || lat_test.download.seq > START_SEQ))
+    {
         // deal with in progress download, if any
-        if (lat_test.download.is_active) {
+        if (lat_test.download.is_active)
+        {
             uint32_t n_good = lat_test.download.n_bytes;
             if (!dongle_download_check(n_good))
             {
                 log_infof("Download Failed - not enough data"
+
                     "(expected %lu, got %lu)\r\n",
                     PERIODIC_FIXED_DATA_LEN,
                     n_good);
                 dongle_download_fail(&lat_test.fail_missing_data);
             } else {
+
                 dongle_download_reset();
             }
         }
         // set the first sequence no. to this packet
         dongle_download_start(seq);
-    } else if (lat_test.download.is_active)
+    }
+    else if (lat_test.download.is_active)
     {
         if (seq < lat_test.download.seq)
         {
@@ -966,6 +979,7 @@ void dongle_download_test_info()
 #ifdef MODE__PERIODIC_FIXED_DATA
     log_info("\r\n");
     log_info("Risk Broadcast:\r\n");
+
     log_infof("    Downloads Started: %d\r\n", lat_test.payloads_started);
     log_infof("    Downloads Completed: %d\r\n", lat_test.payloads_complete);
     log_infof("    Downloads Failed: %d\r\n", lat_test.payloads_failed);
@@ -983,6 +997,7 @@ void dongle_download_test_info()
                                "failed");
     dongle_download_show_stats(&lat_test.all_download_stats,
                                "overall");
+
 
     dongle_download_init();
 #endif

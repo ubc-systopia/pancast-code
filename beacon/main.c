@@ -53,9 +53,10 @@ int main(void)
     uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
     sl_sleeptimer_timer_handle_t timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-                               TIMER_1MS * BEACON_TIMER_RESOLUTION,
+                                               TIMER_1MS * BEACON_TIMER_RESOLUTION,
                                                sl_timer_on_expire,
                                                &main_timer_handle,
+
                                MAIN_TIMER_PRIORT, 0);
     if (sc != SL_STATUS_OK) {
             log_error("Error starting main timer \r\n", timer);

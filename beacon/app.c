@@ -116,12 +116,13 @@ void get_risk_data()
       beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
   }
 
-  // chunk number
-  memcpy(test_data, &chunk_num, sizeof(uint32_t));
-
   // sequence number
-  memcpy(test_data + sizeof(uint32_t), &seq_num, sizeof(uint32_t));
+  memcpy(test_data, &seq_num, sizeof(uint32_t));
 
+  // chunk number
+  memcpy(test_data + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
+
+  // chunk length
   memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, sizeof(uint32_t));
 
   // data

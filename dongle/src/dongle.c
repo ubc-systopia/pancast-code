@@ -546,8 +546,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
     // extract sequence numbers
     uint32_t seq, chunk, chunk_len;
-    memcpy(&chunk, data, sizeof(uint32_t));
-    memcpy(&seq, data + sizeof(uint32_t), sizeof(uint32_t));
+    memcpy(&seq, data, sizeof(uint32_t));
+    memcpy(&chunk, data + sizeof(uint32_t), sizeof(uint32_t));
     memcpy(&chunk_len, data + 2*sizeof(uint32_t), sizeof(uint32_t));
 
     log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,

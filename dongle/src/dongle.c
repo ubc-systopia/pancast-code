@@ -167,7 +167,7 @@ typedef struct
 typedef struct
 {
 //  stat_t packets;
-//  stat_t duplicates;
+  stat_t pkt_duplication;
 //  stat_t duplicate_rate;
   stat_t n_bytes;
   stat_t syncs_lost;
@@ -191,6 +191,7 @@ struct
     download_stats_t failed_download_stats;
     complete_download_stats_t complete_download_stats;
     cf_t cf;
+    download_fail_reason cuckoo_fail;
 } lat_test;
 #endif
 
@@ -416,14 +417,23 @@ void dongle_hp_timer_add(uint32_t ticks)
 void dongle_download_start()
 {
   lat_test.download.is_active = 1;
-  log_info("Download started!\r\n");
+  log_debug("Download started!\r\n");
   lat_test.payloads_started++;
 }
+
+// Count packet duplication
+#define dongle_download_duplication(s, d) \
+  for (int i = 0; i < MAX_NUM_PACKETS_PER_FILTER; i++) { \
+      uint32_t count = d.packet_buffer.counts[i]; \
+      if (count > 0) { \
+          stat_add(count, s.pkt_duplication); \
+      } \
+  } \
 
 #define dongle_update_download_stats(s, d) \
   stat_add(d.packet_buffer.received, s.n_bytes); \
   stat_add(d.n_syncs_lost, s.syncs_lost); \
-//  stat_add(d.n_duplicate_packets, s.duplicates); \
+  dongle_download_duplication(s, d) \
 //  stat_add(d.n_received_packets, s.packets); \
 //  stat_add(d.n_duplicate_packets / d.n_received_packets, \
 //           s.duplicate_rate); \
@@ -437,14 +447,14 @@ void dongle_download_fail(download_fail_reason *reason)
     dongle_update_download_stats(lat_test.failed_download_stats,
                                      lat_test.download);
     *reason = *reason + 1;
-    dongle_download_info();
+//    dongle_download_info();
     dongle_download_reset();
   }
 }
 
 void dongle_download_complete()
 {
-  log_info("Download complete!\r\n");
+  log_debug("Download complete!\r\n");
   lat_test.payloads_complete++;
   // compute latency
   double lat = lat_test.download.time;
@@ -462,30 +472,32 @@ void dongle_download_complete()
 
   // these should exist
   if (!cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+      log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_1);
       status += 1;
   }
   if (!cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+      log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_2);
       status += 1;
   }
 
   // these shouldn't
   if (cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1)) {
-      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
+      log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_1);
       status += 1;
   }
   if (cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2)) {
-      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
+      log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_2);
       status += 1;
   }
 
   if (!status) {
-      log_infof("Cuckoofilter test passed\r\n");
+      log_debugf("Cuckoofilter test passed\r\n");
+  } else {
+      dongle_download_fail(&lat_test.cuckoo_fail);
   }
 
   dongle_download_reset();
@@ -542,7 +554,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
           && chunk != lat_test.download.packet_buffer.chunk_num) {
         // forced to switch chunks
 
-        log_infof("Downloading chunk %lu\r\n", chunk);
+        log_debugf("Downloading chunk %lu\r\n", chunk);
         dongle_download_reset();
         lat_test.download.packet_buffer.chunk_num = chunk;
     } else if (lat_test.download.is_active
@@ -567,7 +579,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             memcpy(lat_test.download.packet_buffer.buf + (seq * MAX_PACKET_SIZE),
                    data + PACKET_HEADER_LEN, len);
             lat_test.download.packet_buffer.received += len;
-            log_infof("download progress: %.2f%%\r\n",
+            log_debugf("download progress: %.2f%%\r\n",
                       ((float) lat_test.download.packet_buffer.received
                        / TEST_FILTER_LEN) * 100);
             if (lat_test.download.packet_buffer.received
@@ -919,8 +931,8 @@ void dongle_download_show_stats(download_stats_t * stats, char *name)
   log_infof("Download Statistics (%s):\r\n", name);
 //  stat_show(stats->packets,
 //            "    Received Packets", "packets");
-//  stat_show(stats->duplicates,
-//            "    Duplicated Packets", "packets");
+  stat_show(stats->pkt_duplication,
+            "    Packet Duplication", "packet copies");
 //  stat_show(stats->duplicate_rate,
 //            "    Duplicate rate", "duplicate/received");
   stat_show(stats->n_bytes,
@@ -943,6 +955,7 @@ void dongle_download_test_info()
 //              lat_test.fail_packet_no_seq);
 //    log_infof("        skipped packet: %d\r\n", lat_test.fail_packet_skipped);
 //    log_infof("        sync lost: %d\r\n", lat_test.fail_sync_lost);
+    log_infof("        decode fail: %d\r\n", lat_test.cuckoo_fail);
     dongle_download_show_stats(&lat_test.complete_download_stats.download_stats,
                                "completed");
     stat_show(lat_test.complete_download_stats.periodic_data_avg_payload_lat,

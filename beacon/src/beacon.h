@@ -24,7 +24,7 @@
 #include <bluetooth/bluetooth.h>
 #define LOG_LEVEL__INFO
 #else
-#include "./sha256/sha-256.h"
+#include "./sha-2/sha-256.h"
 #endif
 
 typedef struct

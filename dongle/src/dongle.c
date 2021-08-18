@@ -159,7 +159,6 @@ typedef struct
 
       // actual received payload
       uint8_t buf[MAX_FILTER_SIZE];
-      uint8_t copy[MAX_FILTER_SIZE];
 
     } packet_buffer;
 } download_t;
@@ -454,12 +453,8 @@ void dongle_download_complete()
                                    lat_test.download);
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
 
-  // copy payload to copy buffer to avoid concurrent modification
-  memcpy(lat_test.download.packet_buffer.copy, lat_test.download.packet_buffer.buf,
-         lat_test.download.packet_buffer.received);
-
   // check the content
-  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.copy,
+  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.buf,
                  lat_test.download.packet_buffer.received);
 
   int status = 0;

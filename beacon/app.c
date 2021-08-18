@@ -89,7 +89,7 @@ void update_risk_data(int len, char *data)
 }
 
 #define PACKET_REPLICATION 1
-#define CHUNK_REPLICATION 2
+#define CHUNK_REPLICATION 10
 
 #ifdef PERIODIC_TEST
   uint8_t chunk_rep_count = 0;

@@ -23,6 +23,7 @@
 #include "src/beacon.h"
 #include "src/storage.h"
 
+#include "../common/src/pancast.h"
 #include "../common/src/settings.h"
 
 /***************************************************************************/ /**
@@ -34,7 +35,6 @@
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
 #define PER_ADV_INTERVAL 80 // 100 ms - round ms number since update timer in ms
-#define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
 #define PER_TX_POWER GLOBAL_TX_POWER
 

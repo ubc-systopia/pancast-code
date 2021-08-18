@@ -88,15 +88,20 @@ void update_risk_data(int len, char *data)
     }
 }
 
+#ifdef PERIODIC_TEST
+
 #define PACKET_REPLICATION 1
 #define CHUNK_REPLICATION 10
 
-#ifdef PERIODIC_TEST
+#define TEST_NUM_PACKETS_PER_FILTER \
+  (1 + ((TEST_FILTER_LEN - 1) / MAX_PACKET_SIZE))                       // N
+
   uint8_t chunk_rep_count = 0;
   uint32_t chunk_num = 0;
   uint8_t pkt_rep_count = 0;
   uint32_t seq_num = 0;
   uint32_t pkt_len;
+  uint32_t chunk_len = TEST_FILTER_LEN;
   uint8_t test_data[PER_ADV_SIZE];
   uint8_t test_filter[MAX_FILTER_SIZE];
 #endif
@@ -117,17 +122,19 @@ void get_risk_data()
   // sequence number
   memcpy(test_data + sizeof(uint32_t), &seq_num, sizeof(uint32_t));
 
+  memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, sizeof(uint32_t));
+
   // data
 #define min(a,b) (b < a ? b : a)
-   pkt_len = min(TEST_PACKET_SIZE,
-                   TEST_FILTER_LEN - (seq_num * TEST_PACKET_SIZE));
+   pkt_len = min(MAX_PACKET_SIZE,
+                   TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
 #undef min
 
-  memcpy(test_data  + 2*sizeof(uint32_t),
-         test_filter + (seq_num*TEST_PACKET_SIZE), pkt_len);
+  memcpy(test_data  + PACKET_HEADER_LEN,
+         test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
 
   // set
-  update_risk_data(2*sizeof(uint32_t) + pkt_len, test_data);
+  update_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
 
   // update sequence
   pkt_rep_count++;

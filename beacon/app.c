@@ -89,9 +89,21 @@ void update_risk_data(int len, char *data)
 }
 
 #ifdef PERIODIC_TEST
-#define NUM_PACKETS PERIODIC_TEST_NUM_PACKETS
-  uint32_t seq_num;
+
+#define PACKET_REPLICATION 1
+#define CHUNK_REPLICATION 10
+
+#define TEST_NUM_PACKETS_PER_FILTER \
+  (1 + ((TEST_FILTER_LEN - 1) / MAX_PACKET_SIZE))                       // N
+
+  uint8_t chunk_rep_count = 0;
+  uint32_t chunk_num = 0;
+  uint8_t pkt_rep_count = 0;
+  uint32_t seq_num = 0;
+  uint32_t pkt_len;
+  uint32_t chunk_len = TEST_FILTER_LEN;
   uint8_t test_data[PER_ADV_SIZE];
+  uint8_t test_filter[MAX_FILTER_SIZE];
 #endif
 
 /* Get risk data from raspberry pi client */
@@ -99,24 +111,54 @@ void get_risk_data()
 {
 #ifdef PERIODIC_TEST
   float time = now();
+
+  if (seq_num == 0) {
+      beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
+  }
+
   // sequence number
   memcpy(test_data, &seq_num, sizeof(uint32_t));
-  // time stamp
-  memcpy(&test_data[sizeof(uint32_t)], &time, sizeof(float));
-  // create a checksum byte
-  uint8_t check =  (seq_num & 0xff000000) >> 24
-                  ^(seq_num & 0x00ff0000) >> 16
-                  ^(seq_num & 0x0000ff00) >> 8
-                  ^(seq_num & 0x000000ff) >> 0;
-  seq_num++;
-  if (seq_num == NUM_PACKETS) {
-      seq_num = 0;
-  }
-  // then filler bytes
-  memset(&test_data[ sizeof(uint32_t) + sizeof(float)],
-         check, PER_ADV_SIZE - sizeof(uint32_t) - sizeof(float));
+
+  // chunk number
+  memcpy(test_data + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
+
+  // chunk length
+  memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, sizeof(uint32_t));
+
+  // data
+#define min(a,b) (b < a ? b : a)
+   pkt_len = min(MAX_PACKET_SIZE,
+                   TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
+#undef min
+
+  memcpy(test_data  + PACKET_HEADER_LEN,
+         test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
+
   // set
-  update_risk_data(PER_ADV_SIZE, test_data);
+  update_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
+
+  // update sequence
+  pkt_rep_count++;
+  if (pkt_rep_count == PACKET_REPLICATION) {
+      // all packet retransmissions complete
+      pkt_rep_count = 0;
+      seq_num++;
+      if (seq_num == TEST_NUM_PACKETS_PER_FILTER) {
+          // one filter retransmission complete
+          seq_num = 0;
+          chunk_rep_count++;
+          if (chunk_rep_count == CHUNK_REPLICATION) {
+              // all filter retransmissions complete
+              chunk_rep_count = 0;
+              chunk_num++;
+              if (chunk_num == TEST_N_FILTERS_PER_PAYLOAD) {
+                  // payload transmission complete
+                  chunk_num = 0;
+              }
+              log_infof("switched to transmit chunk %lu\r\n", chunk_num);
+          }
+      }
+  }
 #else
 #ifndef BATCH_SIZE
 

@@ -17,6 +17,7 @@
 
 #include "../../common/src/pancast.h"
 #include "../../common/src/settings.h"
+#include "../../common/src/test.h"
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>
@@ -101,5 +102,4 @@ void beacon_broadcast();
 void _beacon_info_();
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
-
 #endif

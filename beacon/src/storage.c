@@ -63,7 +63,9 @@ void pre_erase(beacon_storage *sto, size_t write_size)
 
 int _flash_read_(beacon_storage *sto, void *data, size_t size)
 {
+#ifdef VERBOSE_DEBUG_LOGGING
     log_debugf("reading %d bytes from flash at address 0x%x\r\n", size, st.off);
+#endif
 #ifdef BEACON_PLATFORM__ZEPHYR
     return flash_read(st.dev, st.off, data, size);
 #else
@@ -74,7 +76,9 @@ int _flash_read_(beacon_storage *sto, void *data, size_t size)
 
 int _flash_write_(beacon_storage *sto, void *data, size_t size)
 {
+#ifdef VERBOSE_DEBUG_LOGGING
     log_debugf("writing %d bytes to flash at address 0x%x\r\n", size, st.off);
+#endif
 #ifdef BEACON_PLATFORM__ZEPHYR
     return flash_write(st.dev, st.off, data, size)
            ? log_error("Error writing flash\r\n"),
@@ -125,7 +129,7 @@ void beacon_storage_init(beacon_storage *sto)
     {
         log_error("Start address of storage area is not a page-multiple!\r\n");
     }
-    st.map.stat = st.map.config + st.page_size;
+    st.map.stat = st.total_size - (3*st.page_size);
 }
 
 #define cf (*cfg)
@@ -155,6 +159,11 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
                    cf.beacon_sk_size, SK_MAX_SIZE);
     }
     read(cf.beacon_sk_size, &cf.beacon_sk);
+    read(sizeof(test_filter_size_t), &st.test_filter_size);
+    if (st.test_filter_size != TEST_FILTER_LEN) {
+        log_errorf("Warning: test filter length mismatch\r\n");
+    }
+    st.map.test_filter = st.off;
 #undef read
     log_info("Config loaded.\r\n");
 }
@@ -172,6 +181,12 @@ void beacon_storage_read_stat(beacon_storage *sto, void *stat, size_t len)
 {
     st.off = st.map.stat;
     _flash_read_(sto, stat, len);
+}
+
+void beacon_storage_read_test_filter(beacon_storage *sto, uint8_t *buf)
+{
+  st.off = st.map.test_filter;
+  _flash_read_(sto, buf, st.test_filter_size);
 }
 
 #undef block_align

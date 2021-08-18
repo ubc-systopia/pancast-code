@@ -3,7 +3,9 @@
 
 // TEST DATA
 
+#include <stdint.h>
 #include "./pancast.h"
+
 
 #define TEST_BEACON_ID ((BROADCAST_SERVICE_ID << 16) + 1)
 #define TEST_BEACON_LOC_ID 12345678987654321
@@ -30,5 +32,21 @@ static beacon_sk_t TEST_DONGLE_SK = {{0xdc, 0x34, 0x6a, 0xdd, 0xa3, 0x41, 0xf4,
                                       0xd6, 0xd5}};
 
 #define PERIODIC_TEST_NUM_PACKETS 50
+
+// Cuckoo filter testing
+
+typedef uint32_t test_filter_size_t;
+
+#define TEST_FILTER_LEN 1736
+
+#define TEST_N_FILTERS_PER_PAYLOAD 10
+//#define TEST_PAYLOAD_SIZE (TEST_N_FILTERS_PER_PAYLOAD * TEST_FILTER_LEN) // P
+
+// Ephemeral IDs known to be in the test filter
+static char *TEST_ID_EXIST_1 = "\x67\xd1\x05\x49\x39\x36\xe9\x34\x31\xc7\xe4\x2f\xf6\x0e\x7c";
+static char *TEST_ID_EXIST_2 = "\x81\x40\x5a\x4f\xe2\xe6\x87\x79\x93\x99\x61\x22\xfe\x07\x83";
+// not in filter
+static char *TEST_ID_NEXIST_1 = "blablablablabla";
+static char *TEST_ID_NEXIST_2 = "tralalalalalala";
 
 #endif

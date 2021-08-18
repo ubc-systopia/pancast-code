@@ -166,11 +166,10 @@ typedef struct
 
 typedef struct
 {
-//  stat_t packets;
   stat_t pkt_duplication;
-//  stat_t duplicate_rate;
   stat_t n_bytes;
   stat_t syncs_lost;
+  stat_t est_pkt_loss;
 } download_stats_t;
 
 typedef int download_fail_reason;
@@ -428,15 +427,26 @@ void dongle_download_start()
       if (count > 0) { \
           stat_add(count, s.pkt_duplication); \
       } \
-  } \
+  }
+
+float dongle_download_esimtate_loss(download_t *d)
+{
+  uint32_t max_count = d->packet_buffer.counts[0];
+  for (int i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
+      if (d->packet_buffer.counts[i] > max_count) {
+          max_count = d->packet_buffer.counts[i];
+      }
+  }
+  return 100*(1 - (((float) d->n_total_packets)
+                /(max_count * d->packet_buffer.num_distinct)));
+}
+
 
 #define dongle_update_download_stats(s, d) \
   stat_add(d.packet_buffer.received, s.n_bytes); \
   stat_add(d.n_syncs_lost, s.syncs_lost); \
   dongle_download_duplication(s, d) \
-//  stat_add(d.n_received_packets, s.packets); \
-//  stat_add(d.n_duplicate_packets / d.n_received_packets, \
-//           s.duplicate_rate); \
+  stat_add( dongle_download_esimtate_loss(&d), s.est_pkt_loss)
 
 void dongle_download_fail(download_fail_reason *reason)
 {
@@ -574,7 +584,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         lat_test.download.packet_buffer.counts[seq]++;
         if (prev == 0) {
             // this is an unseen packet
-//            lat_test.packet_buffer.num_distinct++;
+            lat_test.download.packet_buffer.num_distinct++;
             uint8_t len = data_len - PACKET_HEADER_LEN;
             memcpy(lat_test.download.packet_buffer.buf + (seq * MAX_PACKET_SIZE),
                    data + PACKET_HEADER_LEN, len);
@@ -929,12 +939,10 @@ void dongle_stats()
 void dongle_download_show_stats(download_stats_t * stats, char *name)
 {
   log_infof("Download Statistics (%s):\r\n", name);
-//  stat_show(stats->packets,
-//            "    Received Packets", "packets");
   stat_show(stats->pkt_duplication,
             "    Packet Duplication", "packet copies");
-//  stat_show(stats->duplicate_rate,
-//            "    Duplicate rate", "duplicate/received");
+  stat_show(stats->est_pkt_loss,
+            "    Estimated loss rate", "% packets");
   stat_show(stats->n_bytes,
             "    Bytes Received", "bytes");
   stat_show(stats->syncs_lost,
@@ -949,12 +957,6 @@ void dongle_download_test_info()
     log_infof("    Downloads Started: %d\r\n", lat_test.payloads_started);
     log_infof("    Downloads Completed: %d\r\n", lat_test.payloads_complete);
     log_infof("    Downloads Failed: %d\r\n", lat_test.payloads_failed);
-//    log_infof("        missing data: %d\r\n", lat_test.fail_missing_data);
-//    log_infof("        packet corrupt: %d\r\n", lat_test.fail_packet_corrupt);
-//    log_infof("        no sequence number (pkt too short): %d\r\n",
-//              lat_test.fail_packet_no_seq);
-//    log_infof("        skipped packet: %d\r\n", lat_test.fail_packet_skipped);
-//    log_infof("        sync lost: %d\r\n", lat_test.fail_sync_lost);
     log_infof("        decode fail: %d\r\n", lat_test.cuckoo_fail);
     dongle_download_show_stats(&lat_test.complete_download_stats.download_stats,
                                "completed");

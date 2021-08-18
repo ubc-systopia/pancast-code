@@ -191,6 +191,7 @@ struct
     complete_download_stats_t complete_download_stats;
     cf_t cf;
     download_fail_reason cuckoo_fail;
+    download_fail_reason switch_chunk;
 } lat_test;
 #endif
 
@@ -564,8 +565,9 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
           && chunk != lat_test.download.packet_buffer.chunk_num) {
         // forced to switch chunks
 
+        dongle_download_fail(&lat_test.switch_chunk);
+
         log_debugf("Downloading chunk %lu\r\n", chunk);
-        dongle_download_reset();
         lat_test.download.packet_buffer.chunk_num = chunk;
     } else if (lat_test.download.is_active
           && chunk_len != lat_test.download.packet_buffer.chunk_len) {
@@ -957,7 +959,8 @@ void dongle_download_test_info()
     log_infof("    Downloads Started: %d\r\n", lat_test.payloads_started);
     log_infof("    Downloads Completed: %d\r\n", lat_test.payloads_complete);
     log_infof("    Downloads Failed: %d\r\n", lat_test.payloads_failed);
-    log_infof("        decode fail: %d\r\n", lat_test.cuckoo_fail);
+    log_infof("        decode fail:  %d\r\n", lat_test.cuckoo_fail);
+    log_infof("        chunk switch: %d\r\n", lat_test.switch_chunk);
     dongle_download_show_stats(&lat_test.complete_download_stats.download_stats,
                                "completed");
     stat_show(lat_test.complete_download_stats.periodic_data_avg_payload_lat,

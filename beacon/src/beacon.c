@@ -233,8 +233,9 @@ static void _beacon_report_()
     }
 }
 
-// Set transmission power.
+// Set transmission power (zephyr).
 // Yoinked from (https://github.com/zephyrproject-rtos/zephyr/blob/main/samples/bluetooth/hci_pwr_ctrl/src/main.c)
+#ifdef BEACON_PLATFORM__ZEPHYR
 static void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
 {
     struct bt_hci_cp_vs_write_tx_power_level *cp;
@@ -272,6 +273,7 @@ static void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl
 
     net_buf_unref(rsp);
 }
+#endif
 
 // Intermediary transformer to create a well-formed BT data type
 // for using the high-level APIs. Becomes obsolete once advertising
@@ -381,6 +383,7 @@ static int _set_adv_data_gaen_()
 }
 
 // procedure to change the type of packet being transmitted
+#ifdef BEACON_PLATFORM__ZEPHYR
 void _alternate_advertisement_content_(uint32_t timer)
 {
     if (timer % 2 == 1)
@@ -420,6 +423,7 @@ void _alternate_advertisement_content_(uint32_t timer)
     }
     return;
 }
+#endif
 
 static void _beacon_init_()
 {

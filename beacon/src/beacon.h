@@ -4,7 +4,10 @@
 #include <assert.h>
 
 #define BEACON_MODE__NETWORK // comment to run as non-network beacon
-#define PERIODIC_TEST        // uncomment to send test data
+
+#define PERIODIC_TEST // uncomment to send test data
+//#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
+
 
 #define BEACON_PLATFORM__ZEPHYR
 
@@ -13,6 +16,7 @@
 #define BEACON_NO_OP assert(1);
 
 #include "../../common/src/pancast.h"
+#include "../../common/src/settings.h"
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>
@@ -53,6 +57,7 @@ typedef struct bt_data bt_data_t;
 #else
 #define BEACON_ADV_MIN_INTERVAL 0x30
 #define BEACON_ADV_MAX_INTERVAL 0x60
+#define LEGACY_TX_POWER GLOBAL_TX_POWER
 
 typedef struct
 {

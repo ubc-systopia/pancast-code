@@ -40,6 +40,9 @@ int risk_data_len;
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
 int adv_index;
 
+uint32_t timer_freq;
+uint64_t timer_ticks;
+
 /* Initialize application */
 void app_init(void)
 {
@@ -49,6 +52,8 @@ void app_init(void)
 
     // Set pin PB01 for output
     GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
+
+    timer_freq = sl_sleeptimer_get_timer_frequency(); // Hz
 }
 
 /* Update risk data after receive from raspberry pi client */
@@ -70,12 +75,16 @@ void update_risk_data(int len, char *data)
     risk_data_len = len;
 
     //printf ("Setting advertising data...\r\n");
+
+    // Advertising data update
+    // data provided is copied into a 'next' buffer by the API,
+    // so risk_data can be overwritten following this
     sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   PER_ADV_SIZE, &risk_data[0]);
+                                   risk_data_len, &risk_data[0]);
 
     if (sc != 0)
     {
-        printf ("Error setting advertising data, sc: 0x%lx", sc);
+        log_error("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
     }
 }
 
@@ -89,18 +98,27 @@ void update_risk_data(int len, char *data)
 void get_risk_data()
 {
 #ifdef PERIODIC_TEST
-  memcpy(test_data, &seq_num, sizeof(uint32_t)); // sequence number
+  float time = now();
+  // sequence number
+  memcpy(test_data, &seq_num, sizeof(uint32_t));
+  // time stamp
+  memcpy(&test_data[sizeof(uint32_t)], &time, sizeof(float));
+  // create a checksum byte
+  uint8_t check =  (seq_num & 0xff000000) >> 24
+                  ^(seq_num & 0x00ff0000) >> 16
+                  ^(seq_num & 0x0000ff00) >> 8
+                  ^(seq_num & 0x000000ff) >> 0;
   seq_num++;
   if (seq_num == NUM_PACKETS) {
       seq_num = 0;
   }
-  // then a bunch of 22
-  memset(&test_data[ sizeof(uint32_t)], 22, PER_ADV_SIZE - sizeof(uint32_t));
+  // then filler bytes
+  memset(&test_data[ sizeof(uint32_t) + sizeof(float)],
+         check, PER_ADV_SIZE - sizeof(uint32_t) - sizeof(float));
+  // set
   update_risk_data(PER_ADV_SIZE, test_data);
 #else
 #ifndef BATCH_SIZE
-
-    fflush(SL_IOSTREAM_STDIN);
 
     // set ready pin
     GPIO_PinOutSet(gpioPortB, 1);
@@ -110,12 +128,6 @@ void get_risk_data()
 
     read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
 
-//    // read until data returned
-//    while (read_len < 0)
-//    {
-//        read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
-//    }
-
     // clear pin once data has been received
     GPIO_PinOutClear(gpioPortB, 1);
 
@@ -124,12 +136,26 @@ void get_risk_data()
     {
         update_risk_data(PER_ADV_SIZE, buf);
     }
+#define MISSING_DATA_BYTE 0x22
+#ifdef BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
+    else {
+        // fill with bytes for missing data
+        memset(&buf[read_len], MISSING_DATA_BYTE, PER_ADV_SIZE - read_len);
+        update_risk_data(PER_ADV_SIZE, buf);
+    }
+#else
+    else if (read_len > 0) {
+        update_risk_data(read_len, buf);
+    } else {
+        // fill with bytes for no data
+        memset(buf, MISSING_DATA_BYTE, PER_ADV_SIZE);
+        update_risk_data(PER_ADV_SIZE, buf);
+    }
+#endif
 
 #else // BATCH_SIZE defined
     if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
     {
-        //	get and update new risk data
-        fflush(SL_IOSTREAM_STDIN);
 
         // set ready pin
         GPIO_PinOutSet(gpioPortB, 1);
@@ -137,12 +163,6 @@ void get_risk_data()
         int read_len = 0;
         char buf[PER_ADV_SIZE * BATCH_SIZE];
         read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
-
-        // read until data returned
-        while (read_len < 0)
-        {
-            read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
-        }
 
         // clear pin once data has been received
         GPIO_PinOutClear(gpioPortB, 1);
@@ -167,18 +187,17 @@ void get_risk_data()
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
+  sl_status_t sc;
 #define user_handle (*((uint8_t*)data))
-
     // handle main clock
-    if (user_handle == MAIN_TIMER_HANDLE)
+  if (user_handle == MAIN_TIMER_HANDLE)
     {
         beacon_clock_increment(1);
     }
 
 #ifdef BEACON_MODE__NETWORK
     // handle data updates
-    if (user_handle == RISK_TIMER_HANDLE)
-    {
+    if (user_handle == RISK_TIMER_HANDLE) {
         if (handle->priority != RISK_TIMER_PRIORT) {
             log_error("Timer mismatch\r\n");
         }
@@ -187,6 +206,8 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 #endif
 #undef user_handle
 }
+
+float adv_start = -1;
 
 /* Bluetooth stack event handler.
   This overrides the dummy weak implementation.
@@ -218,6 +239,10 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         sc = sl_bt_advertiser_set_phy(advertising_set_handle, sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
         app_assert_status(sc);
 
+        // Set Power Level
+        int16_t set_power;
+        sc = sl_bt_advertiser_set_tx_power(advertising_set_handle, PER_TX_POWER, &set_power);
+
         // Set advertising interval to 100ms.
         sc = sl_bt_advertiser_set_timing(advertising_set_handle,
                                          MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
@@ -226,16 +251,24 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                          NO_MAX_EVT);      // max. num. adv. events
         app_assert_status(sc);
 
-        printf("Starting periodic advertising...\r\n");
+        log_info("Starting periodic advertising...\r\n");
 
+        adv_start = now();
         sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
                                                          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
+
         app_assert_status(sc);
+
+        log_infof("periodic advertising started at %f ms\r\n", adv_start);
+
+        log_info("setting periodic advertising data...\r\n");
 
         // printf("Setting advertising data...\r\n");
         sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
                                        &risk_data[adv_index * PER_ADV_SIZE]);
+
         app_assert_status(sc);
+        log_info("periodic advertising data set.\r\n");
 
         beacon_start();
         break;

@@ -12,6 +12,7 @@
 
 #define MODE__STAT
 #define MODE__TEST_CONFIG
+#define MODE__DISABLE_LEGACY_DATA
 
 #define LOG_LEVEL__DEBUG
 
@@ -481,6 +482,7 @@ static void _beacon_epoch_()
 
 int _set_adv_data_()
 {
+#ifndef MODE__DISABLE_LEGACY_DATA
 #ifdef BEACON_PLATFORM__GECKO
     log_debug("Setting legacy adv data...\r\n");
     print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
@@ -494,6 +496,7 @@ int _set_adv_data_()
     }
     log_debug("Success!\r\n");
 #else
+#endif
 #endif
     return 0;
 }
@@ -536,7 +539,14 @@ static int _beacon_advertise_()
         log_errorf("Error, sc: 0x%lx\r\n", sc);
         return -1;
     }
-    printf("Starting legacy advertising...\r\n");
+
+    // Set Power Level
+    int16_t set_power;
+    sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, &set_power);
+
+    log_debug("Set tx power to: %d\r\n", set_power);
+
+    log_info("Starting legacy advertising...\r\n");
     // Set advertising interval to 100ms.
     sc = sl_bt_advertiser_set_timing(
         legacy_set_handle,

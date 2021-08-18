@@ -22,6 +22,8 @@
 
 #include "src/beacon.h"
 
+#include "../common/src/settings.h"
+
 /***************************************************************************/ /**
  * Macros
  ******************************************************************************/
@@ -30,9 +32,10 @@
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 75  // min. adv. interval (milliseconds * 1.6)
 #define MAX_ADV_INTERVAL 100 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 6 // 7.5 ms
+#define PER_ADV_INTERVAL 80 // 100 ms - round ms number since update timer in ms
 #define PER_ADV_SIZE 250
 #define PER_FLAGS 0 // no periodic advertising flags
+#define PER_TX_POWER GLOBAL_TX_POWER
 
 #define NO_MAX_DUR 0 // 0 for no duration limit
 #define NO_MAX_EVT 0 // 0 for no max events
@@ -42,13 +45,19 @@
 #define TIMER_1S 1000 // one second in ms, used for timer
 #define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1
-#define MAIN_TIMER_PRIORT 0
-#define RISK_TIMER_PRIORT 1
-#define RISK_UPDATE_FREQ 0.05 // 50 ms
+#define MAIN_TIMER_PRIORT 1
+#define RISK_TIMER_PRIORT 0
 
 /* Risk Data */
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
 // #define BATCH_SIZE 2
+
+// compute the current time as a float in ms
+#define now() (timer_ticks = sl_sleeptimer_get_tick_count64(), \
+                (((float)timer_ticks)/((float)timer_freq)) * 1000)
+
+// stands for the time at which advertising started
+#define ADV_START adv_start
 
 /***************************************************************************/ /**
  * Initialize application.

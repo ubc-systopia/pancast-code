@@ -476,31 +476,47 @@ void dongle_download_complete()
                                    lat_test.download);
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
 
-  // check the content
-  cf_gadget_init(&lat_test.cf, lat_test.download.packet_buffer.buf,
-                 lat_test.download.packet_buffer.received);
+  // check the content using cuckoofilter decoder
+#define LEN_BYTES 8 // there are 8 bytes at the start of the filter for length
+
+  uint32_t filter_len; // in a 32-bit int for now, fine since little endian
+  memcpy(&filter_len, lat_test.download.packet_buffer.buf, sizeof(uint32_t));
+
+  if (LEN_BYTES + filter_len != lat_test.download.packet_buffer.received) {
+      log_error("Filter length mismatch\r\n");
+      dongle_download_fail(&lat_test.cuckoo_fail);
+      return;
+  }
+
+  // now we know the payload is the correct size
+
+  uint32_t num_buckets = cf_gadget_num_buckets(filter_len);
+  uint8_t *filter = lat_test.download.packet_buffer.buf;
+
+
+#undef LEN_BYTES
 
   int status = 0;
 
   // these should exist
-  if (!cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_1)) {
-      log_debugf("Cuckoofilter test failed: %s should exist\r\n",
+  if (!lookup(TEST_ID_EXIST_1, filter, num_buckets)) {
+      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_1);
       status += 1;
   }
-  if (!cf_gadget_lookup(&lat_test.cf, TEST_ID_EXIST_2)) {
+  if (!lookup(TEST_ID_EXIST_2, filter, num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_2);
       status += 1;
   }
 
   // these shouldn't
-  if (cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_1)) {
+  if (lookup(TEST_ID_NEXIST_1, filter, num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_1);
       status += 1;
   }
-  if (cf_gadget_lookup(&lat_test.cf, TEST_ID_NEXIST_2)) {
+  if (lookup(TEST_ID_NEXIST_2, filter, num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_2);
       status += 1;
@@ -510,6 +526,7 @@ void dongle_download_complete()
       log_debugf("Cuckoofilter test passed\r\n");
   } else {
       dongle_download_fail(&lat_test.cuckoo_fail);
+      return;
   }
 
   dongle_download_reset();
@@ -597,7 +614,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             lat_test.download.packet_buffer.received += len;
             log_debugf("download progress: %.2f%%\r\n",
                       ((float) lat_test.download.packet_buffer.received
-                       / TEST_FILTER_LEN) * 100);
+                       /lat_test.download.packet_buffer.chunk_len) * 100);
             if (lat_test.download.packet_buffer.received
                   == lat_test.download.packet_buffer.chunk_len) {
                 dongle_download_complete();

@@ -43,8 +43,8 @@ typedef uint32_t test_filter_size_t;
 //#define TEST_PAYLOAD_SIZE (TEST_N_FILTERS_PER_PAYLOAD * TEST_FILTER_LEN) // P
 
 // Ephemeral IDs known to be in the test filter
-static char *TEST_ID_EXIST_1 = "\x67\xd1\x05\x49\x39\x36\xe9\x34\x31\xc7\xe4\x2f\xf6\x0e\x7c";
-static char *TEST_ID_EXIST_2 = "\x81\x40\x5a\x4f\xe2\xe6\x87\x79\x93\x99\x61\x22\xfe\x07\x83";
+static char *TEST_ID_EXIST_1 = "\x08\xb5\xec\x97\xaa\x06\xf8\x82\x27\xeb\x4e\x5a\x83\x72\x5b";
+static char *TEST_ID_EXIST_2 = "\x3d\xbd\xb9\xc4\xf4\xe0\x9f\x1d\xc4\x30\x66\xda\xb8\x25\x3a";
 // not in filter
 static char *TEST_ID_NEXIST_1 = "blablablablabla";
 static char *TEST_ID_NEXIST_2 = "tralalalalalala";

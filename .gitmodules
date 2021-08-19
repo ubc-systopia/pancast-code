@@ -5,6 +5,3 @@
 [submodule "beacon/src/sha-2"]
 	path = beacon/src/sha-2
 	url = git@github.com:ubc-systopia/sha-2.git
-[submodule "dongle/src/sha-2"]
-	path = dongle/src/sha-2
-	url = git@github.com:ubc-systopia/sha-2.git

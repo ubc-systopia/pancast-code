@@ -417,7 +417,8 @@ void dongle_hp_timer_add(uint32_t ticks)
 void dongle_download_start()
 {
     lat_test.download.is_active = 1;
-    log_debug("Download started!\r\n");
+    log_info("Download started! (chunk=%lu)\r\n",
+             lat_test.download.packet_buffer.chunk_num);
     lat_test.payloads_started++;
 }
 
@@ -466,7 +467,7 @@ void dongle_download_fail(download_fail_reason *reason)
 
 void dongle_download_complete()
 {
-  log_debug("Download complete!\r\n");
+  log_info("Download complete!\r\n");
   lat_test.payloads_complete++;
   // compute latency
   double lat = lat_test.download.time;
@@ -500,7 +501,7 @@ void dongle_download_complete()
 
   // these should exist
   if (!lookup(TEST_ID_EXIST_1, filter, num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+      log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_1);
       status += 1;
   }
@@ -612,7 +613,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             memcpy(lat_test.download.packet_buffer.buf + (seq * MAX_PACKET_SIZE),
                    data + PACKET_HEADER_LEN, len);
             lat_test.download.packet_buffer.received += len;
-            log_debugf("download progress: %.2f%%\r\n",
+            log_infof("download progress: %.2f%%\r\n",
                       ((float) lat_test.download.packet_buffer.received
                        /lat_test.download.packet_buffer.chunk_len) * 100);
             if (lat_test.download.packet_buffer.received

@@ -29,6 +29,32 @@
 #include "../../common/src/pancast.h"
 #include "../../common/src/log.h"
 
+#include <stdio.h>
+#include <unistd.h>
+#include "sl_iostream.h"
+#include "em_gpio.h"
+
+#define DATA_SIZE 250
+#define READ_SIZE 8
+#define NUM_READS 31
+#define MS_DELAY 1
+#define TICK_DELAY 27
+
+void add_delay_ticks(uint64_t ticks) {
+	uint64_t start_delay = sl_sleeptimer_get_tick_count64();
+	uint64_t end_delay = sl_sleeptimer_get_tick_count64();
+
+	while ((end_delay - start_delay) < ticks) {
+	    end_delay = sl_sleeptimer_get_tick_count64();
+	}
+}
+
+void add_delay_ms(uint32_t ms) {
+	uint64_t ticks = (uint64_t)sl_sleeptimer_ms_to_tick(ms);
+
+	add_delay_ticks(ticks);
+}
+
 int main(void)
 {
     // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
@@ -44,6 +70,9 @@ int main(void)
     // Start the kernel. Task(s) created in app_init() will start running.
     sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
+
+    // Set pin PB01 for output
+      GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
 
     // Set up timers
     sl_status_t sc = sl_sleeptimer_init();
@@ -92,28 +121,129 @@ int main(void)
                   continue; // spin
               }
               risk_timer_started = 1;
+              printf("risk timer started\r\n");
               // start the risk update timer
               // start timer when time delta is a multiple of I/2
               // add an additional wait time to prevent problems at start
               // Risk Timer
-              uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-              // Interval is the same as the advertising interval
-              sl_sleeptimer_timer_handle_t risk_timer;
-              sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-                                                 PER_ADV_INTERVAL * 1.25,
-                                                         sl_timer_on_expire,
-                                                         &risk_timer_handle,
-                                         RISK_TIMER_PRIORT, 0);
-              if (sc) {
-                  log_errorf("Error starting risk timer: 0x%x\r\n", sc);
-              } else {
-                  log_info("Risk timer started at %f ms.\r\n"
-                            "delta=%f ms; \r\n"
-                            "interval: %lu ms\r\n"
-                            "handle=0x%02x\r\n",
-                           time, delta, (uint32_t)(PER_ADV_INTERVAL * 1.25),
-                           risk_timer);
-              }
+//              uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
+//              // Interval is the same as the advertising interval
+//              sl_sleeptimer_timer_handle_t risk_timer;
+//              sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
+//                                                 PER_ADV_INTERVAL * 1.25,
+//                                                         sl_timer_on_expire,
+//                                                         &risk_timer_handle,
+//                                         RISK_TIMER_PRIORT, 0);
+//              if (sc) {
+//                  log_errorf("Error starting risk timer: 0x%x\r\n", sc);
+//              } else {
+//                  log_info("Risk timer started at %f ms.\r\n"
+//                            "delta=%f ms; \r\n"
+//                            "interval: %lu ms\r\n"
+//                            "handle=0x%02x\r\n",
+//                           time, delta, (uint32_t)(PER_ADV_INTERVAL * 1.25),
+//                           risk_timer);
+//              }
+        }
+        else if (adv_start >= 0 && risk_timer_started) {
+
+        	/* Beacon application code starts here */
+
+        	    int rlen = 0;
+
+        	    // Start timer
+        	    uint64_t start_time = sl_sleeptimer_get_tick_count64();
+
+        	    GPIO_PinOutSet(gpioPortB, 1);
+
+        	    uint8_t buf[DATA_SIZE];
+
+        	    for (int i = 0; i < NUM_READS; i++) {
+
+        	    	int len = 0;
+        	    	int off =0;
+        	    	int tot_len = 0;
+        	    	int loops = 0;
+
+        	#define LOOP_BREAK 1000
+        	    	while (tot_len < READ_SIZE) {
+
+        	    		len = read(SL_IOSTREAM_STDIN, &buf[(i*READ_SIZE) + tot_len], READ_SIZE - tot_len);
+        	    		if (len < 0) {
+        	    			continue;
+        	    		}
+        	    		tot_len = tot_len + len;
+        	    		off = off + len;
+        	    		loops++;
+        	    		if (loops == LOOP_BREAK) {
+        	    			break;
+        	    		}
+        	    	}
+
+        	    	// ADD DELAY
+        	//    	uint64_t start_delay = sl_sleeptimer_get_tick_count64();
+        	//    	uint64_t end_delay = sl_sleeptimer_get_tick_count64();
+        	//
+        	//    	while ((end_delay - start_delay) < TICK_DELAY) {
+        	//    		end_delay = sl_sleeptimer_get_tick_count64();
+        	//    	}
+
+        	    	add_delay_ticks(TICK_DELAY);
+
+        	    	if (tot_len < 0) {
+        	       		printf("err, i: %d\r\n", i);
+        	    	}
+        	    	else {
+        	    		rlen = rlen + tot_len;
+        	    	}
+        	    }
+
+        	    if (NUM_READS * READ_SIZE < DATA_SIZE) {
+        	    	int last_rlen = read(SL_IOSTREAM_STDIN, &buf[NUM_READS * READ_SIZE], DATA_SIZE-(NUM_READS * READ_SIZE));
+
+        	       	if (last_rlen < 0) {
+        	       		printf("err in last read\r\n");
+        	       	}
+        	       	else {
+        	       	    rlen = rlen + last_rlen;
+        	       	}
+        	    }
+
+        	    GPIO_PinOutClear(gpioPortB, 1);
+
+        	    uint32_t seq;
+        	    memcpy(&seq, &buf[0], sizeof(uint32_t)); // extract sequence number
+        	    printf("sequence: %lu\r\n", seq);
+
+        	    set_risk_data(rlen, &buf[0]);
+
+        	    // End timer
+        	    uint64_t end_time = sl_sleeptimer_get_tick_count64();
+        	    uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
+        	    printf("READ: %d, TIME: %lu\r\n", rlen, ms);
+
+        	       // Print all data in buffer
+//        	       for (int i= 0; i < DATA_SIZE; i++){
+//        	       	printf("%d, ", buf[i]);
+//        	       }
+//        	       printf("\r\n");
+
+        	    // ADD LOOP DELAY
+        	//    uint64_t start_delay = sl_sleeptimer_get_tick_count64();
+        	//    uint64_t end_delay = sl_sleeptimer_get_tick_count64();
+        	//
+        	//    while ((end_delay - start_delay) < LOOP_DELAY) {
+        	//        end_delay = sl_sleeptimer_get_tick_count64();
+        	//    }
+
+        	    add_delay_ms(70);
+
+        	    // End timer
+        	    end_time = sl_sleeptimer_get_tick_count64();
+        	    ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
+        	    printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+
+        	    /* Application code ends here */
         }
 #endif
 
@@ -123,7 +253,7 @@ int main(void)
 
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
         // Let the CPU go to sleep if the system allows it.
-        sl_power_manager_sleep();
+      //  sl_power_manager_sleep();
 #endif
     }
 #endif // SL_CATALOG_KERNEL_PRESENT

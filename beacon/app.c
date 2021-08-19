@@ -57,6 +57,22 @@ void app_init(void)
 }
 
 /* Update risk data after receive from raspberry pi client */
+void set_risk_data(int len, uint8_t *data)
+{
+    sl_status_t sc = 0;
+
+    if (len == PER_ADV_SIZE) {
+    	sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
+                                   len, &data[0]);
+    }
+
+    if (sc != 0)
+    {
+        printf("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
+    }
+}
+
+/* Update risk data after receive from raspberry pi client */
 void update_risk_data(int len, char *data)
 {
     sl_status_t sc;
@@ -239,12 +255,12 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 
 #ifdef BEACON_MODE__NETWORK
     // handle data updates
-    if (user_handle == RISK_TIMER_HANDLE) {
-        if (handle->priority != RISK_TIMER_PRIORT) {
-            log_error("Timer mismatch\r\n");
-        }
-        get_risk_data();
-    }
+//    if (user_handle == RISK_TIMER_HANDLE) {
+//        if (handle->priority != RISK_TIMER_PRIORT) {
+//            log_error("Timer mismatch\r\n");
+//        }
+//        get_risk_data();
+//    }
 #endif
 #undef user_handle
 }

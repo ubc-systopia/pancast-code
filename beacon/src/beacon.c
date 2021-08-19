@@ -11,7 +11,7 @@
 #define APPL_VERSION "0.1.1"
 
 #define MODE__STAT
-//#define MODE__TEST_CONFIG
+#define MODE__TEST_CONFIG
 #define MODE__DISABLE_LEGACY_DATA
 
 #define LOG_LEVEL__DEBUG

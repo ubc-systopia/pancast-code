@@ -167,17 +167,16 @@ int main(void)
 
         	#define LOOP_BREAK 1000
         	    	while (tot_len < READ_SIZE) {
-
+        	    		loops++;
+        	    		if (loops >= LOOP_BREAK) {
+        	    			break;
+        	    		}
         	    		len = read(SL_IOSTREAM_STDIN, &buf[(i*READ_SIZE) + tot_len], READ_SIZE - tot_len);
         	    		if (len < 0) {
         	    			continue;
         	    		}
         	    		tot_len = tot_len + len;
         	    		off = off + len;
-        	    		loops++;
-        	    		if (loops == LOOP_BREAK) {
-        	    			break;
-        	    		}
         	    	}
 
         	    	// ADD DELAY
@@ -211,9 +210,9 @@ int main(void)
 
         	    GPIO_PinOutClear(gpioPortB, 1);
 
-        	    uint32_t seq;
-        	    memcpy(&seq, &buf[0], sizeof(uint32_t)); // extract sequence number
-        	    printf("sequence: %lu\r\n", seq);
+        	//    uint32_t seq;
+        	//    memcpy(&seq, &buf[0], sizeof(uint32_t)); // extract sequence number
+        	//    printf("sequence: %lu\r\n", seq);
 
         	    set_risk_data(rlen, &buf[0]);
 
@@ -241,7 +240,7 @@ int main(void)
         	    // End timer
         	    end_time = sl_sleeptimer_get_tick_count64();
         	    ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-        	    printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+        	 //   printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
 
         	    /* Application code ends here */
         }

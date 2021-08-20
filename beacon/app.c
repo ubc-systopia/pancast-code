@@ -106,7 +106,7 @@ void send_test_risk_data()
   memcpy(test_data + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
 
   // chunk length
-  memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, sizeof(uint32_t));
+  memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, 8);
 
   // data
 #define min(a,b) (b < a ? b : a)

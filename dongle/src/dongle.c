@@ -469,10 +469,17 @@ void dongle_download_fail(download_fail_reason *reason)
 int dongle_download_check_match(enctr_entry_counter_t i,
                                 dongle_encounter_entry *entry)
 {
+  // pad the stored id in case backend entry contains null byte at end
+#define MAX_EPH_ID_SIZE 15
+  uint8_t id[MAX_EPH_ID_SIZE];
+  memset(id, 0x00, MAX_EPH_ID_SIZE);
+#undef MAX_EPH_ID_SIZE
+
+  memcpy(id, &entry->eph_id, sizeof(beacon_eph_id_t));
+
   log_infof("num buckets: %lu\r\n", lat_test.num_buckets);
      // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
-    if (lookup(entry->eph_id.bytes,
-               lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
+    if (lookup(id, lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
         log_info("====== LOG MATCH!!! ====== \r\n");
     } else {
         log_info("No match for id\r\n");

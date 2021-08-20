@@ -597,6 +597,7 @@ void _beacon_update_()
 {
     _beacon_epoch_();
     _beacon_encode_();
+    _set_adv_data_();
 }
 
 int beacon_clock_increment(beacon_timer_t time)

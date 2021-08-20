@@ -68,6 +68,7 @@ beacon_storage *get_beacon_storage();
 void app_init(void);
 
 void set_risk_data(int len, uint8_t *data);
+void send_test_risk_data();
 
 /***************************************************************************/ /**
  * App ticking function.

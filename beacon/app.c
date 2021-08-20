@@ -72,42 +72,10 @@ void set_risk_data(int len, uint8_t *data)
     }
 }
 
-/* Update risk data after receive from raspberry pi client */
-void update_risk_data(int len, char *data)
-{
-    sl_status_t sc;
-
-    if (len > RISK_DATA_SIZE)
-    {
-        //    printf ("len: %d larger than current risk size\r\n", len);
-        return;
-    }
-
-    // reset data
-    memset(&risk_data, 0, risk_data_len);
-
-    // copy data from risk buffer
-    memcpy(&risk_data, data, len);
-    risk_data_len = len;
-
-    //printf ("Setting advertising data...\r\n");
-
-    // Advertising data update
-    // data provided is copied into a 'next' buffer by the API,
-    // so risk_data can be overwritten following this
-    sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   risk_data_len, &risk_data[0]);
-
-    if (sc != 0)
-    {
-        log_error("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
-    }
-}
-
 #ifdef PERIODIC_TEST
 
 #define PACKET_REPLICATION 1
-#define CHUNK_REPLICATION 10
+#define CHUNK_REPLICATION 20
 
 #define TEST_NUM_PACKETS_PER_FILTER \
   (1 + ((TEST_FILTER_LEN - 1) / MAX_PACKET_SIZE))                       // N
@@ -122,8 +90,7 @@ void update_risk_data(int len, char *data)
   uint8_t test_filter[MAX_FILTER_SIZE];
 #endif
 
-/* Get risk data from raspberry pi client */
-void get_risk_data()
+void send_test_risk_data()
 {
 #ifdef PERIODIC_TEST
   float time = now();
@@ -151,7 +118,7 @@ void get_risk_data()
          test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
 
   // set
-  update_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
+  set_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
 
   // update sequence
   pkt_rep_count++;
@@ -175,71 +142,6 @@ void get_risk_data()
           }
       }
   }
-#else
-#ifndef BATCH_SIZE
-
-    // set ready pin
-    GPIO_PinOutSet(gpioPortB, 1);
-
-    int read_len = 0;
-    char buf[PER_ADV_SIZE];
-
-    read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE);
-
-    // clear pin once data has been received
-    GPIO_PinOutClear(gpioPortB, 1);
-
-    // update broadcast data
-    if (read_len == PER_ADV_SIZE)
-    {
-        update_risk_data(PER_ADV_SIZE, buf);
-    }
-#define MISSING_DATA_BYTE 0x22
-#ifdef BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
-    else {
-        // fill with bytes for missing data
-        memset(&buf[read_len], MISSING_DATA_BYTE, PER_ADV_SIZE - read_len);
-        update_risk_data(PER_ADV_SIZE, buf);
-    }
-#else
-    else if (read_len > 0) {
-        update_risk_data(read_len, buf);
-    } else {
-        // fill with bytes for no data
-        memset(buf, MISSING_DATA_BYTE, PER_ADV_SIZE);
-        update_risk_data(PER_ADV_SIZE, buf);
-    }
-#endif
-
-#else // BATCH_SIZE defined
-    if (adv_index * PER_ADV_SIZE == RISK_DATA_SIZE)
-    {
-
-        // set ready pin
-        GPIO_PinOutSet(gpioPortB, 1);
-
-        int read_len = 0;
-        char buf[PER_ADV_SIZE * BATCH_SIZE];
-        read_len = read(SL_IOSTREAM_STDIN, &buf, PER_ADV_SIZE * BATCH_SIZE);
-
-        // clear pin once data has been received
-        GPIO_PinOutClear(gpioPortB, 1);
-
-        // update broadcast data
-        if (read_len == PER_ADV_SIZE * BATCH_SIZE)
-        {
-            update_risk_data(PER_ADV_SIZE * BATCH_SIZE, buf);
-        }
-        adv_index = 0;
-    }
-    else
-    {
-        // increase index and set data
-        sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                  PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
-        adv_index++;
-    }
-#endif
 #endif
 }
 
@@ -252,16 +154,6 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
     {
         beacon_clock_increment(1);
     }
-
-#ifdef BEACON_MODE__NETWORK
-    // handle data updates
-//    if (user_handle == RISK_TIMER_HANDLE) {
-//        if (handle->priority != RISK_TIMER_PRIORT) {
-//            log_error("Timer mismatch\r\n");
-//        }
-//        get_risk_data();
-//    }
-#endif
 #undef user_handle
 }
 

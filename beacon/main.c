@@ -122,15 +122,15 @@ int main(void)
               }
               risk_timer_started = 1;
               log_info("Risk timer started at %f ms.\r\n"
-                        "delta=%f ms; \r\n"
-                        "interval: %lu ms\r\n",
-                       time, delta, (uint32_t)(PER_ADV_INTERVAL * 1.25));
+                        "delta=%f ms; \r\n",
+                       time, delta);
               // TODO: make sure that the interval is synced properly below
         }
         else if (adv_start >= 0 && risk_timer_started) {
 
         	/* Beacon application code starts here */
 
+#ifndef PERIODIC_TEST
         	    int rlen = 0;
 
         	    // Start timer
@@ -223,6 +223,16 @@ int main(void)
         	    end_time = sl_sleeptimer_get_tick_count64();
         	    ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
         	 //   printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+
+#else
+        	    // Start timer
+              uint64_t start_time = sl_sleeptimer_get_tick_count64();
+        	    send_test_risk_data();
+              add_delay_ms(100);
+              uint64_t end_time = sl_sleeptimer_get_tick_count64();
+              uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
+              printf("LOOP TIME: %lu\r\n", ms);
+#endif
 
         	    /* Application code ends here */
         }

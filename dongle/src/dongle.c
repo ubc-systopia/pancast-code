@@ -192,6 +192,7 @@ struct
     cf_t cf;
     download_fail_reason cuckoo_fail;
     download_fail_reason switch_chunk;
+    uint32_t num_buckets;
 } lat_test;
 #endif
 
@@ -465,6 +466,19 @@ void dongle_download_fail(download_fail_reason *reason)
   }
 }
 
+int dongle_download_check_match(enctr_entry_counter_t i,
+                                dongle_encounter_entry *entry)
+{
+     // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
+    if (lookup(entry->eph_id.bytes,
+               lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
+        log_info("====== LOG MATCH!!! ====== \r\n");
+    } else {
+        log_info("No match for id\r\n");
+    }
+    return 1;
+}
+
 void dongle_download_complete()
 {
   log_info("Download complete!\r\n");
@@ -483,7 +497,7 @@ void dongle_download_complete()
   uint32_t filter_len; // in a 32-bit int for now, fine since little endian
   memcpy(&filter_len, lat_test.download.packet_buffer.buf, sizeof(uint32_t));
 
-  if (LEN_BYTES + filter_len != lat_test.download.packet_buffer.received) {
+  if (LEN_BYTES + filter_len > lat_test.download.packet_buffer.received) {
       log_error("Filter length mismatch\r\n");
       dongle_download_fail(&lat_test.cuckoo_fail);
       return;
@@ -491,7 +505,7 @@ void dongle_download_complete()
 
   // now we know the payload is the correct size
 
-  uint32_t num_buckets = cf_gadget_num_buckets(filter_len);
+  lat_test.num_buckets = cf_gadget_num_buckets(filter_len);
   uint8_t *filter = lat_test.download.packet_buffer.buf;
 
 
@@ -499,29 +513,32 @@ void dongle_download_complete()
 
   int status = 0;
 
+#ifdef CUCKOOFILTER_FIXED_TEST
+  // these are the test cases for the fixed test filter
   // these should exist
-  if (!lookup(TEST_ID_EXIST_1, filter, num_buckets)) {
+  if (!lookup(TEST_ID_EXIST_1, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_1);
       status += 1;
   }
-  if (!lookup(TEST_ID_EXIST_2, filter, num_buckets)) {
+  if (!lookup(TEST_ID_EXIST_2, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_2);
       status += 1;
   }
 
   // these shouldn't
-  if (lookup(TEST_ID_NEXIST_1, filter, num_buckets)) {
+  if (lookup(TEST_ID_NEXIST_1, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_1);
       status += 1;
   }
-  if (lookup(TEST_ID_NEXIST_2, filter, num_buckets)) {
+  if (lookup(TEST_ID_NEXIST_2, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_2);
       status += 1;
   }
+#endif
 
   if (!status) {
       log_debugf("Cuckoofilter test passed\r\n");
@@ -529,6 +546,9 @@ void dongle_download_complete()
       dongle_download_fail(&lat_test.cuckoo_fail);
       return;
   }
+
+  // check existing log entries against the new filter
+  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
 
   dongle_download_reset();
 }
@@ -571,7 +591,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     uint32_t seq, chunk, chunk_len;
     memcpy(&seq, data, sizeof(uint32_t));
     memcpy(&chunk, data + sizeof(uint32_t), sizeof(uint32_t));
-    memcpy(&chunk_len, data + 2*sizeof(uint32_t), sizeof(uint32_t));
+    // TODO: this is actually and 8 byte field so fix
+    memcpy(&chunk_len, data + 2*sizeof(uint32_t), 8);
 
     log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
                        dongle_hp_timer, rssi, data_len, seq, chunk, chunk_len);
@@ -617,7 +638,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                       ((float) lat_test.download.packet_buffer.received
                        /lat_test.download.packet_buffer.chunk_len) * 100);
             if (lat_test.download.packet_buffer.received
-                  == lat_test.download.packet_buffer.chunk_len) {
+                  >= lat_test.download.packet_buffer.chunk_len) {
+                // there may be extra data in the packet
                 dongle_download_complete();
             }
         }
@@ -715,8 +737,24 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #define en (*enc)
     // when a valid encounter is detected
     // log the encounter
-    log_debugf("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
-               dongle_time);
+//    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
+//               dongle_time);
+    log_infof("Encounter: "
+  "\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\r\n",
+                  enc->eph->bytes[0],
+                  enc->eph->bytes[1],
+                  enc->eph->bytes[2],
+                  enc->eph->bytes[3],
+                  enc->eph->bytes[4],
+                  enc->eph->bytes[5],
+                  enc->eph->bytes[6],
+                  enc->eph->bytes[7],
+                  enc->eph->bytes[8],
+                  enc->eph->bytes[9],
+                  enc->eph->bytes[10],
+                  enc->eph->bytes[11],
+                  enc->eph->bytes[12],
+                  enc->eph->bytes[13]);
     // Write to storage
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);

@@ -11,8 +11,8 @@
 #define APPL_VERSION "0.1.1"
 
 #define MODE__STAT
-#define MODE__TEST_CONFIG
-#define MODE__DISABLE_LEGACY_DATA
+//#define MODE__TEST_CONFIG
+//#define MODE__DISABLE_LEGACY_DATA
 
 #define LOG_LEVEL__DEBUG
 
@@ -688,7 +688,11 @@ void beacon_broadcast()
                  0, tx_power);
     beacon_loop();
 #else
-
+    _beacon_update_();
+    err = _beacon_advertise_();
+    if (err != 0) {
+        log_error("Error starting legacy adv\r\n");
+    }
 #endif
 }
 

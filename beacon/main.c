@@ -149,100 +149,106 @@ int main(void)
 
         	/* Beacon application code starts here */
 
-        	    int rlen = 0;
+        	int rlen = 0;
 
-        	    // Start timer
-        	    uint64_t start_time = sl_sleeptimer_get_tick_count64();
+        	// Start timer
+        	uint64_t start_time = sl_sleeptimer_get_tick_count64();
 
-        	    GPIO_PinOutSet(gpioPortB, 1);
+        	GPIO_PinOutSet(gpioPortB, 1);
 
-        	    uint8_t buf[DATA_SIZE];
+        	uint8_t buf[DATA_SIZE];
 
-        	    for (int i = 0; i < NUM_READS; i++) {
+        	for (int i = 0; i < NUM_READS; i++) {
 
-        	    	int len = 0;
-        	    	int off =0;
-        	    	int tot_len = 0;
-        	    	int loops = 0;
+        		int len = 0;
+        	    int off =0;
+        	    int tot_len = 0;
+        	    int loops = 0;
 
-        	#define LOOP_BREAK 1000
-        	    	while (tot_len < READ_SIZE) {
-        	    		loops++;
-        	    		if (loops >= LOOP_BREAK) {
-        	    			break;
-        	    		}
-        	    		len = read(SL_IOSTREAM_STDIN, &buf[(i*READ_SIZE) + tot_len], READ_SIZE - tot_len);
-        	    		if (len < 0) {
-        	    			continue;
-        	    		}
-        	    		tot_len = tot_len + len;
-        	    		off = off + len;
+#define LOOP_BREAK 10000 // we should only need this for the first couple of minutes
+        	    while (tot_len < READ_SIZE) {
+        	    	loops++;
+        	    	if (loops >= LOOP_BREAK) {
+        	    		break;
         	    	}
-
-        	    	// ADD DELAY
-        	//    	uint64_t start_delay = sl_sleeptimer_get_tick_count64();
-        	//    	uint64_t end_delay = sl_sleeptimer_get_tick_count64();
-        	//
-        	//    	while ((end_delay - start_delay) < TICK_DELAY) {
-        	//    		end_delay = sl_sleeptimer_get_tick_count64();
-        	//    	}
-
-        	    	add_delay_ticks(TICK_DELAY);
-
-        	    	if (tot_len < 0) {
-        	       		printf("err, i: %d\r\n", i);
+        	    	len = read(SL_IOSTREAM_STDIN, &buf[(i*READ_SIZE) + tot_len], READ_SIZE - tot_len);
+        	    	if (len < 0) {
+        	    		continue;
         	    	}
-        	    	else {
-        	    		rlen = rlen + tot_len;
-        	    	}
+        	    	tot_len = tot_len + len;
+        	    	off = off + len;
         	    }
 
-        	    if (NUM_READS * READ_SIZE < DATA_SIZE) {
-        	    	int last_rlen = read(SL_IOSTREAM_STDIN, &buf[NUM_READS * READ_SIZE], DATA_SIZE-(NUM_READS * READ_SIZE));
+        	    // Add delay after read
+        	    add_delay_ticks(TICK_DELAY);
 
-        	       	if (last_rlen < 0) {
-        	       		printf("err in last read\r\n");
-        	       	}
-        	       	else {
-        	       	    rlen = rlen + last_rlen;
-        	       	}
+        	    if (tot_len < 0) {
+        	       	printf("err, i: %d\r\n", i);
+        	    }
+        	    else {
+        	    	rlen = rlen + tot_len;
+        	    }
+        	}
+
+        	// Read reamining bytes not read by loop
+        	if (NUM_READS * READ_SIZE < DATA_SIZE) {
+
+        		int len = 0;
+        	    int off =0;
+        	    int tot_len = 0;
+        	    int loops = 0;
+
+        	    while (tot_len < DATA_SIZE-(NUM_READS * READ_SIZE)) {
+        	    	loops++;
+        	    	if (loops >= LOOP_BREAK) {
+        	    		break;
+        	    	}
+        	    	len = read(SL_IOSTREAM_STDIN, &buf[NUM_READS * READ_SIZE + tot_len], DATA_SIZE-(NUM_READS * READ_SIZE) - tot_len);
+        	    	if (len < 0) {
+        	    		continue;
+        	    	}
+        	    	tot_len = tot_len + len;
+        	    	off = off + len;
         	    }
 
-        	    GPIO_PinOutClear(gpioPortB, 1);
+        	//    int last_rlen = read(SL_IOSTREAM_STDIN, &buf[NUM_READS * READ_SIZE], DATA_SIZE-(NUM_READS * READ_SIZE));
 
-        	//    uint32_t seq;
-        	//    memcpy(&seq, &buf[0], sizeof(uint32_t)); // extract sequence number
-        	//    printf("sequence: %lu\r\n", seq);
+        	    if (tot_len < 0) {
+        	    	printf("err in last read\r\n");
+        	    }
+        	    else {
+        	       	rlen = rlen + tot_len;
+        	    }
+        	}
 
-        	    set_risk_data(rlen, &buf[0]);
+        	GPIO_PinOutClear(gpioPortB, 1);
 
-        	    // End timer
-        	    uint64_t end_time = sl_sleeptimer_get_tick_count64();
-        	    uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-        	    printf("READ: %d, TIME: %lu\r\n", rlen, ms);
+            uint32_t seq;
+            memcpy(&seq, buf, sizeof(uint32_t)); // extract sequence number
+        	printf("sequence: %lu\r\n", seq);
 
-        	       // Print all data in buffer
-//        	       for (int i= 0; i < DATA_SIZE; i++){
-//        	       	printf("%d, ", buf[i]);
-//        	       }
-//        	       printf("\r\n");
+        	set_risk_data(rlen, buf);
 
-        	    // ADD LOOP DELAY
-        	//    uint64_t start_delay = sl_sleeptimer_get_tick_count64();
-        	//    uint64_t end_delay = sl_sleeptimer_get_tick_count64();
-        	//
-        	//    while ((end_delay - start_delay) < LOOP_DELAY) {
-        	//        end_delay = sl_sleeptimer_get_tick_count64();
-        	//    }
+        	// End timer
+        	uint64_t end_time = sl_sleeptimer_get_tick_count64();
+        	uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
+        	printf("READ: %d, TIME: %lu\r\n", rlen, ms);
 
-        	    add_delay_ms(70);
+        	// Print all data in buffer
+//        	for (int i= 0; i < DATA_SIZE; i++){
+//        		printf("%d, ", buf[i]);
+//        	}
+//        	printf("\r\n");
 
-        	    // End timer
-        	    end_time = sl_sleeptimer_get_tick_count64();
-        	    ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-        	 //   printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+        	// Add second delay to sync up with advertising interval
+        	add_delay_ms(68);
 
-        	    /* Application code ends here */
+        	// End timer
+        	end_time = sl_sleeptimer_get_tick_count64();
+        	ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
+            printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+
+        	/* Beacon application code ends here */
         }
 #endif
 

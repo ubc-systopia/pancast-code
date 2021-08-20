@@ -192,6 +192,7 @@ struct
     cf_t cf;
     download_fail_reason cuckoo_fail;
     download_fail_reason switch_chunk;
+    uint32_t num_buckets;
 } lat_test;
 #endif
 
@@ -465,6 +466,19 @@ void dongle_download_fail(download_fail_reason *reason)
   }
 }
 
+int dongle_download_check_match(enctr_entry_counter_t i,
+                                dongle_encounter_entry *entry)
+{
+     // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
+    if (lookup(entry->eph_id.bytes,
+               lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
+        log_info("====== LOG MATCH!!! ====== \r\n");
+    } else {
+        log_info("No match for id\r\n");
+    }
+    return 1;
+}
+
 void dongle_download_complete()
 {
   log_info("Download complete!\r\n");
@@ -491,7 +505,7 @@ void dongle_download_complete()
 
   // now we know the payload is the correct size
 
-  uint32_t num_buckets = cf_gadget_num_buckets(filter_len);
+  lat_test.num_buckets = cf_gadget_num_buckets(filter_len);
   uint8_t *filter = lat_test.download.packet_buffer.buf;
 
 
@@ -499,29 +513,32 @@ void dongle_download_complete()
 
   int status = 0;
 
+#ifdef CUCKOOFILTER_FIXED_TEST
+  // these are the test cases for the fixed test filter
   // these should exist
-  if (!lookup(TEST_ID_EXIST_1, filter, num_buckets)) {
+  if (!lookup(TEST_ID_EXIST_1, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_1);
       status += 1;
   }
-  if (!lookup(TEST_ID_EXIST_2, filter, num_buckets)) {
+  if (!lookup(TEST_ID_EXIST_2, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_2);
       status += 1;
   }
 
   // these shouldn't
-  if (lookup(TEST_ID_NEXIST_1, filter, num_buckets)) {
+  if (lookup(TEST_ID_NEXIST_1, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_1);
       status += 1;
   }
-  if (lookup(TEST_ID_NEXIST_2, filter, num_buckets)) {
+  if (lookup(TEST_ID_NEXIST_2, filter, lat_test.num_buckets)) {
       log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_2);
       status += 1;
   }
+#endif
 
   if (!status) {
       log_debugf("Cuckoofilter test passed\r\n");
@@ -529,6 +546,9 @@ void dongle_download_complete()
       dongle_download_fail(&lat_test.cuckoo_fail);
       return;
   }
+
+  // check existing log entries against the new filter
+  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
 
   dongle_download_reset();
 }

@@ -483,7 +483,7 @@ void dongle_download_complete()
   uint32_t filter_len; // in a 32-bit int for now, fine since little endian
   memcpy(&filter_len, lat_test.download.packet_buffer.buf, sizeof(uint32_t));
 
-  if (LEN_BYTES + filter_len != lat_test.download.packet_buffer.received) {
+  if (LEN_BYTES + filter_len > lat_test.download.packet_buffer.received) {
       log_error("Filter length mismatch\r\n");
       dongle_download_fail(&lat_test.cuckoo_fail);
       return;
@@ -618,7 +618,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                       ((float) lat_test.download.packet_buffer.received
                        /lat_test.download.packet_buffer.chunk_len) * 100);
             if (lat_test.download.packet_buffer.received
-                  == lat_test.download.packet_buffer.chunk_len) {
+                  <= lat_test.download.packet_buffer.chunk_len) {
+                // there may be extra data in the packet
                 dongle_download_complete();
             }
         }

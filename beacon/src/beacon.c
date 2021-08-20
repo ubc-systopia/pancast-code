@@ -353,7 +353,7 @@ static void _gen_ephid_()
 #undef complete
 #undef add
 #undef init
-    print_bytes(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
+    hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "new ephemeral id");
 }
 
 // populates gaen_payload.service_data_internals with procotol specific data fields

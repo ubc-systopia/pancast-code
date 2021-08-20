@@ -161,7 +161,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     read(cf.beacon_sk_size, &cf.beacon_sk);
     read(sizeof(test_filter_size_t), &st.test_filter_size);
     if (st.test_filter_size != TEST_FILTER_LEN) {
-        log_errorf("Warning: test filter length mismatch\r\n");
+        log_error("Warning: test filter length mismatch\r\n");
     }
     st.map.test_filter = st.off;
 #undef read

@@ -5,7 +5,7 @@
 // Including data-type size, timing parameters etc.
 // Some of these may be adjusted for testing purposes.
 
-#define PANCAST__TEST // uncomment to set global params for testing
+//#define PANCAST__TEST // uncomment to set global params for testing
 
 #include <stdint.h>
 

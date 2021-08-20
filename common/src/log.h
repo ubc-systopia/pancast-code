@@ -121,8 +121,8 @@
 #define log_debugf app_log_debug
 
 #define log_telem_tag printf("TELEM ")
-#define log_telemf(fmtstr, args...) log_telem_tag; printf(fmtstr, args)
-#define log_telem(str) LOG_NA log_telem_tag; printf(str)
+#define log_telemf(fmtstr, args...) LOG_NA
+#define log_telem(str) LOG_NA
 
 
 #endif

@@ -121,29 +121,11 @@ int main(void)
                   continue; // spin
               }
               risk_timer_started = 1;
-              printf("risk timer started\r\n");
-              // start the risk update timer
-              // start timer when time delta is a multiple of I/2
-              // add an additional wait time to prevent problems at start
-              // Risk Timer
-//              uint8_t risk_timer_handle = RISK_TIMER_HANDLE;
-//              // Interval is the same as the advertising interval
-//              sl_sleeptimer_timer_handle_t risk_timer;
-//              sc = sl_sleeptimer_start_periodic_timer_ms(&risk_timer,
-//                                                 PER_ADV_INTERVAL * 1.25,
-//                                                         sl_timer_on_expire,
-//                                                         &risk_timer_handle,
-//                                         RISK_TIMER_PRIORT, 0);
-//              if (sc) {
-//                  log_errorf("Error starting risk timer: 0x%x\r\n", sc);
-//              } else {
-//                  log_info("Risk timer started at %f ms.\r\n"
-//                            "delta=%f ms; \r\n"
-//                            "interval: %lu ms\r\n"
-//                            "handle=0x%02x\r\n",
-//                           time, delta, (uint32_t)(PER_ADV_INTERVAL * 1.25),
-//                           risk_timer);
-//              }
+              log_info("Risk timer started at %f ms.\r\n"
+                        "delta=%f ms; \r\n"
+                        "interval: %lu ms\r\n",
+                       time, delta, (uint32_t)(PER_ADV_INTERVAL * 1.25));
+              // TODO: make sure that the interval is synced properly below
         }
         else if (adv_start >= 0 && risk_timer_started) {
 

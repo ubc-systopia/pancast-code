@@ -238,9 +238,8 @@ int main(void)
               //printf("LOOP TIME: %lu\r\n", ms);
 #endif
 
-        	    /* Application code ends here */
-        }
-#endif
+              /* Application code ends here */
+      }
 
         // Do not remove this call: Silicon Labs components process action routine
         // must be called from the super loop.

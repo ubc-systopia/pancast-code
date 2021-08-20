@@ -39,11 +39,6 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "pthread_create error\r\n");
   }
 
- // err = pthread_create(&id[LOG_ID], NULL, &receive_log, 0);
- // if (err != 0) {
- //   fprintf(stderr, "pthread create error\r\n");
- // }
-
   //err = pthread_join(id[REQ_THREAD_ID], NULL);
   //if (err != 0) {
   //  fprintf(stderr, "pthread_join error\r\n");
@@ -53,11 +48,6 @@ int main(int argc, char *argv[]) {
   if (err != 0) {
     fprintf(stderr, "pthread_join error\r\n");
   }
-
- // err = pthread_join(id[LOG_ID], NULL);
- // if (err != 0) {
- //   fprintf(stderr, "pthread_join error\r\n);
-//  }
 
   return 0;
 }

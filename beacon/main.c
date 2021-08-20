@@ -208,6 +208,13 @@ int main(void)
             memcpy(&seq, buf, sizeof(uint32_t)); // extract sequence number
         	printf("sequence: %lu\r\n", seq);
 
+              memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
+            printf("chunk number: %lu\r\n", seq);
+
+            memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
+
+            printf("chunk length: %lu\r\n", seq);
+
         	set_risk_data(rlen, buf);
 
         	// End timer

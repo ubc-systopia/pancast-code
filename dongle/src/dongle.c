@@ -469,7 +469,12 @@ void dongle_download_fail(download_fail_reason *reason)
 int dongle_download_check_match(enctr_entry_counter_t i,
                                 dongle_encounter_entry *entry)
 {
+  log_infof("num buckets: %lu\r\n", lat_test.num_buckets);
      // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
+  if (lat_test.num_buckets == 0) {
+      log_error("num buckets is 0!!!\r\n");
+      return 0;
+  }
     if (lookup(entry->eph_id.bytes,
                lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
         log_info("====== LOG MATCH!!! ====== \r\n");
@@ -494,14 +499,16 @@ void dongle_download_complete()
   // check the content using cuckoofilter decoder
 #define LEN_BYTES 8 // there are 8 bytes at the start of the filter for length
 
-  uint32_t filter_len; // in a 32-bit int for now, fine since little endian
-  memcpy(&filter_len, lat_test.download.packet_buffer.buf, sizeof(uint32_t));
+  uint32_t filter_len = lat_test.download.packet_buffer.chunk_len; // in a 32-bit int for now, fine since little endian
+  //memcpy(&filter_len, lat_test.download.packet_buffer.buf, sizeof(uint32_t));
 
   if (LEN_BYTES + filter_len > lat_test.download.packet_buffer.received) {
       log_error("Filter length mismatch\r\n");
       dongle_download_fail(&lat_test.cuckoo_fail);
       return;
   }
+
+  log_infof("filter len: %lu\r\n", filter_len);
 
   // now we know the payload is the correct size
 

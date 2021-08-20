@@ -638,7 +638,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                       ((float) lat_test.download.packet_buffer.received
                        /lat_test.download.packet_buffer.chunk_len) * 100);
             if (lat_test.download.packet_buffer.received
-                  <= lat_test.download.packet_buffer.chunk_len) {
+                  >= lat_test.download.packet_buffer.chunk_len) {
                 // there may be extra data in the packet
                 dongle_download_complete();
             }

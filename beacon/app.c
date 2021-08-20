@@ -61,7 +61,7 @@ void set_risk_data(int len, uint8_t *data)
 {
     sl_status_t sc = 0;
 
-    if (len == PER_ADV_SIZE) {
+    if (len <= PER_ADV_SIZE) {
     	sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
                                    len, &data[0]);
     }
@@ -75,7 +75,7 @@ void set_risk_data(int len, uint8_t *data)
 #ifdef PERIODIC_TEST
 
 #define PACKET_REPLICATION 1
-#define CHUNK_REPLICATION 20
+#define CHUNK_REPLICATION 50
 
 #define TEST_NUM_PACKETS_PER_FILTER \
   (1 + ((TEST_FILTER_LEN - 1) / MAX_PACKET_SIZE))                       // N

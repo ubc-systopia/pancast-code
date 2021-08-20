@@ -231,7 +231,7 @@ int main(void)
               add_delay_ms(100);
               uint64_t end_time = sl_sleeptimer_get_tick_count64();
               uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-              printf("LOOP TIME: %lu\r\n", ms);
+              //printf("LOOP TIME: %lu\r\n", ms);
 #endif
 
         	    /* Application code ends here */

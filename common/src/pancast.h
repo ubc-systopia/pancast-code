@@ -30,7 +30,7 @@
 #endif
 // Dongle clock resolution in ms - should be 1 min in prod.
 #ifdef PANCAST__TEST
-#define DONGLE_TIMER_RESOLUTION 60000
+#define DONGLE_TIMER_RESOLUTION 1000
 #else
 #define DONGLE_TIMER_RESOLUTION 60000 // 1 min
 #endif
@@ -42,7 +42,7 @@
 #endif
 // (Approx) number of time units between each report written to output
 #ifdef PANCAST__TEST
-#define DONGLE_REPORT_INTERVAL 10
+#define DONGLE_REPORT_INTERVAL 60
 #define BEACON_REPORT_INTERVAL 5
 #else
 #define DONGLE_REPORT_INTERVAL 10
@@ -111,7 +111,7 @@ typedef struct
 
 // E_min: the number of time units for which a particular ephemeral id must be
 // (continuously) observed before it is logged in dongle storage
-#define DONGLE_ENCOUNTER_MIN_TIME 5
+#define DONGLE_ENCOUNTER_MIN_TIME 10
 
 // number of OTPs given to user and present in the dongle
 #define NUM_OTP 16

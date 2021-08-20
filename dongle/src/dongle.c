@@ -716,8 +716,24 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 #define en (*enc)
     // when a valid encounter is detected
     // log the encounter
-    log_debugf("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
-               dongle_time);
+//    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
+//               dongle_time);
+    log_infof("Encounter: "
+  "\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\r\n",
+                  enc->eph->bytes[0],
+                  enc->eph->bytes[1],
+                  enc->eph->bytes[2],
+                  enc->eph->bytes[3],
+                  enc->eph->bytes[4],
+                  enc->eph->bytes[5],
+                  enc->eph->bytes[6],
+                  enc->eph->bytes[7],
+                  enc->eph->bytes[8],
+                  enc->eph->bytes[9],
+                  enc->eph->bytes[10],
+                  enc->eph->bytes[11],
+                  enc->eph->bytes[12],
+                  enc->eph->bytes[13]);
     // Write to storage
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);

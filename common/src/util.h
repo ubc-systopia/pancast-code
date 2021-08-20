@@ -27,4 +27,6 @@
 
 #define print_ptr(p, name) log_debugf("%s: %p\r\n", name, (void *)p)
 
+#define hexdump(data, len) log_bytes(printf, printf, data, len, "hexdump")
+
 #endif

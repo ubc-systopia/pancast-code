@@ -24,7 +24,7 @@
 #define BEACON_EPOCH_LENGTH 15
 // Beacon clock resolution in ms - should be 1 min in prod.
 #ifdef PANCAST__TEST
-#define BEACON_TIMER_RESOLUTION 60000
+#define BEACON_TIMER_RESOLUTION 1000
 #else
 #define BEACON_TIMER_RESOLUTION 60000 // 1 min
 #endif
@@ -36,17 +36,17 @@
 #endif
 // Maximum age of an encounter in the dongle log, in time units. Should correspond to 14 days
 #ifdef PANCAST__TEST
-#define DONGLE_MAX_LOG_AGE 60 // 1 hour
+#define DONGLE_MAX_LOG_AGE 60
 #else
 #define DONGLE_MAX_LOG_AGE (14 * 24 * 60) // 14 days
 #endif
 // (Approx) number of time units between each report written to output
 #ifdef PANCAST__TEST
 #define DONGLE_REPORT_INTERVAL 60
-#define BEACON_REPORT_INTERVAL 5
+#define BEACON_REPORT_INTERVAL 60
 #else
-#define DONGLE_REPORT_INTERVAL 10
-#define BEACON_REPORT_INTERVAL 10
+#define DONGLE_REPORT_INTERVAL 10 // 10 min
+#define BEACON_REPORT_INTERVAL 10 // 10 min
 #endif
 
 // Simple Data Types
@@ -111,7 +111,7 @@ typedef struct
 
 // E_min: the number of time units for which a particular ephemeral id must be
 // (continuously) observed before it is logged in dongle storage
-#define DONGLE_ENCOUNTER_MIN_TIME 10
+#define DONGLE_ENCOUNTER_MIN_TIME 5 // corresponds to 5 minutes in production
 
 // number of OTPs given to user and present in the dongle
 #define NUM_OTP 16

@@ -46,7 +46,7 @@ deploy () {
 
 flash () {
 	if 		[[ "$1" == "beacon" ]]; then
-			sn=682013321
+			sn=682213153
 	elif	[[ "$1" == "terminal" ]]; then
 			sn=682013321
 	elif	[[ "$1" == "dongle" ]]; then

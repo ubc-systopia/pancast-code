@@ -24,7 +24,7 @@
 #define BEACON_EPOCH_LENGTH 15
 // Beacon clock resolution in ms - should be 1 min in prod.
 #ifdef PANCAST__TEST
-#define BEACON_TIMER_RESOLUTION 1000
+#define BEACON_TIMER_RESOLUTION 100000
 #else
 #define BEACON_TIMER_RESOLUTION 60000 // 1 min
 #endif
@@ -85,10 +85,7 @@ typedef seckey_t beacon_sk_t;
 
 // Maximum size of a raw data payload to be sent over legacy BLE advertising
 // in a single packet
-//#define MAX_BROADCAST_SIZE 31
-// This is set to 30 until we implement a way to use the length byte for
-// data as well.
-#define MAX_BROADCAST_SIZE 30
+#define MAX_BROADCAST_SIZE 31
 
 // Total size of a Beacon's broadcast as raw bytes 'on the wire'
 // MUST be less than or equal to MAX_BROADCAST_SIZE

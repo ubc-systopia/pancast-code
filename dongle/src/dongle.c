@@ -471,10 +471,6 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 {
   log_infof("num buckets: %lu\r\n", lat_test.num_buckets);
      // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
-  if (lat_test.num_buckets == 0) {
-      log_error("num buckets is 0!!!\r\n");
-      return 0;
-  }
     if (lookup(entry->eph_id.bytes,
                lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
         log_info("====== LOG MATCH!!! ====== \r\n");
@@ -497,13 +493,12 @@ void dongle_download_complete()
   stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
 
   // check the content using cuckoofilter decoder
-#define LEN_BYTES 8 // there are 8 bytes at the start of the filter for length
 
   uint32_t filter_len = lat_test.download.packet_buffer.chunk_len; // in a 32-bit int for now, fine since little endian
-  //memcpy(&filter_len, lat_test.download.packet_buffer.buf, sizeof(uint32_t));
 
-  if (LEN_BYTES + filter_len > lat_test.download.packet_buffer.received) {
-      log_error("Filter length mismatch\r\n");
+  if (filter_len > lat_test.download.packet_buffer.received) {
+      log_error("Filter length mismatch (%lu/%lu)\r\n",
+              lat_test.download.packet_buffer.received, filter_len);
       dongle_download_fail(&lat_test.cuckoo_fail);
       return;
   }
@@ -513,49 +508,56 @@ void dongle_download_complete()
   // now we know the payload is the correct size
 
   lat_test.num_buckets = cf_gadget_num_buckets(filter_len);
+
+  if (lat_test.num_buckets == 0) {
+      log_error("num buckets is 0!!!\r\n");
+      dongle_download_fail(&lat_test.cuckoo_fail);
+      return;
+  }
+
+#ifdef CUCKOOFILTER_FIXED_TEST
+
   uint8_t *filter = lat_test.download.packet_buffer.buf;
 
-
-#undef LEN_BYTES
+  //hexdump(filter, filter_len + 8);
 
   int status = 0;
 
-#ifdef CUCKOOFILTER_FIXED_TEST
   // these are the test cases for the fixed test filter
   // these should exist
   if (!lookup(TEST_ID_EXIST_1, filter, lat_test.num_buckets)) {
-      log_debugf("Cuckoofilter test failed: %s should exist\r\n",
+      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_1);
       status += 1;
   }
   if (!lookup(TEST_ID_EXIST_2, filter, lat_test.num_buckets)) {
-      log_debugf("Cuckoofilter test failed: %s should exist\r\n",
+      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
                  TEST_ID_EXIST_2);
       status += 1;
   }
 
   // these shouldn't
   if (lookup(TEST_ID_NEXIST_1, filter, lat_test.num_buckets)) {
-      log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
+      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_1);
       status += 1;
   }
   if (lookup(TEST_ID_NEXIST_2, filter, lat_test.num_buckets)) {
-      log_debugf("Cuckoofilter test failed: %s should NOT exist\r\n",
+      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
                  TEST_ID_NEXIST_2);
       status += 1;
   }
-#endif
+
 
   if (!status) {
-      log_debugf("Cuckoofilter test passed\r\n");
-  } else {
-      dongle_download_fail(&lat_test.cuckoo_fail);
-      return;
+      log_infof("Cuckoofilter test passed\r\n");
   }
+
+#else
 
   // check existing log entries against the new filter
   dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
+#endif
 
   dongle_download_reset();
 }

@@ -12,6 +12,7 @@
 #define MODE__PERIODIC // enables periodic scanning and syncing
 #define MODE__LEGACY_LOG
 #define MODE__PERIODIC_FIXED_DATA
+#define CUCKOOFILTER_FIXED_TEST
 
 #ifdef MODE__TEST
 #define MODE__TEST_CONFIG

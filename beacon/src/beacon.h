@@ -5,7 +5,7 @@
 
 #define BEACON_MODE__NETWORK // comment to run as non-network beacon
 
-//#define PERIODIC_TEST // uncomment to send test data
+#define PERIODIC_TEST // uncomment to send test data
 //#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
 
 

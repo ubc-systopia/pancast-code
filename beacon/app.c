@@ -85,7 +85,7 @@ void set_risk_data(int len, uint8_t *data)
   uint8_t pkt_rep_count = 0;
   uint32_t seq_num = 0;
   uint32_t pkt_len;
-  uint32_t chunk_len = TEST_FILTER_LEN;
+  uint32_t chunk_len = TEST_FILTER_LEN - 8;
   uint8_t test_data[PER_ADV_SIZE];
   uint8_t test_filter[MAX_FILTER_SIZE];
 #endif

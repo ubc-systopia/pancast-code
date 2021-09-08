@@ -1,7 +1,7 @@
 PANCAST_HOME="$HOME/Work/pancast"
 ZEPHYR="$PANCAST_HOME/zephyrproject/zephyr"
 ZEPHYR_OUT="$ZEPHYR/build/zephyr"
-DEVICE_INFO="$PANCAST_HOME/pancast-keys/out"
+DEVICE_INFO="$PANCAST_HOME/pancast-code/configs"
 
 build () {
 	tmp="$(pwd)"

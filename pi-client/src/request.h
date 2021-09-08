@@ -12,7 +12,9 @@
 const char domain[DOMAIN_LEN];
 const char request[REQUEST_LEN];
 
-int handle_request(struct req_data* chunk);
+int handle_request(struct req_data* data);
+int handle_request_chunk(struct req_data* data, int chunk);
+int handle_request_count(struct req_data* data);
 
 void* request_main(void* arg);
 

@@ -29,26 +29,25 @@ int main(int argc, char *argv[]) {
 
   r_data.data = request;
 
-  err = pthread_create(&id[REQ_THREAD_ID], NULL, &request_main, (void*)&r_data);
-  if (err != 0) {
-    fprintf(stderr, "pthread_create error\r\n");
-  }
+  //err = pthread_create(&id[REQ_THREAD_ID], NULL, &request_main, (void*)&r_data);
+  //if (err != 0) {
+  //  fprintf(stderr, "pthread_create error\r\n");
+ // }
 
   err = pthread_create(&id[UART_THREAD_ID], NULL,  &uart_main, (void*)&r_data);
   if (err != 0) {
     fprintf(stderr, "pthread_create error\r\n");
   }
 
-  err = pthread_join(id[REQ_THREAD_ID],NULL);
-  if (err != 0) {
-    fprintf(stderr, "pthread_join error\r\n");
-  }
+  //err = pthread_join(id[REQ_THREAD_ID], NULL);
+  //if (err != 0) {
+  //  fprintf(stderr, "pthread_join error\r\n");
+ // }
 
-  err = pthread_join(id[UART_THREAD_ID],NULL); 
+  err = pthread_join(id[UART_THREAD_ID], NULL); 
   if (err != 0) {
     fprintf(stderr, "pthread_join error\r\n");
   }
 
   return 0;
 }
-

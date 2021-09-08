@@ -156,10 +156,12 @@ typedef struct
       uint32_t received;
 
       uint32_t chunk_num; // the current chunk being downloaded
-      uint32_t chunk_len; // length of current filter being downloaded
 
       // actual received payload
-      uint8_t buf[MAX_FILTER_SIZE];
+      struct {
+        uint64_t data_len;
+        uint8_t data[MAX_FILTER_SIZE];
+      } buffer;
 
     } packet_buffer;
 } download_t;
@@ -475,11 +477,14 @@ int dongle_download_check_match(enctr_entry_counter_t i,
   memset(id, 0x00, MAX_EPH_ID_SIZE);
 #undef MAX_EPH_ID_SIZE
 
-  memcpy(id, &entry->eph_id, sizeof(beacon_eph_id_t));
+  memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
 
-  log_infof("num buckets: %lu\r\n", lat_test.num_buckets);
+  hexdumpn(id, 15, "checking id");
+
+  log_debugf("num buckets: %lu\r\n", lat_test.num_buckets);
+  //hexdumpn(&lat_test.download.packet_buffer.buffer, 1736, "filter");
      // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
-    if (lookup(id, lat_test.download.packet_buffer.buf, lat_test.num_buckets)) {
+    if (lookup(id, &lat_test.download.packet_buffer.buffer, lat_test.num_buckets)) {
         log_info("====== LOG MATCH!!! ====== \r\n");
     } else {
         log_info("No match for id\r\n");
@@ -501,7 +506,7 @@ void dongle_download_complete()
 
   // check the content using cuckoofilter decoder
 
-  uint32_t filter_len = lat_test.download.packet_buffer.chunk_len; // in a 32-bit int for now, fine since little endian
+  uint64_t filter_len = lat_test.download.packet_buffer.buffer.data_len;
 
   if (filter_len > lat_test.download.packet_buffer.received) {
       log_error("Filter length mismatch (%lu/%lu)\r\n",
@@ -629,16 +634,16 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
         log_debugf("Downloading chunk %lu\r\n", chunk);
         lat_test.download.packet_buffer.chunk_num = chunk;
     } else if (lat_test.download.is_active
-          && chunk_len != lat_test.download.packet_buffer.chunk_len) {
+          && chunk_len != lat_test.download.packet_buffer.buffer.data_len) {
         log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
-                   lat_test.download.packet_buffer.chunk_len, chunk_len);
+                   lat_test.download.packet_buffer.buffer.data_len, chunk_len);
     }
     if (seq >= MAX_NUM_PACKETS_PER_FILTER) {
         log_errorf("Error: sequence number out of bounds\r\n");
     } else {
         if (!lat_test.download.is_active) {
             dongle_download_start();
-            lat_test.download.packet_buffer.chunk_len = chunk_len;
+            lat_test.download.packet_buffer.buffer.data_len = chunk_len;
         }
         lat_test.download.n_total_packets++;
         int prev = lat_test.download.packet_buffer.counts[seq];
@@ -647,14 +652,14 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             // this is an unseen packet
             lat_test.download.packet_buffer.num_distinct++;
             uint8_t len = data_len - PACKET_HEADER_LEN;
-            memcpy(lat_test.download.packet_buffer.buf + (seq * MAX_PACKET_SIZE),
+            memcpy(lat_test.download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
                    data + PACKET_HEADER_LEN, len);
             lat_test.download.packet_buffer.received += len;
             log_infof("download progress: %.2f%%\r\n",
                       ((float) lat_test.download.packet_buffer.received
-                       /lat_test.download.packet_buffer.chunk_len) * 100);
+                       /lat_test.download.packet_buffer.buffer.data_len) * 100);
             if (lat_test.download.packet_buffer.received
-                  >= lat_test.download.packet_buffer.chunk_len) {
+                  >= lat_test.download.packet_buffer.buffer.data_len) {
                 // there may be extra data in the packet
                 dongle_download_complete();
             }
@@ -815,6 +820,8 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     stat_add(rssi, stats.scan_rssi);
 #endif
 
+//    hexdumpn(en.eph->bytes, 14, "eph ID");
+
     // determine which tracked id, if any, is a match
     size_t i = DONGLE_MAX_BC_TRACKED;
     for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++)
@@ -901,6 +908,7 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
                    signal_id,
                    add[0], add[1], add[2], add[3], add[4], add[5], rssi);
     //print_bytes(dat, data_len, "scan-data pre-decode");
+//    hexdumpn(dat, 31, "raw");
     decode_payload(dat);
     //print_bytes(dat, data_len, "scan-data decoded");
     encounter_broadcast_t en;

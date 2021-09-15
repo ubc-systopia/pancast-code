@@ -26,8 +26,8 @@
 #include "sl_system_process_action.h"
 #endif // SL_CATALOG_KERNEL_PRESENT
 
-#include "../../common/src/pancast.h"
-#include "../../common/src/log.h"
+#include "../../common/src/constants.h"
+#include "../../common/src/util/log.h"
 
 #include <stdio.h>
 #include <unistd.h>

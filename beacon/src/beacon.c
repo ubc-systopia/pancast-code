@@ -38,9 +38,10 @@
 
 #include "storage.h"
 
-#include "../../common/src/pancast.h"
-#include "../../common/src/util.h"
-#include "../../common/src/log.h"
+#include "../../common/src/constants.h"
+#include "../../common/src/settings.h"
+#include "../../common/src/util/util.h"
+#include "../../common/src/util/log.h"
 #include "../../common/src/test.h"
 
 //

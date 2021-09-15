@@ -5,8 +5,8 @@
 #include "dongle.h"
 
 #define LOG_LEVEL__INFO
-#include "../../common/src/log.h"
-#include "../../common/src/util.h"
+#include "../../common/src/util/log.h"
+#include "../../common/src/util/util.h"
 
 void _display_encounter_(dongle_encounter_entry *entry)
 {

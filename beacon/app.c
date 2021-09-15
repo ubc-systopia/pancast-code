@@ -24,8 +24,8 @@
 #include "sl_iostream.h"
 #include "em_gpio.h"
 
-#include "../../common/src/pancast.h"
-#include "../../common/src/log.h"
+#include "../../common/src/constants.h"
+#include "../../common/src/util/log.h"
 #include "../../common/src/test.h"
 
 // The advertising set handle allocated from Bluetooth stack.

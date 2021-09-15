@@ -25,8 +25,8 @@
 #include "src/time.h"
 
 #define LOG_LEVEL__DEBUG
-#include "../../common/src/log.h"
-#include "../../common/src/util.h"
+#include "../../common/src/util/log.h"
+#include "../../common/src/util/util.h"
 
 // Sync handle
 static uint16_t sync_handle = 0;

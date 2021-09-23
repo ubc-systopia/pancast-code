@@ -3,16 +3,18 @@ Code for some components of the PanCast system, including an implementation of t
 
 ## Features
 ### Critical Functionality
-| Name                                         | Completion | Notes                                             |
-| -------------------------------------------- | ---------- | ------------------------------------------------- |
-| Bluetooth LE Broadcast/Receive               | 95 %       | Supports 30 byte payload using Legacy Advertising |
-| Ephemeral ID Generation                      | 100 %      |                                                   |
-| Encounter Logging                            | 100 %      |                                                   |
-| Device Configuration Load from Flash         | 100 %      |                                                   |
-| OTP Storage                                  | 100 %      |                                                   |
-| Terminal Connection - Delayed Release Upload | 100 %      |                                                   |
-| Log Deletion (e.g. past 14 Days)             | 100%       |                                                   |
-| Terminal Data Encryption                     | 0%         | Need to develop a data protocol with backend.     |
+
+Working features include:
+
+- Bluetooth LE Broadcast/Receive
+- Ephemeral ID Generation
+- Encounter Logging
+- Device Configuration Load from Flash
+- OTP Storage
+- Terminal Connection - Delayed Release Upload
+- Log Deletion (e.g. past 14 Days)
+
+Problems and missing features are documented on the [issues](github.com/ubc-systopia/pancast-code/issues) page.
 
 ## Structure
 Application code is found in the various directories of the project.
@@ -71,7 +73,7 @@ mergehex -m zephyr.hex config.hex -o app.hex
 #### Gecko (SiLabs) Apps
 
 1. Follow steps 1 and 2 above (using Simplicity Studio for the build).
-2. Combine the hex files using the following command: `mergehex -m GNU\ ARM\ v9.2.1\ -\ Debug/pancast-dongle.hex config.hex -o app.hex`.
+2. Combine the hex files using the following command: `mergehex -m <build_dir>/<device>.hex config.hex -o app.hex`. Where `build_dir` is the build directory e.g. `GNU ARM v10.2.1 - Default` and `device` is the name of a device application (e.g. `pancast-dongle` or `pancast-beacon`).
 3. In Simplicity Studio, open Flash Programmer (the blue, downward-facing arrow button in the toolbar).
 4. Select the correct board if needed.
 5. In the File section, browse to select the `app.hex` file you just generated.

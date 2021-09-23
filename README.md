@@ -73,7 +73,7 @@ mergehex -m zephyr.hex config.hex -o app.hex
 #### Gecko (SiLabs) Apps
 
 1. Follow steps 1 and 2 above (using Simplicity Studio for the build).
-2. Combine the hex files using the following command: `mergehex -m GNU\ ARM\ v9.2.1\ -\ Debug/pancast-dongle.hex config.hex -o app.hex`.
+2. Combine the hex files using the following command: `mergehex -m <build_dir>/<device>.hex config.hex -o app.hex`. Where `build_dir` is the build directory e.g. `GNU ARM v10.2.1 - Default` and `device` is the name of a device application (e.g. `pancast-dongle` or `pancast-beacon`).
 3. In Simplicity Studio, open Flash Programmer (the blue, downward-facing arrow button in the toolbar).
 4. Select the correct board if needed.
 5. In the File section, browse to select the `app.hex` file you just generated.

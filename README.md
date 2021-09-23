@@ -29,7 +29,19 @@ download data from the backend and forward to the network beacon over a serial c
 
 ### Gecko (Silicon Labs) Platform
 
-1. Follow the steps in [Silicon Labs Set-up](https://docs.google.com/document/d/1BJARla0MJZo6spp_89Fs_hWgHd7yTF0c25zpfyrGhVA/edit?usp=sharing).
+1. Install Simplicity Studio 5 from https://www.silabs.com/developers/simplicity-studio. This application is used for development and flashing the boards. Note: If using MacOS Big Sur, a workaround is needed to begin development with Simplicity Studio:
+- Import workaround for OSX Big Sur, follow instructions [here](https://silabs-prod.adobecqms.net/content/usergenerated/asi/cloud/content/siliconlabs/en/community/software/simplicity-studio/forum/jcr:content/content/primary/qna/mac_os_can_t_importdemocodeformsimplicitystdi-ej4M.social.$%7BstartIndex%7D.15.html).
+Copied commands for convenience:
+```
+sudo /usr/local/bin/python3 -m pip install jinja2 pyxb html2text
+cd "/Applications/Simplicity Studio.app/Contents/Eclipse/developer/adapter_packs/python/bin/"
+bin % mv python python.orig
+mv python3 python3.orig
+mv python3.6 python3.6.orig
+ln -s /usr/local/bin/python3 python
+ln -s /usr/local/bin/python3
+ln -s /usr/local/bin/python3.6
+```
 2. Follow the application-specific steps in the application README. (e.g. `dongle/README.md`)
 
 ### Zephyr Platform

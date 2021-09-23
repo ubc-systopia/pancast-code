@@ -29,10 +29,10 @@
 #include "telemetry.h"
 #include "cuckoofilter-gadget/cf-gadget.h"
 
-#include "../../common/src/util/log.h"
-#include "../../common/src/constants.h"
-#include "../../common/src/test.h"
-#include "../../common/src/util/util.h"
+#include "common/src/util/log.h"
+#include "common/src/constants.h"
+#include "common/src/test.h"
+#include "common/src/util/util.h"
 
 //
 // GLOBAL MEMORY
@@ -102,7 +102,7 @@ float dongle_hp_timer = 0.0;
 
 #ifdef MODE__STAT
 
-#include "../../common/src/util/stats.h"
+#include "common/src/util/stats.h"
 
 typedef struct
 {

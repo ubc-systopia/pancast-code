@@ -31,8 +31,8 @@
 
 #include "./src/dongle.h"
 
-#include "../../common/src/constants.h"
-#include "../../common/src/settings.h"
+#include "src/common/src/constants.h"
+#include "src/common/src/settings.h"
 
 int main(void)
 {

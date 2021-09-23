@@ -30,7 +30,7 @@
 #include <assert.h>
 #define DONGLE_NO_OP assert(1);
 
-#include "../../common/src/constants.h"
+#include "common/src/constants.h"
 
 // STATIC PARAMETERS
 

@@ -8,7 +8,7 @@
 // with minimal coupling the underlying drivers.
 
 #include "beacon.h"
-#include "../../common/src/test.h"
+#include "common/src/test.h"
 
 #include <stddef.h>
 

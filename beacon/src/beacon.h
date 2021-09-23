@@ -15,9 +15,9 @@
 
 #define BEACON_NO_OP assert(1);
 
-#include "../../common/src/constants.h"
-#include "../../common/src/settings.h"
-#include "../../common/src/test.h"
+#include "common/src/constants.h"
+#include "common/src/settings.h"
+#include "common/src/test.h"
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 #include <tinycrypt/sha256.h>

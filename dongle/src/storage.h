@@ -6,7 +6,7 @@
 // with minimal coupling the underlying drivers.
 
 #include "dongle.h"
-#include "../../common/src/settings.h"
+#include "common/src/settings.h"
 
 #include <stddef.h>
 

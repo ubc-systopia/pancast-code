@@ -23,8 +23,8 @@
 #include "src/beacon.h"
 #include "src/storage.h"
 
-#include "../common/src/constants.h"
-#include "../common/src/settings.h"
+#include "src/common/src/constants.h"
+#include "src/common/src/settings.h"
 
 /***************************************************************************/ /**
  * Macros

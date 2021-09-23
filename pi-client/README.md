@@ -7,12 +7,26 @@ Note: As of August 19 2021, the UART transfer has been tested with a small test 
 
 ## Getting Started
 
-Follow the instruction in Raspberry Pi Set-up Doc: https://docs.google.com/document/d/1yTDDE8dWmT4W_3zhqdPPBc3t0FCl_lEvqI6VNVbjvZs/edit (TODO: move instructions to README)
+### Setting-up a new Raspberry-Pi
+
+1. Use Raspberry Pi Imager to load OS onto the SD card, further instructions here: https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up/2
+2. Connect Raspberry Pi to wifi and enable SSH, further instructions [here](https://phoenixnap.com/kb/enable-ssh-raspberry-pi) for enabling SSH. These will both require a monitor, mouse and keyboard the first time until we can find a headless mode workaround.
+3. SSH into raspberry pi from PC on the same wifi network.
+
+    `ssh pi@raspberrypi.local`
+
+4. Once you have SSH connection with raspberry pi, clone client code from repo
+
+    `git clone -b rpi https://github.com/ubc-systopia/pancast-code.git`
+
+5. Install required libraries on Raspberry Pi:
+
+    `sudo apt-get install libcurl4-openssl-dev`
 
 ## Compiling the Application
 
 1. Navigate to `src` directory and use `make` to compile the app.
-`
+
 ## Running the Application
 
 1. Connect the GPIO pins on the raspberry pi to the EXT header pins on the Silicon Labs board using jumper wires. Connect ground to ground and PB00 on 

@@ -4,7 +4,7 @@ PanCast Dongle Implementation based on the Silicon Labs Gecko SDK platform. Curr
 
 ## Getting Started
 
-1. Make sure you have followed the SiLabs Setup documentation (linked in the main README) and that your ARM Toolchain version is 2019-q4 (aka `v9.2.1`).
+1. Make sure you have followed the SiLabs Setup documentation (linked in the main README) and that your ARM Toolchain version is 10-2020-q4-major (aka `v10.2.1`).
 2. In the Simplicity Studio IDE, select the option to import a project (`File > Import` on the Mac version).
 3. Browse to select the directory containing this README, and click next.
 4. Click next to skip the Build Configurations page.

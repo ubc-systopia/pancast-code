@@ -15,7 +15,7 @@
 
 #define PAYLOAD_SIZE 250
 #define TEST_SIZE 1000
-#define PACKET_HEADER_LEN (3*sizeof(uint32_t))
+#define PACKET_HEADER_LEN (2*sizeof(uint32_t) + sizeof(uint64_t))
 #define MAX_PACKET_SIZE (PAYLOAD_SIZE - PACKET_HEADER_LEN)  
 #define PACKET_REPLICATION 1
 #define CHUNK_REPLICATION 1

@@ -14,7 +14,7 @@ Working features include:
 - Terminal Connection - Delayed Release Upload
 - Log Deletion (e.g. past 14 Days)
 
-Problems and missing features are documented on the [issues](github.com/ubc-systopia/pancast-code/issues) page.
+Problems and missing features are documented on the [issues](https://github.com/ubc-systopia/pancast-code/issues) page.
 
 ## Structure
 Application code is found in the various directories of the project.

@@ -15,11 +15,13 @@
 
 #define PAYLOAD_SIZE 250
 #define TEST_SIZE 1000
-#define PACKET_HEADER_LEN (3*sizeof(uint32_t))
+#define PACKET_HEADER_LEN 12
 #define MAX_PACKET_SIZE (PAYLOAD_SIZE - PACKET_HEADER_LEN)  
 #define PACKET_REPLICATION 1
 #define CHUNK_REPLICATION 1
 #define MAX_PAYLOAD_SIZE 2000
+
+#define REQ_HEADER_SIZE 8
 
 extern void* uart_main(void* arg);
 

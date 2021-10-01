@@ -24,11 +24,12 @@ void* receive_log() {
 }
 
 
-void convert_chunk_to_pkts(char* chunk, uint64_t len) {
+void convert_chunk_to_pkts(char* chunk, uint32_t len) {
 
     num_pkts = len / (PAYLOAD_SIZE - PACKET_HEADER_LEN);
 
     printf("num_pkts: %d\r\n", num_pkts);
+    printf("len: %lu\r\n", len);
 
     uint32_t data_len = PAYLOAD_SIZE - PACKET_HEADER_LEN;
 
@@ -46,7 +47,7 @@ void convert_chunk_to_pkts(char* chunk, uint64_t len) {
     
     if (len % (PAYLOAD_SIZE - PACKET_HEADER_LEN) != 0) {
       // Add last packet which has less data
-      num_pkts++;
+      //num_pkts++;
       // Add sequence number
       memcpy(payload_data + (num_pkts-1)*PAYLOAD_SIZE, &num_pkts, sizeof(uint32_t));
       // Add chunk number
@@ -63,12 +64,24 @@ void convert_chunk_to_pkts(char* chunk, uint64_t len) {
 
 void make_request() {
 
-  //struct req_data new_data = {0};
-  //handle_request_chunk(&new_data, 0);
+  struct req_data* new_data = malloc(sizeof(struct req_data));
+
+  chunk_num++;
+
+  if (chunk_num >= num_chunks) {
+    chunk_num = 0;
+  }
+
+  handle_request_chunk(new_data, chunk_num);
+  
+  uint32_t real_data_size = new_data->size - REQ_HEADER_SIZE;
 
   // get len from the response data
 
+  convert_chunk_to_pkts(new_data->response + sizeof(uint64_t), real_data_size); 
   //convert_chunk_to_pkts(new_data.response, new_data.size);
+
+  free(new_data);
   
 }
 
@@ -92,6 +105,7 @@ void gpio_callback(int gpio, int level, uint32_t tick) {
     }
     if (chunk_rep_count > CHUNK_REPLICATION) {
       make_request();
+      chunk_rep_count = 0;
     }
   }
   else if (level == 0) {
@@ -159,7 +173,11 @@ void* uart_main(void* arg) {
   request_data = malloc(sizeof(struct req_data));
   handle_request_chunk(request_data, 0);
 
-  uint32_t real_data_size = request_data->size - sizeof(uint64_t);
+  uint32_t real_data_size = request_data->size - REQ_HEADER_SIZE;
+
+  printf("req_data_size: %lu\r\n", request_data->size);
+
+  printf("real_data_size: %lu\r\n", real_data_size);
 
   convert_chunk_to_pkts(request_data->response + sizeof(uint64_t), real_data_size); 
 

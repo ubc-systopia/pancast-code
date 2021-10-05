@@ -4,8 +4,6 @@
 // Dongle Application
 
 // Application Config
-#define APPL_VERSION "0.1.1"
-#define DONGLE_PLATFORM__GECKO
 #define MODE__TEST_CONFIG // loads fixed test data instead of from flash
 //#define MODE__TEST // enables unit tests
 #define MODE__STAT // enables telemetry aggregation
@@ -18,19 +16,13 @@
 #define MODE__TEST_CONFIG
 #endif
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/uuid.h>
-#include <bluetooth/conn.h>
-#else
-#include "sl_bt_api.h"
-#endif
-
 #include <assert.h>
-#define DONGLE_NO_OP assert(1);
 
 #include "common/src/constants.h"
+#include "sl_bt_api.h"
+
+#define DONGLE_NO_OP assert(1);
+
 
 // STATIC PARAMETERS
 
@@ -129,20 +121,12 @@ typedef struct {
 #endif
 
 // High-level routine structure
-#ifndef DONGLE_PLATFORM__ZEPHYR
-void dongle_start();
-#endif
 void dongle_scan(void);
 void dongle_init();
 void dongle_load();
 void dongle_loop();
 void dongle_report();
-#ifdef DONGLE_PLATFORM__ZEPHYR
-void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
-                struct net_buf_simple *ad);
-#else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
-#endif
 void dongle_lock();
 void dongle_unlock();
 void dongle_info();

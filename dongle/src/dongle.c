@@ -9,18 +9,8 @@
 
 #include <string.h>
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-#include <zephyr.h>
-#include <sys/util.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/uuid.h>
-#include <bluetooth/conn.h>
-#include <drivers/flash.h>
-#else
 #include "app_assert.h"
 #include "app_log.h"
-#endif
 
 #include "storage.h"
 #include "test.h"
@@ -41,16 +31,10 @@
 // 1. Mutual exclusion
 // Access for both central updates and scan interrupts
 // is given on a FIFO basis
-#ifdef DONGLE_PLATFORM__ZEPHYR
-struct k_mutex dongle_mu;
-#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
-#define UNLOCK k_mutex_unlock(&dongle_mu);
-#else
 // In the Gecko Platform, locks are no-ops until a firmware implementation
 // can be made to work.
 #define LOCK DONGLE_NO_OP;
 #define UNLOCK DONGLE_NO_OP;
-#endif
 
 void dongle_lock()
 {
@@ -70,9 +54,6 @@ dongle_storage *get_dongle_storage()
     return &storage;
 }
 dongle_epoch_counter_t epoch;
-#ifdef DONGLE_PLATFORM__ZEPHYR
-struct k_timer kernel_time;
-#endif
 dongle_timer_t dongle_time; // main dongle timer
 dongle_timer_t report_time;
 beacon_eph_id_t
@@ -209,13 +190,8 @@ struct
 // MAIN
 // Entrypoint of the application
 // Initialize bluetooth, then call advertising and scan routines
-#ifdef DONGLE_PLATFORM__ZEPHYR
-void main(void)
-#else
-// a.k.a DONGLE START
 // Assumes that kernel has initialized and bluetooth device is booted.
 void dongle_start()
-#endif
 {
     log_info("\r\n");
     log_info("Starting Dongle...\r\n");
@@ -228,18 +204,6 @@ void dongle_start()
 #endif
 #ifdef MODE__PERIODIC
     log_info("Periodic synchronization enabled\r\n");
-#endif
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    int err;
-
-    err = bt_enable(NULL);
-    if (err)
-    {
-        log_errorf("Bluetooth init failed (err %d)\r\n", err);
-        return;
-    }
-
-    log_info("Bluetooth initialized\r\n");
 #endif
 
     if (access_advertise())
@@ -259,16 +223,6 @@ void dongle_scan(void)
     dongle_init();
 
     // Scan Start
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    int err = err = bt_le_scan_start(
-        BT_LE_SCAN_PARAM(
-            BT_LE_SCAN_TYPE_PASSIVE, // passive scan
-            BT_LE_SCAN_OPT_NONE,     // no options; in particular, allow duplicates
-            DONGLE_SCAN_INTERVAL,    // interval
-            DONGLE_SCAN_WINDOW       // window
-            ),
-        dongle_log);
-#else
     int err = 0;
 #ifdef MODE__PERIODIC
     sl_status_t sc;
@@ -301,7 +255,6 @@ void dongle_scan(void)
     sl_bt_scanner_start(gap_1m_phy,
                         sl_bt_scanner_discover_observation); // scan all devices
 #endif
-#endif
     if (err)
     {
         log_errorf("Scanning failed to start (err %d)\r\n", err);
@@ -310,7 +263,6 @@ void dongle_scan(void)
     else
     {
         log_debug("Scanning successfully started\r\n");
-        dongle_loop();
     }
 }
 
@@ -339,10 +291,6 @@ void dongle_download_stats_init()
 #endif
 void dongle_init()
 {
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    k_mutex_init(&dongle_mu);
-#endif
-
     dongle_load();
 
     dongle_time = config.t_init;
@@ -376,15 +324,6 @@ void dongle_init()
     dongle_info();
 
     log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
-
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    k_timer_init(&kernel_time, NULL, NULL);
-
-// Timer zero point
-#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
-    k_timer_start(&kernel_time, DUR, DUR);
-#undef DUR // Initial time
-#endif
 }
 
 // LOAD
@@ -696,32 +635,6 @@ void dongle_on_clock_update()
     dongle_report();
 }
 
-// MAIN LOOP
-// timing and control logic is largely the same as the beacon
-// application. The main difference is that scanning does not
-// require restart for a new epoch.
-void dongle_loop()
-{
-// For the Zephyr platform, an explicit loop is defined. Others
-// are configured to set up and call the clock update callback.
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    uint32_t timer_status = 0;
-
-    int err = 0;
-    while (!err)
-    {
-        // get most updated time
-        timer_status = k_timer_status_sync(&kernel_time);
-        timer_status += k_timer_status_get(&kernel_time);
-        LOCK dongle_time += timer_status;
-        dongle_on_clock_update();
-        UNLOCK
-    }
-#else
-    DONGLE_NO_OP;
-#endif
-}
-
 static int
 decode_payload(uint8_t *data)
 {
@@ -888,22 +801,11 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     return signal_id;
 }
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
-                struct net_buf_simple *ad)
-{
-    char addr_str[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-#define len (ad->len)
-#define add (addr->a.val)
-#define dat (ad->data)
-#else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)
-#endif
     // Filter mis-sized packets
     if (len != ENCOUNTER_BROADCAST_SIZE + 1)
     // TODO: should check for a periodic packet identifier
@@ -952,18 +854,6 @@ void dongle_info()
 {
     log_info("\r\n");
     log_info("Info:\r\n");
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    log_infof("    Platform:                        %s\r\n", "Zephyr OS");
-    log_infof("    Board:                           %s\r\n", CONFIG_BOARD);
-    log_infof("    Bluetooth device name:           %s\r\n", CONFIG_BT_DEVICE_NAME);
-#else
-    log_infof("    Platform:                        %s\r\n", "Gecko");
-#define CONFIG_UNKOWN "Unkown"
-    log_infof("    Board:                           %s\r\n", CONFIG_UNKOWN);
-    log_infof("    Bluetooth device name:           %s\r\n", CONFIG_UNKOWN);
-#undef CONFIG_UNKOWN
-#endif
-    log_infof("    Application Version:             %s\r\n", APPL_VERSION);
     log_infof("    Dongle ID:                       %lu\r\n", config.id);
     log_infof("    Initial clock:                   %lu\r\n", config.t_init);
     log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
@@ -1213,8 +1103,6 @@ void dongle_test()
 
 #endif
 
-#undef APPL__DONGLE
-#undef APPL_VERSION
 #undef LOG_LEVEL__INFO
 #undef MODE__TEST
 #undef MODE__STAT

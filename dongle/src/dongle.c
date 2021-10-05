@@ -187,13 +187,17 @@ struct
     int payloads_started;
     int payloads_complete;
     int payloads_failed;
-    download_t download;
+    download_fail_reason cuckoo_fail;
+    download_fail_reason switch_chunk;
     download_stats_t all_download_stats;
     download_stats_t failed_download_stats;
     complete_download_stats_t complete_download_stats;
+} download_stats;
+
+struct
+{
+    download_t download;
     cf_t cf;
-    download_fail_reason cuckoo_fail;
-    download_fail_reason switch_chunk;
     uint32_t num_buckets;
 } lat_test;
 #endif
@@ -327,6 +331,10 @@ void dongle_download_reset()
 {
     memset(&lat_test.download, 0, sizeof(download_t));
 }
+void dongle_download_stats_init()
+{
+    memset(&download_stats, 0, sizeof(download_stats));
+}
 #endif
 #endif
 void dongle_init()
@@ -360,6 +368,7 @@ void dongle_init()
 
 #ifdef MODE__PERIODIC_FIXED_DATA
     dongle_download_init();
+    dongle_download_stats_init();
 #endif
 
     log_info("Dongle initialized\r\n");
@@ -422,7 +431,7 @@ void dongle_download_start()
     lat_test.download.is_active = 1;
     log_info("Download started! (chunk=%lu)\r\n",
              lat_test.download.packet_buffer.chunk_num);
-    lat_test.payloads_started++;
+    download_stats.payloads_started++;
 }
 
 // Count packet duplication
@@ -457,10 +466,10 @@ void dongle_download_fail(download_fail_reason *reason)
 {
 
   if (lat_test.download.is_active) {
-    lat_test.payloads_failed++;
-    dongle_update_download_stats(lat_test.all_download_stats,
+    download_stats.payloads_failed++;
+    dongle_update_download_stats(download_stats.all_download_stats,
                                  lat_test.download);
-    dongle_update_download_stats(lat_test.failed_download_stats,
+    dongle_update_download_stats(download_stats.failed_download_stats,
                                      lat_test.download);
     *reason = *reason + 1;
 //    dongle_download_info();
@@ -495,14 +504,14 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 void dongle_download_complete()
 {
   log_info("Download complete!\r\n");
-  lat_test.payloads_complete++;
+  download_stats.payloads_complete++;
   // compute latency
   double lat = lat_test.download.time;
-  dongle_update_download_stats(lat_test.all_download_stats,
+  dongle_update_download_stats(download_stats.all_download_stats,
                                    lat_test.download);
-  dongle_update_download_stats(lat_test.complete_download_stats.download_stats,
+  dongle_update_download_stats(download_stats.complete_download_stats.download_stats,
                                    lat_test.download);
-  stat_add(lat, lat_test.complete_download_stats.periodic_data_avg_payload_lat);
+  stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
 
   // check the content using cuckoofilter decoder
 
@@ -511,7 +520,7 @@ void dongle_download_complete()
   if (filter_len > lat_test.download.packet_buffer.received) {
       log_error("Filter length mismatch (%lu/%lu)\r\n",
               lat_test.download.packet_buffer.received, filter_len);
-      dongle_download_fail(&lat_test.cuckoo_fail);
+      dongle_download_fail(&download_stats.cuckoo_fail);
       return;
   }
 
@@ -523,7 +532,7 @@ void dongle_download_complete()
 
   if (lat_test.num_buckets == 0) {
       log_error("num buckets is 0!!!\r\n");
-      dongle_download_fail(&lat_test.cuckoo_fail);
+      dongle_download_fail(&download_stats.cuckoo_fail);
       return;
   }
 
@@ -629,7 +638,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
           && chunk != lat_test.download.packet_buffer.chunk_num) {
         // forced to switch chunks
 
-        dongle_download_fail(&lat_test.switch_chunk);
+        dongle_download_fail(&download_stats.switch_chunk);
 
         log_debugf("Downloading chunk %lu\r\n", chunk);
         lat_test.download.packet_buffer.chunk_num = chunk;
@@ -976,7 +985,7 @@ void dongle_report()
         dongle_info();
         dongle_storage_info(&storage);
         dongle_stats();
-        dongle_download_test_info();
+        dongle_download_stats();
 #ifdef MODE__TEST
         dongle_test();
 #endif
@@ -1035,28 +1044,28 @@ void dongle_download_show_stats(download_stats_t * stats, char *name)
             "    Syncs Lost", "syncs");
 }
 
-void dongle_download_test_info()
+void dongle_download_stats()
 {
 #ifdef MODE__PERIODIC_FIXED_DATA
     log_info("\r\n");
     log_info("Risk Broadcast:\r\n");
 
-    log_infof("    Downloads Started: %d\r\n", lat_test.payloads_started);
-    log_infof("    Downloads Completed: %d\r\n", lat_test.payloads_complete);
-    log_infof("    Downloads Failed: %d\r\n", lat_test.payloads_failed);
-    log_infof("        decode fail:  %d\r\n", lat_test.cuckoo_fail);
-    log_infof("        chunk switch: %d\r\n", lat_test.switch_chunk);
-    dongle_download_show_stats(&lat_test.complete_download_stats.download_stats,
+    log_infof("    Downloads Started: %d\r\n", download_stats.payloads_started);
+    log_infof("    Downloads Completed: %d\r\n", download_stats.payloads_complete);
+    log_infof("    Downloads Failed: %d\r\n", download_stats.payloads_failed);
+    log_infof("        decode fail:  %d\r\n", download_stats.cuckoo_fail);
+    log_infof("        chunk switch: %d\r\n", download_stats.switch_chunk);
+    dongle_download_show_stats(&download_stats.complete_download_stats.download_stats,
                                "completed");
-    stat_show(lat_test.complete_download_stats.periodic_data_avg_payload_lat,
+    stat_show(download_stats.complete_download_stats.periodic_data_avg_payload_lat,
                 "    Download time", "ms");
-    dongle_download_show_stats(&lat_test.failed_download_stats,
+    dongle_download_show_stats(&download_stats.failed_download_stats,
                                "failed");
-    dongle_download_show_stats(&lat_test.all_download_stats,
+    dongle_download_show_stats(&download_stats.all_download_stats,
                                "overall");
 
 
-    dongle_download_init();
+    dongle_download_stats_init();
 #endif
 }
 

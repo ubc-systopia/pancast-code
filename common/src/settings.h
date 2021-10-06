@@ -6,7 +6,7 @@
 
 // #define MODE__TEST_CONFIG    // load test config rather than flash
 #define TEST_DONGLE             // build dongle in test mode
-//#define BEACON_MODE__NETWORK    // comment to build as non-network beacon
+#define BEACON_MODE__NETWORK    // comment to build as non-network beacon
 
 #define GLOBAL_TX_POWER 10  // default
 

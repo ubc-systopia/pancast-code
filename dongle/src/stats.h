@@ -27,7 +27,37 @@ typedef struct
 
 } dongle_stats_t;
 
+typedef struct
+{
+  stat_t pkt_duplication;
+  stat_t n_bytes;
+  stat_t syncs_lost;
+  stat_t est_pkt_loss;
+} download_stats_t;
+
+typedef int download_fail_reason;
+
+typedef struct
+{
+  download_stats_t download_stats;
+  stat_t periodic_data_avg_payload_lat; // download time
+} complete_download_stats_t;
+
+typedef struct
+{
+    int payloads_started;
+    int payloads_complete;
+    int payloads_failed;
+    download_fail_reason cuckoo_fail;
+    download_fail_reason switch_chunk;
+    download_stats_t all_download_stats;
+    download_stats_t failed_download_stats;
+    complete_download_stats_t complete_download_stats;
+} downloads_stats_t;
+
 void dongle_stats_init(dongle_storage *sto);
 void dongle_stats(dongle_storage *sto);
+void dongle_download_stats();
+void dongle_download_stats_init();
 
 #endif

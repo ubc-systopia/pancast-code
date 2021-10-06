@@ -18,7 +18,7 @@
 #include "upload.h"
 #include "encounter.h"
 #include "telemetry.h"
-#include "cuckoofilter-gadget/cf-gadget.h"
+#include "download.h"
 
 #include "common/src/util/log.h"
 #include "common/src/constants.h"
@@ -64,6 +64,7 @@ dongle_timer_t
 size_t cur_id_idx;
 dongle_epoch_counter_t epoch; // current epoch
 uint64_t signal_id;           // to identify scan records received, resets each epoch
+extern download_t download;
 
 // 3. Reporting
 enctr_entry_counter_t non_report_entry_count;
@@ -72,73 +73,7 @@ enctr_entry_counter_t non_report_entry_count;
 // Global high-precision timer, in milliseconds
 float dongle_hp_timer = 0.0;
 extern dongle_stats_t stats;
-
-#ifdef MODE__PERIODIC_FIXED_DATA
-
-typedef struct
-{
-    int is_active;
-    double time;
-    uint32_t n_syncs_lost;
-    uint32_t n_total_packets;
-    uint32_t n_corrupt_packets;
-    struct {
-      // map of sequence number to packet count for that number
-      // used to track completion of the download
-      uint32_t counts[ MAX_NUM_PACKETS_PER_FILTER];
-
-      // number of unique packets seen
-      int num_distinct;
-
-      // number of bytes received
-      uint32_t received;
-
-      uint32_t chunk_num; // the current chunk being downloaded
-
-      // actual received payload
-      struct {
-        uint64_t data_len;
-        uint8_t data[MAX_FILTER_SIZE];
-      } buffer;
-
-    } packet_buffer;
-} download_t;
-
-typedef struct
-{
-  stat_t pkt_duplication;
-  stat_t n_bytes;
-  stat_t syncs_lost;
-  stat_t est_pkt_loss;
-} download_stats_t;
-
-typedef int download_fail_reason;
-
-typedef struct
-{
-  download_stats_t download_stats;
-  stat_t periodic_data_avg_payload_lat; // download time
-} complete_download_stats_t;
-
-struct
-{
-    int payloads_started;
-    int payloads_complete;
-    int payloads_failed;
-    download_fail_reason cuckoo_fail;
-    download_fail_reason switch_chunk;
-    download_stats_t all_download_stats;
-    download_stats_t failed_download_stats;
-    complete_download_stats_t complete_download_stats;
-} download_stats;
-
-struct
-{
-    download_t download;
-    cf_t cf;
-    uint32_t num_buckets;
-} lat_test;
-#endif
+extern download_stats_t download_stats;
 
 //
 // ROUTINES
@@ -226,20 +161,6 @@ void dongle_scan(void)
 // INIT
 // Call load routine, and set variables to their
 // initial value. Also initialize timing structs
-#ifdef MODE__PERIODIC_FIXED_DATA
-void dongle_download_init()
-{
-    memset(&lat_test, 0, sizeof(lat_test));
-}
-void dongle_download_reset()
-{
-    memset(&lat_test.download, 0, sizeof(download_t));
-}
-void dongle_download_stats_init()
-{
-    memset(&download_stats, 0, sizeof(download_stats));
-}
-#endif
 void dongle_init()
 {
     dongle_load();
@@ -253,10 +174,9 @@ void dongle_init()
 
     dongle_stats_init(&storage);
 
-#ifdef MODE__PERIODIC_FIXED_DATA
     dongle_download_init();
+
     dongle_download_stats_init();
-#endif
 
     log_info("Dongle initialized\r\n");
 
@@ -297,263 +217,13 @@ void dongle_hp_timer_add(uint32_t ticks)
 {
     double ms = ((double)ticks * PREC_TIMER_TICK_MS);
     stats.total_periodic_data_time += (ms / 1000.0);
-    if (lat_test.download.is_active)
+    if (download.is_active)
     {
-        lat_test.download.time += ms;
+        download.time += ms;
     }
     dongle_hp_timer += ms;
 }
 
-void dongle_download_start()
-{
-    lat_test.download.is_active = 1;
-    log_info("Download started! (chunk=%lu)\r\n",
-             lat_test.download.packet_buffer.chunk_num);
-    download_stats.payloads_started++;
-}
-
-// Count packet duplication
-#define dongle_download_duplication(s, d) \
-  for (int i = 0; i < MAX_NUM_PACKETS_PER_FILTER; i++) { \
-      uint32_t count = d.packet_buffer.counts[i]; \
-      if (count > 0) { \
-          stat_add(count, s.pkt_duplication); \
-      } \
-  }
-
-float dongle_download_esimtate_loss(download_t *d)
-{
-  uint32_t max_count = d->packet_buffer.counts[0];
-  for (int i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
-      if (d->packet_buffer.counts[i] > max_count) {
-          max_count = d->packet_buffer.counts[i];
-      }
-  }
-  return 100*(1 - (((float) d->n_total_packets)
-                /(max_count * d->packet_buffer.num_distinct)));
-}
-
-
-#define dongle_update_download_stats(s, d) \
-  stat_add(d.packet_buffer.received, s.n_bytes); \
-  stat_add(d.n_syncs_lost, s.syncs_lost); \
-  dongle_download_duplication(s, d) \
-  stat_add( dongle_download_esimtate_loss(&d), s.est_pkt_loss)
-
-void dongle_download_fail(download_fail_reason *reason)
-{
-
-  if (lat_test.download.is_active) {
-    download_stats.payloads_failed++;
-    dongle_update_download_stats(download_stats.all_download_stats,
-                                 lat_test.download);
-    dongle_update_download_stats(download_stats.failed_download_stats,
-                                     lat_test.download);
-    *reason = *reason + 1;
-//    dongle_download_info();
-    dongle_download_reset();
-  }
-}
-
-int dongle_download_check_match(enctr_entry_counter_t i,
-                                dongle_encounter_entry *entry)
-{
-  // pad the stored id in case backend entry contains null byte at end
-#define MAX_EPH_ID_SIZE 15
-  uint8_t id[MAX_EPH_ID_SIZE];
-  memset(id, 0x00, MAX_EPH_ID_SIZE);
-#undef MAX_EPH_ID_SIZE
-
-  memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
-
-  hexdumpn(id, 15, "checking id");
-
-  log_debugf("num buckets: %lu\r\n", lat_test.num_buckets);
-  //hexdumpn(&lat_test.download.packet_buffer.buffer, 1736, "filter");
-     // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
-    if (lookup(id, &lat_test.download.packet_buffer.buffer, lat_test.num_buckets)) {
-        log_info("====== LOG MATCH!!! ====== \r\n");
-    } else {
-        log_info("No match for id\r\n");
-    }
-    return 1;
-}
-
-void dongle_download_complete()
-{
-  log_info("Download complete!\r\n");
-  download_stats.payloads_complete++;
-  // compute latency
-  double lat = lat_test.download.time;
-  dongle_update_download_stats(download_stats.all_download_stats,
-                                   lat_test.download);
-  dongle_update_download_stats(download_stats.complete_download_stats.download_stats,
-                                   lat_test.download);
-  stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
-
-  // check the content using cuckoofilter decoder
-
-  uint64_t filter_len = lat_test.download.packet_buffer.buffer.data_len;
-
-  if (filter_len > lat_test.download.packet_buffer.received) {
-      log_error("Filter length mismatch (%lu/%lu)\r\n",
-              lat_test.download.packet_buffer.received, filter_len);
-      dongle_download_fail(&download_stats.cuckoo_fail);
-      return;
-  }
-
-  log_infof("filter len: %lu\r\n", filter_len);
-
-  // now we know the payload is the correct size
-
-  lat_test.num_buckets = cf_gadget_num_buckets(filter_len);
-
-  if (lat_test.num_buckets == 0) {
-      log_error("num buckets is 0!!!\r\n");
-      dongle_download_fail(&download_stats.cuckoo_fail);
-      return;
-  }
-
-#ifdef CUCKOOFILTER_FIXED_TEST
-
-  uint8_t *filter = lat_test.download.packet_buffer.buf;
-
-  //hexdump(filter, filter_len + 8);
-
-  int status = 0;
-
-  // these are the test cases for the fixed test filter
-  // these should exist
-  if (!lookup(TEST_ID_EXIST_1, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
-                 TEST_ID_EXIST_1);
-      status += 1;
-  }
-  if (!lookup(TEST_ID_EXIST_2, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
-                 TEST_ID_EXIST_2);
-      status += 1;
-  }
-
-  // these shouldn't
-  if (lookup(TEST_ID_NEXIST_1, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
-                 TEST_ID_NEXIST_1);
-      status += 1;
-  }
-  if (lookup(TEST_ID_NEXIST_2, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
-                 TEST_ID_NEXIST_2);
-      status += 1;
-  }
-
-
-  if (!status) {
-      log_infof("Cuckoofilter test passed\r\n");
-  }
-
-#else
-
-  // check existing log entries against the new filter
-  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
-#endif
-
-  dongle_download_reset();
-}
-
-void dongle_on_sync_lost()
-{
-
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_SYNC_LOST, dongle_hp_timer);
-  if (lat_test.download.is_active) {
-      log_info("Download failed - lost sync.\r\n");
-      lat_test.download.n_syncs_lost++;
-  }
-
-}
-
-void dongle_on_periodic_data_error(int8_t rssi)
-{
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_PKT_ERROR, dongle_hp_timer);
-#ifdef MODE__STAT
-    stats.num_periodic_data_error++;
-    stat_add(rssi, stats.periodic_data_rssi);
-    lat_test.download.n_corrupt_packets++;
-#endif
-}
-
-void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
-{
-
-//    log_bytes(printf, printf, data, data_len, "data");
-    if (data_len < PACKET_HEADER_LEN) {
-        log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                   dongle_hp_timer, rssi, data_len);
-        log_error("not enough data to read sequence numbers\r\n");
-        log_error("len: %d\r\n", data_len);
-        lat_test.download.n_corrupt_packets++;
-        return;
-    }
-
-    // extract sequence numbers
-    uint32_t seq, chunk, chunk_len;
-    memcpy(&seq, data, sizeof(uint32_t));
-    memcpy(&chunk, data + sizeof(uint32_t), sizeof(uint32_t));
-    // TODO: this is actually and 8 byte field so fix
-    memcpy(&chunk_len, data + 2*sizeof(uint32_t), 8);
-
-    log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                       dongle_hp_timer, rssi, data_len, seq, chunk, chunk_len);
-
-#ifdef MODE__STAT
-    stats.total_periodic_data_size += data_len;
-    stats.num_periodic_data++;
-    stat_add(data_len, stats.periodic_data_size);
-    stat_add(rssi, stats.periodic_data_rssi);
-#endif
-#ifdef MODE__PERIODIC_FIXED_DATA
-    if (lat_test.download.is_active
-          && chunk != lat_test.download.packet_buffer.chunk_num) {
-        // forced to switch chunks
-
-        dongle_download_fail(&download_stats.switch_chunk);
-
-        log_debugf("Downloading chunk %lu\r\n", chunk);
-        lat_test.download.packet_buffer.chunk_num = chunk;
-    } else if (lat_test.download.is_active
-          && chunk_len != lat_test.download.packet_buffer.buffer.data_len) {
-        log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
-                   lat_test.download.packet_buffer.buffer.data_len, chunk_len);
-    }
-    if (seq >= MAX_NUM_PACKETS_PER_FILTER) {
-        log_errorf("Error: sequence number out of bounds\r\n");
-    } else {
-        if (!lat_test.download.is_active) {
-            dongle_download_start();
-            lat_test.download.packet_buffer.buffer.data_len = chunk_len;
-        }
-        lat_test.download.n_total_packets++;
-        int prev = lat_test.download.packet_buffer.counts[seq];
-        lat_test.download.packet_buffer.counts[seq]++;
-        if (prev == 0) {
-            // this is an unseen packet
-            lat_test.download.packet_buffer.num_distinct++;
-            uint8_t len = data_len - PACKET_HEADER_LEN;
-            memcpy(lat_test.download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
-                   data + PACKET_HEADER_LEN, len);
-            lat_test.download.packet_buffer.received += len;
-            log_infof("download progress: %.2f%%\r\n",
-                      ((float) lat_test.download.packet_buffer.received
-                       /lat_test.download.packet_buffer.buffer.data_len) * 100);
-            if (lat_test.download.packet_buffer.received
-                  >= lat_test.download.packet_buffer.buffer.data_len) {
-                // there may be extra data in the packet
-                dongle_download_complete();
-            }
-        }
-    }
-#endif
-}
 
 // UPDATE
 // For callback-based timers. This is called with the mutex
@@ -832,9 +502,8 @@ void dongle_report()
 
 #ifdef MODE__STAT
         dongle_stats(&storage);
-#endif
-
         dongle_download_stats();
+#endif
 
 #ifdef MODE__TEST
         dongle_test();
@@ -848,57 +517,7 @@ void dongle_report()
     }
 }
 
-
-void dongle_download_show_stats(download_stats_t * stats, char *name)
-{
-  log_infof("Download Statistics (%s):\r\n", name);
-  stat_show(stats->pkt_duplication,
-            "    Packet Duplication", "packet copies");
-  stat_show(stats->est_pkt_loss,
-            "    Estimated loss rate", "% packets");
-  stat_show(stats->n_bytes,
-            "    Bytes Received", "bytes");
-  stat_show(stats->syncs_lost,
-            "    Syncs Lost", "syncs");
-}
-
-void dongle_download_stats()
-{
-#ifdef MODE__PERIODIC_FIXED_DATA
-    log_info("\r\n");
-    log_info("Risk Broadcast:\r\n");
-
-    log_infof("    Downloads Started: %d\r\n", download_stats.payloads_started);
-    log_infof("    Downloads Completed: %d\r\n", download_stats.payloads_complete);
-    log_infof("    Downloads Failed: %d\r\n", download_stats.payloads_failed);
-    log_infof("        decode fail:  %d\r\n", download_stats.cuckoo_fail);
-    log_infof("        chunk switch: %d\r\n", download_stats.switch_chunk);
-    dongle_download_show_stats(&download_stats.complete_download_stats.download_stats,
-                               "completed");
-    stat_show(download_stats.complete_download_stats.periodic_data_avg_payload_lat,
-                "    Download time", "ms");
-    dongle_download_show_stats(&download_stats.failed_download_stats,
-                               "failed");
-    dongle_download_show_stats(&download_stats.all_download_stats,
-                               "overall");
-
-
-    dongle_download_stats_init();
-#endif
-}
-
-void dongle_download_info()
-{
-#ifdef MODE__PERIODIC_FIXED_DATA
-    log_infof("Total time: %.0f ms\r\n", lat_test.download.time);
-    log_info("Packets Received: %lu\r\n", lat_test.download.n_total_packets);
-    log_infof("Data bytes downloaded: %lu\r\n",
-              lat_test.download.packet_buffer.received);
-#endif
-}
-
 #undef alpha
-
 #undef LOG_LEVEL__INFO
 #undef MODE__TEST
 #undef MODE__STAT

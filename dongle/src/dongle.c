@@ -12,6 +12,7 @@
 #include "app_assert.h"
 #include "app_log.h"
 
+#include "stats.h"
 #include "storage.h"
 #include "test.h"
 #include "access.h"
@@ -77,44 +78,10 @@ int total_test_encounters = 0;
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 #endif
 
-// 5. Telemetry
+// 5. Statistics and Telemetry
 // Global high-precision timer, in milliseconds
 float dongle_hp_timer = 0.0;
-
-#ifdef MODE__STAT
-
-#include "common/src/util/stats.h"
-
-typedef struct
-{
-
-    uint8_t storage_checksum; // zero for valid stat data
-
-    uint32_t num_obs_ids;
-    uint32_t num_scan_results;
-    uint32_t num_periodic_data;
-    uint32_t num_periodic_data_error;
-    uint32_t total_periodic_data_size; // bytes
-    double total_periodic_data_time;   // seconds
-
-    stat_t scan_rssi;
-    stat_t encounter_rssi;
-    stat_t periodic_data_size;
-    stat_t periodic_data_rssi;
-
-    double periodic_data_avg_thrpt;
-} stats_t;
-
-stats_t stats;
-
-void stat_compute_thrpt(stats_t *st)
-{
-    st->periodic_data_avg_thrpt =
-        ((double)st->total_periodic_data_size * 0.008) /
-        st->total_periodic_data_time;
-}
-
-#endif
+extern dongle_stats_t stats;
 
 #ifdef MODE__PERIODIC_FIXED_DATA
 
@@ -199,9 +166,9 @@ void dongle_start()
 #ifdef MODE__TEST
     log_info("Test mode enabled\r\n");
 #endif
-#ifdef MODE__STAT
+
     log_info("Statistics enabled\r\n");
-#endif
+
 #ifdef MODE__PERIODIC
     log_info("Periodic synchronization enabled\r\n");
 #endif
@@ -269,11 +236,6 @@ void dongle_scan(void)
 // INIT
 // Call load routine, and set variables to their
 // initial value. Also initialize timing structs
-#ifdef MODE__STAT
-void dongle_stats_init()
-{
-    memset(&stats, 0, sizeof(stats_t));
-}
 #ifdef MODE__PERIODIC_FIXED_DATA
 void dongle_download_init()
 {
@@ -288,7 +250,6 @@ void dongle_download_stats_init()
     memset(&download_stats, 0, sizeof(download_stats));
 }
 #endif
-#endif
 void dongle_init()
 {
     dongle_load();
@@ -300,19 +261,7 @@ void dongle_init()
     non_report_entry_count = 0;
     signal_id = 0;
 
-#ifdef MODE__STAT
-    // must call dongle_config_load before this
-    dongle_storage_read_stat(&storage, &stats, sizeof(stats_t));
-    if (!stats.storage_checksum)
-    {
-        app_log_info("Existing Statistics Found\r\n");
-        dongle_stats();
-    }
-    else
-    {
-        dongle_stats_init();
-    }
-#endif
+    dongle_stats_init(&storage);
 
 #ifdef MODE__PERIODIC_FIXED_DATA
     dongle_download_init();
@@ -863,6 +812,20 @@ void dongle_info()
     log_infof("    Report Interval:                 %u ms\r\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
 }
 
+void dongle_encounter_report()
+{
+    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
+
+    // Large integers here are casted for formatting compatabilty. This may result in false
+    // output for large values.
+    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
+    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
+
+    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
+              (uint32_t)cur,
+              cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
+}
+
 void dongle_report()
 {
     // do report
@@ -874,8 +837,15 @@ void dongle_report()
 
         dongle_info();
         dongle_storage_info(&storage);
-        dongle_stats();
+    log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
+        dongle_encounter_report();
+
+#ifdef MODE__STAT
+        dongle_stats(&storage);
+#endif
+
         dongle_download_stats();
+
 #ifdef MODE__TEST
         dongle_test();
 #endif
@@ -888,38 +858,6 @@ void dongle_report()
     }
 }
 
-void dongle_stats()
-{
-    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
-    enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
-#ifdef MODE__STAT
-    log_info("\r\n");
-    log_info("Statistics:\r\n");
-    log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
-    // Large integers here are casted for formatting compatabilty. This may result in false
-    // output for large values.
-    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
-    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
-
-    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
-              (uint32_t)cur,
-              cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
-    log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
-    log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
-    log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
-    stat_show(stats.periodic_data_size, "Periodic Pkt. Size", "bytes");
-    log_infof("    Periodic Pkts. Received (error):     %lu\r\n", stats.num_periodic_data_error);
-    log_infof("    Total Bytes Transferred:             %lu\r\n", stats.total_periodic_data_size);
-    log_infof("    Total Time (s):                      %f\r\n", stats.total_periodic_data_time);
-    stat_compute_thrpt(&stats);
-    log_infof("    Avg. Throughput (kb/s)               %f\r\n", stats.periodic_data_avg_thrpt);
-    stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
-    stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
-    stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");
-    dongle_storage_save_stat(&storage, &stats, sizeof(stats_t));
-    dongle_stats_init(); // reset the stats
-#endif
-}
 
 void dongle_download_show_stats(download_stats_t * stats, char *name)
 {

@@ -1,5 +1,5 @@
-#ifndef DONGLE_ACCESS__H
-#define DONGLE_ACCESS__H
+#ifndef DONGLE_UPLOAD__H
+#define DONGLE_UPLOAD__H
 
 // TERMINAL INTERACTION
 // This is a connection-oriented protocol for external upload

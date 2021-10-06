@@ -441,24 +441,6 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #undef add
 }
 
-uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
-{
-    uint8_t res = 0;
-    log_debug("comparing ids\r\n");
-#define check(val, idx) res |= (val << idx)
-    check(!(a.beacon_id == b.beacon_id), 0);
-    log_debug("comparing beacon time\r\n");
-    check(!(a.beacon_time == b.beacon_time), 1);
-    log_debug("comparing dongle time\r\n");
-    check(!(a.dongle_time == b.dongle_time), 2);
-    log_debug("comparing location ids\r\n");
-    check(!(a.location_id == b.location_id), 3);
-    log_debug("comparing eph. ids\r\n");
-    check(compare_eph_id(&a.eph_id, &b.eph_id), 4);
-#undef check
-    return res;
-}
-
 void dongle_info()
 {
     log_info("\r\n");

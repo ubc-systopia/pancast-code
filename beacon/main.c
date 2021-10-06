@@ -70,6 +70,7 @@ int main(void)
     // Start the kernel. Task(s) created in app_init() will start running.
     sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
+#endif //
 
     // Set pin PB01 for output
       GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
@@ -237,7 +238,7 @@ int main(void)
         	end_time = sl_sleeptimer_get_tick_count64();
         	ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
             printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
-#else
+#else // !PERIODIC_TEST
         	    // Start timer
               uint64_t start_time = sl_sleeptimer_get_tick_count64();
         	    send_test_risk_data();
@@ -245,11 +246,10 @@ int main(void)
               uint64_t end_time = sl_sleeptimer_get_tick_count64();
               uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
               //printf("LOOP TIME: %lu\r\n", ms);
-#endif
-#endif
-
+#endif // PERIODIC_TEST
+        }
+#endif // BEACON_MODE__NETWORK
               /* Application code ends here */
-      }
 
         // Do not remove this call: Silicon Labs components process action routine
         // must be called from the super loop.
@@ -258,7 +258,6 @@ int main(void)
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
         // Let the CPU go to sleep if the system allows it.
       //  sl_power_manager_sleep();
-#endif
-    }
 #endif // SL_CATALOG_KERNEL_PRESENT
+    }
 }

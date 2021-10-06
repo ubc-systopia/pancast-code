@@ -269,20 +269,6 @@ static int decode_encounter(encounter_broadcast_t *dat,
     return 0;
 }
 
-// compares two ephemeral ids
-int compare_eph_id(beacon_eph_id_t *a, beacon_eph_id_t *b)
-{
-#define A (a->bytes)
-#define B (b->bytes)
-    for (int i = 0; i < BEACON_EPH_ID_HASH_LEN; i++)
-    {
-        if (A[i] != B[i])
-            return 1;
-    }
-#undef B
-#undef A
-    return 0;
-}
 
 static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
@@ -291,22 +277,9 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     // log the encounter
 //    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
 //               dongle_time);
-    log_infof("Encounter: "
-  "\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\r\n",
-                  enc->eph->bytes[0],
-                  enc->eph->bytes[1],
-                  enc->eph->bytes[2],
-                  enc->eph->bytes[3],
-                  enc->eph->bytes[4],
-                  enc->eph->bytes[5],
-                  enc->eph->bytes[6],
-                  enc->eph->bytes[7],
-                  enc->eph->bytes[8],
-                  enc->eph->bytes[9],
-                  enc->eph->bytes[10],
-                  enc->eph->bytes[11],
-                  enc->eph->bytes[12],
-                  enc->eph->bytes[13]);
+    log_info("Encounter! ");
+    display_eph_id(enc->eph);
+
     // Write to storage
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);

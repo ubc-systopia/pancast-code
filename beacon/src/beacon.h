@@ -3,7 +3,8 @@
 
 #include <assert.h>
 
-#define BEACON_MODE__NETWORK // comment to run as non-network beacon
+#include "common/src/settings.h"
+
 
 //#define PERIODIC_TEST // uncomment to send test data
 //#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA

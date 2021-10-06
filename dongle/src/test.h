@@ -39,5 +39,6 @@ static otp_set TEST_OTPS = {
      12345678}};
 
 void dongle_test();
+void dongle_test_encounter(encounter_broadcast_t *enc);
 
 #endif

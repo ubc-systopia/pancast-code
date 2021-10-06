@@ -4,6 +4,7 @@
 #include "encounter.h"
 
 #include "common/src/util/log.h"
+#include "common/src/test.h"
 
 extern dongle_storage storage;
 extern dongle_config_t config;
@@ -16,6 +17,24 @@ int test_errors = 0;
 int test_encounters = 0;
 int total_test_encounters = 0;
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
+
+void dongle_test_encounter(encounter_broadcast_t *enc)
+{
+    if (*enc->b == TEST_BEACON_ID)
+    {
+        test_encounters++;
+    }
+#define test_en (test_encounter_list[total_test_encounters])
+    memcpy(&test_en.location_id, enc->loc, sizeof(beacon_location_id_t));
+    test_en.beacon_id = *enc->b;
+    test_en.beacon_time = *enc->t;
+    test_en.dongle_time = dongle_time;
+    test_en.eph_id = *enc->eph;
+    log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
+    //_display_encounter_(&test_en);
+#undef test_en
+    total_test_encounters++;
+}
 
 uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
 {

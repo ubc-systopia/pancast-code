@@ -88,7 +88,7 @@ void dongle_start()
     log_info("\r\n");
     log_info("Starting Dongle...\r\n");
 
-#ifdef MODE__TEST
+#ifdef TEST_DONGLE
     log_info("Test mode enabled\r\n");
 #endif
 
@@ -272,7 +272,6 @@ static int decode_encounter(encounter_broadcast_t *dat,
 
 static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
-#define en (*enc)
     // when a valid encounter is detected
     // log the encounter
 //    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
@@ -283,25 +282,11 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     // Write to storage
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);
-#ifdef MODE__TEST
-    if (*en.b == TEST_BEACON_ID)
-    {
-        test_encounters++;
-    }
-#define test_en (test_encounter_list[total_test_encounters])
-    memcpy(&test_en.location_id, enc->loc, sizeof(beacon_location_id_t));
-    test_en.beacon_id = *enc->b;
-    test_en.beacon_time = *enc->t;
-    test_en.dongle_time = dongle_time;
-    test_en.eph_id = *enc->eph;
-    log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
-    //_display_encounter_(&test_en);
-#undef test_en
-    total_test_encounters++;
+#ifdef TEST_DONGLE
+    dongle_test_encounter(enc);
 #endif
     // reset the observation time
     obs_time[i] = dongle_time;
-#undef en
 }
 
 static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
@@ -460,7 +445,7 @@ void dongle_report()
         dongle_download_stats();
 #endif
 
-#ifdef MODE__TEST
+#ifdef TEST_DONGLE
         dongle_test();
 #endif
 
@@ -474,5 +459,5 @@ void dongle_report()
 
 #undef alpha
 #undef LOG_LEVEL__INFO
-#undef MODE__TEST
+#undef TEST_DONGLE
 #undef MODE__STAT

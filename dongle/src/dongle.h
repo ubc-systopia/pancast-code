@@ -2,17 +2,17 @@
 #define DONGLE__H
 
 // Dongle Application
+#include "common/src/settings.h"
 
 // Application Config
 #define MODE__TEST_CONFIG // loads fixed test data instead of from flash
-//#define MODE__TEST // enables unit tests
 #define MODE__STAT // enables telemetry aggregation
 #define MODE__PERIODIC // enables periodic scanning and syncing
 #define MODE__LEGACY_LOG
 #define MODE__PERIODIC_FIXED_DATA
 //#define CUCKOOFILTER_FIXED_TEST
 
-#ifdef MODE__TEST
+#ifdef TEST_DONGLE
 #define MODE__TEST_CONFIG
 #endif
 

@@ -4,6 +4,10 @@
 // CONFIGURATION
 // Params for system operation
 
+// #define MODE__TEST_CONFIG    // load test config rather than flash
+#define TEST_DONGLE             // build dongle in test mode
+#define BEACON_MODE__NETWORK    // comment to build as non-network beacon
+
 #define GLOBAL_TX_POWER 10  // default
 
 // number of time units between each report written to output
@@ -34,6 +38,10 @@
 // be continuously observed before it is logged by the dongle
 #define DONGLE_ENCOUNTER_MIN_TIME 5
 
+#endif
+
+#ifdef TEST_DONGLE
+#define MODE__TEST_CONFIG
 #endif
 
 #endif

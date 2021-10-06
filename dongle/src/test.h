@@ -38,4 +38,6 @@ static otp_set TEST_OTPS = {
     {0xffffffffffffffff,
      12345678}};
 
+void dongle_test();
+
 #endif

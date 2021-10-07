@@ -124,10 +124,6 @@ typedef struct {
   uint64_t diff_ms;
 } timertest_t;
 
-#ifdef MODE__PERIODIC_FIXED_DATA
-#define PERIODIC_FIXED_DATA_LEN (246 * PERIODIC_TEST_NUM_PACKETS) // must be <= sizeof(uint32)
-#endif
-
 // High-level routine structure
 #ifndef DONGLE_PLATFORM__ZEPHYR
 void dongle_start();

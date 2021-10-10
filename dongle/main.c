@@ -31,7 +31,8 @@
 
 #include "./src/dongle.h"
 
-#include "../../common/src/pancast.h"
+#include "src/common/src/constants.h"
+#include "src/common/src/settings.h"
 
 int main(void)
 {

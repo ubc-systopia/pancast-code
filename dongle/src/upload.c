@@ -1,4 +1,4 @@
-#include "./access.h"
+#include "./upload.h"
 
 #include <string.h>
 
@@ -14,8 +14,8 @@
 #include "storage.h"
 
 #define LOG_LEVEL__INFO
-#include "../../common/src/log.h"
-#include "../../common/src/util.h"
+#include "common/src/util/log.h"
+#include "common/src/util/util.h"
 
 // Memory
 #ifdef DONGLE_PLATFORM__ZEPHYR

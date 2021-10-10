@@ -1,11 +1,11 @@
 #ifndef COMMON_UTIL__H
 #define COMMON_UTIL__H
 
+#include "log.h"
+
 // Some utility macros
 
 #include <stdint.h>
-
-#include "./log.h"
 
 #define log_bytes(log, logf, data, len, name) \
     logf("%s: 0x", name);                     \

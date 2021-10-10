@@ -1,7 +1,6 @@
 #ifndef DONGLE_TEST__H
 #define DONGLE_TEST__H
 
-#include "../../common/src/pancast.h"
 #include "dongle.h"
 #include "storage.h"
 
@@ -38,5 +37,8 @@ static otp_set TEST_OTPS = {
      11111111},
     {0xffffffffffffffff,
      12345678}};
+
+void dongle_test();
+void dongle_test_encounter(encounter_broadcast_t *enc);
 
 #endif

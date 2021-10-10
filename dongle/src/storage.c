@@ -4,9 +4,9 @@
 
 #include <string.h>
 
-#include "../../common/src/gecko.h"
-#include "../../common/src/log.h"
-#include "../../common/src/util.h"
+#include "common/src/platform/gecko.h"
+#include "common/src/util/log.h"
+#include "common/src/util/util.h"
 
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy

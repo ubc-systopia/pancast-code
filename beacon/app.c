@@ -24,9 +24,9 @@
 #include "sl_iostream.h"
 #include "em_gpio.h"
 
-#include "../../common/src/pancast.h"
-#include "../../common/src/log.h"
-#include "../../common/src/test.h"
+#include "src/common/src/constants.h"
+#include "src/common/src/util/log.h"
+#include "src/common/src/test.h"
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;

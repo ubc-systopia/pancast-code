@@ -9,30 +9,21 @@
 
 #include <string.h>
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-#include <zephyr.h>
-#include <sys/util.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/uuid.h>
-#include <bluetooth/conn.h>
-#include <drivers/flash.h>
-#else
 #include "app_assert.h"
 #include "app_log.h"
-#endif
 
+#include "stats.h"
 #include "storage.h"
 #include "test.h"
-#include "access.h"
+#include "upload.h"
 #include "encounter.h"
 #include "telemetry.h"
-#include "cuckoofilter-gadget/cf-gadget.h"
+#include "download.h"
 
-#include "../../common/src/log.h"
-#include "../../common/src/pancast.h"
-#include "../../common/src/test.h"
-#include "../../common/src/util.h"
+#include "common/src/util/log.h"
+#include "common/src/constants.h"
+#include "common/src/test.h"
+#include "common/src/util/util.h"
 
 //
 // GLOBAL MEMORY
@@ -41,16 +32,10 @@
 // 1. Mutual exclusion
 // Access for both central updates and scan interrupts
 // is given on a FIFO basis
-#ifdef DONGLE_PLATFORM__ZEPHYR
-struct k_mutex dongle_mu;
-#define LOCK k_mutex_lock(&dongle_mu, K_FOREVER);
-#define UNLOCK k_mutex_unlock(&dongle_mu);
-#else
 // In the Gecko Platform, locks are no-ops until a firmware implementation
 // can be made to work.
 #define LOCK DONGLE_NO_OP;
 #define UNLOCK DONGLE_NO_OP;
-#endif
 
 void dongle_lock()
 {
@@ -70,9 +55,6 @@ dongle_storage *get_dongle_storage()
     return &storage;
 }
 dongle_epoch_counter_t epoch;
-#ifdef DONGLE_PLATFORM__ZEPHYR
-struct k_timer kernel_time;
-#endif
 dongle_timer_t dongle_time; // main dongle timer
 dongle_timer_t report_time;
 beacon_eph_id_t
@@ -82,125 +64,16 @@ dongle_timer_t
 size_t cur_id_idx;
 dongle_epoch_counter_t epoch; // current epoch
 uint64_t signal_id;           // to identify scan records received, resets each epoch
+extern download_t download;
 
 // 3. Reporting
 enctr_entry_counter_t non_report_entry_count;
 
-// 4. Testing
-// Allocation is conditioned on the compile setting
-#ifdef MODE__TEST
-int test_errors = 0;
-#define TEST_MAX_ENCOUNTERS 64
-int test_encounters = 0;
-int total_test_encounters = 0;
-dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
-#endif
-
-// 5. Telemetry
+// 5. Statistics and Telemetry
 // Global high-precision timer, in milliseconds
 float dongle_hp_timer = 0.0;
-
-#ifdef MODE__STAT
-
-#include "../../common/src/stats.h"
-
-typedef struct
-{
-
-    uint8_t storage_checksum; // zero for valid stat data
-
-    uint32_t num_obs_ids;
-    uint32_t num_scan_results;
-    uint32_t num_periodic_data;
-    uint32_t num_periodic_data_error;
-    uint32_t total_periodic_data_size; // bytes
-    double total_periodic_data_time;   // seconds
-
-    stat_t scan_rssi;
-    stat_t encounter_rssi;
-    stat_t periodic_data_size;
-    stat_t periodic_data_rssi;
-
-    double periodic_data_avg_thrpt;
-} stats_t;
-
-stats_t stats;
-
-void stat_compute_thrpt(stats_t *st)
-{
-    st->periodic_data_avg_thrpt =
-        ((double)st->total_periodic_data_size * 0.008) /
-        st->total_periodic_data_time;
-}
-
-#endif
-
-#ifdef MODE__PERIODIC_FIXED_DATA
-
-typedef struct
-{
-    int is_active;
-    double time;
-    uint32_t n_syncs_lost;
-    uint32_t n_total_packets;
-    uint32_t n_corrupt_packets;
-    struct {
-      // map of sequence number to packet count for that number
-      // used to track completion of the download
-      uint32_t counts[ MAX_NUM_PACKETS_PER_FILTER];
-
-      // number of unique packets seen
-      int num_distinct;
-
-      // number of bytes received
-      uint32_t received;
-
-      uint32_t chunk_num; // the current chunk being downloaded
-
-      // actual received payload
-      struct {
-        uint64_t data_len;
-        uint8_t data[MAX_FILTER_SIZE];
-      } buffer;
-
-    } packet_buffer;
-} download_t;
-
-typedef struct
-{
-  stat_t pkt_duplication;
-  stat_t n_bytes;
-  stat_t syncs_lost;
-  stat_t est_pkt_loss;
-} download_stats_t;
-
-typedef int download_fail_reason;
-
-typedef struct
-{
-  download_stats_t download_stats;
-  stat_t periodic_data_avg_payload_lat; // download time
-} complete_download_stats_t;
-
-struct
-{
-    int payloads_started;
-    int payloads_complete;
-    int payloads_failed;
-    download_fail_reason cuckoo_fail;
-    download_fail_reason switch_chunk;
-    download_stats_t all_download_stats;
-    download_stats_t failed_download_stats;
-    complete_download_stats_t complete_download_stats;
-} download_stats;
-
-struct
-{
-    download_t download;
-    cf_t cf;
-    uint32_t num_buckets;
-} lat_test;
-#endif
+extern dongle_stats_t stats;
+extern download_stats_t download_stats;
 
 //
 // ROUTINES
@@ -209,37 +82,20 @@ struct
 // MAIN
 // Entrypoint of the application
 // Initialize bluetooth, then call advertising and scan routines
-#ifdef DONGLE_PLATFORM__ZEPHYR
-void main(void)
-#else
-// a.k.a DONGLE START
 // Assumes that kernel has initialized and bluetooth device is booted.
 void dongle_start()
-#endif
 {
     log_info("\r\n");
     log_info("Starting Dongle...\r\n");
 
-#ifdef MODE__TEST
+#ifdef TEST_DONGLE
     log_info("Test mode enabled\r\n");
 #endif
-#ifdef MODE__STAT
+
     log_info("Statistics enabled\r\n");
-#endif
+
 #ifdef MODE__PERIODIC
     log_info("Periodic synchronization enabled\r\n");
-#endif
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    int err;
-
-    err = bt_enable(NULL);
-    if (err)
-    {
-        log_errorf("Bluetooth init failed (err %d)\r\n", err);
-        return;
-    }
-
-    log_info("Bluetooth initialized\r\n");
 #endif
 
     if (access_advertise())
@@ -259,16 +115,6 @@ void dongle_scan(void)
     dongle_init();
 
     // Scan Start
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    int err = err = bt_le_scan_start(
-        BT_LE_SCAN_PARAM(
-            BT_LE_SCAN_TYPE_PASSIVE, // passive scan
-            BT_LE_SCAN_OPT_NONE,     // no options; in particular, allow duplicates
-            DONGLE_SCAN_INTERVAL,    // interval
-            DONGLE_SCAN_WINDOW       // window
-            ),
-        dongle_log);
-#else
     int err = 0;
 #ifdef MODE__PERIODIC
     sl_status_t sc;
@@ -301,7 +147,6 @@ void dongle_scan(void)
     sl_bt_scanner_start(gap_1m_phy,
                         sl_bt_scanner_discover_observation); // scan all devices
 #endif
-#endif
     if (err)
     {
         log_errorf("Scanning failed to start (err %d)\r\n", err);
@@ -310,39 +155,14 @@ void dongle_scan(void)
     else
     {
         log_debug("Scanning successfully started\r\n");
-        dongle_loop();
     }
 }
 
 // INIT
 // Call load routine, and set variables to their
 // initial value. Also initialize timing structs
-#ifdef MODE__STAT
-void dongle_stats_init()
-{
-    memset(&stats, 0, sizeof(stats_t));
-}
-#ifdef MODE__PERIODIC_FIXED_DATA
-void dongle_download_init()
-{
-    memset(&lat_test, 0, sizeof(lat_test));
-}
-void dongle_download_reset()
-{
-    memset(&lat_test.download, 0, sizeof(download_t));
-}
-void dongle_download_stats_init()
-{
-    memset(&download_stats, 0, sizeof(download_stats));
-}
-#endif
-#endif
 void dongle_init()
 {
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    k_mutex_init(&dongle_mu);
-#endif
-
     dongle_load();
 
     dongle_time = config.t_init;
@@ -352,39 +172,17 @@ void dongle_init()
     non_report_entry_count = 0;
     signal_id = 0;
 
-#ifdef MODE__STAT
-    // must call dongle_config_load before this
-    dongle_storage_read_stat(&storage, &stats, sizeof(stats_t));
-    if (!stats.storage_checksum)
-    {
-        app_log_info("Existing Statistics Found\r\n");
-        dongle_stats();
-    }
-    else
-    {
-        dongle_stats_init();
-    }
-#endif
+    dongle_stats_init(&storage);
 
-#ifdef MODE__PERIODIC_FIXED_DATA
     dongle_download_init();
+
     dongle_download_stats_init();
-#endif
 
     log_info("Dongle initialized\r\n");
 
     dongle_info();
 
     log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
-
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    k_timer_init(&kernel_time, NULL, NULL);
-
-// Timer zero point
-#define DUR K_MSEC(DONGLE_TIMER_RESOLUTION)
-    k_timer_start(&kernel_time, DUR, DUR);
-#undef DUR // Initial time
-#endif
 }
 
 // LOAD
@@ -419,263 +217,13 @@ void dongle_hp_timer_add(uint32_t ticks)
 {
     double ms = ((double)ticks * PREC_TIMER_TICK_MS);
     stats.total_periodic_data_time += (ms / 1000.0);
-    if (lat_test.download.is_active)
+    if (download.is_active)
     {
-        lat_test.download.time += ms;
+        download.time += ms;
     }
     dongle_hp_timer += ms;
 }
 
-void dongle_download_start()
-{
-    lat_test.download.is_active = 1;
-    log_info("Download started! (chunk=%lu)\r\n",
-             lat_test.download.packet_buffer.chunk_num);
-    download_stats.payloads_started++;
-}
-
-// Count packet duplication
-#define dongle_download_duplication(s, d) \
-  for (int i = 0; i < MAX_NUM_PACKETS_PER_FILTER; i++) { \
-      uint32_t count = d.packet_buffer.counts[i]; \
-      if (count > 0) { \
-          stat_add(count, s.pkt_duplication); \
-      } \
-  }
-
-float dongle_download_esimtate_loss(download_t *d)
-{
-  uint32_t max_count = d->packet_buffer.counts[0];
-  for (int i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
-      if (d->packet_buffer.counts[i] > max_count) {
-          max_count = d->packet_buffer.counts[i];
-      }
-  }
-  return 100*(1 - (((float) d->n_total_packets)
-                /(max_count * d->packet_buffer.num_distinct)));
-}
-
-
-#define dongle_update_download_stats(s, d) \
-  stat_add(d.packet_buffer.received, s.n_bytes); \
-  stat_add(d.n_syncs_lost, s.syncs_lost); \
-  dongle_download_duplication(s, d) \
-  stat_add( dongle_download_esimtate_loss(&d), s.est_pkt_loss)
-
-void dongle_download_fail(download_fail_reason *reason)
-{
-
-  if (lat_test.download.is_active) {
-    download_stats.payloads_failed++;
-    dongle_update_download_stats(download_stats.all_download_stats,
-                                 lat_test.download);
-    dongle_update_download_stats(download_stats.failed_download_stats,
-                                     lat_test.download);
-    *reason = *reason + 1;
-//    dongle_download_info();
-    dongle_download_reset();
-  }
-}
-
-int dongle_download_check_match(enctr_entry_counter_t i,
-                                dongle_encounter_entry *entry)
-{
-  // pad the stored id in case backend entry contains null byte at end
-#define MAX_EPH_ID_SIZE 15
-  uint8_t id[MAX_EPH_ID_SIZE];
-  memset(id, 0x00, MAX_EPH_ID_SIZE);
-#undef MAX_EPH_ID_SIZE
-
-  memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
-
-  hexdumpn(id, 15, "checking id");
-
-  log_debugf("num buckets: %lu\r\n", lat_test.num_buckets);
-  //hexdumpn(&lat_test.download.packet_buffer.buffer, 1736, "filter");
-     // lat_test.num_buckets = 4; // for testing (num_buckets cannot be 0)
-    if (lookup(id, &lat_test.download.packet_buffer.buffer, lat_test.num_buckets)) {
-        log_info("====== LOG MATCH!!! ====== \r\n");
-    } else {
-        log_info("No match for id\r\n");
-    }
-    return 1;
-}
-
-void dongle_download_complete()
-{
-  log_info("Download complete!\r\n");
-  download_stats.payloads_complete++;
-  // compute latency
-  double lat = lat_test.download.time;
-  dongle_update_download_stats(download_stats.all_download_stats,
-                                   lat_test.download);
-  dongle_update_download_stats(download_stats.complete_download_stats.download_stats,
-                                   lat_test.download);
-  stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
-
-  // check the content using cuckoofilter decoder
-
-  uint64_t filter_len = lat_test.download.packet_buffer.buffer.data_len;
-
-  if (filter_len > lat_test.download.packet_buffer.received) {
-      log_error("Filter length mismatch (%lu/%lu)\r\n",
-              lat_test.download.packet_buffer.received, filter_len);
-      dongle_download_fail(&download_stats.cuckoo_fail);
-      return;
-  }
-
-  log_infof("filter len: %lu\r\n", filter_len);
-
-  // now we know the payload is the correct size
-
-  lat_test.num_buckets = cf_gadget_num_buckets(filter_len);
-
-  if (lat_test.num_buckets == 0) {
-      log_error("num buckets is 0!!!\r\n");
-      dongle_download_fail(&download_stats.cuckoo_fail);
-      return;
-  }
-
-#ifdef CUCKOOFILTER_FIXED_TEST
-
-  uint8_t *filter = lat_test.download.packet_buffer.buf;
-
-  //hexdump(filter, filter_len + 8);
-
-  int status = 0;
-
-  // these are the test cases for the fixed test filter
-  // these should exist
-  if (!lookup(TEST_ID_EXIST_1, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
-                 TEST_ID_EXIST_1);
-      status += 1;
-  }
-  if (!lookup(TEST_ID_EXIST_2, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should exist\r\n",
-                 TEST_ID_EXIST_2);
-      status += 1;
-  }
-
-  // these shouldn't
-  if (lookup(TEST_ID_NEXIST_1, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
-                 TEST_ID_NEXIST_1);
-      status += 1;
-  }
-  if (lookup(TEST_ID_NEXIST_2, filter, lat_test.num_buckets)) {
-      log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
-                 TEST_ID_NEXIST_2);
-      status += 1;
-  }
-
-
-  if (!status) {
-      log_infof("Cuckoofilter test passed\r\n");
-  }
-
-#else
-
-  // check existing log entries against the new filter
-  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
-#endif
-
-  dongle_download_reset();
-}
-
-void dongle_on_sync_lost()
-{
-
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_SYNC_LOST, dongle_hp_timer);
-  if (lat_test.download.is_active) {
-      log_info("Download failed - lost sync.\r\n");
-      lat_test.download.n_syncs_lost++;
-  }
-
-}
-
-void dongle_on_periodic_data_error(int8_t rssi)
-{
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_PKT_ERROR, dongle_hp_timer);
-#ifdef MODE__STAT
-    stats.num_periodic_data_error++;
-    stat_add(rssi, stats.periodic_data_rssi);
-    lat_test.download.n_corrupt_packets++;
-#endif
-}
-
-void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
-{
-
-//    log_bytes(printf, printf, data, data_len, "data");
-    if (data_len < PACKET_HEADER_LEN) {
-        log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                   dongle_hp_timer, rssi, data_len);
-        log_error("not enough data to read sequence numbers\r\n");
-        log_error("len: %d\r\n", data_len);
-        lat_test.download.n_corrupt_packets++;
-        return;
-    }
-
-    // extract sequence numbers
-    uint32_t seq, chunk, chunk_len;
-    memcpy(&seq, data, sizeof(uint32_t));
-    memcpy(&chunk, data + sizeof(uint32_t), sizeof(uint32_t));
-    // TODO: this is actually and 8 byte field so fix
-    memcpy(&chunk_len, data + 2*sizeof(uint32_t), 8);
-
-    log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                       dongle_hp_timer, rssi, data_len, seq, chunk, chunk_len);
-
-#ifdef MODE__STAT
-    stats.total_periodic_data_size += data_len;
-    stats.num_periodic_data++;
-    stat_add(data_len, stats.periodic_data_size);
-    stat_add(rssi, stats.periodic_data_rssi);
-#endif
-#ifdef MODE__PERIODIC_FIXED_DATA
-    if (lat_test.download.is_active
-          && chunk != lat_test.download.packet_buffer.chunk_num) {
-        // forced to switch chunks
-
-        dongle_download_fail(&download_stats.switch_chunk);
-
-        log_debugf("Downloading chunk %lu\r\n", chunk);
-        lat_test.download.packet_buffer.chunk_num = chunk;
-    } else if (lat_test.download.is_active
-          && chunk_len != lat_test.download.packet_buffer.buffer.data_len) {
-        log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
-                   lat_test.download.packet_buffer.buffer.data_len, chunk_len);
-    }
-    if (seq >= MAX_NUM_PACKETS_PER_FILTER) {
-        log_errorf("Error: sequence number out of bounds\r\n");
-    } else {
-        if (!lat_test.download.is_active) {
-            dongle_download_start();
-            lat_test.download.packet_buffer.buffer.data_len = chunk_len;
-        }
-        lat_test.download.n_total_packets++;
-        int prev = lat_test.download.packet_buffer.counts[seq];
-        lat_test.download.packet_buffer.counts[seq]++;
-        if (prev == 0) {
-            // this is an unseen packet
-            lat_test.download.packet_buffer.num_distinct++;
-            uint8_t len = data_len - PACKET_HEADER_LEN;
-            memcpy(lat_test.download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
-                   data + PACKET_HEADER_LEN, len);
-            lat_test.download.packet_buffer.received += len;
-            log_infof("download progress: %.2f%%\r\n",
-                      ((float) lat_test.download.packet_buffer.received
-                       /lat_test.download.packet_buffer.buffer.data_len) * 100);
-            if (lat_test.download.packet_buffer.received
-                  >= lat_test.download.packet_buffer.buffer.data_len) {
-                // there may be extra data in the packet
-                dongle_download_complete();
-            }
-        }
-    }
-#endif
-}
 
 // UPDATE
 // For callback-based timers. This is called with the mutex
@@ -694,32 +242,6 @@ void dongle_on_clock_update()
         // TODO: log time to flash
     }
     dongle_report();
-}
-
-// MAIN LOOP
-// timing and control logic is largely the same as the beacon
-// application. The main difference is that scanning does not
-// require restart for a new epoch.
-void dongle_loop()
-{
-// For the Zephyr platform, an explicit loop is defined. Others
-// are configured to set up and call the clock update callback.
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    uint32_t timer_status = 0;
-
-    int err = 0;
-    while (!err)
-    {
-        // get most updated time
-        timer_status = k_timer_status_sync(&kernel_time);
-        timer_status += k_timer_status_get(&kernel_time);
-        LOCK dongle_time += timer_status;
-        dongle_on_clock_update();
-        UNLOCK
-    }
-#else
-    DONGLE_NO_OP;
-#endif
 }
 
 static int
@@ -747,66 +269,24 @@ static int decode_encounter(encounter_broadcast_t *dat,
     return 0;
 }
 
-// compares two ephemeral ids
-int compare_eph_id(beacon_eph_id_t *a, beacon_eph_id_t *b)
-{
-#define A (a->bytes)
-#define B (b->bytes)
-    for (int i = 0; i < BEACON_EPH_ID_HASH_LEN; i++)
-    {
-        if (A[i] != B[i])
-            return 1;
-    }
-#undef B
-#undef A
-    return 0;
-}
 
 static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
-#define en (*enc)
     // when a valid encounter is detected
     // log the encounter
 //    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
 //               dongle_time);
-    log_infof("Encounter: "
-  "\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\\x%02x\r\n",
-                  enc->eph->bytes[0],
-                  enc->eph->bytes[1],
-                  enc->eph->bytes[2],
-                  enc->eph->bytes[3],
-                  enc->eph->bytes[4],
-                  enc->eph->bytes[5],
-                  enc->eph->bytes[6],
-                  enc->eph->bytes[7],
-                  enc->eph->bytes[8],
-                  enc->eph->bytes[9],
-                  enc->eph->bytes[10],
-                  enc->eph->bytes[11],
-                  enc->eph->bytes[12],
-                  enc->eph->bytes[13]);
+    log_info("Encounter! ");
+    display_eph_id(enc->eph);
+
     // Write to storage
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                  enc->eph);
-#ifdef MODE__TEST
-    if (*en.b == TEST_BEACON_ID)
-    {
-        test_encounters++;
-    }
-#define test_en (test_encounter_list[total_test_encounters])
-    memcpy(&test_en.location_id, enc->loc, sizeof(beacon_location_id_t));
-    test_en.beacon_id = *enc->b;
-    test_en.beacon_time = *enc->t;
-    test_en.dongle_time = dongle_time;
-    test_en.eph_id = *enc->eph;
-    log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
-    //_display_encounter_(&test_en);
-#undef test_en
-    total_test_encounters++;
+#ifdef TEST_DONGLE
+    dongle_test_encounter(enc);
 #endif
     // reset the observation time
     obs_time[i] = dongle_time;
-#undef en
 }
 
 static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
@@ -888,22 +368,11 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     return signal_id;
 }
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-void dongle_log(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
-                struct net_buf_simple *ad)
-{
-    char addr_str[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
-#define len (ad->len)
-#define add (addr->a.val)
-#define dat (ad->data)
-#else
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)
-#endif
     // Filter mis-sized packets
     if (len != ENCOUNTER_BROADCAST_SIZE + 1)
     // TODO: should check for a periodic packet identifier
@@ -930,40 +399,10 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #undef add
 }
 
-uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
-{
-    uint8_t res = 0;
-    log_debug("comparing ids\r\n");
-#define check(val, idx) res |= (val << idx)
-    check(!(a.beacon_id == b.beacon_id), 0);
-    log_debug("comparing beacon time\r\n");
-    check(!(a.beacon_time == b.beacon_time), 1);
-    log_debug("comparing dongle time\r\n");
-    check(!(a.dongle_time == b.dongle_time), 2);
-    log_debug("comparing location ids\r\n");
-    check(!(a.location_id == b.location_id), 3);
-    log_debug("comparing eph. ids\r\n");
-    check(compare_eph_id(&a.eph_id, &b.eph_id), 4);
-#undef check
-    return res;
-}
-
 void dongle_info()
 {
     log_info("\r\n");
     log_info("Info:\r\n");
-#ifdef DONGLE_PLATFORM__ZEPHYR
-    log_infof("    Platform:                        %s\r\n", "Zephyr OS");
-    log_infof("    Board:                           %s\r\n", CONFIG_BOARD);
-    log_infof("    Bluetooth device name:           %s\r\n", CONFIG_BT_DEVICE_NAME);
-#else
-    log_infof("    Platform:                        %s\r\n", "Gecko");
-#define CONFIG_UNKOWN "Unkown"
-    log_infof("    Board:                           %s\r\n", CONFIG_UNKOWN);
-    log_infof("    Bluetooth device name:           %s\r\n", CONFIG_UNKOWN);
-#undef CONFIG_UNKOWN
-#endif
-    log_infof("    Application Version:             %s\r\n", APPL_VERSION);
     log_infof("    Dongle ID:                       %lu\r\n", config.id);
     log_infof("    Initial clock:                   %lu\r\n", config.t_init);
     log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
@@ -971,6 +410,20 @@ void dongle_info()
     log_infof("    Timer Resolution:                %u ms\r\n", DONGLE_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\r\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
+}
+
+void dongle_encounter_report()
+{
+    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
+
+    // Large integers here are casted for formatting compatabilty. This may result in false
+    // output for large values.
+    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
+    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
+
+    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
+              (uint32_t)cur,
+              cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
 }
 
 void dongle_report()
@@ -984,9 +437,15 @@ void dongle_report()
 
         dongle_info();
         dongle_storage_info(&storage);
-        dongle_stats();
+    log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
+        dongle_encounter_report();
+
+#ifdef MODE__STAT
+        dongle_stats(&storage);
         dongle_download_stats();
-#ifdef MODE__TEST
+#endif
+
+#ifdef TEST_DONGLE
         dongle_test();
 #endif
 
@@ -998,223 +457,7 @@ void dongle_report()
     }
 }
 
-void dongle_stats()
-{
-    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
-    enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
-#ifdef MODE__STAT
-    log_info("\r\n");
-    log_info("Statistics:\r\n");
-    log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
-    // Large integers here are casted for formatting compatabilty. This may result in false
-    // output for large values.
-    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
-    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
-
-    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
-              (uint32_t)cur,
-              cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
-    log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
-    log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
-    log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
-    stat_show(stats.periodic_data_size, "Periodic Pkt. Size", "bytes");
-    log_infof("    Periodic Pkts. Received (error):     %lu\r\n", stats.num_periodic_data_error);
-    log_infof("    Total Bytes Transferred:             %lu\r\n", stats.total_periodic_data_size);
-    log_infof("    Total Time (s):                      %f\r\n", stats.total_periodic_data_time);
-    stat_compute_thrpt(&stats);
-    log_infof("    Avg. Throughput (kb/s)               %f\r\n", stats.periodic_data_avg_thrpt);
-    stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
-    stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
-    stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");
-    dongle_storage_save_stat(&storage, &stats, sizeof(stats_t));
-    dongle_stats_init(); // reset the stats
-#endif
-}
-
-void dongle_download_show_stats(download_stats_t * stats, char *name)
-{
-  log_infof("Download Statistics (%s):\r\n", name);
-  stat_show(stats->pkt_duplication,
-            "    Packet Duplication", "packet copies");
-  stat_show(stats->est_pkt_loss,
-            "    Estimated loss rate", "% packets");
-  stat_show(stats->n_bytes,
-            "    Bytes Received", "bytes");
-  stat_show(stats->syncs_lost,
-            "    Syncs Lost", "syncs");
-}
-
-void dongle_download_stats()
-{
-#ifdef MODE__PERIODIC_FIXED_DATA
-    log_info("\r\n");
-    log_info("Risk Broadcast:\r\n");
-
-    log_infof("    Downloads Started: %d\r\n", download_stats.payloads_started);
-    log_infof("    Downloads Completed: %d\r\n", download_stats.payloads_complete);
-    log_infof("    Downloads Failed: %d\r\n", download_stats.payloads_failed);
-    log_infof("        decode fail:  %d\r\n", download_stats.cuckoo_fail);
-    log_infof("        chunk switch: %d\r\n", download_stats.switch_chunk);
-    dongle_download_show_stats(&download_stats.complete_download_stats.download_stats,
-                               "completed");
-    stat_show(download_stats.complete_download_stats.periodic_data_avg_payload_lat,
-                "    Download time", "ms");
-    dongle_download_show_stats(&download_stats.failed_download_stats,
-                               "failed");
-    dongle_download_show_stats(&download_stats.all_download_stats,
-                               "overall");
-
-
-    dongle_download_stats_init();
-#endif
-}
-
-void dongle_download_info()
-{
-#ifdef MODE__PERIODIC_FIXED_DATA
-    log_infof("Total time: %.0f ms\r\n", lat_test.download.time);
-    log_info("Packets Received: %lu\r\n", lat_test.download.n_total_packets);
-    log_infof("Data bytes downloaded: %lu\r\n",
-              lat_test.download.packet_buffer.received);
-#endif
-}
-
 #undef alpha
-
-#ifdef MODE__TEST
-
-//
-// TESTING
-//
-
-int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entry)
-{
-    //log_infof("%.4lu.", i);
-    //_display_encounter_(entry);
-    log_debug("comparing logged encounter against test record\r\n");
-    dongle_encounter_entry test_en = test_encounter_list[i];
-    uint8_t comp = compare_encounter_entry(*entry, test_en);
-    if (comp)
-    {
-        log_infof("FAILED: entry mismatch (index=%lu)\r\n", (uint32_t)i);
-        log_infof("Comp=%u\r\n", comp);
-        test_errors++;
-        log_info("Entry from log:\r\n");
-        _display_encounter_(entry);
-        log_info("Test:\r\n");
-        _display_encounter_(&test_en);
-        return 0;
-    }
-    else
-    {
-        log_debug("Entries MATCH\r\n");
-    }
-    return 1;
-}
-
-int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry *entry)
-{
-    if ((dongle_time - entry->dongle_time) > DONGLE_MAX_LOG_AGE)
-    {
-        log_infof("FAILED: Encounter at index %lu is too old (age=%lu)\r\n",
-                  (uint32_t)i, (uint32_t)entry->dongle_time);
-        test_errors++;
-        return 0;
-    }
-    return 1;
-}
-
-void dongle_test()
-{
-    // Run Tests
-    log_info("\r\n");
-    log_info("Tests:\r\n");
-    test_errors = 0;
-#define FAIL(msg)                          \
-    log_infof("    FAILURE: %s\r\n", msg); \
-    test_errors++
-
-    log_info("    ? Testing that OTPs are loaded\r\n");
-    int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
-    if (otp_idx != 7)
-    {
-        FAIL("Index 7 Not loaded correctly");
-    }
-    otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[0].val);
-    if (otp_idx != 0)
-    {
-        FAIL("Index 0 Not loaded correctly");
-    }
-    log_info("    ? Testing that OTP cannot be re-used\r\n");
-    otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
-    if (otp_idx >= 0)
-    {
-        FAIL("Index 7 was found again");
-    }
-    // Restore OTP data
-    // Need to re-save config as the shared page must be erased
-    dongle_storage_save_config(&storage, &config);
-    dongle_storage_save_otp(&storage, TEST_OTPS);
-
-    log_info("    ? Testing that correct number of encounters were logged\r\n");
-    int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
-    // Tolerant expectation provided to account for timing differences
-    int tolExpected = numExpected + 1;
-    if (test_encounters != numExpected && test_encounters != tolExpected)
-    {
-        FAIL("Wrong number of encounters.");
-        log_infof("Encounters logged in window: %d; Expected: %d or %d\r\n",
-                  test_encounters, numExpected, tolExpected);
-    }
-
-    log_info("    ? Testing that logged encounters are correct\r\n");
-    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
-    if (num > non_report_entry_count)
-    {
-        // There are new entries logged
-        dongle_storage_load_encounters_from_time(&storage, report_time,
-                                                 test_compare_entry_idx);
-    }
-    else
-    {
-        log_error("Cannot test, no new encounters logged.\r\n");
-    }
-
-    log_info("    ? Testing that old encounters are deleted\r\n");
-    dongle_storage_clean_log(&storage, dongle_time);
-    num = dongle_storage_num_encounters_current(&storage);
-    if (dongle_time <= DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
-    {
-        log_error("Cannot test, not enough time has elapsed.\r\n");
-    }
-    else if (num < 1)
-    {
-        log_error("Cannot test, no encounters stored.\r\n");
-    }
-    else
-    {
-        dongle_storage_load_all_encounter(&storage, test_check_entry_age);
-    }
-
-    if (test_errors)
-    {
-        log_info("\r\n");
-        log_infof("    x Tests Failed: status = %d\r\n", test_errors);
-    }
-    else
-    {
-        log_info("\r\n");
-        log_info("    ✔ Tests Passed\r\n");
-    }
-#undef FAIL
-    test_encounters = 0;
-    total_test_encounters = 0;
-}
-
-#endif
-
-#undef APPL__DONGLE
-#undef APPL_VERSION
 #undef LOG_LEVEL__INFO
-#undef MODE__TEST
+#undef TEST_DONGLE
 #undef MODE__STAT

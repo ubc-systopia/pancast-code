@@ -11,7 +11,7 @@
 #define APPL_VERSION "0.1.1"
 
 #define MODE__STAT
-#define MODE__TEST_CONFIG
+
 //#define MODE__DISABLE_LEGACY_DATA
 
 #define LOG_LEVEL__DEBUG
@@ -38,10 +38,11 @@
 
 #include "storage.h"
 
-#include "../../common/src/pancast.h"
-#include "../../common/src/util.h"
-#include "../../common/src/log.h"
-#include "../../common/src/test.h"
+#include "common/src/constants.h"
+#include "common/src/settings.h"
+#include "common/src/util/util.h"
+#include "common/src/util/log.h"
+#include "common/src/test.h"
 
 //
 // ENTRY POINT

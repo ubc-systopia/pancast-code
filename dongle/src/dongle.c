@@ -39,11 +39,12 @@
 
 void dongle_lock()
 {
-    LOCK
+  LOCK
 }
 
 void dongle_unlock(){
-    UNLOCK}
+  UNLOCK
+}
 
 // 2. Config
 dongle_config_t config;
@@ -52,7 +53,7 @@ dongle_config_t config;
 dongle_storage storage;
 dongle_storage *get_dongle_storage()
 {
-    return &storage;
+  return &storage;
 }
 
 dongle_epoch_counter_t epoch;
@@ -84,25 +85,24 @@ extern download_stats_t download_stats;
 // Assumes that kernel has initialized and bluetooth device is booted.
 void dongle_start()
 {
-    log_infof("%s", "\r\n");
-    log_infof("%s", "Starting Dongle...\r\n");
+  log_infof("%s", "\r\n");
+  log_infof("%s", "Starting Dongle...\r\n");
 
 #ifdef TEST_DONGLE
-    log_infof("%s", "Test mode enabled\r\n");
+  log_infof("%s", "Test mode enabled\r\n");
 #endif
 
-    log_infof("%s", "Statistics enabled\r\n");
+  log_infof("%s", "Statistics enabled\r\n");
 
 #ifdef MODE__PERIODIC
-    log_infof("%s", "Periodic synchronization enabled\r\n");
+  log_infof("%s", "Periodic synchronization enabled\r\n");
 #endif
 
-    if (access_advertise())
-    {
-        return;
-    }
+  if (access_advertise()) {
+    return;
+  }
 
-    dongle_scan();
+  dongle_scan();
 }
 
 // SCAN
@@ -111,52 +111,48 @@ void dongle_start()
 void dongle_scan(void)
 {
 
-    dongle_init();
+  dongle_init();
 
-    // Scan Start
-    int err = 0;
+  // Scan Start
+  int err = 0;
 
 #ifdef MODE__PERIODIC
-    sl_status_t sc;
-    // Set scanner timing
-    app_log_info("Setting scanner timing\r\n");
-    sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
-    app_assert_status(sc);
+  sl_status_t sc;
+  // Set scanner timing
+  app_log_info("Setting scanner timing\r\n");
+  sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
+  app_assert_status(sc);
 
-    // Set scanner mode
-    app_log_info("Setting scanner mode\r\n");
-    sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
-    app_assert_status(sc);
+  // Set scanner mode
+  app_log_info("Setting scanner mode\r\n");
+  sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
+  app_assert_status(sc);
 
-    // Set sync parameters
-    app_log_info("Setting sync parameters\r\n");
-    sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
-    app_assert_status(sc);
+  // Set sync parameters
+  app_log_info("Setting sync parameters\r\n");
+  sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
+  app_assert_status(sc);
 
-    // Start scanning
-    app_log_info("Starting scan\r\n");
-    sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
-    app_assert_status(sc);
+  // Start scanning
+  app_log_info("Starting scan\r\n");
+  sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
+  app_assert_status(sc);
 
-    err = sc;
+  err = sc;
 #else
-    sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
-                             DONGLE_SCAN_INTERVAL,
-                             DONGLE_SCAN_WINDOW);
-    sl_bt_scanner_set_mode(gap_1m_phy, 0); // passive scan
-    sl_bt_scanner_start(gap_1m_phy,
-                        sl_bt_scanner_discover_observation); // scan all devices
+  sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
+     DONGLE_SCAN_INTERVAL, DONGLE_SCAN_WINDOW);
+  sl_bt_scanner_set_mode(gap_1m_phy, 0); // passive scan
+  sl_bt_scanner_start(gap_1m_phy,
+    sl_bt_scanner_discover_observation); // scan all devices
 #endif
 
-    if (err)
-    {
-        log_errorf("Scanning failed to start (err %d)\r\n", err);
-        return;
-    }
-    else
-    {
-        log_debugf("%s", "Scanning successfully started\r\n");
-    }
+  if (err) {
+    log_errorf("Scanning failed to start (err %d)\r\n", err);
+    return;
+  } else {
+    log_debugf("%s", "Scanning successfully started\r\n");
+  }
 }
 
 // INIT
@@ -164,65 +160,64 @@ void dongle_scan(void)
 // initial value. Also initialize timing structs
 void dongle_init()
 {
-    dongle_load();
+  dongle_load();
 
-    dongle_time = config.t_init;
-    report_time = dongle_time;
-    cur_id_idx = 0;
-    epoch = 0;
-    non_report_entry_count = 0;
-    signal_id = 0;
+  dongle_time = config.t_init;
+  report_time = dongle_time;
+  cur_id_idx = 0;
+  epoch = 0;
+  non_report_entry_count = 0;
+  signal_id = 0;
 
-    dongle_stats_init(&storage);
+  dongle_stats_init(&storage);
 
-    dongle_download_init();
+  dongle_download_init();
 
-    dongle_download_stats_init();
+  dongle_download_stats_init();
 
-    log_infof("%s", "Dongle initialized\r\n");
+  log_infof("%s", "Dongle initialized\r\n");
 
-    dongle_info();
+  dongle_info();
 
-    log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
+  log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 }
 
 // LOAD
 // Load state and configuration into memory
 void dongle_load()
 {
-    dongle_storage_init(&storage);
-    // Config load is required to properly set up the memory maps
-    dongle_storage_load_config(&storage, &config);
+  dongle_storage_init(&storage);
+  // Config load is required to properly set up the memory maps
+  dongle_storage_load_config(&storage, &config);
 #ifdef MODE__TEST_CONFIG
-    config.id = TEST_DONGLE_ID;
-    config.t_init = TEST_DONGLE_INIT_TIME;
-    config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-    config.backend_pk = TEST_BACKEND_PK;
-    config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
-    config.dongle_sk = TEST_DONGLE_SK;
-    dongle_storage_save_config(&storage, &config);
-    dongle_storage_save_otp(&storage, TEST_OTPS);
+  config.id = TEST_DONGLE_ID;
+  config.t_init = TEST_DONGLE_INIT_TIME;
+  config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
+  config.backend_pk = TEST_BACKEND_PK;
+  config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
+  config.dongle_sk = TEST_DONGLE_SK;
+  dongle_storage_save_config(&storage, &config);
+  dongle_storage_save_otp(&storage, TEST_OTPS);
 #endif
 }
 
 void dongle_clock_increment()
 {
-    dongle_lock();
-    dongle_time++;
-    log_debugf("Dongle clock: %lu\r\n", dongle_time);
-    dongle_on_clock_update();
-    dongle_unlock();
+  dongle_lock();
+  dongle_time++;
+  log_debugf("Dongle clock: %lu\r\n", dongle_time);
+  dongle_on_clock_update();
+  dongle_unlock();
 }
 
 void dongle_hp_timer_add(uint32_t ticks)
 {
-    double ms = ((double)ticks * PREC_TIMER_TICK_MS);
-    stats.total_periodic_data_time += (ms / 1000.0);
-    if (download.is_active)
-    {
-        download.time += ms;
-    }
-    dongle_hp_timer += ms;
+  double ms = ((double)ticks * PREC_TIMER_TICK_MS);
+  stats.total_periodic_data_time += (ms / 1000.0);
+  if (download.is_active) {
+    download.time += ms;
+  }
+  dongle_hp_timer += ms;
 }
 
 
@@ -231,145 +226,128 @@ void dongle_hp_timer_add(uint32_t ticks)
 // locked whenever the application clock obtains a new value.
 void dongle_on_clock_update()
 {
-    // update epoch
+  // update epoch
 #define t_init config.t_init
-    dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
+  dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
 #undef t_init
-    if (new_epoch != epoch)
-    {
-        log_debugf("EPOCH STARTED: %lu\r\n", new_epoch);
-        epoch = new_epoch;
-        signal_id = 0;
-        // TODO: log time to flash
-    }
-    dongle_report();
+  if (new_epoch != epoch) {
+    log_debugf("EPOCH STARTED: %lu\r\n", new_epoch);
+    epoch = new_epoch;
+    signal_id = 0;
+    // TODO: log time to flash
+  }
+  dongle_report();
 }
 
 static int
 decode_payload(uint8_t *data)
 {
-    data[0] = data[1];
-    data[1] = data[MAX_BROADCAST_SIZE - 1];
-    return 0;
+  data[0] = data[1];
+  data[1] = data[MAX_BROADCAST_SIZE - 1];
+  return 0;
 }
 
 // matches the schema defined by encode
 static int decode_encounter(encounter_broadcast_t *dat,
                             encounter_broadcast_raw_t *raw)
 {
-    uint8_t *src = (uint8_t *)raw;
-    size_t pos = 0;
+  uint8_t *src = (uint8_t *)raw;
+  size_t pos = 0;
 #define link(dst, type)          \
-    (dst = (type *)(src + pos)); \
-    pos += sizeof(type)
+  (dst = (type *)(src + pos)); \
+  pos += sizeof(type)
 
-    link(dat->t, beacon_timer_t);
-    link(dat->b, beacon_id_t);
-    link(dat->loc, beacon_location_id_t);
-    link(dat->eph, beacon_eph_id_t);
+  link(dat->t, beacon_timer_t);
+  link(dat->b, beacon_id_t);
+  link(dat->loc, beacon_location_id_t);
+  link(dat->eph, beacon_eph_id_t);
 #undef link
-    return 0;
+  return 0;
 }
 
 
 static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
-    // when a valid encounter is detected
-    // log the encounter
+  // when a valid encounter is detected
+  // log the encounter
 //    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
 //               dongle_time);
-    //log_infof("%s", "Encounter! ");
-    //display_eph_id(enc->eph);
-    hexdumpn(enc->eph->bytes, 14, "eph ID");
+  //log_infof("%s", "Encounter! ");
+  //display_eph_id(enc->eph);
+  hexdumpn(enc->eph->bytes, 14, "eph ID");
 
-    // Write to storage
-    dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
-                                 enc->eph);
+  // Write to storage
+  dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
+                               enc->eph);
 #ifdef TEST_DONGLE
-    dongle_test_encounter(enc);
+  dongle_test_encounter(enc);
 #endif
-    // reset the observation time
-    obs_time[i] = dongle_time;
+  // reset the observation time
+  obs_time[i] = dongle_time;
 }
 
 static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
 {
 #define en (*enc)
 
-    // Check the broadcast UUID
-    beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
-    if (service_id != BROADCAST_SERVICE_ID)
-    {
-        log_telemf("%02x,%u,%u,%lu\r\n",
-                   TELEM_TYPE_BROADCAST_ID_MISMATCH,
-                   dongle_time, epoch,
-                   signal_id);
-        return signal_id;
-    }
+  // Check the broadcast UUID
+  beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
+  if (service_id != BROADCAST_SERVICE_ID) {
+    log_telemf("%02x,%u,%u,%lu\r\n",
+               TELEM_TYPE_BROADCAST_ID_MISMATCH,
+               dongle_time, epoch,
+               signal_id);
+    return signal_id;
+  }
 
 #ifdef MODE__STAT
-    stats.num_scan_results++;
-    stat_add(rssi, stats.scan_rssi);
+  stats.num_scan_results++;
+  stat_add(rssi, stats.scan_rssi);
 #endif
 
 //    hexdumpn(en.eph->bytes, 14, "eph ID");
 
-    // determine which tracked id, if any, is a match
-    size_t i = DONGLE_MAX_BC_TRACKED;
-    for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++)
-    {
-        if (!compare_eph_id(en.eph, &cur_id[j]))
-        {
-            i = j;
-        }
+  // determine which tracked id, if any, is a match
+  size_t i = DONGLE_MAX_BC_TRACKED;
+  for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
+    if (!compare_eph_id(en.eph, &cur_id[j])) {
+      i = j;
     }
+  }
 
-    if (i == DONGLE_MAX_BC_TRACKED)
-    {
-        // if no match was found, start tracking the new id, replacing the oldest
-        // one currently tracked
-        i = cur_id_idx;
-        log_debugf("new ephemeral id observed (beacon=%lu), tracking at index %d\r\n",
-                   *en.b, i);
-        print_bytes(en.eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
-        cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
-        memcpy(&cur_id[i], en.eph->bytes, BEACON_EPH_ID_HASH_LEN);
-        obs_time[i] = dongle_time;
+  if (i == DONGLE_MAX_BC_TRACKED) {
+    // if no match was found, start tracking the new id, replacing the oldest
+    // one currently tracked
+    i = cur_id_idx;
+    log_debugf("new ephemeral id observed (beacon=%lu), tracking at index %d\r\n",
+               *en.b, i);
+    print_bytes(en.eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
+    cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
+    memcpy(&cur_id[i], en.eph->bytes, BEACON_EPH_ID_HASH_LEN);
+    obs_time[i] = dongle_time;
 
 #ifdef MODE__STAT
-        stats.num_obs_ids++;
+    stats.num_obs_ids++;
 #endif
-        log_telemf("%02x,%u,%u,%lu,%u,%u\r\n",
-                   TELEM_TYPE_BROADCAST_TRACK_NEW,
-                   dongle_time, epoch,
-                   signal_id,
-                   *en.b, *en.t);
-    }
-    else
-    {
-        // when a matching ephemeral id is observed
-        log_telemf("%02x,%u,%u,%lu,%u,%u\r\n",
-                   TELEM_TYPE_BROADCAST_TRACK_MATCH,
-                   dongle_time, epoch,
-                   signal_id,
-                   *en.b, *en.t);
-        // check conditions for a valid encounter
-        dongle_timer_t dur = dongle_time - obs_time[i];
-        if (dur >= DONGLE_ENCOUNTER_MIN_TIME)
-        {
-            _dongle_encounter_(&en, i);
+    log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
+       dongle_time, epoch, signal_id, *en.b, *en.t);
+  } else {
+    // when a matching ephemeral id is observed
+    log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
+       dongle_time, epoch, signal_id, *en.b, *en.t);
+    // check conditions for a valid encounter
+    dongle_timer_t dur = dongle_time - obs_time[i];
+    if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
+      _dongle_encounter_(&en, i);
 #ifdef MODE__STAT
-            stat_add(rssi, stats.encounter_rssi);
+      stat_add(rssi, stats.encounter_rssi);
 #endif
-            log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n",
-                       TELEM_TYPE_ENCOUNTER,
-                       dongle_time, epoch,
-                       signal_id,
-                       *en.b, *en.t, dur);
-        }
+      log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
+         dongle_time, epoch, signal_id, *en.b, *en.t, dur);
     }
+  }
 #undef en
-    return signal_id;
+  return signal_id;
 }
 
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
@@ -377,27 +355,24 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #define len (data_len)
 #define add (addr->addr)
 #define dat (data)
-    // Filter mis-sized packets
-    if (len != ENCOUNTER_BROADCAST_SIZE + 1)
+  // Filter mis-sized packets
+  if (len != ENCOUNTER_BROADCAST_SIZE + 1) {
     // TODO: should check for a periodic packet identifier
-    {
-        return;
-    }
-    LOCK
-        log_telemf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
-                   TELEM_TYPE_SCAN_RESULT,
-                   dongle_time, epoch,
-                   signal_id,
-                   add[0], add[1], add[2], add[3], add[4], add[5], rssi);
-    //print_bytes(dat, data_len, "scan-data pre-decode");
+    return;
+  }
+  LOCK
+  log_telemf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
+      TELEM_TYPE_SCAN_RESULT, dongle_time, epoch, signal_id,
+      add[0], add[1], add[2], add[3], add[4], add[5], rssi);
+  //print_bytes(dat, data_len, "scan-data pre-decode");
 //    hexdumpn(dat, 31, "raw");
-    decode_payload(dat);
-    //print_bytes(dat, data_len, "scan-data decoded");
-    encounter_broadcast_t en;
-    decode_encounter(&en, (encounter_broadcast_raw_t *)dat);
-    dongle_track(&en, rssi, signal_id);
-    signal_id++;
-    UNLOCK
+  decode_payload(dat);
+  //print_bytes(dat, data_len, "scan-data decoded");
+  encounter_broadcast_t en;
+  decode_encounter(&en, (encounter_broadcast_raw_t *)dat);
+  dongle_track(&en, rssi, signal_id);
+  signal_id++;
+  UNLOCK
 #undef dat
 #undef data
 #undef add
@@ -405,60 +380,59 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 
 void dongle_info()
 {
-    log_infof("%s", "\r\n");
-    log_infof("%s", "Info:\r\n");
-    log_infof("    Dongle ID:                       %lu\r\n", config.id);
-    log_infof("    Initial clock:                   %lu\r\n", config.t_init);
-    log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
-    log_infof("    Secret key size:                 %lu bytes\r\n", config.dongle_sk_size);
-    log_infof("    Timer Resolution:                %u ms\r\n", DONGLE_TIMER_RESOLUTION);
-    log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
-    log_infof("    Report Interval:                 %u ms\r\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
+  log_infof("%s", "\r\n");
+  log_infof("%s", "Info:\r\n");
+  log_infof("    Dongle ID:                       %lu\r\n", config.id);
+  log_infof("    Initial clock:                   %lu\r\n", config.t_init);
+  log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
+  log_infof("    Secret key size:                 %lu bytes\r\n", config.dongle_sk_size);
+  log_infof("    Timer Resolution:                %u ms\r\n", DONGLE_TIMER_RESOLUTION);
+  log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
+  log_infof("    Report Interval:                 %u ms\r\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
 }
 
 void dongle_encounter_report()
 {
-    enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
+  enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 
-    // Large integers here are casted for formatting compatabilty. This may result in false
-    // output for large values.
-    log_infof("    Encounters logged since last report: %lu\r\n", (uint32_t)(num - non_report_entry_count));
-    log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t)num);
+  // Large integers here are casted for formatting compatabilty. This may result in false
+  // output for large values.
+  log_infof("    Encounters logged since last report: %lu\r\n",
+      (uint32_t) (num - non_report_entry_count));
+  log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t) num);
 
-    log_infof("    Total Encounters logged (Stored):    %lu%s\r\n",
-              (uint32_t)cur,
-              cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
+  log_infof("    Total Encounters logged (Stored):    %lu%s\r\n", (uint32_t) cur,
+    cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
 }
 
 void dongle_report()
 {
-    // do report
-    if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
-    {
+  // do report
+  if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
 
-        log_infof("%s", "\r\n");
-        log_infof("%s", "***          Begin Report          ***\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "***          Begin Report          ***\r\n");
 
-        dongle_info();
-        dongle_storage_info(&storage);
+    dongle_info();
+    dongle_storage_info(&storage);
     log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
-        dongle_encounter_report();
+    dongle_encounter_report();
 
 #ifdef MODE__STAT
-        dongle_stats(&storage);
-        dongle_download_stats();
+    dongle_stats(&storage);
+    dongle_download_stats();
 #endif
 
 #ifdef TEST_DONGLE
-        dongle_test();
+    dongle_test();
 #endif
 
-        log_infof("%s", "\r\n");
-        log_infof("%s", "***          End Report            ***\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "***          End Report            ***\r\n");
 
-        non_report_entry_count = dongle_storage_num_encounters_total(&storage);
-        report_time = dongle_time;
-    }
+    non_report_entry_count = dongle_storage_num_encounters_total(&storage);
+    report_time = dongle_time;
+  }
 }
 
 #undef alpha

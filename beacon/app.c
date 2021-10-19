@@ -46,30 +46,28 @@ uint64_t timer_ticks;
 /* Initialize application */
 void app_init(void)
 {
-    app_iostream_eusart_init();
-    risk_data_len = RISK_DATA_SIZE;
-    memset(&risk_data, 0, risk_data_len);
+  app_iostream_eusart_init();
+  risk_data_len = RISK_DATA_SIZE;
+  memset(&risk_data, 0, risk_data_len);
 
-    // Set pin PB01 for output
-    GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
+  // Set pin PB01 for output
+  GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
 
-    timer_freq = sl_sleeptimer_get_timer_frequency(); // Hz
+  timer_freq = sl_sleeptimer_get_timer_frequency(); // Hz
 }
 
 /* Update risk data after receive from raspberry pi client */
 void set_risk_data(int len, uint8_t *data)
 {
-    sl_status_t sc = 0;
+  sl_status_t sc = 0;
 
-    if (len <= PER_ADV_SIZE) {
-    	sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-                                   len, &data[0]);
-    }
+  if (len <= PER_ADV_SIZE) {
+    sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, len, &data[0]);
+  }
 
-    if (sc != 0)
-    {
-        printf("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
-    }
+  if (sc != 0) {
+    printf("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
+  }
 }
 
 #ifdef PERIODIC_TEST
@@ -96,7 +94,7 @@ void send_test_risk_data()
   float time = now();
 
   if (seq_num == 0) {
-      beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
+    beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
   }
 
   // sequence number
@@ -110,12 +108,11 @@ void send_test_risk_data()
 
   // data
 #define min(a,b) (b < a ? b : a)
-   pkt_len = min(MAX_PACKET_SIZE,
-                   TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
+  pkt_len = min(MAX_PACKET_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
 #undef min
 
   memcpy(test_data  + PACKET_HEADER_LEN,
-         test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
+      test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
 
   // set
   set_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
@@ -123,24 +120,24 @@ void send_test_risk_data()
   // update sequence
   pkt_rep_count++;
   if (pkt_rep_count == PACKET_REPLICATION) {
-      // all packet retransmissions complete
-      pkt_rep_count = 0;
-      seq_num++;
-      if (seq_num == TEST_NUM_PACKETS_PER_FILTER) {
-          // one filter retransmission complete
-          seq_num = 0;
-          chunk_rep_count++;
-          if (chunk_rep_count == CHUNK_REPLICATION) {
-              // all filter retransmissions complete
-              chunk_rep_count = 0;
-              chunk_num++;
-              if (chunk_num == TEST_N_FILTERS_PER_PAYLOAD) {
-                  // payload transmission complete
-                  chunk_num = 0;
-              }
-              log_infof("switched to transmit chunk %lu\r\n", chunk_num);
-          }
+    // all packet retransmissions complete
+    pkt_rep_count = 0;
+    seq_num++;
+    if (seq_num == TEST_NUM_PACKETS_PER_FILTER) {
+      // one filter retransmission complete
+      seq_num = 0;
+      chunk_rep_count++;
+      if (chunk_rep_count == CHUNK_REPLICATION) {
+        // all filter retransmissions complete
+        chunk_rep_count = 0;
+        chunk_num++;
+        if (chunk_num == TEST_N_FILTERS_PER_PAYLOAD) {
+          // payload transmission complete
+          chunk_num = 0;
+        }
+        log_infof("switched to transmit chunk %lu\r\n", chunk_num);
       }
+    }
   }
 #endif
 }
@@ -149,11 +146,10 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
 {
   sl_status_t sc;
 #define user_handle (*((uint8_t*)data))
-    // handle main clock
-  if (user_handle == MAIN_TIMER_HANDLE)
-    {
-        beacon_clock_increment(1);
-    }
+  // handle main clock
+  if (user_handle == MAIN_TIMER_HANDLE) {
+    beacon_clock_increment(1);
+  }
 #undef user_handle
 }
 
@@ -165,67 +161,67 @@ float adv_start = -1;
 */
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
-    sl_status_t sc;
-    bd_addr address;
-    uint8_t address_type;
+  sl_status_t sc;
+  bd_addr address;
+  uint8_t address_type;
 
-    switch (SL_BT_MSG_ID(evt->header))
-    {
+  switch (SL_BT_MSG_ID(evt->header)) {
     // -------------------------------
     // This event indicates the device has started and the radio is ready.
     // Do not call any stack command before receiving this boot event!
     case sl_bt_evt_system_boot_id:
 
-        // Extract unique ID from BT Address.
-        sc = sl_bt_system_get_identity_address(&address, &address_type);
-        app_assert_status(sc);
+      // Extract unique ID from BT Address.
+      sc = sl_bt_system_get_identity_address(&address, &address_type);
+      app_assert_status(sc);
 
-        // Create an advertising set.
-        //  printf("Creating advertising set...\r\n");
-        sc = sl_bt_advertiser_create_set(&advertising_set_handle);
-        app_assert_status(sc);
+      // Create an advertising set.
+      //  printf("Creating advertising set...\r\n");
+      sc = sl_bt_advertiser_create_set(&advertising_set_handle);
+      app_assert_status(sc);
 
-        // Set PHY
+      // Set PHY
 //        sc = sl_bt_advertiser_set_phy(advertising_set_handle, sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
 //        app_assert_status(sc);
 
-        // Set Power Level
-         int16_t set_power;
-         sc = sl_bt_advertiser_set_tx_power(advertising_set_handle, PER_TX_POWER, &set_power);
-//
-//        // Set advertising interval to 100ms.
-        sc = sl_bt_advertiser_set_timing(advertising_set_handle,
-                                         MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
-                                         MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
-                                         NO_MAX_DUR,       // adv. duration
-                                         NO_MAX_EVT);      // max. num. adv. events
-        app_assert_status(sc);
+      // Set Power Level
+      int16_t set_power;
+      sc = sl_bt_advertiser_set_tx_power(advertising_set_handle,
+          PER_TX_POWER, &set_power);
 
-        log_infof("%s", "Starting periodic advertising...\r\n");
+      // Set advertising interval to 100ms.
+      sc = sl_bt_advertiser_set_timing(advertising_set_handle,
+          MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
+          MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
+          NO_MAX_DUR,       // adv. duration
+          NO_MAX_EVT);      // max. num. adv. events
+      app_assert_status(sc);
 
-        adv_start = now();
-        sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
-                                                         PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
+      log_infof("%s", "Starting periodic advertising...\r\n");
 
-        app_assert_status(sc);
+      adv_start = now();
+      sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
+          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
 
-        log_infof("periodic advertising started at %f ms\r\n", adv_start);
+      app_assert_status(sc);
 
-        log_infof("%s", "setting periodic advertising data...\r\n");
+      log_infof("periodic advertising started at %f ms\r\n", adv_start);
 
-        // printf("Setting advertising data...\r\n");
-        sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
-                                       &risk_data[adv_index * PER_ADV_SIZE]);
+      log_infof("%s", "setting periodic advertising data...\r\n");
 
-        app_assert_status(sc);
-        log_infof("%s", "periodic advertising data set.\r\n");
+      // printf("Setting advertising data...\r\n");
+      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
+          &risk_data[adv_index * PER_ADV_SIZE]);
 
-        beacon_start();
-        break;
+      app_assert_status(sc);
+      log_infof("%s", "periodic advertising data set.\r\n");
+
+      beacon_start();
+      break;
 
     case sl_bt_evt_system_soft_timer_id:
     // Default event handler.
     default:
         break;
-    }
+  }
 }

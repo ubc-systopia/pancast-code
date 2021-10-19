@@ -54,24 +54,20 @@
 #define DONGLE_UPLOAD_DATA_TYPE_DATA_4 0x0c
 #define DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_4 0x0d
 
-typedef union
-{
-    uint8_t flags;
-    struct
-    {
-        uint8_t _;
-        uint8_t val[sizeof(dongle_otp_val)];
-    } otp;
-    struct
-    {
-        uint8_t _;
-        uint8_t val[sizeof(enctr_entry_counter_t)];
-    } num_recs;
-    struct
-    {
-        uint8_t _;
-        uint8_t bytes[19];
-    } data;
+typedef union {
+  uint8_t flags;
+  struct {
+      uint8_t _;
+      uint8_t val[sizeof(dongle_otp_val)];
+  } otp;
+  struct {
+      uint8_t _;
+      uint8_t val[sizeof(enctr_entry_counter_t)];
+  } num_recs;
+  struct {
+      uint8_t _;
+      uint8_t bytes[19];
+  } data;
 } interact_state;
 
 int access_advertise();

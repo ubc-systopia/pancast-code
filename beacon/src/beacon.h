@@ -30,13 +30,13 @@
 
 typedef struct
 {
-    beacon_id_t beacon_id;                   // Beacon ID
-    beacon_location_id_t beacon_location_id; // Location ID
-    beacon_timer_t t_init;                   // Beacon Clock Start
-    key_size_t backend_pk_size;              // size of backend public key
-    pubkey_t backend_pk;                     // Backend public key
-    key_size_t beacon_sk_size;               // size of secret key
-    beacon_sk_t beacon_sk;                   // Secret Key
+  beacon_id_t beacon_id;                   // Beacon ID
+  beacon_location_id_t beacon_location_id; // Location ID
+  beacon_timer_t t_init;                   // Beacon Clock Start
+  key_size_t backend_pk_size;              // size of backend public key
+  pubkey_t backend_pk;                     // Backend public key
+  key_size_t beacon_sk_size;               // size of secret key
+  beacon_sk_t beacon_sk;                   // Secret Key
 } beacon_config_t;
 
 // Advertising interval settings
@@ -51,7 +51,7 @@ typedef struct tc_sha256_state_struct hash_t;
 
 typedef struct
 {
-    uint8_t bytes[TC_SHA256_DIGEST_SIZE];
+  uint8_t bytes[TC_SHA256_DIGEST_SIZE];
 } digest_t;
 
 typedef struct bt_data bt_data_t;
@@ -63,31 +63,31 @@ typedef struct bt_data bt_data_t;
 
 typedef struct
 {
-    uint8_t bytes[32];
+  uint8_t bytes[32];
 } digest_t;
 
 typedef struct Sha_256 hash_t;
 
 typedef struct
 {
-    uint8_t data_len;
-    uint8_t type;
-    uint8_t data[29];
+  uint8_t data_len;
+  uint8_t type;
+  uint8_t data[29];
 } bt_data_t;
 
 #endif
 
 typedef union
 {
-    encounter_broadcast_raw_t en_data;
-    bt_data_t bt_data[1];
+  encounter_broadcast_raw_t en_data;
+  bt_data_t bt_data[1];
 } bt_wrapper_t;
 
 typedef union
 {
-    bt_data_t flags;
-    bt_data_t serviceUUID;
-    char service_data_internals[22];
+  bt_data_t flags;
+  bt_data_t serviceUUID;
+  char service_data_internals[22];
 } bt_gaen_wrapper_t;
 
 #ifdef BEACON_PLATFORM__ZEPHYR

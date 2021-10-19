@@ -39,37 +39,34 @@ typedef const struct device flash_device_t;
 typedef uint32_t storage_addr_t;
 #endif
 
-typedef struct
-{
-    enctr_entry_counter_t tail; // index of oldest stored recent encounter
-    enctr_entry_counter_t head; // index to write next stored encounter
+typedef struct {
+  enctr_entry_counter_t tail; // index of oldest stored recent encounter
+  enctr_entry_counter_t head; // index to write next stored encounter
 } _encounter_storage_cursor_;
 
-typedef struct
-{
-    storage_addr_t config;  // address of device configuration
-    storage_addr_t otp;     // address of OTP storage
-    storage_addr_t stat;    // address of saved statistics
-    storage_addr_t log;     // address of first log entry
-    storage_addr_t log_end; // address of next available space after log
+typedef struct {
+  storage_addr_t config;  // address of device configuration
+  storage_addr_t otp;     // address of OTP storage
+  storage_addr_t stat;    // address of saved statistics
+  storage_addr_t log;     // address of first log entry
+  storage_addr_t log_end; // address of next available space after log
 } _dongle_storage_map_;
 
-typedef struct
-{
+typedef struct {
 #ifdef DONGLE_PLATFORM__ZEPHYR
-    flash_device_t *dev;
+  flash_device_t *dev;
 #else
-    MSC_ExecConfig_TypeDef mscExecConfig;
+  MSC_ExecConfig_TypeDef mscExecConfig;
 #endif
-    size_t min_block_size;
-    int num_pages;
-    size_t page_size;
-    storage_addr_t total_size;
-    _dongle_storage_map_ map;
-    _encounter_storage_cursor_ encounters;
-    enctr_entry_counter_t total_encounters;
-    storage_addr_t off; // flash offset
-    uint64_t numErasures;
+  size_t min_block_size;
+  int num_pages;
+  size_t page_size;
+  storage_addr_t total_size;
+  _dongle_storage_map_ map;
+  _encounter_storage_cursor_ encounters;
+  enctr_entry_counter_t total_encounters;
+  storage_addr_t off; // flash offset
+  uint64_t numErasures;
 } dongle_storage;
 
 // STORAGE INIT
@@ -113,28 +110,27 @@ enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto);
 
 // LOAD ENCOUNTER
 // API is defined using a callback structure
-typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i, dongle_encounter_entry *entry);
+typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
+    dongle_encounter_entry *entry);
 
 // load function iterates through the records, and calls cb for each
 // variable i is provided as the index into the log
 void dongle_storage_load_encounter(dongle_storage *sto,
-                                   enctr_entry_counter_t i, dongle_encounter_cb cb);
+    enctr_entry_counter_t i, dongle_encounter_cb cb);
 
 void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb);
 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
-                                          enctr_entry_counter_t i, dongle_encounter_entry *);
+    enctr_entry_counter_t i, dongle_encounter_entry *);
 
 void dongle_storage_load_encounters_from_time(dongle_storage *sto,
-                                              dongle_timer_t min_time, dongle_encounter_cb cb);
+    dongle_timer_t min_time, dongle_encounter_cb cb);
 
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto,
-                                  beacon_location_id_t *loc,
-                                  beacon_id_t *beacon_id,
-                                  beacon_timer_t *beacon_time,
-                                  dongle_timer_t *dongle_time,
-                                  beacon_eph_id_t *eph_id);
+    beacon_location_id_t *loc, beacon_id_t *beacon_id,
+    beacon_timer_t *beacon_time, dongle_timer_t *dongle_time,
+    beacon_eph_id_t *eph_id);
 
 #define DONGLE_STORAGE_MAX_PRINT_LEN 64
 

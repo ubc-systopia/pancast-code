@@ -28,26 +28,26 @@ typedef uint32_t storage_addr_t;
 
 typedef struct
 {
-    storage_addr_t config;  // address of device configuration
-    storage_addr_t test_filter; // test cuckoo filter
-    storage_addr_t stat;    // address of saved statistics
+  storage_addr_t config;  // address of device configuration
+  storage_addr_t test_filter; // test cuckoo filter
+  storage_addr_t stat;    // address of saved statistics
 } _beacon_storage_map_;
 
 typedef struct
 {
 #ifdef BEACON_PLATFORM__ZEPHYR
-    flash_device_t *dev;
+  flash_device_t *dev;
 #else
-    MSC_ExecConfig_TypeDef mscExecConfig;
+  MSC_ExecConfig_TypeDef mscExecConfig;
 #endif
-    size_t min_block_size;
-    int num_pages;
-    size_t page_size;
-    storage_addr_t total_size;
-    _beacon_storage_map_ map;
-    storage_addr_t off; // flash offset
-    uint64_t numErasures;
-    test_filter_size_t test_filter_size;
+  size_t min_block_size;
+  int num_pages;
+  size_t page_size;
+  storage_addr_t total_size;
+  _beacon_storage_map_ map;
+  storage_addr_t off; // flash offset
+  uint64_t numErasures;
+  test_filter_size_t test_filter_size;
 } beacon_storage;
 
 // STORAGE INIT

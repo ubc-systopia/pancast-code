@@ -65,14 +65,15 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 {
   sl_status_t sc;
   switch (SL_BT_MSG_ID(evt->header)) {
-      case sl_bt_evt_system_boot_id:
-        dongle_time_init();
-        app_log_info("Bluetooth start\r\n");
-        log_debugf("%s", "Bluetooth device booted and ready\r\n");
-        dongle_start();
-        log_debugf("%s", "Dongle started\r\n");
-        break;
-      case sl_bt_evt_scanner_scan_report_id:
+    case sl_bt_evt_system_boot_id:
+      dongle_time_init();
+      app_log_info("Bluetooth start\r\n");
+      log_debugf("%s", "Bluetooth device booted and ready\r\n");
+      dongle_start();
+      log_debugf("%s", "Dongle started\r\n");
+      break;
+
+    case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
 //        log_debugf("%s", "Scan result\r\n");
 //#define addr (report.address.addr)
@@ -80,31 +81,32 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //                         addr[0], addr[1], addr[2], addr[3], addr[4], addr[4]);
 //#undef addr
 #ifdef MODE__LEGACY_LOG
-        // First, log into the legacy decode pipeline
-        dongle_log(&report.address,
-                   report.rssi, report.data.data, report.data.len);
+      // First, log into the legacy decode pipeline
+      dongle_log(&report.address,
+                 report.rssi, report.data.data, report.data.len);
 #endif
 #ifdef MODE__PERIODIC
-        // then check for periodic info in packet
-        if (!synced
-            && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
+      // then check for periodic info in packet
+      if (!synced
+          && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
 //         // Start test
 //         sync_test.start_ticks = sl_sleeptimer_get_tick_count64();
-           app_log_info("Opening sync\r\n");
-           // Open sync
-           sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
-                           evt->data.evt_scanner_scan_report.address_type,
-                           evt->data.evt_scanner_scan_report.adv_sid,
-                           &sync_handle);
-           if (sc != 0) {
-               log_errorf("sync not opened: sc: 0x%x\r\n", sc);
-           }
-       }
+        app_log_info("Opening sync\r\n");
+        // Open sync
+        sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
+                       evt->data.evt_scanner_scan_report.address_type,
+                       evt->data.evt_scanner_scan_report.adv_sid,
+                       &sync_handle);
+        if (sc != 0) {
+          log_errorf("sync not opened: sc: 0x%x\r\n", sc);
+        }
+      }
 #endif
 #undef report
-        break;
-      case sl_bt_evt_sync_opened_id:
-        app_log_info("new sync opened!\r\n");
+      break;
+
+    case sl_bt_evt_sync_opened_id:
+      app_log_info("new sync opened!\r\n");
 //        sync_test.end_ticks = sl_sleeptimer_get_tick_count64();
 //        sync_test.diff = sync_test.end_ticks - sync_test.start_ticks;
 //        sl_sleeptimer_tick64_to_ms(timestamp, &sync_test.diff);
@@ -114,10 +116,11 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        }
 //        app_log_info("start_time (ms) = %u\r\n", ms);
         // sl_bt_scanner_stop();
-        synced = 1;
-        break;
-      case sl_bt_evt_sync_closed_id:
-        app_log_info("Sync lost...\r\n");
+      synced = 1;
+      break;
+
+    case sl_bt_evt_sync_closed_id:
+      app_log_info("Sync lost...\r\n");
 //        num_sync_lost = num_sync_lost + 1;
 //        app_log_info("num_sync_lost %d\r\n", num_sync_lost);
 //
@@ -125,18 +128,19 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        app_log_info("Starting scan...\r\n");
 //        sc = sl_bt_scanner_start(1, scanner_discover_observation);
 //        app_assert_status(sc);
-        dongle_on_sync_lost();
-        synced = 0;
-        break;
-      case sl_bt_evt_sync_data_id:
-        // Log info
-        app_log_debug("Received data, len :%d\r\n",
-                     evt->data.evt_sync_data.data.len);
-        app_log_debug("Status: %d\r\n",
-                           evt->data.evt_sync_data.data_status);
+      dongle_on_sync_lost();
+      synced = 0;
+      break;
+
+    case sl_bt_evt_sync_data_id:
+      // Log info
+      app_log_debug("Received data, len :%d\r\n",
+                   evt->data.evt_sync_data.data.len);
+      app_log_debug("Status: %d\r\n",
+                         evt->data.evt_sync_data.data_status);
 //        evt->data.evt_sync_data.
 
-        // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
+      // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
 
 //       //  Print entire byte array
 //        for (int i = 0; i < evt->data.evt_sync_data.data.len; i++) {
@@ -145,16 +149,15 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        app_log_debug("\r\n");
 
 #define ERROR_STATUS 0x02
-        if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
-            dongle_on_periodic_data_error(evt->data.evt_sync_data.rssi);
-        }
+      if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
+        dongle_on_periodic_data_error(evt->data.evt_sync_data.rssi);
+      }
 #undef ERROR_STATUS
-        else {
-          dongle_on_periodic_data(
-              evt->data.evt_sync_data.data.data,
-              evt->data.evt_sync_data.data.len,
-              evt->data.evt_sync_data.rssi);
-        }
+      else {
+        dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
+            evt->data.evt_sync_data.data.len,
+            evt->data.evt_sync_data.rssi);
+      }
 
 //        // check if sync data index + evt->data > length
 //        // if it is larger or equal then print and reset length
@@ -178,10 +181,11 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //        byte_count = byte_count + evt->data.evt_sync_data.data.len;
 //        timestamp = sl_sleeptimer_get_tick_count64() - start_time;
 //        sl_sleeptimer_tick64_to_ms(timestamp, &ms);
-        break;
-      case sl_bt_evt_system_soft_timer_id:
-      default:
-        log_debugf("%s", "Unhandled bluetooth event\r\n");
-        break;
-    }
+      break;
+
+    case sl_bt_evt_system_soft_timer_id:
+    default:
+      log_debugf("%s", "Unhandled bluetooth event\r\n");
+      break;
+  }
 }

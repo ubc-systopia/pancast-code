@@ -44,7 +44,7 @@ void dongle_download_init()
 void dongle_download_start()
 {
     download.is_active = 1;
-    log_info("Download started! (chunk=%lu)\r\n", download.packet_buffer.chunk_num);
+    log_infof("%s", "Download started! (chunk=%lu)\r\n", download.packet_buffer.chunk_num);
     download_stats.payloads_started++;
 }
 
@@ -78,9 +78,9 @@ int dongle_download_check_match(enctr_entry_counter_t i,
   //hexdumpn(&download.packet_buffer.buffer, 1736, "filter");
      // num_buckets = 4; // for testing (num_buckets cannot be 0)
     if (lookup(id, &download.packet_buffer.buffer, num_buckets)) {
-        log_info("====== LOG MATCH!!! ====== \r\n");
+        log_infof("%s", "====== LOG MATCH!!! ====== \r\n");
     } else {
-        log_info("No match for id\r\n");
+        log_infof("%s", "No match for id\r\n");
     }
     return 1;
 }
@@ -90,7 +90,7 @@ void dongle_on_sync_lost()
 
   log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_SYNC_LOST, dongle_hp_timer);
   if (download.is_active) {
-      log_info("Download failed - lost sync.\r\n");
+      log_infof("%s", "Download failed - lost sync.\r\n");
       download.n_syncs_lost++;
   }
 
@@ -113,8 +113,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     if (data_len < PACKET_HEADER_LEN) {
         log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
                    dongle_hp_timer, rssi, data_len);
-        log_error("not enough data to read sequence numbers\r\n");
-        log_error("len: %d\r\n", data_len);
+//        log_errorf("%s", "not enough data to read sequence numbers\r\n");
+//        log_errorf("%s", "len: %d\r\n", data_len);
         download.n_corrupt_packets++;
         return;
     }
@@ -148,7 +148,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
                    download.packet_buffer.buffer.data_len, chunk_len);
     }
     if (seq >= MAX_NUM_PACKETS_PER_FILTER) {
-        log_errorf("Error: sequence number out of bounds\r\n");
+        log_errorf("Error: sequence number %d out of bounds %d\r\n", seq, MAX_NUM_PACKETS_PER_FILTER);
     } else {
         if (!download.is_active) {
             dongle_download_start();
@@ -164,7 +164,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
             memcpy(download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
                    data + PACKET_HEADER_LEN, len);
             download.packet_buffer.received += len;
-            log_infof("download progress: %.2f%%\r\n",
+            log_infof("download progress: %.2f\r\n",
                       ((float) download.packet_buffer.received
                        /download.packet_buffer.buffer.data_len) * 100);
             if (download.packet_buffer.received
@@ -178,7 +178,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
 void dongle_download_complete()
 {
-  log_info("Download complete!\r\n");
+  log_infof("%s", "Download complete!\r\n");
   download_stats.payloads_complete++;
   // compute latency
   double lat = download.time;
@@ -191,7 +191,7 @@ void dongle_download_complete()
   uint64_t filter_len = download.packet_buffer.buffer.data_len;
 
   if (filter_len > download.packet_buffer.received) {
-      log_error("Filter length mismatch (%lu/%lu)\r\n",
+      log_errorf("%s", "Filter length mismatch (%lu/%lu)\r\n",
               download.packet_buffer.received, filter_len);
       dongle_download_fail(&download_stats.cuckoo_fail);
       return;
@@ -204,7 +204,7 @@ void dongle_download_complete()
   num_buckets = cf_gadget_num_buckets(filter_len);
 
   if (num_buckets == 0) {
-      log_error("num buckets is 0!!!\r\n");
+      log_errorf("%s", "num buckets is 0!!!\r\n");
       dongle_download_fail(&download_stats.cuckoo_fail);
       return;
   }
@@ -259,7 +259,7 @@ void dongle_download_complete()
 void dongle_download_info()
 {
     log_infof("Total time: %.0f ms\r\n", download.time);
-    log_info("Packets Received: %lu\r\n", download.n_total_packets);
+    log_infof("Packets Received: %lu\r\n", download.n_total_packets);
     log_infof("Data bytes downloaded: %lu\r\n",
               download.packet_buffer.received);
 }

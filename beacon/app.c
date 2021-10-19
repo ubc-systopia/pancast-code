@@ -201,7 +201,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
                                          NO_MAX_EVT);      // max. num. adv. events
         app_assert_status(sc);
 
-        log_info("Starting periodic advertising...\r\n");
+        log_infof("%s", "Starting periodic advertising...\r\n");
 
         adv_start = now();
         sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
@@ -211,14 +211,14 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
 
         log_infof("periodic advertising started at %f ms\r\n", adv_start);
 
-        log_info("setting periodic advertising data...\r\n");
+        log_infof("%s", "setting periodic advertising data...\r\n");
 
         // printf("Setting advertising data...\r\n");
         sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
                                        &risk_data[adv_index * PER_ADV_SIZE]);
 
         app_assert_status(sc);
-        log_info("periodic advertising data set.\r\n");
+        log_infof("%s", "periodic advertising data set.\r\n");
 
         beacon_start();
         break;

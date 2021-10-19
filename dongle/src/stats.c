@@ -17,7 +17,7 @@ void dongle_stats_init(dongle_storage *sto)
     dongle_storage_read_stat(sto, &stats, sizeof(dongle_stats_t));
     if (!stats.storage_checksum)
     {
-        log_info("Existing Statistics Found\r\n");
+        log_infof("%s", "Existing Statistics Found\r\n");
         dongle_stats(sto);
     }
     else
@@ -41,8 +41,8 @@ void stat_compute_thrpt()
 
 void dongle_stats(dongle_storage *sto)
 {
-    log_info("\r\n");
-    log_info("Statistics:\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Statistics:\r\n");
     log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
     log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
     log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
@@ -74,8 +74,8 @@ void dongle_download_show_stats(download_stats_t * stats, char *name)
 
 void dongle_download_stats()
 {
-    log_info("\r\n");
-    log_info("Risk Broadcast:\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Risk Broadcast:\r\n");
 
     log_infof("    Downloads Started: %d\r\n", download_stats.payloads_started);
     log_infof("    Downloads Completed: %d\r\n", download_stats.payloads_complete);

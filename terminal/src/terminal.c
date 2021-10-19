@@ -69,7 +69,7 @@ static uint8_t notify_func(struct bt_conn *conn,
 {
     if (!data)
     {
-        log_info("[UNSUBSCRIBED]\n");
+        log_infof("%s", "[UNSUBSCRIBED]\n");
         params->value_handle = 0U;
         return BT_GATT_ITER_STOP;
     }
@@ -103,7 +103,7 @@ void interact_update()
             terminal_state = TERMINAL_UPLOAD_STATE_LOCKED;
             break;
         }
-        log_info("Fetching records...\n");
+        log_infof("%s", "Fetching records...\n");
         terminal_state = TERMINAL_UPLOAD_STATE_RECEIVE_DATA_0;
         num_received = 0;
         state.flags = DONGLE_UPLOAD_DATA_TYPE_ACK_NUM_RECS;
@@ -114,7 +114,7 @@ void interact_update()
         {
             break;
         }
-        log_debug("Receiving data 0\n");
+        log_debugf("%s", "Receiving data 0\n");
         memcpy(&entry.beacon_id, state.data.bytes, sizeof(beacon_id_t));
         terminal_state = TERMINAL_UPLOAD_STATE_RECEIVE_DATA_1;
         state.flags = DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_0;
@@ -125,7 +125,7 @@ void interact_update()
         {
             break;
         }
-        log_debug("Receiving data 1\n");
+        log_debugf("%s", "Receiving data 1\n");
         memcpy(&entry.beacon_time, state.data.bytes, sizeof(beacon_timer_t));
         terminal_state = TERMINAL_UPLOAD_STATE_RECEIVE_DATA_2;
         state.flags = DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_1;
@@ -136,7 +136,7 @@ void interact_update()
         {
             break;
         }
-        log_debug("Receiving data 2\n");
+        log_debugf("%s", "Receiving data 2\n");
         memcpy(&entry.dongle_time, state.data.bytes, sizeof(dongle_timer_t));
         terminal_state = TERMINAL_UPLOAD_STATE_RECEIVE_DATA_3;
         state.flags = DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_2;
@@ -147,7 +147,7 @@ void interact_update()
         {
             break;
         }
-        log_debug("Receiving data 3\n");
+        log_debugf("%s", "Receiving data 3\n");
         memcpy(entry.eph_id.bytes, state.data.bytes, BEACON_EPH_ID_SIZE);
         terminal_state = TERMINAL_UPLOAD_STATE_RECEIVE_DATA_4;
         state.flags = DONGLE_UPLOAD_DATA_TYPE_ACK_DATA_3;
@@ -158,13 +158,13 @@ void interact_update()
         {
             break;
         }
-        log_debug("Receiving data 4\n");
+        log_debugf("%s", "Receiving data 4\n");
         memcpy(&entry.location_id, state.data.bytes, sizeof(beacon_location_id_t));
         num_received++;
         log_infof("%llu/%llu\n", num_received, num_recs);
         if (num_received == num_recs)
         {
-            log_info("All records received\n");
+            log_infof("%s", "All records received\n");
         }
         // else
         // {
@@ -204,7 +204,7 @@ static uint8_t discover_func(struct bt_conn *conn,
 
     if (!attr)
     {
-        log_info("Discover complete\n");
+        log_infof("%s", "Discover complete\n");
         (void)memset(params, 0, sizeof(*params));
         return BT_GATT_ITER_STOP;
     }
@@ -252,7 +252,7 @@ static uint8_t discover_func(struct bt_conn *conn,
         }
         else
         {
-            log_info("[SUBSCRIBED]\n");
+            log_infof("%s", "[SUBSCRIBED]\n");
             k_mutex_lock(&state_mu, K_FOREVER);
             terminal_state = TERMINAL_UPLOAD_STATE_LOCKED;
             k_mutex_unlock(&state_mu);
@@ -272,7 +272,7 @@ void parse_data(uint8_t type, uint8_t *data, uint16_t len, bt_addr_le_t *addr)
     case BT_DATA_UUID128_ALL:
         if ((len * 8) != 128U)
         {
-            log_debug("AD malformed\n");
+            log_debugf("%s", "AD malformed\n");
             return;
         }
 
@@ -365,7 +365,7 @@ static void start_scan(void)
         return;
     }
 
-    log_info("Scanning successfully started\n");
+    log_infof("%s", "Scanning successfully started\n");
 }
 
 static void connected(struct bt_conn *conn, uint8_t conn_err)
@@ -452,7 +452,7 @@ void main(void)
         return;
     }
 
-    log_info("Bluetooth initialized\n");
+    log_infof("%s", "Bluetooth initialized\n");
 
     bt_conn_cb_register(&conn_callbacks);
 
@@ -460,14 +460,14 @@ void main(void)
 
     while (state_eql(TERMINAL_UPLOAD_STATE_UNCONNECTED))
     {
-        log_info("Not connected yet\n");
+        log_infof("%s", "Not connected yet\n");
         k_sleep(K_MSEC(1000));
     }
-    log_debug("Connected and subscribed\n");
+    log_debugf("%s", "Connected and subscribed\n");
     int i = 0;
     while (state_eql(TERMINAL_UPLOAD_STATE_LOCKED))
     {
-        log_info("Must enter code\n");
+        log_infof("%s", "Must enter code\n");
         dongle_otp_val otp = i >= 4 ? TEST_OTPS[3].val : bad_otps[i];
         k_mutex_lock(&state_mu, K_FOREVER);
         state.flags = DONGLE_UPLOAD_DATA_TYPE_OTP;

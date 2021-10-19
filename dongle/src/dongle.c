@@ -85,17 +85,17 @@ extern download_stats_t download_stats;
 // Assumes that kernel has initialized and bluetooth device is booted.
 void dongle_start()
 {
-    log_info("\r\n");
-    log_info("Starting Dongle...\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Starting Dongle...\r\n");
 
 #ifdef TEST_DONGLE
-    log_info("Test mode enabled\r\n");
+    log_infof("%s", "Test mode enabled\r\n");
 #endif
 
-    log_info("Statistics enabled\r\n");
+    log_infof("%s", "Statistics enabled\r\n");
 
 #ifdef MODE__PERIODIC
-    log_info("Periodic synchronization enabled\r\n");
+    log_infof("%s", "Periodic synchronization enabled\r\n");
 #endif
 
     if (access_advertise())
@@ -154,7 +154,7 @@ void dongle_scan(void)
     }
     else
     {
-        log_debug("Scanning successfully started\r\n");
+        log_debugf("%s", "Scanning successfully started\r\n");
     }
 }
 
@@ -178,7 +178,7 @@ void dongle_init()
 
     dongle_download_stats_init();
 
-    log_info("Dongle initialized\r\n");
+    log_infof("%s", "Dongle initialized\r\n");
 
     dongle_info();
 
@@ -276,7 +276,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     // log the encounter
 //    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
 //               dongle_time);
-    log_info("Encounter! ");
+    log_infof("%s", "Encounter! ");
     display_eph_id(enc->eph);
 
     // Write to storage
@@ -401,8 +401,8 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 
 void dongle_info()
 {
-    log_info("\r\n");
-    log_info("Info:\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Info:\r\n");
     log_infof("    Dongle ID:                       %lu\r\n", config.id);
     log_infof("    Initial clock:                   %lu\r\n", config.t_init);
     log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
@@ -432,8 +432,8 @@ void dongle_report()
     if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL)
     {
 
-        log_info("\r\n");
-        log_info("***          Begin Report          ***\r\n");
+        log_infof("%s", "\r\n");
+        log_infof("%s", "***          Begin Report          ***\r\n");
 
         dongle_info();
         dongle_storage_info(&storage);
@@ -449,8 +449,8 @@ void dongle_report()
         dongle_test();
 #endif
 
-        log_info("\r\n");
-        log_info("***          End Report            ***\r\n");
+        log_infof("%s", "\r\n");
+        log_infof("%s", "***          End Report            ***\r\n");
 
         non_report_entry_count = dongle_storage_num_encounters_total(&storage);
         report_time = dongle_time;

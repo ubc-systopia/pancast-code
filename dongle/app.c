@@ -48,7 +48,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
  ******************************************************************************/
 sl_status_t app_init(void)
 {
-  log_debug("Initialize\r\n");
+  log_debugf("%s", "Initialize\r\n");
   return SL_STATUS_OK;
 }
 
@@ -68,13 +68,13 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       case sl_bt_evt_system_boot_id:
         dongle_time_init();
         app_log_info("Bluetooth start\r\n");
-        log_debug("Bluetooth device booted and ready\r\n");
+        log_debugf("%s", "Bluetooth device booted and ready\r\n");
         dongle_start();
-        log_debug("Dongle started\r\n");
+        log_debugf("%s", "Dongle started\r\n");
         break;
       case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
-//        log_debug("Scan result\r\n");
+//        log_debugf("%s", "Scan result\r\n");
 //#define addr (report.address.addr)
 //        log_debugf("Packet Address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\r\n",
 //                         addr[0], addr[1], addr[2], addr[3], addr[4], addr[4]);
@@ -181,7 +181,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         break;
       case sl_bt_evt_system_soft_timer_id:
       default:
-        log_debug("Unhandled bluetooth event\r\n");
+        log_debugf("%s", "Unhandled bluetooth event\r\n");
         break;
     }
 }

@@ -34,7 +34,7 @@ void display_eph_id(beacon_eph_id_t *id)
 
 void _display_encounter_(dongle_encounter_entry *entry)
 {
-    log_info("Encounter data:\r\n");
+    log_infof("%s", "Encounter data:\r\n");
     log_infof(" t_d: %lu,", entry->dongle_time);
     log_infof(" b: %lu,", entry->beacon_id);
     log_infof(" t_b: %lu,", entry->beacon_time);

@@ -40,7 +40,7 @@ void beacon_storage_erase(beacon_storage *sto, storage_addr_t offset)
 #else
     MSC_ErasePage((uint32_t *)offset);
 #endif
-    log_debug("erased.\r\n");
+    log_debugf("%s", "erased.\r\n");
     st.numErasures++;
 }
 
@@ -81,7 +81,7 @@ int _flash_write_(beacon_storage *sto, void *data, size_t size)
 #endif
 #ifdef BEACON_PLATFORM__ZEPHYR
     return flash_write(st.dev, st.off, data, size)
-           ? log_error("Error writing flash\r\n"),
+           ? log_errorf("%s", "Error writing flash\r\n"),
            1 : 0;
 #else
     MSC_WriteWord((uint32_t *)st.off, data, (uint32_t)size);
@@ -92,7 +92,7 @@ int _flash_write_(beacon_storage *sto, void *data, size_t size)
 void beacon_storage_get_info(beacon_storage *sto)
 {
 #ifdef BEACON_PLATFORM__ZEPHYR
-    log_info("Getting flash information...\r\n");
+    log_infof("%s", "Getting flash information...\r\n");
     st.num_pages = 0;
     st.min_block_size = flash_get_write_block_size(st.dev);
     flash_page_foreach(st.dev, _flash_page_info_, sto);
@@ -118,7 +118,7 @@ void beacon_storage_init_device(beacon_storage *sto)
 
 void beacon_storage_init(beacon_storage *sto)
 {
-    log_info("Initializing storage...\r\n");
+    log_infof("%s", "Initializing storage...\r\n");
     st.off = 0;
     st.numErasures = 0;
     beacon_storage_init_device(sto);
@@ -127,7 +127,7 @@ void beacon_storage_init(beacon_storage *sto)
     st.map.config = FLASH_OFFSET;
     if (FLASH_OFFSET % st.page_size != 0)
     {
-        log_error("Start address of storage area is not a page-multiple!\r\n");
+        log_errorf("%s", "Start address of storage area is not a page-multiple!\r\n");
     }
     st.map.stat = st.total_size - (3*st.page_size);
 }
@@ -139,7 +139,7 @@ void beacon_storage_init(beacon_storage *sto)
 // data to the device image.
 void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 {
-    log_info("Loading config...\r\n");
+    log_infof("%s", "Loading config...\r\n");
     st.off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), st.off += size)
     read(sizeof(beacon_id_t), &cf.beacon_id);
@@ -161,11 +161,11 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     read(cf.beacon_sk_size, &cf.beacon_sk);
     read(sizeof(test_filter_size_t), &st.test_filter_size);
     if (st.test_filter_size != TEST_FILTER_LEN) {
-        log_error("Warning: test filter length mismatch\r\n");
+        log_errorf("%s", "Warning: test filter length mismatch\r\n");
     }
     st.map.test_filter = st.off;
 #undef read
-    log_info("Config loaded.\r\n");
+    log_infof("%s", "Config loaded.\r\n");
 }
 
 #undef cf

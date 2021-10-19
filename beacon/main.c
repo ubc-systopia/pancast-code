@@ -79,7 +79,7 @@ int main(void)
     sl_status_t sc = sl_sleeptimer_init();
 
     // Main timer (for main clock)
-    log_info("Starting main clock\r\n");
+    log_errorf("%s", "Starting main clock\r\n");
     uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
     sl_sleeptimer_timer_handle_t timer;
     sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
@@ -89,10 +89,10 @@ int main(void)
 
                                MAIN_TIMER_PRIORT, 0);
     if (sc != SL_STATUS_OK) {
-            log_error("Error starting main timer \r\n", timer);
-        } else {
-            log_info("Main Timer Started. handle=0x%02x\r\n", timer);
-        }
+        log_errorf("%s", "Error starting main timer %d\r\n", sc);
+    } else {
+        log_infof("%s", "Main Timer Started. handle=0x%02x\r\n", timer);
+    }
 
     int risk_timer_started = 0;
 
@@ -122,7 +122,7 @@ int main(void)
                   continue; // spin
               }
               risk_timer_started = 1;
-              log_info("Risk timer started at %f ms.\r\n"
+              log_infof("%s", "Risk timer started at %f ms.\r\n"
                         "delta=%f ms; \r\n",
                        time, delta);
               // TODO: make sure that the interval is synced properly below
@@ -207,23 +207,23 @@ int main(void)
 
         	GPIO_PinOutClear(gpioPortB, 1);
 
-            uint32_t seq;
-            memcpy(&seq, buf, sizeof(uint32_t)); // extract sequence number
-        	printf("sequence: %lu\r\n", seq);
+          uint32_t seq;
+          memcpy(&seq, buf, sizeof(uint32_t)); // extract sequence number
+          log_debugf("%s", "sequence: %lu\r\n", seq);
 
-              memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
-            printf("chunk number: %lu\r\n", seq);
+          memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
+          log_debugf("%s", "chunk number: %lu\r\n", seq);
 
             memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
 
-            printf("chunk length: %lu\r\n", seq);
+          log_debugf("%s", "chunk length: %lu\r\n", seq);
 
         	set_risk_data(rlen, buf);
 
         	// End timer
         	uint64_t end_time = sl_sleeptimer_get_tick_count64();
         	uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-        	printf("READ: %d, TIME: %lu\r\n", rlen, ms);
+          log_debugf("%s", "READ: %d, TIME: %lu\r\n", rlen, ms);
 
         	// Print all data in buffer
 //        	for (int i= 0; i < DATA_SIZE; i++){
@@ -237,7 +237,7 @@ int main(void)
         	// End timer
         	end_time = sl_sleeptimer_get_tick_count64();
         	ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-            printf("READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+          log_debugf("%s", "READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
 #else // !PERIODIC_TEST
         	    // Start timer
               uint64_t start_time = sl_sleeptimer_get_tick_count64();

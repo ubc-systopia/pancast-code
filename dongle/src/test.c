@@ -39,16 +39,16 @@ void dongle_test_encounter(encounter_broadcast_t *enc)
 uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
 {
     uint8_t res = 0;
-    log_debug("comparing ids\r\n");
+    log_debugf("%s", "comparing ids\r\n");
 #define check(val, idx) res |= (val << idx)
     check(!(a.beacon_id == b.beacon_id), 0);
-    log_debug("comparing beacon time\r\n");
+    log_debugf("%s", "comparing beacon time\r\n");
     check(!(a.beacon_time == b.beacon_time), 1);
-    log_debug("comparing dongle time\r\n");
+    log_debugf("%s", "comparing dongle time\r\n");
     check(!(a.dongle_time == b.dongle_time), 2);
-    log_debug("comparing location ids\r\n");
+    log_debugf("%s", "comparing location ids\r\n");
     check(!(a.location_id == b.location_id), 3);
-    log_debug("comparing eph. ids\r\n");
+    log_debugf("%s", "comparing eph. ids\r\n");
     check(compare_eph_id(&a.eph_id, &b.eph_id), 4);
 #undef check
     return res;
@@ -58,7 +58,7 @@ int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entr
 {
     //log_infof("%.4lu.", i);
     //_display_encounter_(entry);
-    log_debug("comparing logged encounter against test record\r\n");
+    log_debugf("%s", "comparing logged encounter against test record\r\n");
     dongle_encounter_entry test_en = test_encounter_list[i];
     uint8_t comp = compare_encounter_entry(*entry, test_en);
     if (comp)
@@ -66,15 +66,15 @@ int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entr
         log_infof("FAILED: entry mismatch (index=%lu)\r\n", (uint32_t)i);
         log_infof("Comp=%u\r\n", comp);
         test_errors++;
-        log_info("Entry from log:\r\n");
+        log_infof("%s", "Entry from log:\r\n");
         _display_encounter_(entry);
-        log_info("Test:\r\n");
+        log_infof("%s", "Test:\r\n");
         _display_encounter_(&test_en);
         return 0;
     }
     else
     {
-        log_debug("Entries MATCH\r\n");
+        log_debugf("%s", "Entries MATCH\r\n");
     }
     return 1;
 }
@@ -94,14 +94,14 @@ int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry *entry)
 void dongle_test()
 {
     // Run Tests
-    log_info("\r\n");
-    log_info("Tests:\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Tests:\r\n");
     test_errors = 0;
 #define FAIL(msg)                          \
     log_infof("    FAILURE: %s\r\n", msg); \
     test_errors++
 
-    log_info("    ? Testing that OTPs are loaded\r\n");
+    log_infof("%s", "    ? Testing that OTPs are loaded\r\n");
     int otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
     if (otp_idx != 7)
     {
@@ -112,7 +112,7 @@ void dongle_test()
     {
         FAIL("Index 0 Not loaded correctly");
     }
-    log_info("    ? Testing that OTP cannot be re-used\r\n");
+    log_infof("%s", "    ? Testing that OTP cannot be re-used\r\n");
     otp_idx = dongle_storage_match_otp(&storage, TEST_OTPS[7].val);
     if (otp_idx >= 0)
     {
@@ -123,7 +123,7 @@ void dongle_test()
     dongle_storage_save_config(&storage, &config);
     dongle_storage_save_otp(&storage, TEST_OTPS);
 
-    log_info("    ? Testing that correct number of encounters were logged\r\n");
+    log_infof("%s", "    ? Testing that correct number of encounters were logged\r\n");
     int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
     // Tolerant expectation provided to account for timing differences
     int tolExpected = numExpected + 1;
@@ -134,7 +134,7 @@ void dongle_test()
                   test_encounters, numExpected, tolExpected);
     }
 
-    log_info("    ? Testing that logged encounters are correct\r\n");
+    log_infof("%s", "    ? Testing that logged encounters are correct\r\n");
     enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
     if (num > non_report_entry_count)
     {
@@ -144,19 +144,19 @@ void dongle_test()
     }
     else
     {
-        log_error("Cannot test, no new encounters logged.\r\n");
+        log_errorf("%s", "Cannot test, no new encounters logged.\r\n");
     }
 
-    log_info("    ? Testing that old encounters are deleted\r\n");
+    log_infof("%s", "    ? Testing that old encounters are deleted\r\n");
     dongle_storage_clean_log(&storage, dongle_time);
     num = dongle_storage_num_encounters_current(&storage);
     if (dongle_time <= DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME)
     {
-        log_error("Cannot test, not enough time has elapsed.\r\n");
+        log_errorf("%s", "Cannot test, not enough time has elapsed.\r\n");
     }
     else if (num < 1)
     {
-        log_error("Cannot test, no encounters stored.\r\n");
+        log_errorf("%s", "Cannot test, no encounters stored.\r\n");
     }
     else
     {
@@ -165,13 +165,13 @@ void dongle_test()
 
     if (test_errors)
     {
-        log_info("\r\n");
+        log_infof("%s", "\r\n");
         log_infof("    x Tests Failed: status = %d\r\n", test_errors);
     }
     else
     {
-        log_info("\r\n");
-        log_info("    ✔ Tests Passed\r\n");
+        log_infof("%s", "\r\n");
+        log_infof("%s", "    ✔ Tests Passed\r\n");
     }
 #undef FAIL
     test_encounters = 0;

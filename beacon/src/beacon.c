@@ -54,10 +54,10 @@ void main(void)
 void beacon_start()
 #endif
 {
-    log_info("\r\n");
-    log_info("Starting Beacon...\r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Starting Beacon...\r\n");
 #ifdef MODE__STAT
-    log_info("Statistics mode enabled\r\n");
+    log_infof("%s", "Statistics mode enabled\r\n");
 #endif
     log_infof("Reporting every %d ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
 #ifdef BEACON_PLATFORM__ZEPHYR
@@ -141,8 +141,8 @@ static void _beacon_load_()
 
 void _beacon_info_()
 {
-    log_info("\r\n");
-    log_info("Info: \r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Info: \r\n");
     log_infof("    Platform:                        %s\r\n", "Zephyr OS");
 #ifndef BEACON_PLATFORM__ZEPHYR
 #define UK "Unknown"
@@ -160,7 +160,7 @@ void _beacon_info_()
     log_infof("    Timer Resolution:                %u ms\r\n", BEACON_TIMER_RESOLUTION);
     log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
     log_infof("    Report Interval:                 %u ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-    log_info("    Advertising Interval:                  \r\n");
+    log_infof("%s", "    Advertising Interval:                  \r\n");
     log_infof("        Min:                         %x ms\r\n", BEACON_ADV_MIN_INTERVAL);
     log_infof("        Max:                         %x ms\r\n", BEACON_ADV_MAX_INTERVAL);
     log_infof("    Test Filter Length:              %lu\r\n", storage.test_filter_size);
@@ -197,10 +197,10 @@ void beacon_stat_update()
 
 static void _beacon_stats_()
 {
-    log_info("\r\n");
-    log_info("Statistics: \r\n");
+    log_infof("%s", "\r\n");
+    log_infof("%s", "Statistics: \r\n");
     log_infof("     Time since last report:         %d ms\r\n", stats.duration);
-    log_info("     Timer:\r\n");
+    log_infof("%s", "     Timer:\r\n");
     log_infof("         Start:                      %u\r\n", stats.start);
     log_infof("         End:                        %u\r\n", stats.end);
     log_infof("     Cycles:                         %u\r\n", stats.cycles);
@@ -220,8 +220,8 @@ static void _beacon_report_()
     else
     {
         report_time = beacon_time;
-        log_info("\r\n");
-        log_info("***          Begin Report          ***\r\n");
+        log_infof("%s", "\r\n");
+        log_infof("%s", "***          Begin Report          ***\r\n");
         _beacon_info_();
 #ifdef MODE__STAT
         beacon_stat_update();
@@ -230,8 +230,8 @@ static void _beacon_report_()
         stat_cycles = 0;
         stat_epochs = 0;
 #endif
-        log_info("\r\n");
-        log_info("***          End Report            ***\r\n");
+        log_infof("%s", "\r\n");
+        log_infof("%s", "***          End Report            ***\r\n");
     }
 }
 
@@ -394,7 +394,7 @@ void _alternate_advertisement_content_(uint32_t timer)
         int err = _set_adv_data_gaen_();
         if (err)
         {
-            log_error("Failed to obtain gaen advertisement data");
+            log_errorf("%s", "Failed to obtain gaen advertisement data");
             return;
         }
         bt_data_t serviceData = BT_DATA(service_data_type,
@@ -440,7 +440,7 @@ static void _beacon_init_()
     beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
     if (!stats.storage_checksum)
     {
-        log_info("Existing Statistics Found\r\n");
+        log_infof("%s", "Existing Statistics Found\r\n");
         _beacon_stats_();
     }
     else
@@ -490,7 +490,7 @@ int _set_adv_data_()
 {
 #ifndef MODE__DISABLE_LEGACY_DATA
 #ifdef BEACON_PLATFORM__GECKO
-    log_debug("Setting legacy adv data...\r\n");
+    log_debugf("%s", "Setting legacy adv data...\r\n");
     print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
     sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
                                                0, 31,
@@ -500,7 +500,7 @@ int _set_adv_data_()
         log_errorf("Error, sc: 0x%lx\r\n", sc);
         return -1;
     }
-    log_debug("Success!\r\n");
+    log_debugf("%s", "Success!\r\n");
 #else
 #endif
 #endif
@@ -538,7 +538,7 @@ static int _beacon_advertise_()
     }
 #else
     sl_status_t sc;
-    log_debug("Creating legacy advertising set\r\n");
+    log_debugf("%s", "Creating legacy advertising set\r\n");
     sc = sl_bt_advertiser_create_set(&legacy_set_handle);
     if (sc != 0)
     {
@@ -550,9 +550,9 @@ static int _beacon_advertise_()
     int16_t set_power;
     sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, &set_power);
 
-    log_debug("Set tx power to: %d\r\n", set_power);
+    log_debugf("%s", "Set tx power to: %d\r\n", set_power);
 
-    log_info("Starting legacy advertising...\r\n");
+    log_infof("%s", "Starting legacy advertising...\r\n");
     // Set advertising interval to 100ms.
     sc = sl_bt_advertiser_set_timing(
         legacy_set_handle,
@@ -578,7 +578,7 @@ static int _beacon_advertise_()
     err = _set_adv_data_();
     if (!err)
     {
-        log_info("Success!\r\n");
+        log_infof("%s", "Success!\r\n");
     }
 #endif
     return err;
@@ -667,11 +667,11 @@ void _beacon_broadcast_(int err)
         return;
     }
 
-    log_info("Bluetooth initialized - starting broadcast\r\n");
+    log_infof("%s", "Bluetooth initialized - starting broadcast\r\n");
 #else
 void beacon_broadcast()
 {
-    log_info("Starting broadcast\r\n");
+    log_infof("%s", "Starting broadcast\r\n");
     int err = 0;
 #endif
 
@@ -693,7 +693,7 @@ void beacon_broadcast()
     _beacon_update_();
     err = _beacon_advertise_();
     if (err != 0) {
-        log_error("Error starting legacy adv\r\n");
+        log_errorf("%s", "Error starting legacy adv\r\n");
     }
 #endif
 }

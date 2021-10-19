@@ -73,7 +73,7 @@ int main(void)
 #endif //
 
     // Set pin PB01 for output
-      GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
+    GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
 
     // Set up timers
     sl_status_t sc = sl_sleeptimer_init();
@@ -176,7 +176,6 @@ int main(void)
 
         	// Read reamining bytes not read by loop
         	if (NUM_READS * READ_SIZE < DATA_SIZE) {
-
         		int len = 0;
         	    int off =0;
         	    int tot_len = 0;
@@ -214,7 +213,7 @@ int main(void)
           memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
           log_debugf("%s", "chunk number: %lu\r\n", seq);
 
-            memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
+          memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t)); // extract sequence number
 
           log_debugf("%s", "chunk length: %lu\r\n", seq);
 

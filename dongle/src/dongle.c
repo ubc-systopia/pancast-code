@@ -54,13 +54,12 @@ dongle_storage *get_dongle_storage()
 {
     return &storage;
 }
+
 dongle_epoch_counter_t epoch;
 dongle_timer_t dongle_time; // main dongle timer
 dongle_timer_t report_time;
-beacon_eph_id_t
-    cur_id[DONGLE_MAX_BC_TRACKED]; // currently observed ephemeral id
-dongle_timer_t
-    obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
+beacon_eph_id_t cur_id[DONGLE_MAX_BC_TRACKED]; // currently observed ephemeral id
+dongle_timer_t obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
 size_t cur_id_idx;
 dongle_epoch_counter_t epoch; // current epoch
 uint64_t signal_id;           // to identify scan records received, resets each epoch
@@ -116,6 +115,7 @@ void dongle_scan(void)
 
     // Scan Start
     int err = 0;
+
 #ifdef MODE__PERIODIC
     sl_status_t sc;
     // Set scanner timing
@@ -147,6 +147,7 @@ void dongle_scan(void)
     sl_bt_scanner_start(gap_1m_phy,
                         sl_bt_scanner_discover_observation); // scan all devices
 #endif
+
     if (err)
     {
         log_errorf("Scanning failed to start (err %d)\r\n", err);
@@ -261,6 +262,7 @@ static int decode_encounter(encounter_broadcast_t *dat,
 #define link(dst, type)          \
     (dst = (type *)(src + pos)); \
     pos += sizeof(type)
+
     link(dat->t, beacon_timer_t);
     link(dat->b, beacon_id_t);
     link(dat->loc, beacon_location_id_t);
@@ -276,8 +278,9 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
     // log the encounter
 //    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
 //               dongle_time);
-    log_infof("%s", "Encounter! ");
-    display_eph_id(enc->eph);
+    //log_infof("%s", "Encounter! ");
+    //display_eph_id(enc->eph);
+    hexdumpn(enc->eph->bytes, 14, "eph ID");
 
     // Write to storage
     dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
@@ -320,6 +323,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
             i = j;
         }
     }
+
     if (i == DONGLE_MAX_BC_TRACKED)
     {
         // if no match was found, start tracking the new id, replacing the oldest

@@ -2,6 +2,3 @@
 	path = dongle/src/cuckoofilter-gadget
 	url = git@github.com:ubc-systopia/cuckoofilter-gadget.git
 	branch = soc-patch
-[submodule "beacon/src/sha-2"]
-	path = beacon/src/sha-2
-	url = git@github.com:ubc-systopia/sha-2.git

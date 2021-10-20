@@ -1,4 +1,4 @@
 [submodule "dongle/src/cuckoofilter-gadget"]
 	path = dongle/src/cuckoofilter-gadget
 	url = git@github.com:ubc-systopia/cuckoofilter-gadget.git
-	branch = soc-patch
+	branch = main

@@ -112,12 +112,13 @@ void beacon_storage_init_device(beacon_storage *sto)
 
 void beacon_storage_init(beacon_storage *sto)
 {
-  log_infof("%s", "Initializing storage...\r\n");
+  log_debugf("%s", "Initializing storage...\r\n");
   st.off = 0;
   st.numErasures = 0;
   beacon_storage_init_device(sto);
   beacon_storage_get_info(sto);
-  log_infof("Pages: %d, Page Size: %u\r\n", st.num_pages, st.page_size);
+  log_infof("Init'ed storage #pages: %d, page Size: %u\r\n",
+      st.num_pages, st.page_size);
   st.map.config = FLASH_OFFSET;
   if (FLASH_OFFSET % st.page_size != 0) {
     log_errorf("%s", "Start address of storage area is not a page-multiple!\r\n");
@@ -132,7 +133,7 @@ void beacon_storage_init(beacon_storage *sto)
 // data to the device image.
 void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 {
-  log_infof("%s", "Loading config...\r\n");
+  log_debugf("%s", "Loading config...\r\n");
   st.off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), st.off += size)
   read(sizeof(beacon_id_t), &cf.beacon_id);
@@ -158,7 +159,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   }
   st.map.test_filter = st.off;
 #undef read
-  log_infof("%s", "Config loaded.\r\n");
+  log_debugf("%s", "Config loaded.\r\n");
 }
 
 #undef cf

@@ -79,16 +79,17 @@ int main(void)
   sl_status_t sc = sl_sleeptimer_init();
 
   // Main timer (for main clock)
-  log_errorf("%s", "Starting main clock\r\n");
+  log_debugf("%s", "Starting main clock\r\n");
   uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
   sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
       TIMER_1MS * BEACON_TIMER_RESOLUTION, sl_timer_on_expire, &main_timer_handle,
       MAIN_TIMER_PRIORT, 0);
   if (sc != SL_STATUS_OK) {
-    log_errorf("%s", "Error starting main timer %d\r\n", sc);
+    log_errorf("Error starting main timer %d\r\n", sc);
   } else {
-    log_infof("%s", "Main Timer Started. handle=0x%02x\r\n", timer);
+    log_infof("Beacon clock started, resolution: %u, handle=0x%02x\r\n",
+        TIMER_1MS * BEACON_TIMER_RESOLUTION, timer);
   }
 
   int risk_timer_started = 0;
@@ -117,8 +118,7 @@ int main(void)
         continue; // spin
       }
       risk_timer_started = 1;
-      log_infof("%s", "Risk timer started at %f ms.\r\ndelta=%f ms; \r\n",
-          time, delta);
+      log_infof("Risk timer started at %f ms delta=%f ms \r\n", time, delta);
       // TODO: make sure that the interval is synced properly below
     } else if (adv_start >= 0 && risk_timer_started) {
       /* Beacon application code starts here */

@@ -54,12 +54,6 @@ void main(void)
 void beacon_start()
 #endif
 {
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Starting Beacon...\r\n");
-#ifdef MODE__STAT
-  log_infof("%s", "Statistics mode enabled\r\n");
-#endif
-  log_infof("Reporting every %d ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
 #ifdef BEACON_PLATFORM__ZEPHYR
   int err = bt_enable(_beacon_broadcast_);
   if (err) {
@@ -143,29 +137,33 @@ static void _beacon_load_()
 
 void _beacon_info_()
 {
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Info: \r\n");
-  log_infof("    Platform:                        %s\r\n", "Zephyr OS");
+  log_infof("%s", "=== Beacon Info: ===\r\n");
+  log_infof("    Platform:                 %s\r\n", "Zephyr OS");
 #ifndef BEACON_PLATFORM__ZEPHYR
 #define UK "Unknown"
 #define CONFIG_BOARD UK
 #define CONFIG_BT_DEVICE_NAME UK
 #endif
-  log_infof("    Board:                           %s\r\n", CONFIG_BOARD);
-  log_infof("    Bluetooth device name:           %s\r\n", CONFIG_BT_DEVICE_NAME);
-  log_infof("    Application Version:             %s\r\n", APPL_VERSION);
-  log_infof("    Beacon ID:                       %u\r\n", config.beacon_id);
-  log_infof("    Location ID:                     %lu\r\n", (uint32_t)config.beacon_location_id);
-  log_infof("    Initial clock:                   %u\r\n", config.t_init);
-  log_infof("    Backend public key size:         %u bytes\r\n", config.backend_pk_size);
-  log_infof("    Secret key size:                 %u bytes\r\n", config.beacon_sk_size);
-  log_infof("    Timer Resolution:                %u ms\r\n", BEACON_TIMER_RESOLUTION);
-  log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
-  log_infof("    Report Interval:                 %u ms\r\n", BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-  log_infof("%s", "    Advertising Interval:                  \r\n");
-  log_infof("        Min:                         %x ms\r\n", BEACON_ADV_MIN_INTERVAL);
-  log_infof("        Max:                         %x ms\r\n", BEACON_ADV_MAX_INTERVAL);
-  log_infof("    Test Filter Length:              %lu\r\n", storage.test_filter_size);
+  log_infof("    Board:                    %s\r\n", CONFIG_BOARD);
+  log_infof("    Bluetooth device name:    %s\r\n", CONFIG_BT_DEVICE_NAME);
+  log_infof("    Application version:      %s\r\n", APPL_VERSION);
+  log_infof("    Beacon ID:                0x%x\r\n", config.beacon_id);
+  log_infof("    Location ID:              0x%lx\r\n", config.beacon_location_id);
+  log_infof("    Initial clock:            %u\r\n", config.t_init);
+  log_infof("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);
+  log_infof("    Secret key size:          %u bytes\r\n", config.beacon_sk_size);
+  log_infof("    Timer resolution:         %u ms\r\n", BEACON_TIMER_RESOLUTION);
+  log_infof("    Epoch length:             %u ms\r\n",
+      BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
+  log_infof("    Report interval:          %u ms\r\n",
+      BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
+  log_infof("    Legacy adv interval:      %x-%x ms\r\n",
+      BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
+  log_infof("    Periodic adv pkt size:    %u bytes\r\n", PER_ADV_SIZE);
+  log_infof("    Test Filter Length:       %lu\r\n", storage.test_filter_size);
+#ifdef MODE__STAT
+  log_infof("%s", "    Statistics mode enabled\r\n");
+#endif
 }
 
 #ifdef MODE__STAT
@@ -524,9 +522,9 @@ static int _beacon_advertise_()
   int16_t set_power;
   sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, &set_power);
 
-  log_debugf("%s", "Set tx power to: %d\r\n", set_power);
+  log_infof("Tx power: %d\r\n", set_power);
 
-  log_infof("%s", "Starting legacy advertising...\r\n");
+  log_infof("%s", "=== Starting legacy advertising... ===\r\n");
   // Set advertising interval to 100ms.
   sc = sl_bt_advertiser_set_timing(legacy_set_handle,
       BEACON_ADV_MIN_INTERVAL, // min. adv. interval (milliseconds * 1.6)
@@ -545,8 +543,8 @@ static int _beacon_advertise_()
     return -1;
   }
   err = _set_adv_data_();
-  if (!err) {
-    log_infof("%s", "Success!\r\n");
+  if (err) {
+    log_errorf("Set adv data, err: %d\r\n", err);
   }
 #endif
   return err;
@@ -636,7 +634,7 @@ void _beacon_broadcast_(int err)
 #else
 void beacon_broadcast()
 {
-  log_infof("%s", "Starting broadcast\r\n");
+  log_debugf("%s", "Starting broadcast\r\n");
   int err = 0;
 #endif
 

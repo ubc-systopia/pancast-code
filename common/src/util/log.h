@@ -94,7 +94,7 @@
 #define log_telemf(_...) LOG_NA
 #endif
 
-#else
+#else /* BEACON_PLATFORM__GECKO */
 
 #include "app_log.h"
 
@@ -108,5 +108,5 @@
 #define log_telemf(fmtstr, args...) LOG_NA
 
 
-#endif
-#endif
+#endif /* PLATFORM CONFIG */
+#endif /* COMMON_LOG_H */

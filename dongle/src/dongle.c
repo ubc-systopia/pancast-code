@@ -380,20 +380,22 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 
 void dongle_info()
 {
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Info:\r\n");
-  log_infof("    Dongle ID:                       %lu\r\n", config.id);
-  log_infof("    Initial clock:                   %lu\r\n", config.t_init);
-  log_infof("    Backend public key size:         %lu bytes\r\n", config.backend_pk_size);
-  log_infof("    Secret key size:                 %lu bytes\r\n", config.dongle_sk_size);
-  log_infof("    Timer Resolution:                %u ms\r\n", DONGLE_TIMER_RESOLUTION);
-  log_infof("    Epoch Length:                    %u ms\r\n", BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
-  log_infof("    Report Interval:                 %u ms\r\n", DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
+  log_infof("%s", "=== Dongle Info: ===\r\n");
+  log_infof("    Dongle ID:                0x%lx\r\n", config.id);
+  log_infof("    Initial clock:            %lu\r\n", config.t_init);
+  log_infof("    Backend public key size:  %lu bytes\r\n", config.backend_pk_size);
+  log_infof("    Secret key size:          %lu bytes\r\n", config.dongle_sk_size);
+  log_infof("    Timer resolution:         %u ms\r\n", DONGLE_TIMER_RESOLUTION);
+  log_infof("    Epoch length:             %u ms\r\n",
+      BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
+  log_infof("    Report interval:          %u ms\r\n",
+      DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
 }
 
 void dongle_encounter_report()
 {
-  enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
+  enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
+  enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 
   // Large integers here are casted for formatting compatabilty. This may result in false
   // output for large values.

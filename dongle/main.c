@@ -33,6 +33,7 @@
 
 #include "src/common/src/constants.h"
 #include "src/common/src/settings.h"
+#include "src/common/src/util/log.h"
 
 int main(void)
 {
@@ -48,7 +49,7 @@ int main(void)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
-  app_log_info("Kernel start\r\n");
+  log_infof("%s", "=== Kernel start ===\r\n");
 
   sc = sl_sleeptimer_init();
   app_assert_status(sc);

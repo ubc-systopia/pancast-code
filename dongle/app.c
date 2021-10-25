@@ -67,7 +67,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
   switch (SL_BT_MSG_ID(evt->header)) {
     case sl_bt_evt_system_boot_id:
       dongle_time_init();
-      app_log_info("Bluetooth start\r\n");
+      log_debugf("Bluetooth start\r\n");
       log_debugf("%s", "Bluetooth device booted and ready\r\n");
       dongle_start();
       log_debugf("%s", "Dongle started\r\n");
@@ -91,7 +91,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
           && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
 //         // Start test
 //         sync_test.start_ticks = sl_sleeptimer_get_tick_count64();
-        app_log_info("Opening sync\r\n");
+        log_debugf("Opening sync\r\n");
         // Open sync
         sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
                        evt->data.evt_scanner_scan_report.address_type,
@@ -106,7 +106,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_opened_id:
-      app_log_info("new sync opened!\r\n");
+      log_debugf("new sync opened!\r\n");
 //        sync_test.end_ticks = sl_sleeptimer_get_tick_count64();
 //        sync_test.diff = sync_test.end_ticks - sync_test.start_ticks;
 //        sl_sleeptimer_tick64_to_ms(timestamp, &sync_test.diff);
@@ -134,9 +134,9 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
     case sl_bt_evt_sync_data_id:
       // Log info
-      app_log_debug("Received data, len :%d\r\n",
+      log_debugf("Received data, len :%d\r\n",
                    evt->data.evt_sync_data.data.len);
-      app_log_debug("Status: %d\r\n",
+      log_debugf("Status: %d\r\n",
                          evt->data.evt_sync_data.data_status);
 //        evt->data.evt_sync_data.
 

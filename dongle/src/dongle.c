@@ -274,7 +274,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 //               dongle_time);
   //log_infof("%s", "Encounter! ");
   //display_eph_id(enc->eph);
-  hexdumpn(enc->eph->bytes, 14, "eph ID");
+  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
 
   // Write to storage
   dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
@@ -305,7 +305,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
   stat_add(rssi, stats.scan_rssi);
 #endif
 
-//    hexdumpn(en.eph->bytes, 14, "eph ID");
+//    hexdumpn(en.eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
 
   // determine which tracked id, if any, is a match
   size_t i = DONGLE_MAX_BC_TRACKED;

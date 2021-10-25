@@ -8,14 +8,21 @@
 #include <stdint.h>
 
 #define log_bytes(log, logf, data, len, name) \
-    logf("%s: 0x", name);                     \
+    uint32_t time_ms = (uint32_t) (sl_sleeptimer_get_tick_count64()  \
+        * 1000 / sl_sleeptimer_get_timer_frequency());  \
+        \
+        logf(APP_LOG_TIME_FORMAT APP_LOG_SEPARATOR  \
+            "%s: 0x ", (time_ms / 3600000),  \
+            ((time_ms / 60000) % 60), ((time_ms / 1000) % 60),  \
+            (time_ms % 1000), name);  \
+        \
     for (unsigned int i = 0; i < len; i++)    \
     {                                         \
-        if (!(i % 16))                        \
+        if (i != 0 && !(i % 16))              \
         {                                     \
             logf("%s", "\r\n");               \
         }                                     \
-        logf(" %.2x", ((uint8_t *)data)[i]);  \
+        logf("%.2x ", ((uint8_t *)data)[i]);  \
     }                                         \
     logf("%s", "\r\n")
 
@@ -28,6 +35,5 @@
 #define print_ptr(p, name) log_debugf("%s: %p\r\n", name, (void *)p)
 
 #define hexdumpn(data, len, name) log_bytes(printf, printf, data, len, name)
-#define hexdump(data, len) hexdumpn(data, len, "hexdump")
 
 #endif

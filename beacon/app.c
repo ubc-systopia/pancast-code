@@ -221,7 +221,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       beacon_start();
       break;
 
-    case sl_bt_evt_system_soft_timer_id:
     // Default event handler.
     default:
         break;

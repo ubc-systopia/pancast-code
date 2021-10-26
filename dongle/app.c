@@ -132,7 +132,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       }
       break;
 
-    case sl_bt_evt_system_soft_timer_id:
     default:
       log_debugf("%s", "Unhandled bluetooth event\r\n");
       break;

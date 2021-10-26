@@ -20,6 +20,7 @@ uint32_t num_buckets;
 
 float dongle_download_esimtate_loss(download_t *d)
 {
+#if 1
   uint32_t max_count = d->packet_buffer.counts[0];
   for (int i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
     if (d->packet_buffer.counts[i] > max_count) {
@@ -28,6 +29,24 @@ float dongle_download_esimtate_loss(download_t *d)
   }
   return 100 * (1 - (((float) d->n_total_packets)
                 / (max_count * d->packet_buffer.num_distinct)));
+#else
+  /*
+   * The transmitter's payload update does not align perfectly with
+   * the BLE's periodic interval at the lower layer. Consequently, we
+   * do not receive each packet exactly once from the transmitter.
+   * However, as long as we receive each packet at least once, there
+   * will be no loss for the application. Therefore, count a loss
+   * only if some packet is never received
+   */
+  int num_errs = 0;
+  int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PACKET_SIZE)+1;
+  for (int i = 0; i < actual_pkts_per_filter; i++) {
+    if (d->packet_buffer.counts[i] == 0)
+      num_errs++;
+  }
+
+  return ((float) num_errs/actual_pkts_per_filter) * 100;
+#endif
 }
 
 void dongle_download_reset()

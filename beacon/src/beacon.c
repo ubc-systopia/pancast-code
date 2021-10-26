@@ -231,19 +231,18 @@ static void _beacon_error_rate_stats_()
 
 static void _beacon_report_()
 {
-  if (beacon_time - report_time < BEACON_REPORT_INTERVAL) {
+  if (beacon_time - report_time < BEACON_REPORT_INTERVAL)
     return;
-  } else {
-    report_time = beacon_time;
+
+  report_time = beacon_time;
 #ifdef MODE__STAT
-    beacon_stat_update();
-    _beacon_stats_();
-    _beacon_error_rate_stats_();
-    stat_start = beacon_time;
-    stat_cycles = 0;
-    stat_epochs = 0;
+  beacon_stat_update();
+  _beacon_stats_();
+  _beacon_error_rate_stats_();
+  stat_start = beacon_time;
+  stat_cycles = 0;
+  stat_epochs = 0;
 #endif
-  }
 }
 
 /* Log system counters */

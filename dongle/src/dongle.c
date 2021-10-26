@@ -415,21 +415,22 @@ void dongle_encounter_report()
 void dongle_report()
 {
   // do report
-  if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
-    dongle_encounter_report();
+  if (dongle_time - report_time < DONGLE_REPORT_INTERVAL)
+    return;
+
+  dongle_encounter_report();
 
 #ifdef MODE__STAT
-    dongle_stats(&storage);
-    dongle_download_stats();
+  dongle_stats(&storage);
+  dongle_download_stats();
 #endif
 
 #if TEST_DONGLE
-    dongle_test();
+  dongle_test();
 #endif
 
-    non_report_entry_count = dongle_storage_num_encounters_total(&storage);
-    report_time = dongle_time;
-  }
+  non_report_entry_count = dongle_storage_num_encounters_total(&storage);
+  report_time = dongle_time;
 }
 
 #undef alpha

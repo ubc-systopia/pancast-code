@@ -6,6 +6,7 @@
 #include "telemetry.h"
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
+#include "common/src/test.h"
 
 extern dongle_stats_t stats;
 extern downloads_stats_t download_stats;
@@ -44,7 +45,7 @@ void dongle_download_init()
 void dongle_download_start()
 {
   download.is_active = 1;
-  log_infof("%s", "Download started! (chunk=%lu)\r\n",
+  log_debugf("Download started! (chunk=%lu)\r\n",
       download.packet_buffer.chunk_num);
   download_stats.payloads_started++;
 }
@@ -181,7 +182,25 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
 void dongle_download_complete()
 {
-  log_infof("%s", "Download complete!\r\n");
+  log_debugf("%s", "Download complete!\r\n");
+  int is_loss = 0;
+  int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PACKET_SIZE)+1;
+  for (int i = 0; i < actual_pkts_per_filter; i++) {
+    if (download.packet_buffer.counts[i] <= 0)
+      is_loss = 1;
+  }
+
+  if (is_loss) {
+    log_infof("#distinct: %d, #total: %d, count/pkts: ",
+        download.packet_buffer.num_distinct, download.n_total_packets);
+    for (int i = 0; i < actual_pkts_per_filter; i++) {
+      if (download.packet_buffer.counts[i] <= 0)
+        printf("%d ", i);
+      //printf("%d ", download.packet_buffer.counts[i]);
+    }
+    printf("%s", "\r\n");
+  }
+
   download_stats.payloads_complete++;
   // compute latency
   double lat = download.time;
@@ -200,8 +219,11 @@ void dongle_download_complete()
     return;
   }
 
-  log_infof("filter len: %lu\r\n", filter_len);
-
+  if (is_loss) {
+    log_infof("len: %lu, ", filter_len);
+    printf("chunk: %lu, sz(u64): %u\r\n",
+        download.packet_buffer.chunk_num, sizeof(uint64_t));
+  }
   // now we know the payload is the correct size
 
   num_buckets = cf_gadget_num_buckets(filter_len);

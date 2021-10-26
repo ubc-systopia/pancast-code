@@ -221,7 +221,7 @@ static void _beacon_stats_()
 static void _beacon_error_rate_stats_()
 {
   log_infof("%s", "Statistics: \r\n");
-  log_infof("sent broadcast packets: %lu, total sent packets: %lu",
+  log_infof("sent broadcast packets: %lu, total sent packets: %lu\r\n",
 		  stats.sent_broadcast_packets, stats.total_packets_sent);
 
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));

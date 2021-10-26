@@ -7,6 +7,7 @@
 //
 
 #include "./beacon.h"
+#include "app.h"
 
 #define APPL_VERSION "0.1.1"
 
@@ -168,6 +169,14 @@ void _beacon_info_()
 #endif
 }
 
+void _beacon_periodic_info()
+{
+  log_infof("    Periodic Interval:                %s\r\n", PER_ADV_INTERVAL);
+  log_infof("    Min Sync Advertising Interval:    %s\r\n", MIN_ADV_INTERVAL);
+  log_infof("    Max Sync Advertising Interval:    %s\r\n", MAX_ADV_INTERVAL);
+  log_infof("    Tx power:                         %s\r\n", PER_TX_POWER);
+}
+
 #ifdef MODE__STAT
 typedef struct
 {
@@ -208,6 +217,16 @@ static void _beacon_stats_()
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
   beacon_stats_init();
 }
+
+static void _beacon_error_rate_stats_()
+{
+  log_infof("%s", "Statistics: \r\n");
+  log_infof("sent broadcast packets: %lu, total sent packets: %lu",
+		  stats.sent_broadcast_packets, stats.total_packets_sent);
+
+  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+  beacon_stats_init();
+}
 #endif
 
 static void _beacon_report_()
@@ -219,6 +238,7 @@ static void _beacon_report_()
 #ifdef MODE__STAT
     beacon_stat_update();
     _beacon_stats_();
+    _beacon_error_rate_stats_();
     stat_start = beacon_time;
     stat_cycles = 0;
     stat_epochs = 0;

@@ -35,7 +35,7 @@ typedef struct {
 
 // Count packet duplication
 #define dongle_download_duplication(s, d) \
-  for (int i = 0; i < MAX_NUM_PACKETS_PER_FILTER; i++) { \
+  for (int i = 0; i < (int) MAX_NUM_PACKETS_PER_FILTER; i++) { \
     uint32_t count = d.packet_buffer.counts[i]; \
     if (count > 0) { \
       stat_add(count, s.pkt_duplication); \

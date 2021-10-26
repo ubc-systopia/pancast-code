@@ -78,7 +78,7 @@ int dongle_download_check_match(enctr_entry_counter_t i,
   //hexdumpn(&download.packet_buffer.buffer, 1736, "filter");
   // num_buckets = 4; // for testing (num_buckets cannot be 0)
   if (lookup(id, &download.packet_buffer.buffer, num_buckets)) {
-    log_infof("%s", "====== LOG MATCH!!! ====== \r\n");
+    log_infof("====== LOG MATCH [%d]!!! ====== \r\n", i);
   } else {
     log_infof("%s", "No match for id\r\n");
   }

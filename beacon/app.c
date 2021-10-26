@@ -121,26 +121,30 @@ void send_test_risk_data()
 
   // update sequence
   pkt_rep_count++;
-  if (pkt_rep_count == PACKET_REPLICATION) {
-    // all packet retransmissions complete
-    pkt_rep_count = 0;
-    seq_num++;
-    if (seq_num == TEST_NUM_PACKETS_PER_FILTER) {
-      // one filter retransmission complete
-      seq_num = 0;
-      chunk_rep_count++;
-      if (chunk_rep_count == CHUNK_REPLICATION) {
-        // all filter retransmissions complete
-        chunk_rep_count = 0;
-        chunk_num++;
-        if (chunk_num == TEST_N_FILTERS_PER_PAYLOAD) {
-          // payload transmission complete
-          chunk_num = 0;
-        }
-        log_debugf("switched to transmit chunk %lu\r\n", chunk_num);
-      }
-    }
-  }
+  if (pkt_rep_count < PACKET_REPLICATION)
+    return;
+
+  // all packet retransmissions complete
+  pkt_rep_count = 0;
+  seq_num++;
+  if (seq_num < TEST_NUM_PACKETS_PER_FILTER)
+    return;
+
+  // one filter retransmission complete
+  seq_num = 0;
+  chunk_rep_count++;
+  if (chunk_rep_count < CHUNK_REPLICATION)
+    return;
+
+  // all filter retransmissions complete
+  chunk_rep_count = 0;
+  chunk_num++;
+  if (chunk_num < TEST_N_FILTERS_PER_PAYLOAD)
+    return;
+
+  // payload transmission complete
+  chunk_num = 0;
+  log_debugf("switched to transmit chunk %lu\r\n", chunk_num);
 #endif
 }
 

@@ -286,11 +286,10 @@ void dongle_storage_load_encounter(dongle_storage *sto,
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
   dongle_encounter_entry en;
   do {
-    if (i < num) {
-      dongle_storage_load_single_encounter(sto, i, &en);
-    } else {
+    if (i >= num)
       break;
-    }
+
+    dongle_storage_load_single_encounter(sto, i, &en);
     i++;
   } while (cb(i - 1, &en));
 }

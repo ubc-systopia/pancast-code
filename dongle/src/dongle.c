@@ -86,7 +86,7 @@ extern download_stats_t download_stats;
 void dongle_start()
 {
   log_infof("%s", "=== Starting Dongle... ===\r\n");
-  log_infof("Config test: %d, periodic sync: %d\r\n", TEST_DONGLE, MODE__PERIODIC);
+  // log_infof("Config test: %d, periodic sync: %d\r\n", TEST_DONGLE, MODE__PERIODIC);
 
   if (access_advertise()) {
     return;
@@ -229,6 +229,26 @@ void dongle_on_clock_update()
   }
   dongle_report();
 }
+
+/* Log system counters */
+void dongle_log_counters() {
+  uint16_t    tx_packets;
+  uint16_t    rx_packets;
+  uint16_t    crc_errors;
+  uint16_t    failures;
+
+  sl_bt_system_get_counters(1, &tx_packets, &rx_packets, &crc_errors, &failures);
+
+  stats.total_packets_rx = stats.total_packets_rx + (uint32_t)rx_packets;
+  stats.total_crc_fail = stats.total_crc_fail + (uint32_t)crc_errors;
+
+  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
+}
+
+void dongle_reset_counters() {
+	sl_bt_system_get_counters(1, 0, 0, 0, 0);
+}
+
 
 static int
 decode_payload(uint8_t *data)

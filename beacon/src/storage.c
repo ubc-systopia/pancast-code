@@ -48,18 +48,16 @@ void pre_erase(beacon_storage *sto, size_t write_size)
   // Erase before write
 #define page_num(o) ((o) / st.page_size)
   if ((st.off % st.page_size) == 0) {
-      erase(st.off);
+    erase(st.off);
   } else if (page_num(st.off + write_size) > page_num(st.off)) {
 #undef page_num
-      erase(next_multiple(st.page_size, st.off));
+    erase(next_multiple(st.page_size, st.off));
   }
 }
 
 int _flash_read_(beacon_storage *sto, void *data, size_t size)
 {
-#ifdef VERBOSE_DEBUG_LOGGING
   log_debugf("reading %d bytes from flash at address 0x%x\r\n", size, st.off);
-#endif
 #ifdef BEACON_PLATFORM__ZEPHYR
   return flash_read(st.dev, st.off, data, size);
 #else
@@ -126,8 +124,6 @@ void beacon_storage_init(beacon_storage *sto)
   st.map.stat = st.total_size - (3*st.page_size);
 }
 
-#define cf (*cfg)
-
 // Read data from flashed storage
 // Format matches the fixed structure which is also used as a protocol when appending non-app
 // data to the device image.
@@ -136,23 +132,23 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   log_debugf("%s", "Loading config...\r\n");
   st.off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), st.off += size)
-  read(sizeof(beacon_id_t), &cf.beacon_id);
-  read(8, &cf.beacon_location_id);
-  read(sizeof(beacon_timer_t), &cf.t_init);
-  read(sizeof(key_size_t), &cf.backend_pk_size);
-  if (cf.backend_pk_size > PK_MAX_SIZE) {
+  read(sizeof(beacon_id_t), &cfg->beacon_id);
+  read(sizeof(beacon_location_id_t), &cfg->beacon_location_id);
+  read(sizeof(beacon_timer_t), &cfg->t_init);
+  read(sizeof(key_size_t), &cfg->backend_pk_size);
+  if (cfg->backend_pk_size > PK_MAX_SIZE) {
     log_errorf("Key size read for public key (%u bytes) "
         "is larger than max (%u)\r\n",
-        cf.backend_pk_size, PK_MAX_SIZE);
+        cfg->backend_pk_size, PK_MAX_SIZE);
   }
-  read(cf.backend_pk_size, &cf.backend_pk);
-  read(sizeof(key_size_t), &cf.beacon_sk_size);
-  if (cf.beacon_sk_size > SK_MAX_SIZE) {
+  read(cfg->backend_pk_size, &cfg->backend_pk);
+  read(sizeof(key_size_t), &cfg->beacon_sk_size);
+  if (cfg->beacon_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for secret key (%u bytes) "
         "is larger than max (%u)\r\n",
-        cf.beacon_sk_size, SK_MAX_SIZE);
+        cfg->beacon_sk_size, SK_MAX_SIZE);
   }
-  read(cf.beacon_sk_size, &cf.beacon_sk);
+  read(cfg->beacon_sk_size, &cfg->beacon_sk);
   read(sizeof(test_filter_size_t), &st.test_filter_size);
   if (st.test_filter_size != TEST_FILTER_LEN) {
       log_errorf("%s", "Warning: test filter length mismatch\r\n");
@@ -161,8 +157,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
 }
-
-#undef cf
 
 void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)
 {

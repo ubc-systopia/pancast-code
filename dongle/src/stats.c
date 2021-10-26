@@ -31,8 +31,8 @@ void dongle_download_stats_init()
 void stat_compute_thrpt()
 {
   stats.periodic_data_avg_thrpt =
-      ((double)stats.total_periodic_data_size * 0.008) /
-      stats.total_periodic_data_time;
+      ((double) stats.total_periodic_data_size * BITS_PER_BYTE) /
+      stats.total_periodic_data_time / Kbps;
 }
 
 
@@ -46,33 +46,17 @@ void dongle_stats(dongle_storage *sto)
   stat_show(stats.periodic_data_rssi, "[Period adv] Data RSSI", "");
   stat_show(stats.periodic_data_size, "[Period adv] Pkt size", "bytes");
   log_infof("[Period adv] #rcvd: %lu, #error: %lu, #bytes: %lu"
-      ", time: %f, xput: %f\r\n",
+      ", time: %f s, xput: %f Kbps\r\n",
       stats.num_periodic_data, stats.num_periodic_data_error,
       stats.total_periodic_data_size, stats.total_periodic_data_time,
       stats.periodic_data_avg_thrpt);
-#if 0
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Statistics:\r\n");
-  log_infof("    Distinct Eph. IDs observed:          %d\r\n", stats.num_obs_ids);
-  log_infof("    Legacy Scan Results:                 %lu\r\n", stats.num_scan_results);
-  log_infof("    Periodic Pkts. Received:             %lu\r\n", stats.num_periodic_data);
-  stat_show(stats.periodic_data_size, "Periodic Pkt. Size", "bytes");
-  log_infof("    Periodic Pkts. Received (error):     %lu\r\n", stats.num_periodic_data_error);
-  log_infof("    Total Bytes Transferred:             %lu\r\n", stats.total_periodic_data_size);
-  log_infof("    Total Time (s):                      %f\r\n", stats.total_periodic_data_time);
-  stat_compute_thrpt(&stats);
-  log_infof("    Avg. Throughput (kb/s)               %f\r\n", stats.periodic_data_avg_thrpt);
-  stat_show(stats.scan_rssi, "Legacy Scan RSSI", "");
-  stat_show(stats.encounter_rssi, "Logged Encounter RSSI", "");
-  stat_show(stats.periodic_data_rssi, "Periodic Data RSSI", "");
-#endif
   dongle_storage_save_stat(sto, &stats, sizeof(dongle_stats_t));
   dongle_stats_reset();
 }
 
 void dongle_download_show_stats(download_stats_t * stats, char *name)
 {
-//  log_infof("Download Statistics (%s):\r\n", name);
+  log_infof("%s:\r\n", name);
   stat_show(stats->pkt_duplication, "Packet Duplication", "packet copies");
   stat_show(stats->est_pkt_loss, "Estimated loss rate", "% packets");
   stat_show(stats->n_bytes, "Bytes Received", "bytes");
@@ -81,16 +65,11 @@ void dongle_download_show_stats(download_stats_t * stats, char *name)
 
 void dongle_download_stats()
 {
-#if 0
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Risk Broadcast:\r\n");
+  // ignore printing stats if no downloads even started
+  // may be because beacon not configured to broadcast risk data yet
+  if (download_stats.payloads_started == 0)
+    return;
 
-  log_infof("    Downloads Started: %d\r\n", download_stats.payloads_started);
-  log_infof("    Downloads Completed: %d\r\n", download_stats.payloads_complete);
-  log_infof("    Downloads Failed: %d\r\n", download_stats.payloads_failed);
-  log_infof("        decode fail:  %d\r\n", download_stats.cuckoo_fail);
-  log_infof("        chunk switch: %d\r\n", download_stats.switch_chunk);
-#endif
   log_infof("[Risk broadcast] #downloads: %d, completed: %d, failed: %d"
       ", decode fail: %d, chunk switch: %d\r\n",
       download_stats.payloads_started, download_stats.payloads_complete,
@@ -100,11 +79,11 @@ void dongle_download_stats()
   stat_show(download_stats.complete_download_stats.periodic_data_avg_payload_lat,
               "[Risk broadcast] download time", "ms");
   dongle_download_show_stats(&download_stats.complete_download_stats.download_stats,
-                             "[Risk broadcast] completed");
+                             "=== [Risk broadcast] completed ===");
   dongle_download_show_stats(&download_stats.failed_download_stats,
-      "[Risk broadcast] failed");
+      "=== [Risk broadcast] failed ===");
   dongle_download_show_stats(&download_stats.all_download_stats,
-      "[Risk broadcast] overall");
+      "=== [Risk broadcast] overall ===");
 
   dongle_download_stats_init();
 }

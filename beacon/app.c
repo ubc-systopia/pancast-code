@@ -97,21 +97,23 @@ void send_test_risk_data()
     beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
   }
 
+  uint32_t off = 0;
   // sequence number
-  memcpy(test_data, &seq_num, sizeof(uint32_t));
-
+  memcpy(test_data+off, &seq_num, sizeof(uint32_t));
+  off += sizeof(uint32_t);
   // chunk number
-  memcpy(test_data + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
-
+  memcpy(test_data+off, &chunk_num, sizeof(uint32_t));
+  off += sizeof(uint32_t);
   // chunk length
-  memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, 8);
+  memcpy(test_data+off, &chunk_len, sizeof(uint64_t));
+  off += sizeof(uint64_t);
 
   // data
 #define min(a,b) (b < a ? b : a)
   pkt_len = min(MAX_PACKET_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
 #undef min
 
-  memcpy(test_data  + PACKET_HEADER_LEN,
+  memcpy(test_data+PACKET_HEADER_LEN,
       test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
 
   // set
@@ -119,26 +121,30 @@ void send_test_risk_data()
 
   // update sequence
   pkt_rep_count++;
-  if (pkt_rep_count == PACKET_REPLICATION) {
-    // all packet retransmissions complete
-    pkt_rep_count = 0;
-    seq_num++;
-    if (seq_num == TEST_NUM_PACKETS_PER_FILTER) {
-      // one filter retransmission complete
-      seq_num = 0;
-      chunk_rep_count++;
-      if (chunk_rep_count == CHUNK_REPLICATION) {
-        // all filter retransmissions complete
-        chunk_rep_count = 0;
-        chunk_num++;
-        if (chunk_num == TEST_N_FILTERS_PER_PAYLOAD) {
-          // payload transmission complete
-          chunk_num = 0;
-        }
-        log_debugf("switched to transmit chunk %lu\r\n", chunk_num);
-      }
-    }
-  }
+  if (pkt_rep_count < PACKET_REPLICATION)
+    return;
+
+  // all packet retransmissions complete
+  pkt_rep_count = 0;
+  seq_num++;
+  if (seq_num < TEST_NUM_PACKETS_PER_FILTER)
+    return;
+
+  // one filter retransmission complete
+  seq_num = 0;
+  chunk_rep_count++;
+  if (chunk_rep_count < CHUNK_REPLICATION)
+    return;
+
+  // all filter retransmissions complete
+  chunk_rep_count = 0;
+  chunk_num++;
+  if (chunk_num < TEST_N_FILTERS_PER_PAYLOAD)
+    return;
+
+  // payload transmission complete
+  chunk_num = 0;
+  log_debugf("switched to transmit chunk %lu\r\n", chunk_num);
 #endif
 }
 

@@ -14,7 +14,7 @@ typedef struct {
   struct {
     // map of sequence number to packet count for that number
     // used to track completion of the download
-    uint32_t counts[ MAX_NUM_PACKETS_PER_FILTER];
+    uint32_t counts[MAX_NUM_PACKETS_PER_FILTER];
 
     // number of unique packets seen
     int num_distinct;
@@ -22,7 +22,8 @@ typedef struct {
     // number of bytes received
     uint32_t received;
 
-    uint32_t chunk_num; // the current chunk being downloaded
+    // the current chunk being downloaded
+    uint32_t chunk_num;
 
     // actual received payload
     struct {
@@ -46,7 +47,7 @@ typedef struct {
   stat_add(d.packet_buffer.received, s.n_bytes); \
   stat_add(d.n_syncs_lost, s.syncs_lost); \
   dongle_download_duplication(s, d) \
-  stat_add( dongle_download_esimtate_loss(&d), s.est_pkt_loss)
+  stat_add(dongle_download_esimtate_loss(&d), s.est_pkt_loss)
 
 void dongle_download_init();
 void dongle_download_complete();

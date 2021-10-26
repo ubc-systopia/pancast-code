@@ -18,12 +18,11 @@ typedef struct {
 #define stat_add(val,stat)                                                \
   stat.mu_0 = stat.mu,                                                    \
   stat.mu = ((stat.mu * stat.n) + val) / (stat.n + 1),                    \
-  stat.var =                                                              \
-  stat.n > 0 ?                                                            \
-  (((stat.n - 1) * stat.var)                                              \
+  stat.var =  stat.n > 0 ?                                                \
+  ((((stat.n - 1) * stat.var)                                             \
     + (stat.n * pow(stat.mu_0 - stat.mu, 2.0))                            \
-    + pow(val - stat.mu, 2.0)) / stat.n                                   \
-    : pow(val - stat.mu, 2.0) / (stat.n + 1),                             \
+    + pow(val - stat.mu, 2.0)) / stat.n)                                  \
+    : (pow(val - stat.mu, 2.0) / (stat.n + 1)),                           \
   stat.sigma = sqrt(stat.var),                                            \
   stat.n++
 

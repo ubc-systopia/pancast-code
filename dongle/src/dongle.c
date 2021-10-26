@@ -218,9 +218,7 @@ void dongle_hp_timer_add(uint32_t ticks)
 void dongle_on_clock_update()
 {
   // update epoch
-#define t_init config.t_init
-  dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, t_init);
-#undef t_init
+  dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, config.t_init);
   if (new_epoch != epoch) {
     log_debugf("EPOCH STARTED: %lu\r\n", new_epoch);
     epoch = new_epoch;
@@ -299,10 +297,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 
 static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
 {
-#define en (*enc)
-
   // Check the broadcast UUID
-  beacon_id_t service_id = (*en.b & BEACON_SERVICE_ID_MASK) >> 16;
+  beacon_id_t service_id = (*(enc->b) & BEACON_SERVICE_ID_MASK) >> 16;
   if (service_id != BROADCAST_SERVICE_ID) {
     log_telemf("%02x,%u,%u,%lu\r\n",
                TELEM_TYPE_BROADCAST_ID_MISMATCH,
@@ -316,12 +312,12 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
   stat_add(rssi, stats.scan_rssi);
 #endif
 
-//    hexdumpn(en.eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
+//    hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
 
   // determine which tracked id, if any, is a match
   size_t i = DONGLE_MAX_BC_TRACKED;
   for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
-    if (!compare_eph_id(en.eph, &cur_id[j])) {
+    if (!compare_eph_id(enc->eph, &cur_id[j])) {
       i = j;
     }
   }
@@ -331,33 +327,32 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     // one currently tracked
     i = cur_id_idx;
     log_debugf("new ephemeral id observed (beacon=%lu), tracking at index %d\r\n",
-               *en.b, i);
-    print_bytes(en.eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
+               enc->b, i);
+    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
     cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
-    memcpy(&cur_id[i], en.eph->bytes, BEACON_EPH_ID_HASH_LEN);
+    memcpy(&cur_id[i], enc->eph->bytes, BEACON_EPH_ID_HASH_LEN);
     obs_time[i] = dongle_time;
 
 #ifdef MODE__STAT
     stats.num_obs_ids++;
 #endif
     log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
-       dongle_time, epoch, signal_id, *en.b, *en.t);
+       dongle_time, epoch, signal_id, enc->b, enc->t);
   } else {
     // when a matching ephemeral id is observed
     log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
-       dongle_time, epoch, signal_id, *en.b, *en.t);
+       dongle_time, epoch, signal_id, enc->b, enc->t);
     // check conditions for a valid encounter
     dongle_timer_t dur = dongle_time - obs_time[i];
     if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
-      _dongle_encounter_(&en, i);
+      _dongle_encounter_(enc, i);
 #ifdef MODE__STAT
       stat_add(rssi, stats.encounter_rssi);
 #endif
       log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
-         dongle_time, epoch, signal_id, *en.b, *en.t, dur);
+         dongle_time, epoch, signal_id, enc->b, enc->t, dur);
     }
   }
-#undef en
   return signal_id;
 }
 
@@ -435,21 +430,22 @@ void dongle_encounter_report()
 void dongle_report()
 {
   // do report
-  if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
-    dongle_encounter_report();
+  if (dongle_time - report_time < DONGLE_REPORT_INTERVAL)
+    return;
+
+  dongle_encounter_report();
 
 #ifdef MODE__STAT
-    dongle_stats(&storage);
-    dongle_download_stats();
+  dongle_stats(&storage);
+  dongle_download_stats();
 #endif
 
 #if TEST_DONGLE
-    dongle_test();
+  dongle_test();
 #endif
 
-    non_report_entry_count = dongle_storage_num_encounters_total(&storage);
-    report_time = dongle_time;
-  }
+  non_report_entry_count = dongle_storage_num_encounters_total(&storage);
+  report_time = dongle_time;
 }
 
 #undef alpha

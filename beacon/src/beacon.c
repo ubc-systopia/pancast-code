@@ -133,6 +133,7 @@ static void _beacon_load_()
   memcpy(&config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
   memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
+  storage.test_filter_size = TEST_FILTER_LEN;
 #else
   beacon_storage_load_config(&storage, &config);
 #endif
@@ -220,8 +221,7 @@ static void _beacon_stats_()
 
 static void _beacon_error_rate_stats_()
 {
-  log_infof("%s", "Statistics: \r\n");
-  log_infof("sent broadcast packets: %lu, total sent packets: %lu",
+  log_infof("sent broadcast packets: %lu, total sent packets: %lu\r\n",
 		  stats.sent_broadcast_packets, stats.total_packets_sent);
 
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
@@ -231,19 +231,18 @@ static void _beacon_error_rate_stats_()
 
 static void _beacon_report_()
 {
-  if (beacon_time - report_time < BEACON_REPORT_INTERVAL) {
+  if (beacon_time - report_time < BEACON_REPORT_INTERVAL)
     return;
-  } else {
-    report_time = beacon_time;
+
+  report_time = beacon_time;
 #ifdef MODE__STAT
-    beacon_stat_update();
-    _beacon_stats_();
-    _beacon_error_rate_stats_();
-    stat_start = beacon_time;
-    stat_cycles = 0;
-    stat_epochs = 0;
+  beacon_stat_update();
+  _beacon_stats_();
+  _beacon_error_rate_stats_();
+  stat_start = beacon_time;
+  stat_cycles = 0;
+  stat_epochs = 0;
 #endif
-  }
 }
 
 /* Log system counters */

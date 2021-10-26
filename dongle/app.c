@@ -28,6 +28,8 @@
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
 
+extern void dongle_start();
+
 // Sync handle
 static uint16_t sync_handle = 0;
 

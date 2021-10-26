@@ -234,6 +234,7 @@ int main(void)
       uint64_t start_time = sl_sleeptimer_get_tick_count64();
       send_test_risk_data();
       add_delay_ms(PER_ADV_INTERVAL * 1.25);
+      add_sent_packet();
       uint64_t end_time = sl_sleeptimer_get_tick_count64();
       uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
       //printf("LOOP TIME: %lu\r\n", ms);

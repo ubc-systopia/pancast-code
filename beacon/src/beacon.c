@@ -226,6 +226,28 @@ static void _beacon_report_()
   }
 }
 
+/* Log system counters */
+void beacon_log_counters() {
+  uint16_t  	tx_packets;
+  uint16_t  	rx_packets;
+  uint16_t 	    crc_errors;
+  uint16_t   	failures;
+
+  sl_bt_system_get_counters(1, &tx_packets, &rx_packets, &crc_errors, &failures);
+
+  stat_total_packets_sent = stat_total_packets_sent + (uint32_t)tx_packets;
+
+  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
+}
+
+void beacon_reset_counters() {
+  sl_bt_system_get_counters(1, 0, 0, 0, 0);
+}
+
+void add_sent_packet() {
+	stat_sent_broadcast_packets++;
+}
+
 // Set transmission power (zephyr).
 // Yoinked from (https://github.com/zephyrproject-rtos/zephyr/blob/main/samples/bluetooth/hci_pwr_ctrl/src/main.c)
 #ifdef BEACON_PLATFORM__ZEPHYR

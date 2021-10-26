@@ -135,7 +135,7 @@ void send_test_risk_data()
           // payload transmission complete
           chunk_num = 0;
         }
-        log_infof("switched to transmit chunk %lu\r\n", chunk_num);
+        log_debugf("switched to transmit chunk %lu\r\n", chunk_num);
       }
     }
   }

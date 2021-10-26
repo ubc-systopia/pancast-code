@@ -171,10 +171,10 @@ void _beacon_info_()
 
 void _beacon_periodic_info()
 {
-  log_infof("    Periodic Interval:                %s\r\n", PER_ADV_INTERVAL);
-  log_infof("    Min Sync Advertising Interval:    %s\r\n", MIN_ADV_INTERVAL);
-  log_infof("    Max Sync Advertising Interval:    %s\r\n", MAX_ADV_INTERVAL);
-  log_infof("    Tx power:                         %s\r\n", PER_TX_POWER);
+  log_infof("    Periodic Interval:                %u\r\n", PER_ADV_INTERVAL);
+  log_infof("    Min Sync Advertising Interval:    %u\r\n", MIN_ADV_INTERVAL);
+  log_infof("    Max Sync Advertising Interval:    %u\r\n", MAX_ADV_INTERVAL);
+  log_infof("    Tx power:                         %u\r\n", PER_TX_POWER);
 }
 
 #ifdef MODE__STAT

@@ -77,10 +77,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
     case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
-//        log_debugf("%s", "Scan result\r\n");
-//#define addr (report.address.addr)
-//        log_debugf("Packet Address: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\r\n",
-//                         addr[0], addr[1], addr[2], addr[3], addr[4], addr[4]);
+
 //#undef addr
 #ifdef MODE__LEGACY_LOG
       // First, log into the legacy decode pipeline
@@ -91,8 +88,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       // then check for periodic info in packet
       if (!synced
           && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
-//         // Start test
-//         sync_test.start_ticks = sl_sleeptimer_get_tick_count64();
         log_debugf("Opening sync\r\n");
         // Open sync
         sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
@@ -109,27 +104,11 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
     case sl_bt_evt_sync_opened_id:
       log_debugf("new sync opened!\r\n");
-//        sync_test.end_ticks = sl_sleeptimer_get_tick_count64();
-//        sync_test.diff = sync_test.end_ticks - sync_test.start_ticks;
-//        sl_sleeptimer_tick64_to_ms(timestamp, &sync_test.diff);
-//        if (start_time == 0) {
-//            start_time = sl_sleeptimer_get_tick_count64();
-//            sl_sleeptimer_tick64_to_ms(timestamp, &ms);
-//        }
-//        app_log_info("start_time (ms) = %u\r\n", ms);
-        // sl_bt_scanner_stop();
       synced = 1;
       break;
 
     case sl_bt_evt_sync_closed_id:
       app_log_info("Sync lost...\r\n");
-//        num_sync_lost = num_sync_lost + 1;
-//        app_log_info("num_sync_lost %d\r\n", num_sync_lost);
-//
-//        // Start scanning again
-//        app_log_info("Starting scan...\r\n");
-//        sc = sl_bt_scanner_start(1, scanner_discover_observation);
-//        app_assert_status(sc);
       dongle_on_sync_lost();
       synced = 0;
       break;
@@ -140,15 +119,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                    evt->data.evt_sync_data.data.len);
       log_debugf("Status: %d\r\n",
                          evt->data.evt_sync_data.data_status);
-//        evt->data.evt_sync_data.
-
-      // app_log_info("RSSI: %d\n", evt->data.evt_sync_data.rssi);
-
-//       //  Print entire byte array
-//        for (int i = 0; i < evt->data.evt_sync_data.data.len; i++) {
-//           app_log_debug(", %d\r\n", evt->data.evt_sync_data.data.data[i]);
-//        }
-//        app_log_debug("\r\n");
 
 #define ERROR_STATUS 0x02
       if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
@@ -160,29 +130,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_sync_data.data.len,
             evt->data.evt_sync_data.rssi);
       }
-
-//        // check if sync data index + evt->data > length
-//        // if it is larger or equal then print and reset length
-//        if ((sync_data_index + evt->data.evt_sync_data.data.len) < SYNC_BUFFER_SIZE) {
-//          memcpy(&sync_rx_buffer[sync_data_index], evt->data.evt_sync_data.data.data, evt->data.evt_sync_data.data.len);
-//            sync_data_index += evt->data.evt_sync_data.data.len;
-//        } else {
-//          // Printf buffer
-//            for (int i = 0; i < SYNC_BUFFER_SIZE; i++) {
-//              app_log_info(", %d", sync_rx_buffer[i]);
-//            }
-//            app_log_info("\r\n");
-//            sync_data_index = 0;
-//
-//          //  memset(&sync_rx_buffer, 0, SYNC_BUFFER_SIZE);
-//            memcpy(&sync_rx_buffer[sync_data_index], evt->data.evt_sync_data.data.data, evt->data.evt_sync_data.data.len);
-//            sync_data_index += evt->data.evt_sync_data.data.len;
-//        }
-//
-//          // Log throughput measurements
-//        byte_count = byte_count + evt->data.evt_sync_data.data.len;
-//        timestamp = sl_sleeptimer_get_tick_count64() - start_time;
-//        sl_sleeptimer_tick64_to_ms(timestamp, &ms);
       break;
 
     case sl_bt_evt_system_soft_timer_id:

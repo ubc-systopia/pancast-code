@@ -97,14 +97,16 @@ void send_test_risk_data()
     beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
   }
 
+  uint32_t off = 0;
   // sequence number
-  memcpy(test_data, &seq_num, sizeof(uint32_t));
-
+  memcpy(test_data+off, &seq_num, sizeof(uint32_t));
+  off += sizeof(uint32_t);
   // chunk number
-  memcpy(test_data + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
-
+  memcpy(test_data+off, &chunk_num, sizeof(uint32_t));
+  off += sizeof(uint32_t);
   // chunk length
-  memcpy(test_data + 2*sizeof(uint32_t), &chunk_len, 8);
+  memcpy(test_data+off, &chunk_len, sizeof(uint64_t));
+  off += sizeof(uint64_t);
 
   // data
 #define min(a,b) (b < a ? b : a)

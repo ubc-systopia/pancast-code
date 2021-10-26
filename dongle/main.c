@@ -49,7 +49,7 @@ int main(void)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
-  log_infof("%s", "=== Kernel start ===\r\n");
+  log_debugf("%s", "=== Kernel start ===\r\n");
 
   sc = sl_sleeptimer_init();
   app_assert_status(sc);

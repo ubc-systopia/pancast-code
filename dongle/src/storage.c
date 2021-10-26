@@ -116,7 +116,7 @@ void dongle_storage_init_device(dongle_storage *sto)
 
 void dongle_storage_init(dongle_storage *sto)
 {
-  log_infof("%s", "Initializing storage...\r\n");
+  log_debugf("%s", "Initializing storage...\r\n");
   st.off = 0;
   st.encounters.tail = 0;
   st.encounters.head = 0;
@@ -135,7 +135,7 @@ void dongle_storage_init(dongle_storage *sto)
 
 void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-  log_infof("%s", "Loading config...\r\n");
+  log_debugf("%s", "Loading config...\r\n");
   st.off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), st.off += size)
   read(sizeof(dongle_id_t), &cf.id);
@@ -151,12 +151,12 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   st.map.log = st.map.stat + st.page_size;
   st.map.log_end = st.map.log + FLASH_LOG_SIZE;
 #undef read
-  log_infof("%s", "Config loaded.\r\n");
+  log_debugf("%s", "Config loaded.\r\n");
 }
 
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-  log_infof("%s", "Saving config\r\n");
+  log_debugf("%s", "Saving config\r\n");
   st.off = st.map.config;
 #define write(data, size) (pre_erase(sto, size), _flash_write_(sto, data, size), st.off += size)
   write(&cf.id, sizeof(dongle_id_t));
@@ -166,7 +166,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   write(&cf.dongle_sk_size, sizeof(key_size_t));
   write(&cf.dongle_sk, SK_MAX_SIZE);
 #undef write
-  log_infof("%s", "saved.\r\n");
+  log_debugf("%s", "saved.\r\n");
 }
 
 #undef cf
@@ -180,13 +180,13 @@ void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 
 void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
 {
-  log_infof("%s", "Saving OTPs\r\n");
+  log_debugf("%s", "Saving OTPs\r\n");
   for (int i = 0; i < NUM_OTP; i++) {
     st.off = OTP(i);
     pre_erase(sto, sizeof(dongle_otp_t));
     _flash_write_(sto, &otps[i], sizeof(dongle_otp_t));
   }
-  log_infof("%s", "Saved.\r\n");
+  log_debugf("%s", "Saved.\r\n");
 }
 
 int otp_is_used(dongle_otp_t *otp)
@@ -399,11 +399,9 @@ void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len)
 
 void dongle_storage_info(dongle_storage *sto)
 {
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Storage Info:\r\n");
-  log_infof("    Total flash space available for log: %lu\r\n",
+  log_infof("Total flash space:       %lu bytes\r\n",
       (uint32_t) FLASH_LOG_SIZE);
-  log_infof("    Maximum number of log entries:       %lu\r\n",
+  log_infof("Maximum enctr entries:   %lu\r\n",
       (uint32_t) MAX_LOG_COUNT);
 }
 

@@ -85,18 +85,8 @@ extern download_stats_t download_stats;
 // Assumes that kernel has initialized and bluetooth device is booted.
 void dongle_start()
 {
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Starting Dongle...\r\n");
-
-#ifdef TEST_DONGLE
-  log_infof("%s", "Test mode enabled\r\n");
-#endif
-
-  log_infof("%s", "Statistics enabled\r\n");
-
-#ifdef MODE__PERIODIC
-  log_infof("%s", "Periodic synchronization enabled\r\n");
-#endif
+  log_infof("%s", "=== Starting Dongle... ===\r\n");
+  log_infof("Config test: %d, periodic sync: %d\r\n", TEST_DONGLE, MODE__PERIODIC);
 
   if (access_advertise()) {
     return;
@@ -119,22 +109,22 @@ void dongle_scan(void)
 #ifdef MODE__PERIODIC
   sl_status_t sc;
   // Set scanner timing
-  app_log_info("Setting scanner timing\r\n");
+  log_debugf("Setting scanner timing\r\n");
   sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
   app_assert_status(sc);
 
   // Set scanner mode
-  app_log_info("Setting scanner mode\r\n");
+  log_debugf("Setting scanner mode\r\n");
   sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
   app_assert_status(sc);
 
   // Set sync parameters
-  app_log_info("Setting sync parameters\r\n");
+  log_debugf("Setting sync parameters\r\n");
   sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
   app_assert_status(sc);
 
   // Start scanning
-  app_log_info("Starting scan\r\n");
+  log_debugf("Starting scan\r\n");
   sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
   app_assert_status(sc);
 
@@ -381,15 +371,24 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 void dongle_info()
 {
   log_infof("%s", "=== Dongle Info: ===\r\n");
-  log_infof("    Dongle ID:                0x%lx\r\n", config.id);
-  log_infof("    Initial clock:            %lu\r\n", config.t_init);
-  log_infof("    Backend public key size:  %lu bytes\r\n", config.backend_pk_size);
-  log_infof("    Secret key size:          %lu bytes\r\n", config.dongle_sk_size);
-  log_infof("    Timer resolution:         %u ms\r\n", DONGLE_TIMER_RESOLUTION);
-  log_infof("    Epoch length:             %u ms\r\n",
+  log_infof("    Dongle ID:                    0x%lx\r\n", config.id);
+  log_infof("    Initial clock:                %lu\r\n", config.t_init);
+  log_infof("    Backend public key size:      %lu bytes\r\n",
+      config.backend_pk_size);
+  log_infof("    Secret key size:              %lu bytes\r\n",
+      config.dongle_sk_size);
+  log_infof("    Timer resolution:             %u ms\r\n",
+      DONGLE_TIMER_RESOLUTION);
+  log_infof("    Epoch length:                 %u ms\r\n",
       BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
-  log_infof("    Report interval:          %u ms\r\n",
+  log_infof("    Report interval:              %u ms\r\n",
       DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
+  log_infof("    Legacy adv scan [PHY, mode]:  %d, %d\r\n", SCAN_PHY, SCAN_MODE);
+  log_infof("    Legacy adv scan interval:     %u ms\r\n", SCAN_INTERVAL);
+  log_infof("    Legacy adv scan window:       %u ms\r\n", SCAN_WINDOW);
+  log_infof("    Periodic adv sync skip:       %d\r\n", SYNC_SKIP);
+  log_infof("    Periodic adv sync flags:      %d\r\n", SYNC_FLAGS);
+  log_infof("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
 }
 
 void dongle_encounter_report()
@@ -397,6 +396,10 @@ void dongle_encounter_report()
   enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
   enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 
+  log_infof("[%lu] last report time: %lu, "
+      "#encounters [delta, total, stored]: %lu, %lu, %lu\r\n",
+      dongle_time, report_time, (num - non_report_entry_count), num, cur);
+#if 0
   // Large integers here are casted for formatting compatabilty. This may result in false
   // output for large values.
   log_infof("    Encounters logged since last report: %lu\r\n",
@@ -405,19 +408,13 @@ void dongle_encounter_report()
 
   log_infof("    Total Encounters logged (Stored):    %lu%s\r\n", (uint32_t) cur,
     cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
+#endif
 }
 
 void dongle_report()
 {
   // do report
   if (dongle_time - report_time >= DONGLE_REPORT_INTERVAL) {
-
-    log_infof("%s", "\r\n");
-    log_infof("%s", "***          Begin Report          ***\r\n");
-
-    dongle_info();
-    dongle_storage_info(&storage);
-    log_infof("    Dongle timer:                        %lu\r\n", dongle_time);
     dongle_encounter_report();
 
 #ifdef MODE__STAT
@@ -428,9 +425,6 @@ void dongle_report()
 #ifdef TEST_DONGLE
     dongle_test();
 #endif
-
-    log_infof("%s", "\r\n");
-    log_infof("%s", "***          End Report            ***\r\n");
 
     non_report_entry_count = dongle_storage_num_encounters_total(&storage);
     report_time = dongle_time;

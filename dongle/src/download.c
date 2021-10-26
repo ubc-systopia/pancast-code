@@ -68,11 +68,11 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 #define MAX_EPH_ID_SIZE 15
   uint8_t id[MAX_EPH_ID_SIZE];
   memset(id, 0x00, MAX_EPH_ID_SIZE);
-#undef MAX_EPH_ID_SIZE
 
   memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
 
-  hexdumpn(id, 15, "checking id");
+  hexdumpn(id, MAX_EPH_ID_SIZE, "checking id");
+#undef MAX_EPH_ID_SIZE
 
   log_debugf("num buckets: %lu\r\n", num_buckets);
   //hexdumpn(&download.packet_buffer.buffer, 1736, "filter");

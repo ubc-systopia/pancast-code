@@ -48,18 +48,16 @@ void pre_erase(beacon_storage *sto, size_t write_size)
   // Erase before write
 #define page_num(o) ((o) / st.page_size)
   if ((st.off % st.page_size) == 0) {
-      erase(st.off);
+    erase(st.off);
   } else if (page_num(st.off + write_size) > page_num(st.off)) {
 #undef page_num
-      erase(next_multiple(st.page_size, st.off));
+    erase(next_multiple(st.page_size, st.off));
   }
 }
 
 int _flash_read_(beacon_storage *sto, void *data, size_t size)
 {
-#ifdef VERBOSE_DEBUG_LOGGING
   log_debugf("reading %d bytes from flash at address 0x%x\r\n", size, st.off);
-#endif
 #ifdef BEACON_PLATFORM__ZEPHYR
   return flash_read(st.dev, st.off, data, size);
 #else

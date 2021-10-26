@@ -112,6 +112,8 @@ static beacon_timer_t report_time; // Report tracking clock
 static beacon_timer_t stat_start;
 static beacon_timer_t stat_cycles;
 static beacon_timer_t stat_epochs;
+uint32_t stat_sent_broadcast_packets;
+uint32_t stat_total_packets_sent;
 #endif
 
 //
@@ -175,6 +177,8 @@ typedef struct
   beacon_timer_t end;
   uint32_t cycles;
   uint32_t epochs;
+  uint32_t sent_broadcast_packets;
+  uint32_t total_packets_sent;
 } beacon_stats_t;
 
 beacon_stats_t stats;
@@ -193,6 +197,8 @@ void beacon_stat_update()
   stats.end = beacon_time;
   stats.cycles = stat_cycles;
   stats.epochs = stat_epochs;
+  stats.sent_broadcast_packets = stat_sent_broadcast_packets;
+  stats.total_packets_sent = stat_total_packets_sent;
 }
 
 static void _beacon_stats_()

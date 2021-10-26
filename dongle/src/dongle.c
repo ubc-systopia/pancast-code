@@ -229,7 +229,8 @@ void dongle_on_clock_update()
 }
 
 /* Log system counters */
-void dongle_log_counters() {
+void dongle_log_counters()
+{
   uint16_t    tx_packets;
   uint16_t    rx_packets;
   uint16_t    crc_errors;
@@ -243,7 +244,8 @@ void dongle_log_counters() {
   log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
 }
 
-void dongle_reset_counters() {
+void dongle_reset_counters()
+{
 	sl_bt_system_get_counters(1, 0, 0, 0, 0);
 }
 

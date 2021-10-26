@@ -7,12 +7,17 @@
 // Application Config
 #define MODE__TEST_CONFIG // loads fixed test data instead of from flash
 #define MODE__STAT // enables telemetry aggregation
-#define MODE__PERIODIC // enables periodic scanning and syncing
+/*
+ * config for periodic scanning and syncing
+ * 0 - disable
+ * 1 - enable
+ */
+#define MODE__PERIODIC  1
 #define MODE__LEGACY_LOG
 #define MODE__PERIODIC_FIXED_DATA
 //#define CUCKOOFILTER_FIXED_TEST
 
-#ifdef TEST_DONGLE
+#if TEST_DONGLE
 #define MODE__TEST_CONFIG
 #endif
 

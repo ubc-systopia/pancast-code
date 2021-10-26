@@ -106,7 +106,7 @@ void dongle_scan(void)
   // Scan Start
   int err = 0;
 
-#ifdef MODE__PERIODIC
+#if MODE__PERIODIC
   sl_status_t sc;
   // Set scanner timing
   log_debugf("Setting scanner timing\r\n");
@@ -270,7 +270,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
   // Write to storage
   dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
                                enc->eph);
-#ifdef TEST_DONGLE
+#if TEST_DONGLE
   dongle_test_encounter(enc);
 #endif
   // reset the observation time
@@ -423,7 +423,7 @@ void dongle_report()
     dongle_download_stats();
 #endif
 
-#ifdef TEST_DONGLE
+#if TEST_DONGLE
     dongle_test();
 #endif
 
@@ -434,5 +434,5 @@ void dongle_report()
 
 #undef alpha
 #undef LOG_LEVEL__INFO
-#undef TEST_DONGLE
+//#undef TEST_DONGLE
 #undef MODE__STAT

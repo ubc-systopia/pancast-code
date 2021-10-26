@@ -85,7 +85,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       dongle_log(&report.address,
                  report.rssi, report.data.data, report.data.len);
 #endif
-#ifdef MODE__PERIODIC
+#if MODE__PERIODIC
       // then check for periodic info in packet
       if (!synced
           && evt->data.evt_scanner_scan_report.periodic_interval != 0) {

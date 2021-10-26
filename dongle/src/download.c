@@ -146,33 +146,36 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
                download.packet_buffer.buffer.data_len, chunk_len);
   }
+
   if (seq >= MAX_NUM_PACKETS_PER_FILTER) {
     log_errorf("Error: sequence number %d out of bounds %d\r\n", seq,
         MAX_NUM_PACKETS_PER_FILTER);
-  } else {
-    if (!download.is_active) {
-      dongle_download_start();
-      download.packet_buffer.buffer.data_len = chunk_len;
-    }
-    download.n_total_packets++;
-    int prev = download.packet_buffer.counts[seq];
-    download.packet_buffer.counts[seq]++;
-    if (prev == 0) {
-      // this is an unseen packet
-      download.packet_buffer.num_distinct++;
-      uint8_t len = data_len - PACKET_HEADER_LEN;
-      memcpy(download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
-             data + PACKET_HEADER_LEN, len);
-      download.packet_buffer.received += len;
-      log_infof("download progress: %.2f\r\n",
-        ((float) download.packet_buffer.received
-         /download.packet_buffer.buffer.data_len) * 100);
-      if (download.packet_buffer.received
-          >= download.packet_buffer.buffer.data_len) {
-        // there may be extra data in the packet
-        dongle_download_complete();
-      }
-    }
+    return;
+  }
+
+  if (!download.is_active) {
+    dongle_download_start();
+    download.packet_buffer.buffer.data_len = chunk_len;
+  }
+  download.n_total_packets++;
+  int prev = download.packet_buffer.counts[seq];
+  download.packet_buffer.counts[seq]++;
+  // duplicate packet
+  if (prev > 0)
+    return;
+
+  // this is an unseen packet
+  download.packet_buffer.num_distinct++;
+  uint8_t len = data_len - PACKET_HEADER_LEN;
+  memcpy(download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
+         data + PACKET_HEADER_LEN, len);
+  download.packet_buffer.received += len;
+  log_debugf("download progress: %.2f\r\n",
+    ((float) download.packet_buffer.received
+     / download.packet_buffer.buffer.data_len) * 100);
+  if (download.packet_buffer.received >= download.packet_buffer.buffer.data_len) {
+    // there may be extra data in the packet
+    dongle_download_complete();
   }
 }
 

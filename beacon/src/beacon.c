@@ -197,15 +197,8 @@ void beacon_stat_update()
 
 static void _beacon_stats_()
 {
-  log_infof("%s", "\r\n");
-  log_infof("%s", "Statistics: \r\n");
-  log_infof("     Time since last report:         %d ms\r\n", stats.duration);
-  log_infof("%s", "     Timer:\r\n");
-  log_infof("         Start:                      %u\r\n", stats.start);
-  log_infof("         End:                        %u\r\n", stats.end);
-  log_infof("     Cycles:                         %u\r\n", stats.cycles);
-  log_infof("     Completed Epochs:               %u\r\n", stats.epochs);
-
+  log_infof("[%lu] last report time: %lu, #cycles: %u, #epochs: %u\r\n",
+      beacon_time, stats.start, stats.cycles, stats.epochs);
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
   beacon_stats_init();
 }
@@ -217,9 +210,6 @@ static void _beacon_report_()
     return;
   } else {
     report_time = beacon_time;
-    log_infof("%s", "\r\n");
-    log_infof("%s", "***          Begin Report          ***\r\n");
-    _beacon_info_();
 #ifdef MODE__STAT
     beacon_stat_update();
     _beacon_stats_();
@@ -227,8 +217,6 @@ static void _beacon_report_()
     stat_cycles = 0;
     stat_epochs = 0;
 #endif
-    log_infof("%s", "\r\n");
-    log_infof("%s", "***          End Report            ***\r\n");
   }
 }
 

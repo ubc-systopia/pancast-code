@@ -416,6 +416,7 @@ static void _beacon_init_()
 
 #ifdef MODE__STAT
   stat_epochs = 0;
+  stat_start = beacon_time;
   beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");

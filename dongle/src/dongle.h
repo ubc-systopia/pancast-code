@@ -5,7 +5,7 @@
 #include "common/src/settings.h"
 
 // Application Config
-#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
+//#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
 #define MODE__STAT // enables telemetry aggregation
 /*
  * config for periodic scanning and syncing

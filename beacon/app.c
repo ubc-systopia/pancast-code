@@ -113,7 +113,7 @@ void send_test_risk_data()
   pkt_len = min(MAX_PACKET_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
 #undef min
 
-  memcpy(test_data  + PACKET_HEADER_LEN,
+  memcpy(test_data+PACKET_HEADER_LEN,
       test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
 
   // set

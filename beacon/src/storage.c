@@ -133,7 +133,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   st.off = st.map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), st.off += size)
   read(sizeof(beacon_id_t), &cfg->beacon_id);
-  read(8, &cfg->beacon_location_id);
+  read(sizeof(beacon_location_id_t), &cfg->beacon_location_id);
   read(sizeof(beacon_timer_t), &cfg->t_init);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {

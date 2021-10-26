@@ -72,7 +72,7 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
 #define MAX_FILTER_SIZE 2048 // 2kb
 #define PER_ADV_SIZE 250
-#define PACKET_HEADER_LEN (2*sizeof(uint32_t) + 8)
+#define PACKET_HEADER_LEN (2*sizeof(uint32_t) + sizeof(uint64_t))
 #define MAX_PACKET_SIZE (PER_ADV_SIZE - PACKET_HEADER_LEN)              // S
 #define MAX_NUM_PACKETS_PER_FILTER ((MAX_FILTER_SIZE / MAX_PACKET_SIZE) + 1)
 

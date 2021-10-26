@@ -14,6 +14,8 @@ typedef struct {
   uint32_t num_scan_results;
   uint32_t num_periodic_data;
   uint32_t num_periodic_data_error;
+  uint32_t total_packets_rx;
+  uint32_t total_crc_fail;
   uint32_t total_periodic_data_size; // bytes
   double total_periodic_data_time;   // seconds
 

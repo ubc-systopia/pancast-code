@@ -168,6 +168,7 @@ void dongle_init()
   log_infof("%s", "Dongle initialized\r\n");
 
   dongle_info();
+  dongle_storage_info(&storage);
 
   log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 }

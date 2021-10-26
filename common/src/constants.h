@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include "pancast/constants.h"
 
+#define BITS_PER_BYTE       8
+#define Kbps    1000
+
 // maximum size of a secret key in bytes - used for data containing
 #define SK_MAX_SIZE 44
 // maximum size of a public key

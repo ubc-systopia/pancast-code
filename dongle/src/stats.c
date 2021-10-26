@@ -31,8 +31,8 @@ void dongle_download_stats_init()
 void stat_compute_thrpt()
 {
   stats.periodic_data_avg_thrpt =
-      ((double)stats.total_periodic_data_size * 0.008) /
-      stats.total_periodic_data_time;
+      ((double) stats.total_periodic_data_size * BITS_PER_BYTE) /
+      stats.total_periodic_data_time / Kbps;
 }
 
 
@@ -46,7 +46,7 @@ void dongle_stats(dongle_storage *sto)
   stat_show(stats.periodic_data_rssi, "[Period adv] Data RSSI", "");
   stat_show(stats.periodic_data_size, "[Period adv] Pkt size", "bytes");
   log_infof("[Period adv] #rcvd: %lu, #error: %lu, #bytes: %lu"
-      ", time: %f, xput: %f\r\n",
+      ", time: %f s, xput: %f Kbps\r\n",
       stats.num_periodic_data, stats.num_periodic_data_error,
       stats.total_periodic_data_size, stats.total_periodic_data_time,
       stats.periodic_data_avg_thrpt);

@@ -9,6 +9,8 @@
 #define BEACON_MODE__NETWORK    // comment to build as non-network beacon
 
 #define GLOBAL_TX_POWER 10  // default
+#define MIN_TX_POWER -3 // default
+#define MAX_TX_POWER 100 // device maximum is 8.5 dbm
 
 // number of time units between each report written to output
 #define DONGLE_REPORT_INTERVAL 60

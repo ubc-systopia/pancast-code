@@ -181,6 +181,11 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       sc = sl_bt_system_get_identity_address(&address, &address_type);
       app_assert_status(sc);
 
+      int16_t set_min;
+      int16_t set_max;
+      sc = sl_bt_system_set_tx_power(MIN_TX_POWER, MAX_TX_POWER, &set_min, &set_max);
+      log_debugf("Set min tx power: %d, max tx power: %d", set_min, set_max);
+
       // Create an advertising set.
       //  printf("Creating advertising set...\r\n");
       sc = sl_bt_advertiser_create_set(&advertising_set_handle);

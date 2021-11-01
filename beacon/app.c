@@ -27,6 +27,7 @@
 #include "src/common/src/constants.h"
 #include "src/common/src/util/log.h"
 #include "src/common/src/test.h"
+#include "src/beacon.h"
 
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;
@@ -92,6 +93,7 @@ void send_test_risk_data()
 {
 #ifdef PERIODIC_TEST
   float time = now();
+  float starttime = now();
 
   if (seq_num == 0) {
     beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
@@ -118,6 +120,9 @@ void send_test_risk_data()
 
   // set
   set_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
+
+  float endtime = now();
+  stat_add((endtime - starttime), stats.broadcast_payload_update_duration);
 
   // update sequence
   pkt_rep_count++;

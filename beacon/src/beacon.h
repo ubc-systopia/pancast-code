@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "common/src/settings.h"
+#include "common/src/util/stats.h"
 
 
 //#define PERIODIC_TEST // uncomment to send test data
@@ -89,6 +90,21 @@ typedef union
   bt_data_t serviceUUID;
   char service_data_internals[22];
 } bt_gaen_wrapper_t;
+
+typedef struct
+{
+  uint8_t storage_checksum; // zero for valid stat data
+  beacon_timer_t duration;
+  beacon_timer_t start;
+  beacon_timer_t end;
+  uint32_t cycles;
+  uint32_t epochs;
+  uint32_t sent_broadcast_packets;
+  uint32_t total_packets_sent;
+  stat_t broadcast_payload_update_duration;
+} beacon_stats_t;
+
+extern beacon_stats_t stats;
 
 #ifdef BEACON_PLATFORM__ZEPHYR
 void main(void);

@@ -386,11 +386,13 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 #undef add
 }
 
+extern uint32_t timer_freq;
 void dongle_info()
 {
   log_infof("%s", "=== Dongle Info: ===\r\n");
   log_infof("    Dongle ID:                    0x%lx\r\n", config.id);
   log_infof("    Initial clock:                %lu\r\n", config.t_init);
+  log_infof("    Timer frequency:              %u Hz\r\n", timer_freq);
   log_infof("    Backend public key size:      %lu bytes\r\n",
       config.backend_pk_size);
   log_infof("    Secret key size:              %lu bytes\r\n",

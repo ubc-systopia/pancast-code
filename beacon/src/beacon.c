@@ -349,6 +349,8 @@ static void _encode_encounter_()
   copy(&config.beacon_location_id, sizeof(beacon_location_id_t));
   copy(&beacon_eph_id, sizeof(beacon_eph_id_t));
 #undef copy
+  hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
+      config.beacon_id, 0, beacon_time);
 }
 
 static void _beacon_encode_()
@@ -384,7 +386,6 @@ static void _gen_ephid_()
 #undef complete
 #undef add
 #undef init
-  hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
 }
 
 // populates gaen_payload.service_data_internals with procotol specific data fields

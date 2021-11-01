@@ -285,7 +285,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 //               dongle_time);
   //log_infof("%s", "Encounter! ");
   //display_eph_id(enc->eph);
-  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
+  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID", *enc->b, 0, *enc->t);
 
   // Write to storage
   dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,

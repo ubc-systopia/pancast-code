@@ -120,7 +120,7 @@ void beacon_storage_init(beacon_storage *sto)
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
         FLASH_OFFSET, st.page_size);
   }
-  st.map.stat = st.total_size - (3*st.page_size);
+//  st.map.stat = st.total_size - (3*st.page_size);
 }
 
 // Read data from flashed storage
@@ -154,6 +154,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
       st.test_filter_size = TEST_FILTER_LEN;
   }
   st.map.test_filter = st.off;
+  st.map.stat = next_multiple(st.page_size, st.map.test_filter + st.test_filter_size);
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
   log_infof("    Flash offset:        %u\r\n", st.map.config);

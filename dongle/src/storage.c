@@ -70,8 +70,7 @@ int _flash_write_(dongle_storage *sto, void *data, size_t size)
          ? log_errorf("%s", "Error writing flash\r\n"),
          1 : 0;
 #else
-  MSC_WriteWord((uint32_t *)sto->off, data, (uint32_t)size);
-  return 0;
+  return MSC_WriteWord((uint32_t *)sto->off, data, (uint32_t)size);
 #endif
 }
 

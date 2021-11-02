@@ -76,8 +76,7 @@ int _flash_write_(beacon_storage *sto, void *data, size_t size)
          ? log_errorf("%s", "Error writing flash\r\n"),
          1 : 0;
 #else
-  MSC_WriteWord((uint32_t *)st.off, data, (uint32_t)size);
-  return 0;
+  return MSC_WriteWord((uint32_t *)st.off, data, (uint32_t)size);
 #endif
 }
 
@@ -115,11 +114,11 @@ void beacon_storage_init(beacon_storage *sto)
   st.numErasures = 0;
   beacon_storage_init_device(sto);
   beacon_storage_get_info(sto);
-  log_infof("Init'ed storage #pages: %d, page Size: %u\r\n",
-      st.num_pages, st.page_size);
+  log_infof("Pages: %d, Page Size: %u\r\n", st.num_pages, st.page_size);
   st.map.config = FLASH_OFFSET;
   if (FLASH_OFFSET % st.page_size != 0) {
-    log_errorf("%s", "Start address of storage area is not a page-multiple!\r\n");
+    log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
+        FLASH_OFFSET, st.page_size);
   }
   st.map.stat = st.total_size - (3*st.page_size);
 }
@@ -137,25 +136,29 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   read(sizeof(beacon_timer_t), &cfg->t_init);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {
-    log_errorf("Key size read for public key (%u bytes) "
-        "is larger than max (%u)\r\n",
+    log_errorf("Key size read for backend pubkey (%u > %u)\r\n",
         cfg->backend_pk_size, PK_MAX_SIZE);
+    cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, &cfg->backend_pk);
   read(sizeof(key_size_t), &cfg->beacon_sk_size);
   if (cfg->beacon_sk_size > SK_MAX_SIZE) {
-    log_errorf("Key size read for secret key (%u bytes) "
-        "is larger than max (%u)\r\n",
+    log_errorf("Key size read for beacon privkey (%u > %u)\r\n",
         cfg->beacon_sk_size, SK_MAX_SIZE);
+    cfg->beacon_sk_size = SK_MAX_SIZE;
   }
   read(cfg->beacon_sk_size, &cfg->beacon_sk);
   read(sizeof(test_filter_size_t), &st.test_filter_size);
   if (st.test_filter_size != TEST_FILTER_LEN) {
-      log_errorf("%s", "Warning: test filter length mismatch\r\n");
+      log_errorf("Warning: test filter length mismatch (%u != %u)\r\n", st.test_filter_size, TEST_FILTER_LEN);
+      st.test_filter_size = TEST_FILTER_LEN;
   }
   st.map.test_filter = st.off;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
+  log_infof("    Flash offset:        %u\r\n", st.map.config);
+  log_infof("    Test filter offset:  %u\r\n", st.map.test_filter);
+  log_infof("    Stat offset:         %u\r\n", st.map.stat);
 }
 
 void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)

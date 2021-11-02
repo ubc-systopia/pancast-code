@@ -127,7 +127,8 @@ void dongle_storage_init(dongle_storage *sto)
   log_infof("Pages: %d, Page Size: %u\r\n", st.num_pages, st.page_size);
   st.map.config = FLASH_OFFSET;
   if (FLASH_OFFSET % st.page_size != 0) {
-    log_errorf("%s", "Start address of storage area is not a page-multiple!\r\n");
+    log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
+        FLASH_OFFSET, st.page_size);
   }
 }
 
@@ -141,8 +142,18 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   read(sizeof(dongle_id_t), &cf.id);
   read(sizeof(dongle_timer_t), &cf.t_init);
   read(sizeof(key_size_t), &cf.backend_pk_size);
+  if (cf.backend_pk_size > PK_MAX_SIZE) {
+    log_errorf("Key size read for backend pubkey (%u > %u)\r\n",
+        cf.backend_pk_size, PK_MAX_SIZE);
+    cf.backend_pk_size = PK_MAX_SIZE;
+  }
   read(PK_MAX_SIZE, &cf.backend_pk);
   read(sizeof(key_size_t), &cf.dongle_sk_size);
+  if (cf.dongle_sk_size > SK_MAX_SIZE) {
+    log_errorf("Key size read for dongle privkey (%u > %u)\r\n",
+        cf.dongle_sk_size, SK_MAX_SIZE);
+    cf.dongle_sk_size = SK_MAX_SIZE;
+  }
   read(SK_MAX_SIZE, &cf.dongle_sk);
   st.map.otp = st.off;
   // push onto the next blank page
@@ -152,6 +163,10 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   st.map.log_end = st.map.log + FLASH_LOG_SIZE;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
+  log_infof("    Flash offset:    %u\r\n", st.map.config);
+  log_infof("    OTP offset:      %u\r\n", st.map.otp);
+  log_infof("    Stat offset:     %u\r\n", st.map.stat);
+  log_infof("    Log offset:      %u-%u\r\n", st.map.log, st.map.log_end);
 }
 
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)

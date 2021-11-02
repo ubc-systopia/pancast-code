@@ -456,6 +456,7 @@ static void _beacon_init_()
     log_infof("%s", "Existing Statistics Found\r\n");
     _beacon_stats_();
   } else {
+    log_errorf("init stats checksum: 0x%0x\r\n", stats.storage_checksum);
     beacon_stats_init();
   }
 #endif

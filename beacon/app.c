@@ -92,7 +92,6 @@ void set_risk_data(int len, uint8_t *data)
 void send_test_risk_data()
 {
 #ifdef PERIODIC_TEST
-  float time = now();
   float starttime = now();
 
   if (seq_num == 0) {
@@ -153,9 +152,10 @@ void send_test_risk_data()
 #endif
 }
 
-void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
+void sl_timer_on_expire(
+    __attribute__ ((unused)) sl_sleeptimer_timer_handle_t *handle,
+    void *data)
 {
-  sl_status_t sc;
 #define user_handle (*((uint8_t*)data))
   // handle main clock
   if (user_handle == MAIN_TIMER_HANDLE) {

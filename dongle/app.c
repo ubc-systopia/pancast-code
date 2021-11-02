@@ -33,7 +33,8 @@ extern void dongle_start();
 // Sync handle
 static uint16_t sync_handle = 0;
 
-void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
+void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
+    __attribute__ ((unused)) void *data)
 {
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {

@@ -40,6 +40,8 @@
 #define MS_DELAY 1
 #define TICK_DELAY 27
 
+extern void add_sent_packet();
+
 void add_delay_ticks(uint64_t ticks) {
   uint64_t start_delay = sl_sleeptimer_get_tick_count64();
   uint64_t end_delay = sl_sleeptimer_get_tick_count64();
@@ -231,13 +233,12 @@ int main(void)
 #else // !PERIODIC_TEST
 
       // Start timer
-      uint64_t start_time = sl_sleeptimer_get_tick_count64();
+      float starttime = now();
       send_test_risk_data();
       add_delay_ms(PER_ADV_INTERVAL * 1.25);
       add_sent_packet();
-      uint64_t end_time = sl_sleeptimer_get_tick_count64();
-      uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-      //printf("LOOP TIME: %lu\r\n", ms);
+      float endtime = now();
+      log_debugf("LOOP TIME: %f\r\n", (endtime - starttime));
 
 #endif // PERIODIC_TEST
     }

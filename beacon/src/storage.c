@@ -39,40 +39,40 @@ void beacon_storage_erase(beacon_storage *sto, storage_addr_t offset)
   sto->numErasures++;
 }
 
-void pre_erase(beacon_storage *sto, size_t write_size)
+void pre_erase(beacon_storage *sto, storage_addr_t off, size_t write_size)
 {
   // Erase before write
 #define page_num(o) ((o) / sto->page_size)
-  if ((sto->off % sto->page_size) == 0) {
-    beacon_storage_erase(sto, sto->off);
-  } else if (page_num(sto->off + write_size) > page_num(sto->off)) {
+  if ((off % sto->page_size) == 0) {
+    beacon_storage_erase(sto, off);
+  } else if (page_num(off + write_size) > page_num(off)) {
 #undef page_num
-    beacon_storage_erase(sto, next_multiple(sto->page_size, sto->off));
+    beacon_storage_erase(sto, next_multiple(sto->page_size, off));
   }
 }
 
-int _flash_read_(beacon_storage *sto, void *data, size_t size)
+int _flash_read_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
 {
-  log_debugf("reading %d bytes from flash at address 0x%x\r\n", size, sto->off);
+  log_debugf("size: %d bytes, addr: 0x%x, flash off: 0x%0x\r\n",
+      size, off, sto->map.config);
 #ifdef BEACON_PLATFORM__ZEPHYR
-  return flash_read(sto->dev, sto->off, data, size);
+  return flash_read(sto->dev, off, data, size);
 #else
-  memcpy(data, (uint32_t *)sto->off, size);
+  memcpy(data, (uint32_t *)off, size);
   return 0;
 #endif
 }
 
-int _flash_write_(beacon_storage *sto, void *data, size_t size)
+int _flash_write_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
 {
-#ifdef VERBOSE_DEBUG_LOGGING
-  log_debugf("writing %d bytes to flash at address 0x%x\r\n", size, sto->off);
-#endif
+  log_debugf("size: %d bytes, addr: 0x%x, flash off: 0x%0x\r\n",
+      size, off, sto->map.config);
 #ifdef BEACON_PLATFORM__ZEPHYR
-  return flash_write(sto->dev, sto->off, data, size)
+  return flash_write(sto->dev, off, data, size)
          ? log_errorf("%s", "Error writing flash\r\n"),
          1 : 0;
 #else
-  return MSC_WriteWord((uint32_t *)sto->off, data, (uint32_t)size);
+  return MSC_WriteWord((uint32_t *)off, data, (uint32_t)size);
 #endif
 }
 
@@ -106,7 +106,6 @@ void beacon_storage_init_device(beacon_storage *sto)
 void beacon_storage_init(beacon_storage *sto)
 {
   log_debugf("%s", "Initializing storage...\r\n");
-  sto->off = 0;
   sto->numErasures = 0;
   beacon_storage_init_device(sto);
   beacon_storage_get_info(sto);
@@ -125,8 +124,8 @@ void beacon_storage_init(beacon_storage *sto)
 void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 {
   log_debugf("%s", "Loading config...\r\n");
-  sto->off = sto->map.config;
-#define read(size, dst) (_flash_read_(sto, dst, size), sto->off += size)
+  storage_addr_t off = sto->map.config;
+#define read(size, dst) (_flash_read_(sto, off, dst, size), off += size)
   read(sizeof(beacon_id_t), &cfg->beacon_id);
   read(sizeof(beacon_location_id_t), &cfg->beacon_location_id);
   read(sizeof(beacon_timer_t), &cfg->t_init);
@@ -150,7 +149,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
           sto->test_filter_size, TEST_FILTER_LEN);
       sto->test_filter_size = TEST_FILTER_LEN;
   }
-  sto->map.test_filter = sto->off;
+  sto->map.test_filter = off;
   sto->map.stat = next_multiple(sto->page_size,
       sto->map.test_filter + sto->test_filter_size);
 #undef read
@@ -163,20 +162,18 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)
 {
   beacon_storage_erase(sto, sto->map.stat);
-  sto->off = sto->map.stat;
-  _flash_write_(sto, stat, len);
+  storage_addr_t off = sto->map.stat;
+  _flash_write_(sto, off, stat, len);
 }
 
 void beacon_storage_read_stat(beacon_storage *sto, void *stat, size_t len)
 {
-  sto->off = sto->map.stat;
-  _flash_read_(sto, stat, len);
+  _flash_read_(sto, sto->map.stat, stat, len);
 }
 
 void beacon_storage_read_test_filter(beacon_storage *sto, uint8_t *buf)
 {
-  sto->off = sto->map.test_filter;
-  _flash_read_(sto, buf, sto->test_filter_size);
+  _flash_read_(sto, sto->map.test_filter, buf, sto->test_filter_size);
 }
 
 #undef next_multiple

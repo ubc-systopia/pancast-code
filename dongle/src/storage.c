@@ -39,17 +39,15 @@ void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
   sto->numErasures++;
 }
 
-#define erase(addr) dongle_storage_erase(sto, addr)
-
 void pre_erase(dongle_storage *sto, size_t write_size)
 {
 // Erase before write
 #define page_num(o) ((o) / sto->page_size)
   if ((sto->off % sto->page_size) == 0) {
-    erase(sto->off);
+    dongle_storage_erase(sto, sto->off);
   } else if (page_num(sto->off + write_size) > page_num(sto->off)) {
 #undef page_num
-    erase(next_multiple(sto->page_size, sto->off));
+    dongle_storage_erase(sto, next_multiple(sto->page_size, sto->off));
   }
 }
 
@@ -130,29 +128,27 @@ void dongle_storage_init(dongle_storage *sto)
   }
 }
 
-#define cf (*cfg)
-
 void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 {
   log_debugf("%s", "Loading config...\r\n");
   sto->off = sto->map.config;
 #define read(size, dst) (_flash_read_(sto, dst, size), sto->off += size)
-  read(sizeof(dongle_id_t), &cf.id);
-  read(sizeof(dongle_timer_t), &cf.t_init);
-  read(sizeof(key_size_t), &cf.backend_pk_size);
-  if (cf.backend_pk_size > PK_MAX_SIZE) {
+  read(sizeof(dongle_id_t), &cfg->id);
+  read(sizeof(dongle_timer_t), &cfg->t_init);
+  read(sizeof(key_size_t), &cfg->backend_pk_size);
+  if (cfg->backend_pk_size > PK_MAX_SIZE) {
     log_errorf("Key size read for backend pubkey (%u > %u)\r\n",
-        cf.backend_pk_size, PK_MAX_SIZE);
-    cf.backend_pk_size = PK_MAX_SIZE;
+        cfg->backend_pk_size, PK_MAX_SIZE);
+    cfg->backend_pk_size = PK_MAX_SIZE;
   }
-  read(PK_MAX_SIZE, &cf.backend_pk);
-  read(sizeof(key_size_t), &cf.dongle_sk_size);
-  if (cf.dongle_sk_size > SK_MAX_SIZE) {
+  read(PK_MAX_SIZE, &cfg->backend_pk);
+  read(sizeof(key_size_t), &cfg->dongle_sk_size);
+  if (cfg->dongle_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for dongle privkey (%u > %u)\r\n",
-        cf.dongle_sk_size, SK_MAX_SIZE);
-    cf.dongle_sk_size = SK_MAX_SIZE;
+        cfg->dongle_sk_size, SK_MAX_SIZE);
+    cfg->dongle_sk_size = SK_MAX_SIZE;
   }
-  read(SK_MAX_SIZE, &cf.dongle_sk);
+  read(SK_MAX_SIZE, &cfg->dongle_sk);
   sto->map.otp = sto->off;
   // push onto the next blank page
   sto->map.stat = next_multiple(sto->page_size,
@@ -175,19 +171,17 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 #define write(data, size) \
   (pre_erase(sto, size), _flash_write_(sto, data, size), sto->off += size)
 
-  write(&cf.id, sizeof(dongle_id_t));
-  write(&cf.t_init, sizeof(dongle_timer_t));
-  write(&cf.backend_pk_size, sizeof(key_size_t));
-  write(&cf.backend_pk, PK_MAX_SIZE);
-  write(&cf.dongle_sk_size, sizeof(key_size_t));
-  write(&cf.dongle_sk, SK_MAX_SIZE);
+  write(&cfg->id, sizeof(dongle_id_t));
+  write(&cfg->t_init, sizeof(dongle_timer_t));
+  write(&cfg->backend_pk_size, sizeof(key_size_t));
+  write(&cfg->backend_pk, PK_MAX_SIZE);
+  write(&cfg->dongle_sk_size, sizeof(key_size_t));
+  write(&cfg->dongle_sk, SK_MAX_SIZE);
 
 #undef write
 
   log_debugf("%s", "saved.\r\n");
 }
-
-#undef cf
 
 #define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
 
@@ -227,8 +221,11 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
   return -1;
 }
 
-#define inc_head(_) (sto->encounters.head = (sto->encounters.head + 1) % MAX_LOG_COUNT)
-#define inc_tail(_) (sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT)
+#define inc_head(_) \
+  (sto->encounters.head = (sto->encounters.head + 1) % MAX_LOG_COUNT)
+
+#define inc_tail(_) \
+  (sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT)
 
 void _log_increment_(dongle_storage *sto)
 {
@@ -270,7 +267,6 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
   enctr_entry_counter_t i = 0;
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
 #define age (cur_time - en.dongle_time)
-#define old (age > DONGLE_MAX_LOG_AGE)
   do {
     if (i >= num) {
         break;
@@ -280,7 +276,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
     // tail is updated during loop, so reference first index every time
     dongle_storage_load_single_encounter(sto, 0, &en);
     log_debugf("age: %lu\r\n", (uint32_t) age);
-    if (old) {
+    if (age > DONGLE_MAX_LOG_AGE) {
       log_debugf("%s", "incrementing tail\r\n");
       inc_tail();
       i++;
@@ -289,7 +285,6 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
       break;
     }
   } while (sto->encounters.tail != sto->encounters.head);
-#undef old
 #undef age
 }
 
@@ -298,7 +293,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
      (((sto->encounters.tail + j) % MAX_LOG_COUNT) * ENCOUNTER_ENTRY_SIZE))
 
 void dongle_storage_load_encounter(dongle_storage *sto,
-                                   enctr_entry_counter_t i, dongle_encounter_cb cb)
+    enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
   log_debugf("loading log entries starting at (virtual) index %lu\r\n", (uint32_t)i);
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
@@ -370,15 +365,19 @@ void dongle_storage_log_encounter(dongle_storage *sto,
   // can probably be done with a page buffer, but may lose up to page
   // of data if dongle is stopped
   pre_erase(sto, ENCOUNTER_ENTRY_SIZE);
-#define write(data, size) \
-  _flash_write_(sto, data, size), sto->off += size
+
+#define write(data, size) _flash_write_(sto, data, size), sto->off += size
+
   write(beacon_id, sizeof(beacon_id_t));
   write(location_id, sizeof(beacon_location_id_t));
   write(beacon_time, sizeof(beacon_timer_t));
   write(dongle_time, sizeof(dongle_timer_t));
   write(eph_id, BEACON_EPH_ID_SIZE);
-  log_debugf("total size: %u (entry size=%d)\r\n", sto->off - start, ENCOUNTER_ENTRY_SIZE);
+  log_debugf("total size: %u (entry size=%d)\r\n",
+      sto->off - start, ENCOUNTER_ENTRY_SIZE);
+
 #undef write
+
   sto->total_encounters++;
   _log_increment_(sto);
   num = dongle_storage_num_encounters_current(sto);
@@ -427,7 +426,5 @@ void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time)
   _delete_old_encounters_(sto, cur_time);
 }
 
-#undef block_align
-#undef align
 #undef next_multiple
 #undef prev_multiple

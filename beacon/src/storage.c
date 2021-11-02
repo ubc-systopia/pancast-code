@@ -39,17 +39,15 @@ void beacon_storage_erase(beacon_storage *sto, storage_addr_t offset)
   sto->numErasures++;
 }
 
-#define erase(addr) beacon_storage_erase(sto, addr)
-
 void pre_erase(beacon_storage *sto, size_t write_size)
 {
   // Erase before write
 #define page_num(o) ((o) / sto->page_size)
   if ((sto->off % sto->page_size) == 0) {
-    erase(sto->off);
+    beacon_storage_erase(sto, sto->off);
   } else if (page_num(sto->off + write_size) > page_num(sto->off)) {
 #undef page_num
-    erase(next_multiple(sto->page_size, sto->off));
+    beacon_storage_erase(sto, next_multiple(sto->page_size, sto->off));
   }
 }
 
@@ -153,7 +151,8 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
       sto->test_filter_size = TEST_FILTER_LEN;
   }
   sto->map.test_filter = sto->off;
-  sto->map.stat = next_multiple(sto->page_size, sto->map.test_filter + sto->test_filter_size);
+  sto->map.stat = next_multiple(sto->page_size,
+      sto->map.test_filter + sto->test_filter_size);
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
   log_infof("    Flash offset:        %u\r\n", sto->map.config);
@@ -180,7 +179,5 @@ void beacon_storage_read_test_filter(beacon_storage *sto, uint8_t *buf)
   _flash_read_(sto, buf, sto->test_filter_size);
 }
 
-#undef block_align
-#undef align
 #undef next_multiple
 #undef prev_multiple

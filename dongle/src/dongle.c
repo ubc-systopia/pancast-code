@@ -302,10 +302,8 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
   // Check the broadcast UUID
   beacon_id_t service_id = (*(enc->b) & BEACON_SERVICE_ID_MASK) >> 16;
   if (service_id != BROADCAST_SERVICE_ID) {
-    log_telemf("%02x,%u,%u,%lu\r\n",
-               TELEM_TYPE_BROADCAST_ID_MISMATCH,
-               dongle_time, epoch,
-               signal_id);
+    log_telemf("%02x,%u,%u,%lu\r\n", TELEM_TYPE_BROADCAST_ID_MISMATCH,
+        dongle_time, epoch, signal_id);
     return signal_id;
   }
 
@@ -357,30 +355,25 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
 
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
-#define len (data_len)
-#define add (addr->addr)
-#define dat (data)
   // Filter mis-sized packets
-  if (len != ENCOUNTER_BROADCAST_SIZE + 1) {
+  if (data_len != ENCOUNTER_BROADCAST_SIZE + 1) {
     // TODO: should check for a periodic packet identifier
     return;
   }
   LOCK
-  log_telemf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
+  log_debugf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
       TELEM_TYPE_SCAN_RESULT, dongle_time, epoch, signal_id,
-      add[0], add[1], add[2], add[3], add[4], add[5], rssi);
+      addr->addr[0], addr->addr[1], addr->addr[2], addr->addr[3],
+      addr->addr[4], addr->addr[5], rssi);
   //print_bytes(dat, data_len, "scan-data pre-decode");
 //    hexdumpn(dat, 31, "raw");
-  decode_payload(dat);
+  decode_payload(data);
   //print_bytes(dat, data_len, "scan-data decoded");
   encounter_broadcast_t en;
-  decode_encounter(&en, (encounter_broadcast_raw_t *)dat);
+  decode_encounter(&en, (encounter_broadcast_raw_t *)data);
   dongle_track(&en, rssi, signal_id);
   signal_id++;
   UNLOCK
-#undef dat
-#undef data
-#undef add
 }
 
 extern uint32_t timer_freq;

@@ -294,7 +294,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 
     // delete old logs
     inc_tail();
-    log_infof("[%u] age: %u > %u, head: %u, tail: %u -> %u\r\n", i, age,
+    log_debugf("[%u] age: %u > %u, head: %u, tail: %u -> %u\r\n", i, age,
         DONGLE_MAX_LOG_AGE, sto->encounters.head, old_tail, sto->encounters.tail);
 
     i++;

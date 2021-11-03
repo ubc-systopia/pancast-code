@@ -318,6 +318,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
   for (i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
     if (!compare_eph_id(enc->eph, &cur_id[i])) {
       found = 1;
+      break;
     }
   }
 

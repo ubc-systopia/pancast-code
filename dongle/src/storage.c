@@ -11,6 +11,9 @@
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
+extern dongle_timer_t report_time;
+extern dongle_timer_t dongle_time;
+
 #ifdef DONGLE_PLATFORM__ZEPHYR
 static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
 {
@@ -381,8 +384,10 @@ void dongle_storage_log_encounter(dongle_storage *sto,
   num2 = dongle_storage_num_encounters_current(sto);
   _delete_old_encounters_(sto, *dongle_time);
   num3 = dongle_storage_num_encounters_current(sto);
-  log_debugf("#entries: %u -> %u -> %u, H: %u, T: %u, off: %u, size: %u %u\r\n",
-      num1, num2, num3, sto->encounters.head, sto->encounters.tail,
+  log_debugf("time: %u, %u #entries: %lu -> %lu -> %lu, "
+      "H: %lu, T: %lu, off: %u, size: %u %u\r\n",
+      *dongle_time, report_time, num1, num2, num3,
+      sto->encounters.head, sto->encounters.tail,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
 }
 

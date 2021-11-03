@@ -269,19 +269,20 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
     if (i >= num) {
         break;
     }
-    log_debugf("tail: %lu\r\n", (uint32_t)sto->encounters.tail);
-    log_debugf("head: %lu\r\n", (uint32_t)sto->encounters.head);
+
+    uint32_t old_tail = sto->encounters.tail;
     // tail is updated during loop, so reference first index every time
     dongle_storage_load_single_encounter(sto, 0, &en);
-    log_debugf("age: %lu\r\n", (uint32_t) age);
-    if (age > DONGLE_MAX_LOG_AGE) {
-      log_debugf("%s", "incrementing tail\r\n");
-      inc_tail();
-      i++;
-    } else {
-      log_debugf("%s", "break\r\n");
+
+    if (age <= DONGLE_MAX_LOG_AGE)
       break;
-    }
+
+    // delete old logs
+    inc_tail();
+    log_infof("[%u] age: %u > %u, head: %u, tail: %u -> %u\r\n", i, age,
+        DONGLE_MAX_LOG_AGE, sto->encounters.head, old_tail, sto->encounters.tail);
+
+    i++;
   } while (sto->encounters.tail != sto->encounters.head);
 #undef age
 }

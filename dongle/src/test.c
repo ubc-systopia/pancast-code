@@ -114,7 +114,8 @@ void dongle_test()
   dongle_storage_save_config(&storage, &config);
   dongle_storage_save_otp(&storage, TEST_OTPS);
 
-  log_infof("#encounters logged: %d, expected: %d\r\n", test_encounters, (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME));
+  log_infof("#encounters logged: %d, expected: %d\r\n", test_encounters,
+      (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME));
 #if 0
   log_infof("%s", "    ? correct #encounters logged?\r\n");
   int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);

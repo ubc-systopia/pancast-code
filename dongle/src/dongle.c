@@ -314,8 +314,6 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
   stat_add(rssi, stats.scan_rssi);
 #endif
 
-//    hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
-
   // determine which tracked id, if any, is a match
   size_t i = DONGLE_MAX_BC_TRACKED;
   for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
@@ -328,9 +326,8 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     // if no match was found, start tracking the new id, replacing the oldest
     // one currently tracked
     i = cur_id_idx;
-    log_debugf("new ephemeral id observed (beacon=%lu), tracking at index %d\r\n",
-               enc->b, i);
-    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
+    log_debugf("new ephid, beacon: %lu, tracking idx: %d\r\n", enc->b, i);
+    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "new ID");
     cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
     memcpy(&cur_id[i], enc->eph->bytes, BEACON_EPH_ID_HASH_LEN);
     obs_time[i] = dongle_time;
@@ -349,7 +346,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
     if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
       _dongle_encounter_(enc, i);
 #ifdef MODE__STAT
-      stat_add(rssi, stats.encounter_rssi);
+    stat_add(rssi, stats.encounter_rssi);
 #endif
       log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
          dongle_time, epoch, signal_id, enc->b, enc->t, dur);

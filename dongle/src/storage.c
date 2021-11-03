@@ -180,7 +180,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 
 #undef write
 
-  log_debugf("%s", "saved.\r\n");
+  log_debugf("off: %u, size: %u\r\n", sto->map.config, total_size);
 }
 
 #define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
@@ -353,11 +353,12 @@ void dongle_storage_log_encounter(dongle_storage *sto,
     beacon_timer_t *beacon_time, dongle_timer_t *dongle_time,
     beacon_eph_id_t *eph_id)
 {
-  enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-  storage_addr_t start = ENCOUNTER_LOG_OFFSET(sto->encounters.head - sto->encounters.tail);
+  enctr_entry_counter_t num1, num2, num3;
+  num1 = dongle_storage_num_encounters_current(sto);
+  storage_addr_t start =
+    ENCOUNTER_LOG_OFFSET(sto->encounters.head - sto->encounters.tail);
   storage_addr_t off = start;
-  log_debugf("write log; existing entries: %lu, offset: 0x%x\r\n",
-             (uint32_t)num, off);
+
   // TODO: save erased into memory in case the cursor has wrapped around
   // currently reads corrupted data once the max size is reached
   // can probably be done with a page buffer, but may lose up to page
@@ -371,18 +372,17 @@ void dongle_storage_log_encounter(dongle_storage *sto,
   write(beacon_time, sizeof(beacon_timer_t));
   write(dongle_time, sizeof(dongle_timer_t));
   write(eph_id, BEACON_EPH_ID_SIZE);
-  log_debugf("total size: %u (entry size=%d)\r\n",
-      off - start, ENCOUNTER_ENTRY_SIZE);
 
 #undef write
 
   sto->total_encounters++;
   _log_increment_(sto);
-  num = dongle_storage_num_encounters_current(sto);
-  log_debugf("log now contains %lu entries\r\n", (uint32_t)num);
+  num2 = dongle_storage_num_encounters_current(sto);
   _delete_old_encounters_(sto, *dongle_time);
-  num = dongle_storage_num_encounters_current(sto);
-  log_debugf("after deletion, contains %lu entries\r\n", (uint32_t)num);
+  num3 = dongle_storage_num_encounters_current(sto);
+  log_debugf("#entries: %u -> %u -> %u, H: %u, T: %u, off: %u, size: %u %u\r\n",
+      num1, num2, num3, sto->encounters.head, sto->encounters.tail,
+      start, off - start, ENCOUNTER_ENTRY_SIZE);
 }
 
 int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)

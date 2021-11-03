@@ -297,7 +297,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
   obs_time[i] = dongle_time;
 }
 
-static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
+static uint64_t dongle_track(encounter_broadcast_t *enc,
+    int8_t rssi, uint64_t signal_id)
 {
   // Check the broadcast UUID
   beacon_id_t service_id = (*(enc->b) & BEACON_SERVICE_ID_MASK) >> 16;
@@ -313,14 +314,14 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
 #endif
 
   // determine which tracked id, if any, is a match
-  size_t i = DONGLE_MAX_BC_TRACKED;
-  for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
-    if (!compare_eph_id(enc->eph, &cur_id[j])) {
-      i = j;
+  int found = 0, i;
+  for (i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
+    if (!compare_eph_id(enc->eph, &cur_id[i])) {
+      found = 1;
     }
   }
 
-  if (i == DONGLE_MAX_BC_TRACKED) {
+  if (found == 0) {
     // if no match was found, start tracking the new id, replacing the oldest
     // one currently tracked
     i = cur_id_idx;
@@ -335,21 +336,29 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
 #endif
     log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
        dongle_time, epoch, signal_id, enc->b, enc->t);
-  } else {
-    // when a matching ephemeral id is observed
-    log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
-       dongle_time, epoch, signal_id, enc->b, enc->t);
-    // check conditions for a valid encounter
-    dongle_timer_t dur = dongle_time - obs_time[i];
-    if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
-      _dongle_encounter_(enc, i);
-#ifdef MODE__STAT
-    stat_add(rssi, stats.encounter_rssi);
-#endif
-      log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
-         dongle_time, epoch, signal_id, enc->b, enc->t, dur);
-    }
+
+    return signal_id;
   }
+
+  // when a matching ephemeral id is observed
+  log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
+     dongle_time, epoch, signal_id, enc->b, enc->t);
+  // check conditions for a valid encounter
+  dongle_timer_t dur = dongle_time - obs_time[i];
+
+  /*
+   * ephemeral id observed only momentarily, do not log it yet.
+   */
+  if (dur < DONGLE_ENCOUNTER_MIN_TIME)
+    return signal_id;
+
+  _dongle_encounter_(enc, i);
+#ifdef MODE__STAT
+  stat_add(rssi, stats.encounter_rssi);
+#endif
+  log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
+     dongle_time, epoch, signal_id, enc->b, enc->t, dur);
+
   return signal_id;
 }
 

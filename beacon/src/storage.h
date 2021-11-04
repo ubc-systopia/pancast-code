@@ -45,7 +45,6 @@ typedef struct
   size_t page_size;
   storage_addr_t total_size;
   _beacon_storage_map_ map;
-  storage_addr_t off; // flash offset
   uint64_t numErasures;
   test_filter_size_t test_filter_size;
 } beacon_storage;

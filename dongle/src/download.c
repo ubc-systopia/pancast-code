@@ -91,7 +91,6 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 
   memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
 
-  hexdumpn(id, MAX_EPH_ID_SIZE, "checking id");
 #undef MAX_EPH_ID_SIZE
 
   log_debugf("num buckets: %lu\r\n", num_buckets);
@@ -100,7 +99,8 @@ int dongle_download_check_match(enctr_entry_counter_t i,
   if (lookup(id, &download.packet_buffer.buffer, num_buckets)) {
     log_infof("====== LOG MATCH [%d]!!! ====== \r\n", i);
   } else {
-    log_infof("%s", "No match for id\r\n");
+//    log_infof("%s", "No match for id\r\n");
+//    hexdumpn(id, BEACON_EPH_ID_HASH_LEN, "checking id");
   }
   return 1;
 }

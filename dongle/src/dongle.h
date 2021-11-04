@@ -69,7 +69,7 @@ typedef struct {
 } dongle_otp_t;
 
 // Count for number of encounters
-typedef uint64_t enctr_entry_counter_t;
+typedef uint32_t enctr_entry_counter_t;
 
 // Management data structure for referring to locations in the
 // raw bluetooth data by name. Pointers are linked when a new

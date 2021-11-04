@@ -65,7 +65,6 @@ typedef struct {
   _dongle_storage_map_ map;
   _encounter_storage_cursor_ encounters;
   enctr_entry_counter_t total_encounters;
-  storage_addr_t off; // flash offset
   uint64_t numErasures;
 } dongle_storage;
 

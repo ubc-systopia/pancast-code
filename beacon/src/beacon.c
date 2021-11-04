@@ -8,6 +8,7 @@
 
 #include "./beacon.h"
 #include "app.h"
+#include "common/src/util/stats.h"
 
 #define APPL_VERSION "0.1.1"
 
@@ -125,6 +126,7 @@ static void _beacon_load_()
 {
   beacon_storage_init(&storage);
   // Load data
+  beacon_storage_load_config(&storage, &config);
 #ifdef MODE__TEST_CONFIG
   config.beacon_id = TEST_BEACON_ID;
   config.beacon_location_id = TEST_BEACON_LOC_ID;
@@ -134,11 +136,10 @@ static void _beacon_load_()
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
   memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
   storage.test_filter_size = TEST_FILTER_LEN;
-#else
-  beacon_storage_load_config(&storage, &config);
 #endif
 }
 
+extern uint32_t timer_freq;
 void _beacon_info_()
 {
   log_infof("%s", "=== Beacon Info: ===\r\n");
@@ -154,6 +155,7 @@ void _beacon_info_()
   log_infof("    Beacon ID:                0x%x\r\n", config.beacon_id);
   log_infof("    Location ID:              0x%lx\r\n", config.beacon_location_id);
   log_infof("    Initial clock:            %u\r\n", config.t_init);
+  log_infof("    Timer frequency:          %u Hz\r\n", timer_freq);
   log_infof("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);
   log_infof("    Secret key size:          %u bytes\r\n", config.beacon_sk_size);
   log_infof("    Timer resolution:         %u ms\r\n", BEACON_TIMER_RESOLUTION);
@@ -179,18 +181,6 @@ void _beacon_periodic_info()
 }
 
 #ifdef MODE__STAT
-typedef struct
-{
-  uint8_t storage_checksum; // zero for valid stat data
-  beacon_timer_t duration;
-  beacon_timer_t start;
-  beacon_timer_t end;
-  uint32_t cycles;
-  uint32_t epochs;
-  uint32_t sent_broadcast_packets;
-  uint32_t total_packets_sent;
-} beacon_stats_t;
-
 beacon_stats_t stats;
 
 void beacon_stats_init()
@@ -213,8 +203,12 @@ void beacon_stat_update()
 
 static void _beacon_stats_()
 {
-  log_infof("[%lu] last report time: %lu, #cycles: %u, #epochs: %u\r\n",
-      beacon_time, stats.start, stats.cycles, stats.epochs);
+  log_infof("[%lu] last report time: %lu, #cycles: %u, #epochs: %u chksum: %u\r\n",
+      beacon_time, stats.start, stats.cycles, stats.epochs, stats.storage_checksum);
+  stat_show(stats.broadcast_payload_update_duration,
+      "[broadcast payload] Update duration", "ms");
+//  log_infof("[%lu] broadcast payload update: %f\r\n",
+//      stats.broadcast_payload_update_duration);
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
   beacon_stats_init();
 }
@@ -349,6 +343,8 @@ static void _encode_encounter_()
   copy(&config.beacon_location_id, sizeof(beacon_location_id_t));
   copy(&beacon_eph_id, sizeof(beacon_eph_id_t));
 #undef copy
+  hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
+      config.beacon_id, 0, beacon_time);
 }
 
 static void _beacon_encode_()
@@ -384,7 +380,6 @@ static void _gen_ephid_()
 #undef complete
 #undef add
 #undef init
-  hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
 }
 
 // populates gaen_payload.service_data_internals with procotol specific data fields
@@ -460,6 +455,7 @@ static void _beacon_init_()
     log_infof("%s", "Existing Statistics Found\r\n");
     _beacon_stats_();
   } else {
+    log_errorf("init stats checksum: 0x%0x\r\n", stats.storage_checksum);
     beacon_stats_init();
   }
 #endif

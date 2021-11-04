@@ -285,7 +285,7 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 //               dongle_time);
   //log_infof("%s", "Encounter! ");
   //display_eph_id(enc->eph);
-  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
+  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID", *enc->b, 0, *enc->t);
 
   // Write to storage
   dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
@@ -297,15 +297,14 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
   obs_time[i] = dongle_time;
 }
 
-static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t signal_id)
+static uint64_t dongle_track(encounter_broadcast_t *enc,
+    int8_t rssi, uint64_t signal_id)
 {
   // Check the broadcast UUID
   beacon_id_t service_id = (*(enc->b) & BEACON_SERVICE_ID_MASK) >> 16;
   if (service_id != BROADCAST_SERVICE_ID) {
-    log_telemf("%02x,%u,%u,%lu\r\n",
-               TELEM_TYPE_BROADCAST_ID_MISMATCH,
-               dongle_time, epoch,
-               signal_id);
+    log_telemf("%02x,%u,%u,%lu\r\n", TELEM_TYPE_BROADCAST_ID_MISMATCH,
+        dongle_time, epoch, signal_id);
     return signal_id;
   }
 
@@ -314,23 +313,21 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
   stat_add(rssi, stats.scan_rssi);
 #endif
 
-//    hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID");
-
   // determine which tracked id, if any, is a match
-  size_t i = DONGLE_MAX_BC_TRACKED;
-  for (size_t j = 0; j < DONGLE_MAX_BC_TRACKED; j++) {
-    if (!compare_eph_id(enc->eph, &cur_id[j])) {
-      i = j;
+  int found = 0, i;
+  for (i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
+    if (!compare_eph_id(enc->eph, &cur_id[i])) {
+      found = 1;
+      break;
     }
   }
 
-  if (i == DONGLE_MAX_BC_TRACKED) {
+  if (found == 0) {
     // if no match was found, start tracking the new id, replacing the oldest
     // one currently tracked
     i = cur_id_idx;
-    log_debugf("new ephemeral id observed (beacon=%lu), tracking at index %d\r\n",
-               enc->b, i);
-    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph_id");
+    log_debugf("new ephid, beacon: %lu, tracking idx: %d\r\n", enc->b, i);
+    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "new ID");
     cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
     memcpy(&cur_id[i], enc->eph->bytes, BEACON_EPH_ID_HASH_LEN);
     obs_time[i] = dongle_time;
@@ -340,57 +337,62 @@ static uint64_t dongle_track(encounter_broadcast_t *enc, int8_t rssi, uint64_t s
 #endif
     log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
        dongle_time, epoch, signal_id, enc->b, enc->t);
-  } else {
-    // when a matching ephemeral id is observed
-    log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
-       dongle_time, epoch, signal_id, enc->b, enc->t);
-    // check conditions for a valid encounter
-    dongle_timer_t dur = dongle_time - obs_time[i];
-    if (dur >= DONGLE_ENCOUNTER_MIN_TIME) {
-      _dongle_encounter_(enc, i);
-#ifdef MODE__STAT
-      stat_add(rssi, stats.encounter_rssi);
-#endif
-      log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
-         dongle_time, epoch, signal_id, enc->b, enc->t, dur);
-    }
+
+    return signal_id;
   }
+
+  // when a matching ephemeral id is observed
+  log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
+     dongle_time, epoch, signal_id, enc->b, enc->t);
+  // check conditions for a valid encounter
+  dongle_timer_t dur = dongle_time - obs_time[i];
+
+  /*
+   * ephemeral id observed only momentarily, do not log it yet.
+   */
+  if (dur < DONGLE_ENCOUNTER_MIN_TIME)
+    return signal_id;
+
+  _dongle_encounter_(enc, i);
+#ifdef MODE__STAT
+  stat_add(rssi, stats.encounter_rssi);
+#endif
+  log_telemf("%02x,%u,%u,%lu,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
+     dongle_time, epoch, signal_id, enc->b, enc->t, dur);
+
   return signal_id;
 }
 
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
-#define len (data_len)
-#define add (addr->addr)
-#define dat (data)
   // Filter mis-sized packets
-  if (len != ENCOUNTER_BROADCAST_SIZE + 1) {
+  if (data_len != ENCOUNTER_BROADCAST_SIZE + 1) {
     // TODO: should check for a periodic packet identifier
     return;
   }
   LOCK
-  log_telemf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
+  log_debugf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
       TELEM_TYPE_SCAN_RESULT, dongle_time, epoch, signal_id,
-      add[0], add[1], add[2], add[3], add[4], add[5], rssi);
+      addr->addr[0], addr->addr[1], addr->addr[2], addr->addr[3],
+      addr->addr[4], addr->addr[5], rssi);
   //print_bytes(dat, data_len, "scan-data pre-decode");
 //    hexdumpn(dat, 31, "raw");
-  decode_payload(dat);
+  decode_payload(data);
   //print_bytes(dat, data_len, "scan-data decoded");
   encounter_broadcast_t en;
-  decode_encounter(&en, (encounter_broadcast_raw_t *)dat);
+  decode_encounter(&en, (encounter_broadcast_raw_t *)data);
   dongle_track(&en, rssi, signal_id);
   signal_id++;
   UNLOCK
-#undef dat
-#undef data
-#undef add
 }
 
+extern uint32_t timer_freq;
 void dongle_info()
 {
   log_infof("%s", "=== Dongle Info: ===\r\n");
   log_infof("    Dongle ID:                    0x%lx\r\n", config.id);
   log_infof("    Initial clock:                %lu\r\n", config.t_init);
+  log_infof("    Timer frequency:              %u Hz\r\n", timer_freq);
   log_infof("    Backend public key size:      %lu bytes\r\n",
       config.backend_pk_size);
   log_infof("    Secret key size:              %lu bytes\r\n",

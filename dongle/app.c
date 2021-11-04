@@ -33,7 +33,8 @@ extern void dongle_start();
 // Sync handle
 static uint16_t sync_handle = 0;
 
-void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle, void *data)
+void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
+    __attribute__ ((unused)) void *data)
 {
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
@@ -78,11 +79,9 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
     case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
 
-//#undef addr
 #ifdef MODE__LEGACY_LOG
       // First, log into the legacy decode pipeline
-      dongle_log(&report.address,
-                 report.rssi, report.data.data, report.data.len);
+      dongle_log(&report.address, report.rssi, report.data.data, report.data.len);
 #endif
 #if MODE__PERIODIC
       // then check for periodic info in packet

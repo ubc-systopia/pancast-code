@@ -6,7 +6,7 @@
 #include "common/src/settings.h"
 
 
-//#define PERIODIC_TEST // uncomment to send test data
+#define PERIODIC_TEST // uncomment to send test data
 //#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
 
 
@@ -102,5 +102,6 @@ void beacon_broadcast();
 #endif
 void _beacon_info_();
 int _set_adv_data_();
+void add_sent_packet();
 int beacon_clock_increment(beacon_timer_t time);
 #endif

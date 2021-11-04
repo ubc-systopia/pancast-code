@@ -43,6 +43,11 @@ int adv_index;
 uint32_t timer_freq;
 uint64_t timer_ticks;
 
+// Channel map is 5 bytes and contains 37 1-bit fields.
+// The nth field (in the range 0 to 36) contains the value for the link layer
+// channel index n.
+const uint8_t chan_map[CHAN_MAP_SIZE] = { 0x04, 0x40, 0x00, 0x00, 0x00 };
+
 /* Initialize application */
 void app_init(void)
 {
@@ -73,7 +78,7 @@ void set_risk_data(int len, uint8_t *data)
 #ifdef PERIODIC_TEST
 
 #define PACKET_REPLICATION 1
-#define CHUNK_REPLICATION 50
+#define CHUNK_REPLICATION 1
 
 #define TEST_NUM_PACKETS_PER_FILTER \
   (1 + ((TEST_FILTER_LEN - 1) / MAX_PACKET_SIZE))                       // N
@@ -180,6 +185,18 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       // Extract unique ID from BT Address.
       sc = sl_bt_system_get_identity_address(&address, &address_type);
       app_assert_status(sc);
+
+      log_debugf("address: %X %X %X %X %X %X\r\n", address.addr[5], address.addr[4],
+    		  address.addr[3], address.addr[2], address.addr[1],
+			  address.addr[0]);
+
+
+      // comment to use random channel selection
+      sc = sl_bt_gap_set_data_channel_classification(CHAN_MAP_SIZE, chan_map);
+
+      if (sc != 0) {
+    	  log_errorf("Error setting channel map, sc: 0x%X", sc);
+      }
 
       int16_t set_min;
       int16_t set_max;

@@ -101,6 +101,8 @@ typedef struct
   uint32_t epochs;
   uint32_t sent_broadcast_packets;
   uint32_t total_packets_sent;
+  uint32_t crc_errors;
+  uint32_t failures;
   stat_t broadcast_payload_update_duration;
 } beacon_stats_t;
 

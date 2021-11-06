@@ -116,6 +116,8 @@ static beacon_timer_t stat_cycles;
 static beacon_timer_t stat_epochs;
 uint32_t stat_sent_broadcast_packets;
 uint32_t stat_total_packets_sent;
+uint32_t stat_crc_errors;
+uint32_t stat_failures;
 #endif
 
 //
@@ -199,6 +201,8 @@ void beacon_stat_update()
   stats.epochs = stat_epochs;
   stats.sent_broadcast_packets = stat_sent_broadcast_packets;
   stats.total_packets_sent = stat_total_packets_sent;
+  stats.crc_errors = stat_crc_errors;
+  stats.failures = stat_failures;
 }
 
 static void _beacon_stats_()
@@ -210,16 +214,18 @@ static void _beacon_stats_()
 //  log_infof("[%lu] broadcast payload update: %f\r\n",
 //      stats.broadcast_payload_update_duration);
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-  beacon_stats_init();
+ // beacon_stats_init();
 }
 
 static void _beacon_error_rate_stats_()
 {
-  log_infof("sent broadcast packets: %lu, total sent packets: %lu\r\n",
-		  stats.sent_broadcast_packets, stats.total_packets_sent);
+  log_infof("sent broadcast packets: %lu, total sent packets: %lu, "
+		  "crc errors: %lu, failures: %lu\r\n",
+		  stats.sent_broadcast_packets, stats.total_packets_sent,
+		  stats.crc_errors, stats.failures);
 
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-  beacon_stats_init();
+//  beacon_stats_init();
 }
 #endif
 
@@ -233,6 +239,7 @@ static void _beacon_report_()
   beacon_stat_update();
   _beacon_stats_();
   _beacon_error_rate_stats_();
+  beacon_stats_init();
   stat_start = beacon_time;
   stat_cycles = 0;
   stat_epochs = 0;
@@ -250,8 +257,10 @@ void beacon_log_counters()
   sl_bt_system_get_counters(1, &tx_packets, &rx_packets, &crc_errors, &failures);
 
   stat_total_packets_sent = stat_total_packets_sent + (uint32_t)tx_packets;
+  stat_crc_errors = stat_crc_errors + (uint32_t)crc_errors;
+  stat_failures = stat_failures + (uint32_t)failures;
 
-  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
+  // log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
 }
 
 void beacon_reset_counters()

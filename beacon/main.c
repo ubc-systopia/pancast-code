@@ -237,6 +237,7 @@ int main(void)
       send_test_risk_data();
       add_delay_ms(PER_ADV_INTERVAL * 1.25);
       add_sent_packet();
+      beacon_log_counters();
       float endtime = now();
       log_debugf("LOOP TIME: %f\r\n", (endtime - starttime));
 

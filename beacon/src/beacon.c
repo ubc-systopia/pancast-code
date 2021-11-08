@@ -114,10 +114,10 @@ static beacon_timer_t report_time; // Report tracking clock
 static beacon_timer_t stat_start;
 static beacon_timer_t stat_cycles;
 static beacon_timer_t stat_epochs;
-uint32_t stat_sent_broadcast_packets;
-uint32_t stat_total_packets_sent;
-uint32_t stat_crc_errors;
-uint32_t stat_failures;
+uint32_t stat_sent_broadcast_packets = 0;
+uint32_t stat_total_packets_sent = 0;
+uint32_t stat_crc_errors = 0;
+uint32_t stat_failures = 0;
 #endif
 
 //
@@ -211,21 +211,17 @@ static void _beacon_stats_()
       beacon_time, stats.start, stats.cycles, stats.epochs, stats.storage_checksum);
   stat_show(stats.broadcast_payload_update_duration,
       "[broadcast payload] Update duration", "ms");
-//  log_infof("[%lu] broadcast payload update: %f\r\n",
-//      stats.broadcast_payload_update_duration);
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
- // beacon_stats_init();
 }
 
 static void _beacon_error_rate_stats_()
 {
-  log_infof("sent broadcast packets: %lu, total sent packets: %lu, "
-		  "crc errors: %lu, failures: %lu\r\n",
+  log_infof("sent broadcast packets: %u, total sent packets: %u, "
+		  "crc errors: %u, failures: %u\r\n",
 		  stats.sent_broadcast_packets, stats.total_packets_sent,
 		  stats.crc_errors, stats.failures);
 
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-//  beacon_stats_init();
 }
 #endif
 

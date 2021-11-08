@@ -104,31 +104,25 @@ void dongle_scan(void)
   dongle_init();
 
   // Scan Start
-  int err = 0;
+  sl_status_t sc = 0;
 
 #if MODE__PERIODIC
-  sl_status_t sc;
   // Set scanner timing
-  log_debugf("Setting scanner timing\r\n");
   sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
-  app_assert_status(sc);
+  log_debugf("set scanner timing, sc: %d\r\n", sc);
 
   // Set scanner mode
-  log_debugf("Setting scanner mode\r\n");
   sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
-  app_assert_status(sc);
+  log_debugf("set scanner mode, sc: %d\r\n", sc);
 
   // Set sync parameters
-  log_debugf("Setting sync parameters\r\n");
   sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
-  app_assert_status(sc);
+  log_debugf("set sync parameters, sc: %d\r\n", sc);
 
   // Start scanning
-  log_debugf("Starting scan\r\n");
   sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
-  app_assert_status(sc);
+  log_debugf("start scan, sc: %d\r\n", sc);
 
-  err = sc;
 #else
   sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
      DONGLE_SCAN_INTERVAL, DONGLE_SCAN_WINDOW);
@@ -136,13 +130,6 @@ void dongle_scan(void)
   sl_bt_scanner_start(gap_1m_phy,
     sl_bt_scanner_discover_observation); // scan all devices
 #endif
-
-  if (err) {
-    log_errorf("Scanning failed to start (err %d)\r\n", err);
-    return;
-  } else {
-    log_debugf("%s", "Scanning successfully started\r\n");
-  }
 }
 
 // INIT
@@ -279,12 +266,6 @@ static int decode_encounter(encounter_broadcast_t *dat,
 
 static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
 {
-  // when a valid encounter is detected
-  // log the encounter
-//    log_infof("Beacon Encounter (id=%lu, t_b=%lu, t_d=%lu)\r\n", *en.b, *en.t,
-//               dongle_time);
-  //log_infof("%s", "Encounter! ");
-  //display_eph_id(enc->eph);
   hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID", *enc->b, 0, *enc->t);
 
   // Write to storage
@@ -452,7 +433,6 @@ void dongle_report()
   report_time = dongle_time;
 }
 
-#undef alpha
 #undef LOG_LEVEL__INFO
 //#undef TEST_DONGLE
 #undef MODE__STAT

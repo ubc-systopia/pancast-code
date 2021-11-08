@@ -70,7 +70,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
   switch (SL_BT_MSG_ID(evt->header)) {
     case sl_bt_evt_system_boot_id:
       dongle_time_init();
-      log_debugf("Bluetooth start\r\n");
       log_debugf("%s", "Bluetooth device booted and ready\r\n");
       dongle_start();
       log_debugf("%s", "Dongle started\r\n");

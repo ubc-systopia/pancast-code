@@ -79,7 +79,6 @@ int main(void)
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
 
   // Main timer (for main clock)
-  log_debugf("%s", "Starting main clock\r\n");
   uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
   sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_start_periodic_timer_ms(&timer,

@@ -150,6 +150,10 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
       sto->test_filter_size = TEST_FILTER_LEN;
   }
   sto->map.test_filter = off;
+  /*
+   * important to place stats on a separate page that can be repeatedly
+   * erased and written to in order to ensure persistence of stats correctly.
+   */
   sto->map.stat = next_multiple(sto->page_size,
       sto->map.test_filter + sto->test_filter_size);
 #undef read

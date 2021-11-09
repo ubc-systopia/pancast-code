@@ -13,9 +13,12 @@ extern dongle_timer_t dongle_time;
 extern dongle_timer_t report_time;
 
 int test_errors = 0;
-#define TEST_MAX_ENCOUNTERS 64
+#define TEST_MAX_ENCOUNTERS 16
 int test_encounters = 0;
 int total_test_encounters = 0;
+/*
+ * a simple fifo cache which can be used for matching encounter entries
+ */
 dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
 
 void dongle_test_encounter(encounter_broadcast_t *enc)

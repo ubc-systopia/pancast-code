@@ -37,25 +37,20 @@
 
 int main(void)
 {
+  sl_status_t sc = 0;
   // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
   // Note that if the kernel is present, processing task(s) will be created by
   // this call.
   sl_system_init();
 
   // Initialize the application.
-  sl_status_t sc = app_init();
+  sc = app_init();
 
 #if defined(SL_CATALOG_KERNEL_PRESENT)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
   log_debugf("%s", "=== Kernel start ===\r\n");
-
-  sc = sl_sleeptimer_init();
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed sleeptimer init, sc: %d\r\n", sc);
-    return sc;
-  }
 
   // Initialize the main timer
   uint8_t main_timer_handle = MAIN_TIMER_HANDLE;

@@ -59,6 +59,7 @@ void add_delay_ms(uint32_t ms) {
 
 int main(void)
 {
+  sl_status_t sc = 0;
   // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
   // Note that if the kernel is present, processing task(s) will be created by
   // this call.
@@ -76,9 +77,6 @@ int main(void)
 
   // Set pin PB01 for output
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
-
-  // Set up timers
-  sl_status_t sc = sl_sleeptimer_init();
 
   // Main timer (for main clock)
   log_debugf("%s", "Starting main clock\r\n");

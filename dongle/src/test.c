@@ -32,7 +32,7 @@ void dongle_test_encounter(encounter_broadcast_t *enc)
   log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
   //_display_encounter_(&test_en);
 #undef test_en
-  total_test_encounters++;
+  total_test_encounters = (total_test_encounters + 1) % TEST_MAX_ENCOUNTERS;
 }
 
 uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)

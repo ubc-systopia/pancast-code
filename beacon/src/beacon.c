@@ -211,7 +211,6 @@ static void _beacon_stats_()
       beacon_time, stats.start, stats.cycles, stats.epochs, stats.storage_checksum);
   stat_show(stats.broadcast_payload_update_duration,
       "[broadcast payload] Update duration", "ms");
-  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
 }
 
 static void _beacon_error_rate_stats_()
@@ -220,8 +219,6 @@ static void _beacon_error_rate_stats_()
 		  "crc errors: %u, failures: %u\r\n",
 		  stats.sent_broadcast_packets, stats.total_packets_sent,
 		  stats.crc_errors, stats.failures);
-
-  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
 }
 #endif
 
@@ -235,6 +232,7 @@ static void _beacon_report_()
   beacon_stat_update();
   _beacon_stats_();
   _beacon_error_rate_stats_();
+  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
   beacon_stats_init();
   stat_start = beacon_time;
   stat_cycles = 0;

@@ -33,9 +33,9 @@
 /* Periodic Advertising */
 #define PER_ADV_HANDLE 0xff
 #define MIN_ADV_INTERVAL 0x20  // min. adv. interval (milliseconds * 1.6)
-#define MAX_ADV_INTERVAL 0x20 // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 10 // 100 ms - round ms number since update timer in ms
-#define PER_FLAGS 0 // no periodic advertising flags
+#define MAX_ADV_INTERVAL 0x20  // max. adv. interval (milliseconds * 1.6)
+#define PER_ADV_INTERVAL 10    // per. adv. interval (units of 1.25ms)
+#define PER_FLAGS 0            // no periodic advertising flags
 #define PER_TX_POWER GLOBAL_TX_POWER
 
 #define CHAN_MAP_SIZE 5 // size of array used to map channels

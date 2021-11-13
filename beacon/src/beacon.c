@@ -500,7 +500,6 @@ static void _beacon_epoch_()
 
 int _set_adv_data_()
 {
-#ifndef MODE__DISABLE_LEGACY_DATA
 #ifdef BEACON_PLATFORM__GECKO
   log_debugf("%s", "Setting legacy adv data...\r\n");
   print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
@@ -513,7 +512,6 @@ int _set_adv_data_()
   }
   log_debugf("%s", "Success!\r\n");
 #else
-#endif
 #endif
   return 0;
 }

@@ -15,7 +15,7 @@
 /*
  * #time units between statistic reports
  */
-#define BEACON_REPORT_INTERVAL 2
+#define BEACON_REPORT_INTERVAL 10
 
 /*
  * uncomment to set global params for testing
@@ -39,7 +39,7 @@
 /*
  * number of time units (in minutes) in one epoch
  */
-#define BEACON_EPOCH_LENGTH 2
+#define BEACON_EPOCH_LENGTH 15
 
 #endif /* PANCAST__TEST */
 

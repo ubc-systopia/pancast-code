@@ -8,3 +8,5 @@ bootloader
 tools
 zephyr
 configs
+cscope.*
+tags

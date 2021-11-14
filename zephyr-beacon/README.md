@@ -12,10 +12,22 @@ PanCast Beacon / Network Beacon Implementation based on the Silicon Labs Gecko S
 1. Navigate to the root Zephyr directory (the one containing the samples directory)
 2. Issue the following command: `west build -p auto -b nrf52dk_nrf52832 <app_path> -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` where `<app_path>` is the full path to the application to be built (For example: `$HOME/projects/pancast-code/ble-encounters/beacon`).
 
+### Troubleshooting
+1. On Apple M1, `west flash` JLink dll may not be recognized properly:
+
+```
+ERROR: JLinkARM DLL load failed. Try again. If it keeps failing, please
+ERROR: reinstall latest JLinkARM from Segger webpage.
+NOTE: For additional output, try running again with logging enabled (--log).
+NOTE: Any generated log error messages will be displayed.
+```
+
+- Download and install JLink from [SEGGER](https://www.segger.com/downloads/jlink/) for x86\_64 (Intel) target for Mac. (You may need to use [Rosetta](https://support.apple.com/en-ca/HT211861), or minimally switch the architecture to [x86\_64](https://vineethbharadwaj.medium.com/m1-mac-switching-terminal-between-x86-64-and-arm64-e45f324184d9) for installing JLink).
+
 ## Flashing the application
 
 1. Make sure the development board is plugged in.
-2. In the root Zephyr directory, run:   `west flash`, to flash the currently built application.
+2. In the root Zephyr directory, run:   `west flash`, to flash the currently built application. Alternatively, can directly run
 
 #### VSCode Setup (Optional)
 1. Make sure you have followed the steps under General Setup and Building the App.

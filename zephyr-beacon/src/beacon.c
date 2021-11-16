@@ -66,7 +66,7 @@ void main(void)
   log_infof("=== Starting %s ===\r\n", CONFIG_BT_DEVICE_NAME);
   timer_freq = sys_clock_hw_cycles_per_sec();
   int err = bt_enable(_beacon_broadcast_);
-  log_errorf("beacon enable, ret: %d\r\n", err);
+  log_debugf("beacon enable, ret: %d\r\n", err);
 }
 
 //
@@ -507,8 +507,6 @@ int beacon_clock_increment(beacon_timer_t time)
 
 int beacon_loop()
 {
-  _beacon_update_();
-
   uint32_t lp_timer_status = 0, hp_timer_status = 0, alt_timer_status = 0;
 
   int err = 0;
@@ -554,7 +552,6 @@ void _beacon_broadcast_(int err)
   int8_t tx_power = MAX_TX_POWER;
   _beacon_load_();
   _beacon_init_();
-  _beacon_update_();
   err = _beacon_advertise_();
   set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
   beacon_loop();

@@ -418,7 +418,6 @@ static void _beacon_epoch_()
   old_epoch = epoch;
   epoch = epoch_i(beacon_time, config.t_init);
   if (!cycles || epoch != old_epoch) {
-    log_debugf("EPOCH STARTED: %u\r\n", epoch);
     // When a new epoch has started, generate a new ephemeral id
     _gen_ephid_();
     if (epoch != old_epoch) {

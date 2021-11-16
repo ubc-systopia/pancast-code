@@ -53,10 +53,9 @@ int _flash_read_(beacon_storage *sto, storage_addr_t off, void *data, size_t siz
 
 int _flash_write_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
 {
-  log_debugf("size: %d bytes, addr: 0x%x, flash off: 0x%0x\r\n",
-      size, off, sto->map.config);
   int ret = flash_write(sto->dev, off, data, size);
-  log_errorf("ret: %d\r\n", ret);
+  log_debugf("size: %d bytes, addr: 0x%x, flash off: 0x%0x, ret: %d\r\n",
+      size, off, sto->map.config, ret);
   return ret;
 }
 

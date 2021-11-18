@@ -105,10 +105,7 @@ static uint32_t alt_time_in_ms = 1000; // alt clock tick time (currently 1s)
 static uint8_t legacy_set_handle = 0xf1;
 #endif
 static bt_wrapper_t payload; // container for actual blutooth payload
-//
-// Reporting
-static beacon_timer_t report_time; // Report tracking clock
-//
+
 // Statistics
 #ifdef MODE__STAT
 static beacon_timer_t stat_start;
@@ -224,11 +221,10 @@ static void _beacon_error_rate_stats_()
 
 static void _beacon_report_()
 {
-  if (beacon_time - report_time < BEACON_REPORT_INTERVAL)
+#ifdef MODE__STAT
+  if (beacon_time - stat_start < BEACON_REPORT_INTERVAL)
     return;
 
-  report_time = beacon_time;
-#ifdef MODE__STAT
   beacon_stat_update();
   _beacon_stats_();
   _beacon_error_rate_stats_();
@@ -448,7 +444,6 @@ static void _beacon_init_()
   cycles = 0;
 
   beacon_time = config.t_init;
-  report_time = beacon_time;
 
 #ifdef MODE__STAT
   stat_epochs = 0;

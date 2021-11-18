@@ -63,9 +63,10 @@ uint32_t timer_freq = 0;
  */
 void main(void)
 {
+  int err = 0;
   log_infof("=== Starting %s ===\r\n", CONFIG_BT_DEVICE_NAME);
   timer_freq = sys_clock_hw_cycles_per_sec();
-  int err = bt_enable(_beacon_broadcast_);
+  err = bt_enable(_beacon_broadcast_);
   log_debugf("beacon enable, ret: %d\r\n", err);
 }
 

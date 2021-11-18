@@ -262,9 +262,10 @@ static int decode_encounter(encounter_broadcast_t *dat,
 }
 
 
-static void _dongle_encounter_(encounter_broadcast_t *enc, size_t i)
+static void _dongle_encounter_(encounter_broadcast_t *enc, int8_t rssi, size_t i)
 {
-  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID", *enc->b, 0, *enc->t);
+  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
+      *enc->b, 0, *enc->t, rssi);
 
   // Write to storage
   dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
@@ -332,7 +333,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
   if (dur < DONGLE_ENCOUNTER_MIN_TIME)
     return signal_id;
 
-  _dongle_encounter_(enc, i);
+  _dongle_encounter_(enc, rssi, i);
 #ifdef MODE__STAT
   stat_add(rssi, stats.encounter_rssi);
 #endif

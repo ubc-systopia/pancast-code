@@ -41,7 +41,7 @@ int risk_data_len;
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
 int adv_index;
 
-uint32_t timer_freq;
+uint32_t timer_freq = 0;
 uint64_t timer_ticks;
 
 // Channel map is 5 bytes and contains 37 1-bit fields.
@@ -157,6 +157,8 @@ void send_test_risk_data()
 #endif
 }
 
+float adv_start = -1;
+
 void sl_timer_on_expire(
     __attribute__ ((unused)) sl_sleeptimer_timer_handle_t *handle,
     void *data)
@@ -168,8 +170,6 @@ void sl_timer_on_expire(
   }
 #undef user_handle
 }
-
-float adv_start = -1;
 
 /* Bluetooth stack event handler.
   This overrides the dummy weak implementation.

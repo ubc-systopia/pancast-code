@@ -150,8 +150,6 @@ void dongle_init()
 
   dongle_download_init();
 
-  dongle_download_stats_init();
-
   log_infof("%s", "Dongle initialized\r\n");
 
   dongle_info();
@@ -422,9 +420,18 @@ void dongle_report()
   dongle_encounter_report();
 
 #ifdef MODE__STAT
-  dongle_stats(&storage);
+  dongle_stats();
   dongle_download_stats();
+  char statbuf[1024];
+  memset(statbuf, 0, 1024);
+  memcpy(statbuf, (void *) &stats, sizeof(dongle_stats_t));
+  memcpy(statbuf+sizeof(dongle_stats_t), (void *) &download_stats,
+      sizeof(downloads_stats_t));
+  dongle_storage_save_stat(&storage, statbuf,
+      sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
   stat_start = dongle_time;
+  dongle_stats_reset();
+  dongle_download_stats_init();
 #endif
 
 #if TEST_DONGLE

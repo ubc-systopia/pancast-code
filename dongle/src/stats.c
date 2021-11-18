@@ -11,15 +11,27 @@ void dongle_stats_reset()
   memset(&stats, 0, sizeof(dongle_stats_t));
 }
 
+extern void dongle_encounter_report();
+
 void dongle_stats_init(dongle_storage *sto)
 {
-    // must call dongle_config_load before this
-  dongle_storage_read_stat(sto, &stats, sizeof(dongle_stats_t));
+  // must call dongle_config_load before this
+  char statbuf[1024];
+  memset(statbuf, 0, 1024);
+  dongle_storage_read_stat(sto, statbuf,
+      sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
+  memcpy(&stats, statbuf, sizeof(dongle_stats_t));
+  memcpy(&download_stats, statbuf+sizeof(dongle_stats_t),
+      sizeof(downloads_stats_t));
+
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");
-    dongle_stats(sto);
+    dongle_encounter_report();
+    dongle_stats();
+    dongle_download_stats();
   } else {
     dongle_stats_reset();
+    dongle_download_stats_init();
   }
 }
 
@@ -36,7 +48,7 @@ void stat_compute_thrpt()
 }
 
 
-void dongle_stats(dongle_storage *sto)
+void dongle_stats()
 {
   stat_compute_thrpt(&stats);
   log_infof("[Legacy adv] #ephids: %d, #scan results: %lu\r\n",
@@ -50,8 +62,6 @@ void dongle_stats(dongle_storage *sto)
       stats.num_periodic_data, stats.num_periodic_data_error,
       stats.total_periodic_data_size, stats.total_periodic_data_time,
       stats.periodic_data_avg_thrpt);
-  dongle_storage_save_stat(sto, &stats, sizeof(dongle_stats_t));
-  dongle_stats_reset();
 }
 
 void dongle_download_show_stats(download_stats_t * stats, char *name)
@@ -84,6 +94,4 @@ void dongle_download_stats()
       "=== [Risk broadcast] failed ===");
   dongle_download_show_stats(&download_stats.all_download_stats,
       "=== [Risk broadcast] overall ===");
-
-  dongle_download_stats_init();
 }

@@ -55,7 +55,7 @@ typedef struct {
 } downloads_stats_t;
 
 void dongle_stats_init(dongle_storage *sto);
-void dongle_stats(dongle_storage *sto);
+void dongle_stats();
 void dongle_download_stats();
 void dongle_download_stats_init();
 

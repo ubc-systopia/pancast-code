@@ -25,7 +25,7 @@
       }                                                           \
       logf("%.2x ", ((uint8_t *)data)[i]);                        \
   }                                                               \
-  logf("%u %lu %u\r\n", arg1, arg2, arg3)
+  logf("%u %llu %u\r\n", arg1, arg2, arg3)
 
 #define print_bytes(data, len, name) \
   log_bytes(log_debugf, log_debugf, data, len, name, 0, 0, 0)

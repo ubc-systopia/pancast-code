@@ -11,7 +11,7 @@
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
-extern dongle_timer_t report_time;
+extern dongle_timer_t stat_start;
 extern dongle_timer_t dongle_time;
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
@@ -398,7 +398,7 @@ void dongle_storage_log_encounter(dongle_storage *sto,
   num3 = dongle_storage_num_encounters_current(sto);
   log_debugf("time: %u, %u #entries: %lu -> %lu -> %lu, "
       "H: %lu, T: %lu, off: %u, size: %u %u\r\n",
-      *dongle_time, report_time, num1, num2, num3,
+      *dongle_time, stat_start, num1, num2, num3,
       sto->encounters.head, sto->encounters.tail,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
 }

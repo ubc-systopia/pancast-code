@@ -58,7 +58,7 @@ dongle_storage *get_dongle_storage()
 
 dongle_epoch_counter_t epoch;
 dongle_timer_t dongle_time; // main dongle timer
-dongle_timer_t report_time;
+dongle_timer_t stat_start;
 beacon_eph_id_t cur_id[DONGLE_MAX_BC_TRACKED]; // currently observed ephemeral id
 dongle_timer_t obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
 size_t cur_id_idx;
@@ -140,7 +140,7 @@ void dongle_init()
   dongle_load();
 
   dongle_time = config.t_init;
-  report_time = dongle_time;
+  stat_start = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
   non_report_entry_count = 0;
@@ -399,7 +399,7 @@ void dongle_encounter_report()
 
   log_infof("[%lu] last report time: %lu, "
       "#encounters [delta, total, stored]: %lu, %lu, %lu\r\n",
-      dongle_time, report_time, (num - non_report_entry_count), num, cur);
+      dongle_time, stats.start, (num - non_report_entry_count), num, cur);
 #if 0
   // Large integers here are casted for formatting compatabilty. This may result in false
   // output for large values.
@@ -415,14 +415,16 @@ void dongle_encounter_report()
 void dongle_report()
 {
   // do report
-  if (dongle_time - report_time < DONGLE_REPORT_INTERVAL)
+  if (dongle_time - stat_start < DONGLE_REPORT_INTERVAL)
     return;
 
+  stats.start = stat_start;
   dongle_encounter_report();
 
 #ifdef MODE__STAT
   dongle_stats(&storage);
   dongle_download_stats();
+  stat_start = dongle_time;
 #endif
 
 #if TEST_DONGLE
@@ -430,7 +432,6 @@ void dongle_report()
 #endif
 
   non_report_entry_count = dongle_storage_num_encounters_total(&storage);
-  report_time = dongle_time;
 }
 
 #undef LOG_LEVEL__INFO

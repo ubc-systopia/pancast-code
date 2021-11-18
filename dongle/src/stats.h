@@ -10,6 +10,7 @@
 typedef struct {
   uint8_t storage_checksum; // zero for valid stat data
 
+  dongle_timer_t start;
   uint32_t num_obs_ids;
   uint32_t num_scan_results;
   uint32_t num_periodic_data;

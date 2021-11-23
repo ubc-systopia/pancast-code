@@ -165,7 +165,7 @@ void dongle_load()
   dongle_storage_init(&storage);
   // Config load is required to properly set up the memory maps
   dongle_storage_load_config(&storage, &config);
-#ifdef MODE__TEST_CONFIG
+#ifdef MODE__SL_DONGLE_TEST_CONFIG
   config.id = TEST_DONGLE_ID;
   config.t_init = TEST_DONGLE_INIT_TIME;
   config.backend_pk_size = TEST_BACKEND_KEY_SIZE;

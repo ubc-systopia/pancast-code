@@ -4,7 +4,18 @@
 // Dongle Application
 #include "common/src/settings.h"
 
-// Application Config
+/*
+ * 1 - init test config
+ * 0 - load config from storage
+ */
+#define MODE__SL_DONGLE_TEST_CONFIG      1
+
+/*
+ * 1 - test encounters and OTPs inline
+ * 0 - disable the test
+ */
+#define TEST_DONGLE 0
+
 //#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
 #define MODE__STAT // enables telemetry aggregation
 /*
@@ -16,10 +27,6 @@
 #define MODE__LEGACY_LOG
 #define MODE__PERIODIC_FIXED_DATA
 //#define CUCKOOFILTER_FIXED_TEST
-
-#if TEST_DONGLE
-#define MODE__TEST_CONFIG
-#endif
 
 #include <assert.h>
 

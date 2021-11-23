@@ -8,6 +8,13 @@
 
 
 #define PERIODIC_TEST // uncomment to send test data
+/*
+ * 1 - init test config
+ * 0 - load config from storage
+ */
+#define MODE__SL_BEACON_TEST_CONFIG  1
+
+#define BEACON_MODE__NETWORK    // comment to build as non-network beacon
 //#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
 
 

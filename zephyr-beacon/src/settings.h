@@ -8,9 +8,10 @@
  */
 
 /*
- * load test config rather than flash
+ * 0 - init test config
+ * 1 - load config from storage
  */
-#define MODE__TEST_CONFIG
+#define MODE__NRF_BEACON_TEST_CONFIG  1
 
 /*
  * #time units between statistic reports

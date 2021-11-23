@@ -116,7 +116,7 @@ static void _beacon_load_()
   beacon_storage_init(&storage);
   // Load data
   beacon_storage_load_config(&storage, &config);
-#ifdef MODE__TEST_CONFIG
+#if MODE__NRF_BEACON_TEST_CONFIG
   config.beacon_id = TEST_BEACON_ID;
   config.beacon_location_id = TEST_BEACON_LOC_ID;
   config.t_init = TEST_BEACON_INIT_TIME;
@@ -559,4 +559,3 @@ void _beacon_broadcast_(int err)
 
 #undef MODE__STAT
 #undef APPL_VERSION
-#undef MODE__TEST_CONFIG

@@ -12,9 +12,9 @@
 #define Kbps    1000
 
 // maximum size of a secret key in bytes - used for data containing
-#define SK_MAX_SIZE 44
+#define SK_MAX_SIZE 2048
 // maximum size of a public key
-#define PK_MAX_SIZE 800
+#define PK_MAX_SIZE 512
 // number of bytes used from hash for eph. id - should be 15 in prod. (currently not supported)
 #define BEACON_EPH_ID_HASH_LEN 14
 // size of containers used internally

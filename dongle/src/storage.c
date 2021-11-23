@@ -144,14 +144,20 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
         cfg->backend_pk_size, PK_MAX_SIZE);
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
-  read(PK_MAX_SIZE, &cfg->backend_pk);
+  read(cfg->backend_pk_size, &cfg->backend_pk);
+  // slide through the extra space for a pubkey
+  off += PK_MAX_SIZE - cfg->backend_pk_size;
+
   read(sizeof(key_size_t), &cfg->dongle_sk_size);
   if (cfg->dongle_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for dongle privkey (%u > %u)\r\n",
         cfg->dongle_sk_size, SK_MAX_SIZE);
     cfg->dongle_sk_size = SK_MAX_SIZE;
   }
-  read(SK_MAX_SIZE, &cfg->dongle_sk);
+  read(cfg->dongle_sk_size, &cfg->dongle_sk);
+  // slide through the extra space for a pubkey
+  off += SK_MAX_SIZE - cfg->dongle_sk_size;
+
   sto->map.otp = off;
   // push onto the next blank page
   sto->map.stat = next_multiple(sto->page_size,

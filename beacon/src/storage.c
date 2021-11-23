@@ -136,6 +136,9 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, &cfg->backend_pk);
+  // slide through the extra space for a pubkey
+  off += PK_MAX_SIZE - cfg->backend_pk_size;
+
   read(sizeof(key_size_t), &cfg->beacon_sk_size);
   if (cfg->beacon_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for beacon privkey (%u > %u)\r\n",
@@ -143,6 +146,9 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     cfg->beacon_sk_size = SK_MAX_SIZE;
   }
   read(cfg->beacon_sk_size, &cfg->beacon_sk);
+  // slide through the extra space for a pubkey
+  off += SK_MAX_SIZE - cfg->beacon_sk_size;
+
   read(sizeof(test_filter_size_t), &sto->test_filter_size);
   if (sto->test_filter_size != TEST_FILTER_LEN) {
       log_errorf("Test filter length mismatch (%u != %u)\r\n",

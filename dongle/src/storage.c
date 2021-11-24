@@ -139,22 +139,26 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   read(sizeof(dongle_id_t), &cfg->id);
   read(sizeof(dongle_timer_t), &cfg->t_init);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
+  log_debugf("bknd key off: %u, size: %u\r\n", off, cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {
     log_errorf("Key size read for backend pubkey (%u > %u)\r\n",
         cfg->backend_pk_size, PK_MAX_SIZE);
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, &cfg->backend_pk);
+  hexdumpn(cfg->backend_pk.bytes, 16, "Server PK", 0, 0, 0, 0);
   // slide through the extra space for a pubkey
   off += PK_MAX_SIZE - cfg->backend_pk_size;
 
   read(sizeof(key_size_t), &cfg->dongle_sk_size);
+  log_debugf("dongle key off: %u, size: %u\r\n", off, cfg->dongle_sk_size);
   if (cfg->dongle_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for dongle privkey (%u > %u)\r\n",
         cfg->dongle_sk_size, SK_MAX_SIZE);
     cfg->dongle_sk_size = SK_MAX_SIZE;
   }
   read(cfg->dongle_sk_size, &cfg->dongle_sk);
+  hexdumpn(cfg->dongle_sk.bytes, 16, "Si Dongle SK", 0, 0, 0, 0);
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->dongle_sk_size;
 

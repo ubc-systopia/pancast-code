@@ -130,22 +130,26 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   read(sizeof(beacon_location_id_t), &cfg->beacon_location_id);
   read(sizeof(beacon_timer_t), &cfg->t_init);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
+  log_debugf("bknd key off: %u, size: %u\r\n", off, cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {
     log_errorf("Key size read for backend pubkey (%u > %u)\r\n",
         cfg->backend_pk_size, PK_MAX_SIZE);
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, &cfg->backend_pk);
+  hexdumpn(cfg->backend_pk.bytes, 16, "Server PK", 0, 0, 0, 0);
   // slide through the extra space for a pubkey
   off += PK_MAX_SIZE - cfg->backend_pk_size;
 
   read(sizeof(key_size_t), &cfg->beacon_sk_size);
+  log_debugf("beacon key off: %u, size: %u\r\n", off, cfg->beacon_sk_size);
   if (cfg->beacon_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for beacon privkey (%u > %u)\r\n",
         cfg->beacon_sk_size, SK_MAX_SIZE);
     cfg->beacon_sk_size = SK_MAX_SIZE;
   }
   read(cfg->beacon_sk_size, &cfg->beacon_sk);
+  hexdumpn(cfg->beacon_sk.bytes, 16, "Si Beacon SK", 0, 0, 0, 0);
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 

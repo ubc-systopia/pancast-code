@@ -54,16 +54,21 @@
 
 // Data Structures
 
+// Count for number of encounters
+typedef uint32_t enctr_entry_counter_t;
+
 // Fixed configuration info.
 // This is typically loaded from non-volatile storage at app
 // start and held constant during operation.
 typedef struct {
   dongle_id_t id;
   dongle_timer_t t_init;
-  key_size_t backend_pk_size; // size of backend public key
-  pubkey_t backend_pk;        // Backend public key
-  key_size_t dongle_sk_size;  // size of secret key
-  seckey_t dongle_sk;         // Secret Key
+  key_size_t backend_pk_size;     // size of backend public key
+  pubkey_t backend_pk;            // Backend public key
+  key_size_t dongle_sk_size;      // size of secret key
+  seckey_t dongle_sk;             // Secret Key
+  enctr_entry_counter_t en_tail;  // Encounter cursor tail
+  enctr_entry_counter_t en_head;  // Encounter cursor head
 } dongle_config_t;
 
 // One-Time-Passcode (OTP) representation
@@ -75,8 +80,6 @@ typedef struct {
   dongle_otp_val val;
 } dongle_otp_t;
 
-// Count for number of encounters
-typedef uint32_t enctr_entry_counter_t;
 
 // Management data structure for referring to locations in the
 // raw bluetooth data by name. Pointers are linked when a new
@@ -147,4 +150,5 @@ void dongle_on_periodic_data
 void dongle_on_periodic_data_error
 (int8_t rssi);
 void dongle_on_sync_lost();
+int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry *entry);
 #endif

@@ -162,6 +162,12 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->dongle_sk_size;
 
+  read(sizeof(uint32_t), &cfg->en_head);
+  log_infof("head: %u\r\n", cfg->en_head);
+  read(sizeof(uint32_t), &cfg->en_tail);
+  log_infof("tail: %u\r\n", cfg->en_tail);
+
+
   sto->map.otp = off;
   // push onto the next blank page
   sto->map.stat = next_multiple(sto->page_size,
@@ -194,6 +200,32 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   write(&cfg->backend_pk, PK_MAX_SIZE);
   write(&cfg->dongle_sk_size, sizeof(key_size_t));
   write(&cfg->dongle_sk, SK_MAX_SIZE);
+
+#undef write
+
+  log_debugf("off: %u, size: %u\r\n", sto->map.config, total_size);
+}
+
+void dongle_storage_save_cursor(dongle_storage *sto, dongle_config_t *cfg)
+{
+  log_debugf("%s", "Saving config\r\n");
+  storage_addr_t off = sto->map.config;
+  int total_size = sizeof(dongle_id_t) + sizeof(dongle_timer_t) +
+    sizeof(key_size_t)*2 + PK_MAX_SIZE + SK_MAX_SIZE;
+
+  pre_erase(sto, off, total_size);
+
+#define write(data, size) \
+  (_flash_write_(sto, off, data, size), off += size)
+
+  write(&cfg->id, sizeof(dongle_id_t));
+  write(&cfg->t_init, sizeof(dongle_timer_t));
+  write(&cfg->backend_pk_size, sizeof(key_size_t));
+  write(&cfg->backend_pk, PK_MAX_SIZE);
+  write(&cfg->dongle_sk_size, sizeof(key_size_t));
+  write(&cfg->dongle_sk, SK_MAX_SIZE);
+  write(&cfg->en_head, sizeof(enctr_entry_counter_t));
+  write(&cfg->en_tail, sizeof(enctr_entry_counter_t));
 
 #undef write
 
@@ -250,7 +282,7 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 #define inc_tail(_) \
   (sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT)
 
-void _log_increment_(dongle_storage *sto)
+void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
 {
   inc_head();
   // FORCED_DELETION
@@ -260,6 +292,10 @@ void _log_increment_(dongle_storage *sto)
     log_debugf("Head caught up; idx=%lu\r\n", (uint32_t)sto->encounters.head);
     inc_tail();
   }
+  // save head and tail to flash
+  cfg->en_head = sto->encounters.head;
+  cfg->en_tail = sto->encounters.tail;
+  dongle_storage_save_cursor(sto, cfg);
 }
 
 enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
@@ -374,10 +410,10 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
   }
 }
 
-void dongle_storage_log_encounter(dongle_storage *sto,
+void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
     beacon_location_id_t *location_id, beacon_id_t *beacon_id,
     beacon_timer_t *beacon_time, dongle_timer_t *dongle_time,
-    beacon_eph_id_t *eph_id)
+    beacon_eph_id_t *eph_id, int8_t rssi)
 {
   enctr_entry_counter_t num1, num2, num3;
   num1 = dongle_storage_num_encounters_current(sto);
@@ -397,12 +433,15 @@ void dongle_storage_log_encounter(dongle_storage *sto,
   write(location_id, sizeof(beacon_location_id_t));
   write(beacon_time, sizeof(beacon_timer_t));
   write(dongle_time, sizeof(dongle_timer_t));
+
+  eph_id->bytes[15] = rssi;
+
   write(eph_id, BEACON_EPH_ID_SIZE);
 
 #undef write
 
   sto->total_encounters++;
-  _log_increment_(sto);
+  _log_increment_(sto, cfg);
   num2 = dongle_storage_num_encounters_current(sto);
   _delete_old_encounters_(sto, *dongle_time);
   num3 = dongle_storage_num_encounters_current(sto);

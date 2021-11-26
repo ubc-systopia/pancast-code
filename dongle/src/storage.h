@@ -126,10 +126,10 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
     dongle_timer_t min_time, dongle_encounter_cb cb);
 
 // WRITE ENCOUNTER
-void dongle_storage_log_encounter(dongle_storage *sto,
+void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
     beacon_location_id_t *loc, beacon_id_t *beacon_id,
     beacon_timer_t *beacon_time, dongle_timer_t *dongle_time,
-    beacon_eph_id_t *eph_id);
+    beacon_eph_id_t *eph_id, int8_t rssi);
 
 #define DONGLE_STORAGE_MAX_PRINT_LEN 64
 

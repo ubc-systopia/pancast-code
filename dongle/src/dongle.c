@@ -139,12 +139,21 @@ void dongle_init()
 {
   dongle_load();
 
+  // Set encounters cursor to loaded config values,
+  // then load all stored encounters
+  if (config.en_tail == 0) {
+	  storage.encounters.head = config.en_head;
+	  storage.encounters.tail = config.en_tail;
+  }
+  dongle_storage_load_all_encounter(&storage, dongle_print_encounter);
+
   dongle_time = config.t_init;
   stat_start = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
   non_report_entry_count = 0;
   signal_id = 0;
+
 
   dongle_stats_init(&storage);
 
@@ -269,8 +278,8 @@ static void _dongle_encounter_(encounter_broadcast_t *enc, int8_t rssi, size_t i
       *enc->b, 0, *enc->t, rssi);
 
   // Write to storage
-  dongle_storage_log_encounter(&storage, enc->loc, enc->b, enc->t, &dongle_time,
-                               enc->eph);
+  dongle_storage_log_encounter(&storage, &config, enc->loc, enc->b, enc->t,
+		  &dongle_time, enc->eph, rssi);
 #if TEST_DONGLE
   dongle_test_encounter(enc);
 #endif
@@ -365,6 +374,21 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
   dongle_track(&en, rssi, signal_id);
   signal_id++;
   UNLOCK
+}
+
+// used as callback for dongle_load_encounter, for debugging purposes
+int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry *entry) {
+  // print entry ephemeral id and RSSI for now
+  beacon_eph_id_t *id = &entry->eph_id;
+  log_infof("EID at %u: "
+  "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+		  "RSSI: %d\r\n",
+	i, id->bytes[0], id->bytes[1], id->bytes[2], id->bytes[3], id->bytes[4],
+	id->bytes[5], id->bytes[6], id->bytes[7], id->bytes[8], id->bytes[9],
+	id->bytes[10], id->bytes[11], id->bytes[12], id->bytes[13],
+	(int8_t)id->bytes[15]);
+
+	return 1;
 }
 
 extern uint32_t timer_freq;

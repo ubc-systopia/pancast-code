@@ -434,6 +434,8 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
   write(beacon_time, sizeof(beacon_timer_t));
   write(dongle_time, sizeof(dongle_timer_t));
 
+  // store RSSI in the last byte slot of ephemeral ID. This byte is currently
+  // unused as we only use 14 byte ephemeral IDs
   eph_id->bytes[15] = rssi;
 
   write(eph_id, BEACON_EPH_ID_SIZE);

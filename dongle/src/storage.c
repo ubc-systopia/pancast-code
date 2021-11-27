@@ -146,7 +146,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, &cfg->backend_pk);
-  hexdumpn(cfg->backend_pk.bytes, 16, "Server PK", 0, 0, 0, 0);
+  hexdumpn(cfg->backend_pk.bytes, 16, "   Server PK", 0, 0, 0, 0);
   // slide through the extra space for a pubkey
   off += PK_MAX_SIZE - cfg->backend_pk_size;
 
@@ -289,7 +289,7 @@ void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
   // If the head catches, the tail, can either opt to block or delete.
   // We delete since newer records are preferred.
   if (sto->encounters.head == sto->encounters.tail) {
-    log_debugf("Head caught up; idx=%lu\r\n", (uint32_t)sto->encounters.head);
+    log_errorf("Encounter storage full; idx=%lu\r\n", (uint32_t)sto->encounters.head);
     inc_tail();
   }
   // save head and tail to flash

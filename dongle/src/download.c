@@ -295,7 +295,7 @@ void dongle_download_complete()
 
   // check existing log entries against the new filter
   dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
-#endif
+#endif /* CUCKOOFILTER_FIXED_TEST */
 
   dongle_download_reset();
 }

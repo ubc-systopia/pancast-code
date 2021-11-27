@@ -17,7 +17,11 @@
 #define PK_MAX_SIZE 512
 // number of bytes used from hash for eph. id - should be 15 in prod. (currently not supported)
 #define BEACON_EPH_ID_HASH_LEN 14
-// size of containers used internally
+/*
+ * size of containers used internally
+ * XXX: do not change this without updating the logic for storing encounters
+ * in dongles, which encodes rssi in the last byte of eph_id
+ */
 #define BEACON_EPH_ID_SIZE 16
 
 // size of a secret or public key

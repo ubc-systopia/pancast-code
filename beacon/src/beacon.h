@@ -65,8 +65,8 @@ typedef struct
 typedef struct bt_data bt_data_t;
 
 #else
-#define BEACON_ADV_MIN_INTERVAL 0x30
-#define BEACON_ADV_MAX_INTERVAL 0x60
+#define BEACON_ADV_MIN_INTERVAL 0x300 // 480ms
+#define BEACON_ADV_MAX_INTERVAL 0x320 // 500ms
 #define LEGACY_TX_POWER GLOBAL_TX_POWER
 
 typedef struct

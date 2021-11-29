@@ -4,7 +4,8 @@
 #include "common.h"
 #include "request.h"
 
-#include <fcntl.h>  
+#include <fcntl.h> 
+#include <time.h>
 #include <string.h>
 #include <termios.h>
 #include <pigpio.h>
@@ -19,9 +20,11 @@
 #define MAX_PACKET_SIZE (PAYLOAD_SIZE - PACKET_HEADER_LEN)  
 #define PACKET_REPLICATION 1
 #define CHUNK_REPLICATION 1
-#define MAX_PAYLOAD_SIZE 2000
+#define MAX_PAYLOAD_SIZE 100000
 
 #define REQ_HEADER_SIZE 8
+
+#define REQUEST_INTERVAL 86400 // how often in seconds to request data from backend
 
 extern void* uart_main(void* arg);
 

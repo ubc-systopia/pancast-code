@@ -20,14 +20,14 @@ int main(int argc, char *argv[]) {
   }
 
   // handle request once at beginning for now, until mutex is implemented
-  struct req_data request = {0};
-  int req_err = handle_request(&request); 
-  if (req_err != 0) {
-    printf("error in handle_request\r\n");
-    return -1;
-  }
+  //struct req_data request = {0};
+  //int req_err = handle_request(&request); 
+  //if (req_err != 0) {
+  //  printf("error in handle_request\r\n");
+  //  return -1;
+  //}
 
-  r_data.data = request;
+  //r_data.data = request;
 
   //err = pthread_create(&id[REQ_THREAD_ID], NULL, &request_main, (void*)&r_data);
   //if (err != 0) {

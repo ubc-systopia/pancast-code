@@ -2,15 +2,20 @@
 
 int fd;
 
-struct req_data* request_data;
+int data_ready = 0;
+
+struct req_data request_data;
+double last_request_time_sec;
 
 uint32_t prev_seq_num = 0;
 uint32_t seq_num = 0;
 uint32_t chunk_num = 0;
 uint8_t chunk_rep_count = 0;
 uint32_t num_chunks;
+uint32_t current_chunk_offset = 0;
 
 uint8_t payload_data[MAX_PAYLOAD_SIZE];
+
 uint32_t num_pkts;
 
 void* receive_log() {
@@ -24,69 +29,79 @@ void* receive_log() {
 }
 
 
-void convert_chunk_to_pkts(char* chunk, uint32_t len) {
+void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, uint32_t len) {
 
     num_pkts = len / (PAYLOAD_SIZE - PACKET_HEADER_LEN);
 
-    printf("num_pkts: %d\r\n", num_pkts);
-    printf("len: %lu\r\n", len);
+    //printf("num_pkts: %d\r\n", num_pkts);
+    //printf("len: %u\r\n", len);
 
     uint32_t data_len = PAYLOAD_SIZE - PACKET_HEADER_LEN;
 
     for (int i = 0; i < num_pkts; i++) {
       // Add sequence number
-      memcpy(payload_data + i*PAYLOAD_SIZE, &i, sizeof(uint32_t));
+      memcpy(payload_data + offset + i*PAYLOAD_SIZE, &i, sizeof(uint32_t));
       // Add chunk number
-      memcpy(payload_data + i*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
+      memcpy(payload_data + offset + i*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_number, sizeof(uint32_t));
       // Add chunk length
-      memcpy(payload_data + i*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
+      memcpy(payload_data + offset + i*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
 
       // Add data
-      memcpy(payload_data + i*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[i*data_len], data_len);
+      memcpy(payload_data + offset + i*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[i*data_len], data_len);
     }
     
+    // add last packet if data does not fit evenly 
     if (len % (PAYLOAD_SIZE - PACKET_HEADER_LEN) != 0) {
-      // Add last packet which has less data
-      //num_pkts++;
       // Add sequence number
-      memcpy(payload_data + (num_pkts-1)*PAYLOAD_SIZE, &num_pkts, sizeof(uint32_t));
+      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE, &num_pkts, sizeof(uint32_t));
       // Add chunk number
-      memcpy(payload_data + (num_pkts-1)*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_num, sizeof(uint32_t));
+      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_number, sizeof(uint32_t));
       // Add chunk length
-      memcpy(payload_data + (num_pkts-1)*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
+      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
       
-      uint32_t last_data_len = len - (num_pkts-1)*(PAYLOAD_SIZE - PACKET_HEADER_LEN);
+      uint32_t last_data_len = len - (num_pkts)*(PAYLOAD_SIZE - PACKET_HEADER_LEN);
       // Add data
-      memcpy(payload_data + (num_pkts-1)*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[data_len*num_pkts-1], last_data_len);
+      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[data_len*num_pkts-1], last_data_len);
+      num_pkts++;
     }
-
 }
 
 void make_request() {
 
-  struct req_data* new_data = malloc(sizeof(struct req_data));
+  data_ready = 0;
 
-  chunk_num++;
+  // get number of chunks in payload from backend
+  struct req_data chunk_count_data = {0};
+  handle_request_count(&chunk_count_data);
 
-  if (chunk_num >= num_chunks) {
-    chunk_num = 0;
+  memcpy(&num_chunks, chunk_count_data.response, sizeof(uint32_t));
+  // printf("num chunks: %u\r\n", num_chunks);
+
+  for (int i = 0; i < num_chunks; i++) {
+    // make request to backend for the chunk
+    struct req_data req_chunk = {0};
+    handle_request_chunk(&req_chunk, i);
+
+    uint32_t data_size = req_chunk.size - REQ_HEADER_SIZE;
+
+    // load chunk into payload_data[]
+    convert_chunk_to_pkts(req_chunk.response + sizeof(uint64_t), i, i*PAYLOAD_SIZE*num_pkts, data_size);
+    printf("total chunk size: %u\r\n", PAYLOAD_SIZE*num_pkts);	  
   }
 
-  handle_request_chunk(new_data, chunk_num);
-  
-  uint32_t real_data_size = new_data->size - REQ_HEADER_SIZE;
+  clock_t last_request_time = clock();
+  last_request_time_sec = ((double)last_request_time)/CLOCKS_PER_SEC;
+  printf("request at time: %f\r\n", last_request_time_sec);
 
-  // get len from the response data
-
-  convert_chunk_to_pkts(new_data->response + sizeof(uint64_t), real_data_size); 
-  //convert_chunk_to_pkts(new_data.response, new_data.size);
-
-  free(new_data);
-  
+  data_ready = 1;
 }
 
 
 void gpio_callback(int gpio, int level, uint32_t tick) {
+
+  if (data_ready == 0) {
+    return;
+  }
 
   if (level == 1) {
 
@@ -104,13 +119,23 @@ void gpio_callback(int gpio, int level, uint32_t tick) {
       printf("chunk_rep_count: %d\r\n", chunk_rep_count);
     }
     if (chunk_rep_count > CHUNK_REPLICATION) {
-      make_request();
+     // make_request(); instead want to move some data pointer to the next chunk
+     //  current_chunk_offset = current_chunk_offset + 1;
       chunk_rep_count = 0;
     }
   }
   else if (level == 0) {
     // no action
   }
+
+  clock_t curr_time = clock();
+  double curr_time_sec = ((double)curr_time)/CLOCKS_PER_SEC;
+
+  if (curr_time_sec - last_request_time_sec > REQUEST_INTERVAL) {
+    // handle request new data
+    last_request_time_sec = curr_time_sec;	  
+  }
+   
 }
 
 /* Set attributes for serial communication,
@@ -155,42 +180,19 @@ int set_interface_attribs(int fd, int speed) {
 void* uart_main(void* arg) {
 
   char* portname = TERMINAL;
-  struct risk_data* r_data = (struct risk_data*)arg;
+  // struct risk_data* r_data = (struct risk_data*)arg;
 
-  struct req_data count_data = {0};
-  handle_request_count(&count_data);
+  // make request to backend and fill payload_data
+  make_request();
 
-  //max_chunks = (uint32_t)count_data.response;
-  memcpy(&num_chunks, count_data.response, sizeof(uint32_t));
-  printf("max chunks: %u\r\n", num_chunks);
-  
- // printf("size: %d\r\n", payload->data.size);
-//  for (int i = 0; i < payload->data.size; i++) {
-//    printf("%d ", payload->data.response[i]);
-//  }
-//  printf("\r\n");
+  // for (int i = 0; i < PAYLOAD_SIZE*num_pkts; i++) {
+  //     if (i % 250 == 0) {
+  //       printf("\r\n");
+  //     }
+  //     printf("0x%x, ", payload_data[i]);
+  // }
 
-  request_data = malloc(sizeof(struct req_data));
-  handle_request_chunk(request_data, 0);
-
-  uint32_t real_data_size = request_data->size - REQ_HEADER_SIZE;
-
-  printf("req_data_size: %lu\r\n", request_data->size);
-
-  printf("real_data_size: %lu\r\n", real_data_size);
-
-  convert_chunk_to_pkts(request_data->response + sizeof(uint64_t), real_data_size); 
-
-  for (int i = 0; i < MAX_PAYLOAD_SIZE; i++) {
-      if (i % 250 == 0) {
-        printf("\r\n");
-      }
-      printf("0x%x, ", payload_data[i]);
-  } 
-
-  printf("Starting uart main loop\r\n");
-
-  // open port for read and write
+  // open port for read and write over UART
   fd = open(portname, O_RDWR);
 
   if (fd == -1) {
@@ -202,7 +204,7 @@ void* uart_main(void* arg) {
   // baudrate 115200, 8 bits, no parity, 1 stop bit
   set_interface_attribs(fd, B115200);
 
-  // Init GPIO
+  // init GPIO
   gpioCfgClock(1, 0, 0);
 
   if (gpioInitialise() == -1) {
@@ -213,8 +215,10 @@ void* uart_main(void* arg) {
   gpioSetMode(PIN, PI_INPUT);
   gpioSetAlertFunc(PIN, gpio_callback);
 
+  // read logs from beacon
   receive_log();
 
+  // should not get here
   return 0;
 
 }

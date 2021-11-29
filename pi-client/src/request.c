@@ -12,8 +12,6 @@ const char request[] = "update";
  */
 size_t write_function(char *data, size_t size, size_t nmemb, void *userdata) {
 
-  printf("writing\r\n");
-
   size_t realsize = size * nmemb;
   struct req_data *mem = (struct req_data*)userdata;
  

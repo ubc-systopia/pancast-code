@@ -210,14 +210,14 @@ void dongle_download_complete()
   }
 
   if (is_loss) {
-    log_infof("#distinct: %d, #total: %d, count/pkts: ",
+    log_debugf("#distinct: %d, #total: %d, count/pkts: ",
         download.packet_buffer.num_distinct, download.n_total_packets);
     for (int i = 0; i < actual_pkts_per_filter; i++) {
       if (download.packet_buffer.counts[i] <= 0)
-        printf("%d ", i);
+        log_debugf("%d ", i);
       //printf("%d ", download.packet_buffer.counts[i]);
     }
-    printf("%s", "\r\n");
+    log_debugf("%s", "\r\n");
   }
 
   download_stats.payloads_complete++;
@@ -239,8 +239,8 @@ void dongle_download_complete()
   }
 
   if (is_loss) {
-    log_infof("len: %lu, ", filter_len);
-    printf("chunk: %lu, sz(u64): %u\r\n",
+    log_debugf("len: %lu, ", filter_len);
+    log_debugf("chunk: %lu, sz(u64): %u\r\n",
         download.packet_buffer.chunk_num, sizeof(uint64_t));
   }
   // now we know the payload is the correct size
@@ -248,7 +248,7 @@ void dongle_download_complete()
   num_buckets = cf_gadget_num_buckets(filter_len);
 
   if (num_buckets == 0) {
-    log_errorf("%s", "num buckets is 0!!!\r\n");
+    log_debugf("%s", "num buckets is 0!!!\r\n");
     dongle_download_fail(&download_stats.cuckoo_fail);
     return;
   }

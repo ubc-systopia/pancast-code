@@ -306,7 +306,7 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
   if (sto->encounters.head >= sto->encounters.tail) {
     result = sto->encounters.head - sto->encounters.tail;
   } else {
-    result = MAX_LOG_COUNT;
+    result = MAX_LOG_COUNT - (sto->encounters.tail - sto->encounters.head);
   }
   log_debugf("result: %lu\r\n", (uint32_t)result);
   return result;

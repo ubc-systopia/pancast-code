@@ -130,6 +130,13 @@ static void _beacon_load_()
 
 void _beacon_info_()
 {
+  char addr_s[BT_ADDR_LE_STR_LEN];
+  bt_addr_le_t addr = {0};
+  size_t count = 1;
+
+  bt_id_get(&addr, &count);
+  bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
+
   log_infof("%s", "=== Beacon Info: ===\r\n");
   log_infof("    Platform:                 %s\r\n", "Zephyr OS");
   log_infof("    Board:                    %s\r\n", CONFIG_BOARD);
@@ -138,6 +145,7 @@ void _beacon_info_()
   log_infof("    Beacon ID:                0x%x\r\n", config.beacon_id);
   log_infof("    Location ID:              0x%lx\r\n",
       (unsigned long) config.beacon_location_id);
+  log_infof("    MAC addr:                 %s\r\n", addr_s);
   log_infof("    Initial clock:            %u\r\n", config.t_init);
   log_infof("    Timer frequency:          %u Hz\r\n", timer_freq);
   log_infof("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);

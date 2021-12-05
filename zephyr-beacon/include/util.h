@@ -20,7 +20,7 @@
                                                                     \
     for (unsigned int i = 0; i < len; i++)                          \
     {                                                               \
-        if (i != 0 && !(i % 16))                                    \
+        if (i != 0 && !(i % len))                                    \
         {                                                           \
             logf("%s", "\r\n");                                     \
         }                                                           \

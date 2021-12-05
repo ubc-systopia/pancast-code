@@ -371,6 +371,21 @@ static int _set_adv_data_gaen_()
   }
   return 0;
 }
+
+static void _gaen_encode_(bt_data_t *data)
+{
+  bt_data_t flags = BT_DATA_BYTES(0x01, 0x1a);
+  bt_data_t serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd);
+  bt_data_t serviceData = BT_DATA(service_data_type,
+      gaen_payload.service_data_internals,
+      ARRAY_SIZE(gaen_payload.service_data_internals));
+  data[0] = flags;
+  data[1] = serviceUUID;
+  data[2] = serviceData;
+  hexdumpn(gaen_payload.service_data_internals,
+      ARRAY_SIZE(gaen_payload.service_data_internals), "gaenID",
+      config.beacon_id, (uint64_t) (*(uint16_t *) serviceUUID.data), beacon_time);
+}
 #endif /* BEACON_GAEN_ENABLED */
 
 /*
@@ -386,12 +401,9 @@ void _alternate_advertisement_content_(int type)
       log_errorf("%s", "Failed to obtain gaen advertisement data");
       return;
     }
-    bt_data_t serviceData = BT_DATA(service_data_type,
-        gaen_payload.service_data_internals,
-        ARRAY_SIZE(gaen_payload.service_data_internals));
-    bt_data_t flags = BT_DATA_BYTES(0x01, 0x1a);
-    bt_data_t serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd);
-    bt_data_t data[3] = {flags, serviceUUID, serviceData};
+    bt_data_t data[3];
+    _gaen_encode_((bt_data_t *) &data);
+//    bt_data_t data[3] = {flags, serviceUUID, serviceData};
 
     err = bt_le_adv_update_data(data, ARRAY_SIZE(data), NULL, 0); // has 3 fields
     if (err) {
@@ -513,6 +525,27 @@ void beacon_loop()
   }
 }
 
+void beacon_gaen_pancast_loop()
+{
+  uint32_t lp_timer_status = 0, rem_time = 0, alt_timer_status = 0;
+  int count = 0;
+  lp_timer_status = k_timer_status_get(&kernel_time_lp);
+  rem_time = k_timer_remaining_get(&kernel_time_lp);
+  log_infof("beacon time: %u, expired: %u, time till next expiry: %u\r\n",
+      beacon_time, lp_timer_status, rem_time);
+  while (true) {
+    while ((rem_time = k_timer_remaining_get(&kernel_time_lp)) > 0) {
+      _alternate_advertisement_content_((count % 2));
+      count++;
+      lp_timer_status = k_timer_status_get(&kernel_time_lp);
+      beacon_clock_increment(lp_timer_status);
+      alt_timer_status = k_timer_status_sync(&kernel_time_alternater);
+//      log_infof("beacon time: %u, expired: %u, time till next expiry: %u\r\n",
+//          beacon_time, lp_timer_status, rem_time);
+    }
+  }
+}
+
 /*
  * Primary broadcasting routine
  */
@@ -523,7 +556,11 @@ void _beacon_broadcast_(int err)
   _beacon_init_();
   err = _beacon_advertise_();
   set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
+#ifdef BEACON_GAEN_ENABLED
+  beacon_gaen_pancast_loop();
+#else
   beacon_loop();
+#endif
 }
 
 #undef MODE__STAT

@@ -453,9 +453,7 @@ static int _beacon_advertise_()
   int err = 0;
   err = bt_le_adv_start(
       BT_LE_ADV_PARAM(
-        BT_LE_ADV_OPT_USE_IDENTITY |
-        BT_LE_ADV_OPT_DISABLE_CHAN_38 |
-        BT_LE_ADV_OPT_DISABLE_CHAN_39, // use random identity address,
+        BT_LE_ADV_OPT_USE_IDENTITY, // use random identity address,
         BEACON_ADV_MIN_INTERVAL,
         BEACON_ADV_MAX_INTERVAL,
         NULL), // undirected advertising

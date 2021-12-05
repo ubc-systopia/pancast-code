@@ -316,6 +316,40 @@ static void _gen_ephid_()
 #undef init
 }
 
+static void _beacon_epoch_()
+{
+  static beacon_epoch_counter_t old_epoch;
+  old_epoch = epoch;
+  epoch = epoch_i(beacon_time, config.t_init);
+  if (!cycles || epoch != old_epoch) {
+    // When a new epoch has started, generate a new ephemeral id
+    _gen_ephid_();
+    if (epoch != old_epoch) {
+#ifdef MODE__STAT
+      stat_epochs++;
+#endif
+    }
+    // TODO: log time to flash
+  }
+}
+
+void _beacon_update_()
+{
+  _beacon_epoch_();
+  _beacon_encode_();
+  _set_adv_data_();
+}
+
+static int _beacon_pause_()
+{
+  cycles++;
+#ifdef MODE__STAT
+  stat_cycles++;
+#endif
+  _beacon_report_();
+  return 0;
+}
+
 #ifdef BEACON_GAEN_ENABLED
 /*
  * populates gaen_payload.service_data_internals
@@ -421,23 +455,6 @@ static void _beacon_init_()
 #undef DUR_LP
 }
 
-static void _beacon_epoch_()
-{
-  static beacon_epoch_counter_t old_epoch;
-  old_epoch = epoch;
-  epoch = epoch_i(beacon_time, config.t_init);
-  if (!cycles || epoch != old_epoch) {
-    // When a new epoch has started, generate a new ephemeral id
-    _gen_ephid_();
-    if (epoch != old_epoch) {
-#ifdef MODE__STAT
-      stat_epochs++;
-#endif
-    }
-    // TODO: log time to flash
-  }
-}
-
 int _set_adv_data_()
 {
 #ifdef BEACON_PLATFORM__GECKO
@@ -472,23 +489,6 @@ static int _beacon_advertise_()
     log_errorf("adv start failed, err: %d\r\n", err);
 
   return err;
-}
-
-static int _beacon_pause_()
-{
-  cycles++;
-#ifdef MODE__STAT
-  stat_cycles++;
-#endif
-  _beacon_report_();
-  return 0;
-}
-
-void _beacon_update_()
-{
-  _beacon_epoch_();
-  _beacon_encode_();
-  _set_adv_data_();
 }
 
 int beacon_clock_increment(beacon_timer_t time)

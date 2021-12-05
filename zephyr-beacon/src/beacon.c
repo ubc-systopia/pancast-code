@@ -376,10 +376,10 @@ static int _set_adv_data_gaen_()
 /*
  * procedure to change the type of packet being transmitted
  */
-void _alternate_advertisement_content_(uint32_t timer)
+void _alternate_advertisement_content_(int type)
 {
 #ifdef BEACON_GAEN_ENABLED
-  if (timer % 2 == 1) {
+  if (type == 1) {
     // currently transmitting pancast data, switch to gaen data
     int err = _set_adv_data_gaen_();
     if (err) {
@@ -405,6 +405,9 @@ void _alternate_advertisement_content_(uint32_t timer)
                          CONFIG_BT_DEVICE_NAME,
                          sizeof(CONFIG_BT_DEVICE_NAME) - 1) };
 #endif
+//    _beacon_update_();
+    _beacon_epoch_();
+    _beacon_encode_();
     // currently transmitting gaen data, switch to pancast data
     int err = bt_le_adv_update_data(payload.bt_data, ARRAY_SIZE(payload.bt_data),
         adv_res, ARRAY_SIZE(adv_res));
@@ -495,48 +498,19 @@ int beacon_clock_increment(beacon_timer_t time)
 {
   beacon_time += time;
   log_debugf("beacon timer: %u\r\n", beacon_time);
-  _beacon_update_();
+//  _beacon_update_();
   _beacon_pause_();
   return 0;
 }
 
-int beacon_loop()
+void beacon_loop()
 {
   uint32_t lp_timer_status = 0, hp_timer_status = 0, alt_timer_status = 0;
-
-  int err = 0;
-  while (!err) {
-
-//#ifdef BEACON_GAEN_ENABLED
-//    alt_timer_status += k_timer_status_get(&kernel_time_alternater);
-//    if (alt_timer_status % (num_ms_in_min / alt_time_in_ms) == 0) {
-//#endif
-      // get most updated time
-      // Low-precision timer is synced, so accumulate status here
-      lp_timer_status += k_timer_status_get(&kernel_time_lp);
-
-      // update beacon clock using kernel. The addition is the number of
-      // periods elapsed in the internal timer
-      beacon_clock_increment(lp_timer_status);
-
-      // high-precision collects the raw number of expirations
-      hp_timer_status = k_timer_status_get(&kernel_time_hp);
-//#ifdef BEACON_GAEN_ENABLED
-//    }
-
-    _alternate_advertisement_content_(alt_timer_status);
-//    alt_timer_status += k_timer_status_sync(&kernel_time_alternater);
-//
-//#else
-
-    // // Wait for a clock update, this blocks until the internal timer
-    // // period expires, indicating that at least one unit of relevant beacon
-    // // time has elapsed. timer status is reset here
-    lp_timer_status = k_timer_status_sync(&kernel_time_lp);
-
-//#endif
+  _alternate_advertisement_content_(0);
+  while (lp_timer_status = k_timer_status_sync(&kernel_time_lp)) {
+    beacon_clock_increment(lp_timer_status);
+    _alternate_advertisement_content_(0);
   }
-  return err;
 }
 
 /*

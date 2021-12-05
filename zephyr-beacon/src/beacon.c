@@ -468,20 +468,9 @@ static int _beacon_advertise_()
       payload.bt_data, ARRAY_SIZE(payload.bt_data),
       adv_res, ARRAY_SIZE(adv_res));
 
-  if (err) {
-    log_errorf("Advertising failed to start (err %d)\r\n", err);
-    return -1;
-  } else {
-    // obtain and report advertisement address
-    char addr_s[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_t addr = {0};
-    size_t count = 1;
+  if (err)
+    log_errorf("adv start failed, err: %d\r\n", err);
 
-    bt_id_get(&addr, &count);
-    bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
-
-    log_debugf("advertising started with address %s\r\n", addr_s);
-  }
   return err;
 }
 

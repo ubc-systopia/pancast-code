@@ -275,7 +275,7 @@ static int decode_encounter(encounter_broadcast_t *dat,
 static void _dongle_encounter_(encounter_broadcast_t *enc, int8_t rssi, size_t i)
 {
   hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
-      *enc->b, 0, *enc->t, rssi);
+      *enc->b, 0, *enc->t, 0, rssi);
 
   // Write to storage
   dongle_storage_log_encounter(&storage, &config, enc->loc, enc->b, enc->t,
@@ -380,15 +380,10 @@ void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry *entry) {
   // print entry ephemeral id and RSSI for now
   beacon_eph_id_t *id = &entry->eph_id;
-  log_infof("EID at %u: "
-  "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x "
-		  "RSSI: %d\r\n",
-	i, id->bytes[0], id->bytes[1], id->bytes[2], id->bytes[3], id->bytes[4],
-	id->bytes[5], id->bytes[6], id->bytes[7], id->bytes[8], id->bytes[9],
-	id->bytes[10], id->bytes[11], id->bytes[12], id->bytes[13],
-	(int8_t)id->bytes[15]);
+  hexdumpn(entry->eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,
+    i, entry->beacon_time, entry->dongle_time, (int8_t) id->bytes[15]);
 
-	return 1;
+  return 1;
 }
 
 extern uint32_t timer_freq;

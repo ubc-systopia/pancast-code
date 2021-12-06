@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#define log_bytes(log, logf, data, len, name, arg1, arg2, arg3, arg4)   \
+#define log_bytes(log, logf, data, len, name, arg1, arg2, arg3, arg4, arg5)   \
   {                                                                  \
     uint32_t time_ms = (uint32_t) (sl_sleeptimer_get_tick_count64()     \
         * 1000 / sl_sleeptimer_get_timer_frequency());                  \
@@ -25,18 +25,18 @@
         }                                                               \
         logf("%.2x ", ((uint8_t *)data)[i]);                            \
     }                                                                   \
-    logf("%u %lu %u %d\r\n", arg1, arg2, arg3, arg4);                   \
+    logf("0x%x %lu %u %u %d\r\n", arg1, arg2, arg3, arg4, arg5);                   \
   }
 
 #define print_bytes(data, len, name) \
-  log_bytes(log_debugf, log_debugf, data, len, name, 0, 0, 0, 0)
+  log_bytes(log_debugf, log_debugf, data, len, name, 0, 0, 0, 0, 0)
 
 #define info_bytes(data, len, name) \
-  log_bytes(log_infof, log_infof, data, len, name, 0, 0, 0, 0)
+  log_bytes(log_infof, log_infof, data, len, name, 0, 0, 0, 0, 0)
 
 #define print_ptr(p, name) log_debugf("%s: %p\r\n", name, (void *)p)
 
-#define hexdumpn(data, len, name, arg1, arg2, arg3, arg4)   \
-  log_bytes(printf, printf, data, len, name, arg1, arg2, arg3, arg4)
+#define hexdumpn(data, len, name, arg1, arg2, arg3, arg4, arg5)   \
+  log_bytes(printf, printf, data, len, name, arg1, arg2, arg3, arg4, arg5)
 
 #endif

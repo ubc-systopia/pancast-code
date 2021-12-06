@@ -162,9 +162,9 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->dongle_sk_size;
 
+  read(sizeof(uint32_t), &cfg->en_tail);
   read(sizeof(uint32_t), &cfg->en_head);
   log_infof("head: %u\r\n", cfg->en_head);
-  read(sizeof(uint32_t), &cfg->en_tail);
   log_infof("tail: %u\r\n", cfg->en_tail);
 
 
@@ -208,28 +208,19 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 
 void dongle_storage_save_cursor(dongle_storage *sto, dongle_config_t *cfg)
 {
-  log_debugf("%s", "Saving config\r\n");
   storage_addr_t off = sto->map.config;
   int total_size = sizeof(dongle_id_t) + sizeof(dongle_timer_t) +
-    sizeof(key_size_t)*2 + PK_MAX_SIZE + SK_MAX_SIZE;
+    sizeof(key_size_t)*2 + PK_MAX_SIZE + SK_MAX_SIZE +
+	sizeof(enctr_entry_counter_t)*2;
 
   pre_erase(sto, off, total_size);
 
 #define write(data, size) \
   (_flash_write_(sto, off, data, size), off += size)
 
-  write(&cfg->id, sizeof(dongle_id_t));
-  write(&cfg->t_init, sizeof(dongle_timer_t));
-  write(&cfg->backend_pk_size, sizeof(key_size_t));
-  write(&cfg->backend_pk, PK_MAX_SIZE);
-  write(&cfg->dongle_sk_size, sizeof(key_size_t));
-  write(&cfg->dongle_sk, SK_MAX_SIZE);
-  write(&cfg->en_head, sizeof(enctr_entry_counter_t));
-  write(&cfg->en_tail, sizeof(enctr_entry_counter_t));
+ write(cfg, sizeof(dongle_config_t));
 
 #undef write
-
-  log_debugf("off: %u, size: %u\r\n", sto->map.config, total_size);
 }
 
 #define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))

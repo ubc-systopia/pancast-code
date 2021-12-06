@@ -141,7 +141,7 @@ void dongle_init()
 
   // Set encounters cursor to loaded config values,
   // then load all stored encounters
-  if (config.en_tail == 0) {
+  if (config.en_tail <= dongle_storage_max_log_count(&storage)) {
 	  storage.encounters.head = config.en_head;
 	  storage.encounters.tail = config.en_tail;
   }

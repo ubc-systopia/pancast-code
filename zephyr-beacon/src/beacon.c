@@ -54,9 +54,8 @@ static beacon_timer_t beacon_time;    // Beacon Clock
 static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
 static beacon_epoch_counter_t epoch;  // track the current time epoch
 static beacon_timer_t cycles;         // total number of updates.
-static struct k_timer kernel_time_lp;         // low-precision kernel timer
-static struct k_timer kernel_time_hp;         // high-precision kernel timer
-static struct k_timer kernel_time_alternater; // medium-precision kernel timer used to alternate packet generation
+static struct k_timer kernel_time_lp;         // periodic timer for new ephid gen
+static struct k_timer kernel_time_alternater; // alternate Pancast and GAEN packets
 uint32_t timer_freq = 0;
 /*
  * ENTRY POINT
@@ -457,13 +456,10 @@ static void _beacon_init_()
 
 // Timer Start
   k_timer_init(&kernel_time_lp, NULL, NULL);
-  k_timer_init(&kernel_time_hp, NULL, NULL);
   k_timer_init(&kernel_time_alternater, NULL, NULL);
 #define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
-#define DUR_HP K_MSEC(1)
 #define DUR_ALT K_MSEC(alt_time_in_ms)
   k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
-  k_timer_start(&kernel_time_hp, DUR_HP, DUR_HP);
   k_timer_start(&kernel_time_alternater, DUR_ALT, DUR_ALT);
 #undef DUR_ALT
 #undef DUR_HP
@@ -517,9 +513,9 @@ int beacon_clock_increment(beacon_timer_t time)
 
 void beacon_loop()
 {
-  uint32_t lp_timer_status = 0, hp_timer_status = 0, alt_timer_status = 0;
+  uint32_t lp_timer_status = 0;
   _alternate_advertisement_content_(0);
-  while (lp_timer_status = k_timer_status_sync(&kernel_time_lp)) {
+  while ((lp_timer_status = k_timer_status_sync(&kernel_time_lp))) {
     beacon_clock_increment(lp_timer_status);
     _alternate_advertisement_content_(0);
   }

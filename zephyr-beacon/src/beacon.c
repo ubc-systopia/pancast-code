@@ -88,7 +88,6 @@ static bt_gaen_wrapper_t gaen_payload = {
 }; // container for gaen broadcast data
 static uint32_t num_ms_in_min = 60000;
 #endif /* BEACON_GAEN_ENABLED */
-static uint32_t alt_time_in_ms = 1000; // alt clock tick time (currently 1s)
 
 #else
 // Advertising handle
@@ -457,13 +456,11 @@ static void _beacon_init_()
 // Timer Start
   k_timer_init(&kernel_time_lp, NULL, NULL);
   k_timer_init(&kernel_time_alternater, NULL, NULL);
-#define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
-#define DUR_ALT K_MSEC(alt_time_in_ms)
-  k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
-  k_timer_start(&kernel_time_alternater, DUR_ALT, DUR_ALT);
-#undef DUR_ALT
-#undef DUR_HP
-#undef DUR_LP
+
+  k_timer_start(&kernel_time_lp, K_MSEC(BEACON_TIMER_RESOLUTION),
+      K_MSEC(BEACON_TIMER_RESOLUTION));
+  k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
+      K_MSEC(PAYLOAD_ALTERNATE_TIMER));
 }
 
 int _set_adv_data_()

@@ -14,6 +14,8 @@
 
 #define BEACON_TIMER_RESOLUTION 60000       // ms
 #define DONGLE_TIMER_RESOLUTION 60000       // ms
+#define PAYLOAD_ALTERNATE_TIMER  1000       // ms
+
 #define BEACON_EPOCH_LENGTH 15              // minutes
 #define DONGLE_MAX_LOG_AGE_DAYS 14          // days
 #define DONGLE_MAX_LOG_AGE  \

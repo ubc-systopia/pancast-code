@@ -36,6 +36,7 @@
 // clock resolution in ms - this corresponds to a single time 'unit'
 #define BEACON_TIMER_RESOLUTION 60000
 #define DONGLE_TIMER_RESOLUTION 60000
+#define PAYLOAD_ALTERNATE_TIMER  1000
 
 /*
  * number of time units (in minutes) in one epoch

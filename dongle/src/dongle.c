@@ -19,6 +19,7 @@
 #include "encounter.h"
 #include "telemetry.h"
 #include "download.h"
+#include "led.h"
 
 #include "common/src/util/log.h"
 #include "common/src/constants.h"
@@ -102,6 +103,9 @@ void dongle_scan(void)
 {
 
   dongle_init();
+
+  // set up LED
+  configure_blinky();
 
   // Scan Start
   sl_status_t sc = 0;

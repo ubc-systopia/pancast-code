@@ -23,6 +23,7 @@
 #include "sl_mbedtls.h"
 #include "sl_mpu.h"
 #include "nvm3_default.h"
+#include "sl_simple_led_instances.h"
 #include "sl_power_manager.h"
 
 void sl_iostream_init_instances(void)
@@ -51,6 +52,7 @@ void sl_platform_init(void)
 void sl_driver_init(void)
 {
   sl_debug_swo_init();
+  sl_simple_led_init_instances();
 }
 
 void sl_service_init(void)

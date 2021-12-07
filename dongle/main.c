@@ -30,6 +30,7 @@
 #include "app_assert.h"
 
 #include "./src/dongle.h"
+#include "./src/led.h"
 
 #include "src/common/src/constants.h"
 #include "src/common/src/settings.h"
@@ -69,6 +70,14 @@ int main(void)
       sl_timer_on_expire, &prec_timer_handle, 0, 0);
   if (sc != SL_STATUS_OK) {
     log_errorf("failed periodic timer start hp, sc: %d\r\n", sc);
+    return sc;
+  }
+
+  sl_sleeptimer_timer_handle_t led_timer;
+  sc = sl_sleeptimer_start_periodic_timer_ms(&led_timer, LED_TIMER_MS,
+      dongle_led_timer_handler, (void *) NULL, 0, 0);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("failed period led timer start, sc: %d\r\n", sc);
     return sc;
   }
 

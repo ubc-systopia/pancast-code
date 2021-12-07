@@ -38,6 +38,8 @@
 #include "constants.h"
 #include "settings.h"
 #include "test.h"
+#include "led.h"
+
 #include <include/util.h>
 #include <include/log.h>
 
@@ -56,6 +58,7 @@ static beacon_epoch_counter_t epoch;  // track the current time epoch
 static beacon_timer_t cycles;         // total number of updates.
 static struct k_timer kernel_time_lp;         // periodic timer for new ephid gen
 static struct k_timer kernel_time_alternater; // alternate Pancast and GAEN packets
+static struct k_timer led_timer;      // periodic LED blinking
 uint32_t timer_freq = 0;
 /*
  * ENTRY POINT
@@ -456,11 +459,13 @@ static void _beacon_init_()
 // Timer Start
   k_timer_init(&kernel_time_lp, NULL, NULL);
   k_timer_init(&kernel_time_alternater, NULL, NULL);
+  k_timer_init(&led_timer, beacon_led_timeout_handler, NULL);
 
   k_timer_start(&kernel_time_lp, K_MSEC(BEACON_TIMER_RESOLUTION),
       K_MSEC(BEACON_TIMER_RESOLUTION));
   k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
       K_MSEC(PAYLOAD_ALTERNATE_TIMER));
+  k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
 }
 
 int _set_adv_data_()
@@ -549,6 +554,7 @@ void _beacon_broadcast_(int err)
   _beacon_init_();
   err = _beacon_advertise_();
   set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
+  configure_blinky();
 #ifdef BEACON_GAEN_ENABLED
   beacon_gaen_pancast_loop();
 #else

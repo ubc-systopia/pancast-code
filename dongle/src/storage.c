@@ -36,8 +36,11 @@ void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 #ifdef DONGLE_PLATFORM__ZEPHYR
   flash_erase(sto->dev, (offset), sto->page_size);
 #else
-  MSC_ErasePage((uint32_t *)offset);
+  int status = MSC_ErasePage((uint32_t *)offset);
 #endif
+  if (status != 0) {
+    log_debugf("error erasing page: 0x%x", status);
+  }
   log_debugf("%s", "erased.\r\n");
   sto->numErasures++;
 }
@@ -97,9 +100,12 @@ void dongle_storage_get_info(dongle_storage *sto)
 // Upper-bound of size of encounter log, in bytes
 #define TARGET_FLASH_LOG_SIZE (sto->total_size - FLASH_OFFSET)
 
+// Number of encounters in each page, with no encounters stored across pages
+#define ENCOUNTERS_PER_PAGE (sto->page_size / ENCOUNTER_ENTRY_SIZE)
+
 size_t dongle_storage_max_log_count(dongle_storage *sto)
 {
-  return MAX_LOG_COUNT;
+  return (TARGET_FLASH_LOG_SIZE / sto->page_size) * ENCOUNTERS_PER_PAGE;
 }
 
 void dongle_storage_init_device(dongle_storage *sto)
@@ -267,21 +273,23 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
   return -1;
 }
 
-#define inc_head(_) \
-  (sto->encounters.head = (sto->encounters.head + 1) % MAX_LOG_COUNT)
+void inc_head(dongle_storage *sto) {
+  sto->encounters.head = (sto->encounters.head + 1) % dongle_storage_max_log_count(sto);
+}
 
-#define inc_tail(_) \
-  (sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT)
+void inc_tail(dongle_storage *sto) {
+  sto->encounters.tail = (sto->encounters.tail + 1) % dongle_storage_max_log_count(sto);
+}
 
 void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
 {
-  inc_head();
+  inc_head(sto);
   // FORCED_DELETION
   // If the head catches, the tail, can either opt to block or delete.
   // We delete since newer records are preferred.
   if (sto->encounters.head == sto->encounters.tail) {
     log_errorf("Encounter storage full; idx=%lu\r\n", (uint32_t)sto->encounters.head);
-    inc_tail();
+    inc_tail(sto);
   }
   // save head and tail to flash
   cfg->en_head = sto->encounters.head;
@@ -297,7 +305,7 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
   if (sto->encounters.head >= sto->encounters.tail) {
     result = sto->encounters.head - sto->encounters.tail;
   } else {
-    result = MAX_LOG_COUNT - (sto->encounters.tail - sto->encounters.head);
+    result = dongle_storage_max_log_count(sto) - (sto->encounters.tail - sto->encounters.head);
   }
   log_debugf("result: %lu\r\n", (uint32_t)result);
   return result;
@@ -330,7 +338,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
       break;
 
     // delete old logs
-    inc_tail();
+    inc_tail(sto);
     log_debugf("[%u] age: %u > %u, head: %u, tail: %u -> %u\r\n", i, age,
         DONGLE_MAX_LOG_AGE, sto->encounters.head, old_tail, sto->encounters.tail);
 
@@ -339,9 +347,10 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 #undef age
 }
 
+// Encounter offset is page number + offset in page
 #define ENCOUNTER_LOG_OFFSET(j) \
-    (sto->map.log +               \
-     (((sto->encounters.tail + j) % MAX_LOG_COUNT) * ENCOUNTER_ENTRY_SIZE))
+    (sto->map.log + (j / ENCOUNTERS_PER_PAGE) * sto->page_size + \
+    	(j % ENCOUNTERS_PER_PAGE)*ENCOUNTER_ENTRY_SIZE)
 
 void dongle_storage_load_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_cb cb)
@@ -409,7 +418,8 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
   enctr_entry_counter_t num1, num2, num3;
   num1 = dongle_storage_num_encounters_current(sto);
   storage_addr_t start =
-    ENCOUNTER_LOG_OFFSET(sto->encounters.head - sto->encounters.tail);
+    ENCOUNTER_LOG_OFFSET(sto->encounters.head);
+
   storage_addr_t off = start;
 
   // TODO: save erased into memory in case the cursor has wrapped around

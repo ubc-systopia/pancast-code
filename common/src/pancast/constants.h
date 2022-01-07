@@ -13,6 +13,7 @@ typedef uint32_t dongle_id_t;
 typedef uint32_t beacon_timer_t;
 typedef uint32_t dongle_timer_t;
 typedef uint64_t beacon_location_id_t;
+typedef int8_t   dongle_rssi_t;
 // for counting epochs
 typedef uint32_t beacon_epoch_counter_t;
 typedef uint32_t dongle_epoch_counter_t;

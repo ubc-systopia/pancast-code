@@ -61,10 +61,8 @@ dongle_epoch_counter_t epoch;
 dongle_timer_t dongle_time; // main dongle timer
 dongle_timer_t stat_start;
 beacon_eph_id_t cur_id[DONGLE_MAX_BC_TRACKED]; // currently observed ephemeral id
-encounter_broadcast_t cur_encounters[DONGLE_MAX_BC_TRACKED];
+dongle_encounter_track_t cur_encounters[DONGLE_MAX_BC_TRACKED];
 dongle_timer_t obs_time[DONGLE_MAX_BC_TRACKED]; // time of last new id observation
-dongle_timer_t end_obs_time[DONGLE_MAX_BC_TRACKED];
-dongle_rssi_t cur_rssi[DONGLE_MAX_BC_TRACKED];
 size_t cur_id_idx;
 dongle_epoch_counter_t epoch; // current epoch
 uint64_t signal_id;           // to identify scan records received, resets each epoch
@@ -283,29 +281,38 @@ static int decode_encounter(encounter_broadcast_t *dat,
 
 static void _dongle_encounter_(encounter_broadcast_t *enc, int8_t rssi, size_t i)
 {
-  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
-      *enc->b, 0, *enc->t, 0, rssi);
+//  hexdumpn(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
+//      *enc->b, 0, *enc->t, 0, rssi);
 
   // Write to storage
-  // TODO take dongle + beacon time and format as two uint16 ranges
   dongle_storage_log_encounter(&storage, &config, enc->loc, enc->b, enc->t,
 		  &dongle_time, enc->eph, rssi);
 #if TEST_DONGLE
   dongle_test_encounter(enc);
 #endif
 
-
-#if MODE__ENCOUNTER_DURATION
-  obs_time[i] = 0;
-  end_obs_time[i] = 0;
-#else
-  // reset the initial observation time
   obs_time[i] = dongle_time;
-#endif
+}
+
+/* Same functionality as _dongle_encounter_ but takes duration into account
+ */
+static void dongle_save_encounter(dongle_encounter_track_t *enc, size_t i)
+{
+  dongle_timer_t dongle_dur = enc->dongle_time_start << 16 |
+      enc->dongle_time_end;
+  log_debugf("dongle start: %u, dongle end: %u, dongle_dur %u\r\n",
+      enc->dongle_time_start, enc->dongle_time_end, dongle_dur);
+  beacon_timer_t beacon_dur = enc->beacon_time_start << 16 |
+      enc->beacon_time_end;
+  log_debugf("beacon start: %u, beacon end: %u, beacon_dur %u\r\n",
+      enc->beacon_time_start, enc->beacon_time_end, beacon_dur);
+
+  dongle_storage_log_encounter(&storage, &config, &enc->location_id,
+      &enc->beacon_id, &beacon_dur, &dongle_dur, &cur_id[i], enc->rssi);
 }
 
 static uint64_t dongle_track(encounter_broadcast_t *enc,
-    dongle_rssi_t rssi, uint64_t signal_id)
+    int8_t rssi, uint64_t signal_id)
 {
   // Check the broadcast UUID
   beacon_id_t service_id = (*(enc->b) & BEACON_SERVICE_ID_MASK) >> 16;
@@ -336,10 +343,16 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
     log_debugf("new ephid, beacon: %lu, tracking idx: %d\r\n", enc->b, i);
     print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "new ID");
     cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
+
+    // copy eph id bytes into tracking array
     memcpy(&cur_id[i], enc->eph->bytes, BEACON_EPH_ID_HASH_LEN);
 
-    // copy encounter data into encounters tracking
-    memcpy(&cur_encounters[i], enc, sizeof(encounter_broadcast_t));
+    // copy beacon info into tracking array
+    memcpy(&cur_encounters[i].beacon_id, enc->b, sizeof(beacon_id_t));
+    memcpy(&cur_encounters[i].location_id, enc->loc, sizeof(beacon_location_id_t));
+    memcpy(&cur_encounters[i].beacon_time_start, enc->t, sizeof(beacon_timer_t));
+    memcpy(&cur_encounters[i].rssi, &rssi, sizeof(int8_t));
+    memcpy(&cur_encounters[i].dongle_time_start, &dongle_time, sizeof(dongle_timer_t));
 
     obs_time[i] = dongle_time;
 
@@ -358,9 +371,12 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
   // check conditions for a valid encounter
   dongle_timer_t dur = dongle_time - obs_time[i];
 
-  // set the end obs time to the current dongle time
-  end_obs_time[i] = dongle_time;
-  cur_rssi[i] = rssi;
+  // set the end obs time to the current dongle time and beacon time
+  memcpy(&cur_encounters[i].dongle_time_end, &dongle_time, sizeof(dongle_timer_t));
+  memcpy(&cur_encounters[i].beacon_time_end, enc->t, sizeof(beacon_timer_t));
+
+  // set rssi to current rssi
+  cur_encounters[i].rssi = rssi;
 
   // ephemeral id observed only momentarily, do not log it yet.
   if (dur < DONGLE_ENCOUNTER_MIN_TIME)
@@ -380,18 +396,18 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
   return signal_id;
 }
 
-void dongle_save_encounters() {
+void dongle_save_encounters()
+{
 #define MIN_TIME_UNSEEN 2
   for (int i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
-   dongle_timer_t dur = end_obs_time[i] - obs_time[i];
-    log_infof("saving encounters, dur: %u\r\n", dur);
+   dongle_timer_t dur = cur_encounters[i].dongle_time_end -
+		   cur_encounters[i].dongle_time_start;
+    log_debugf("saving encounters, dur: %u\r\n", dur);
     // if two time cycles have passed and we haven't seen the eph id again,
-    // then count this as the end f the duration and log the encounter
-    if (dongle_time - end_obs_time[i] > MIN_TIME_UNSEEN &&
-    		dur > DONGLE_ENCOUNTER_MIN_TIME) {
-      // TODO determine correct rssi value for storage,
-      // currently using last seen
-      _dongle_encounter_(&cur_encounters[i], cur_rssi[i], i);
+    // then count this as the end of the duration and log the encounter
+    if (dongle_time - cur_encounters[i].dongle_time_end > MIN_TIME_UNSEEN &&
+    		dur >= DONGLE_ENCOUNTER_MIN_TIME) {
+      dongle_save_encounter(&cur_encounters[i], i);
 	  break;
 	}
   }

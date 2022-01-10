@@ -26,7 +26,7 @@
 #define MODE__PERIODIC  1
 #define MODE__LEGACY_LOG
 #define MODE__PERIODIC_FIXED_DATA
-#define MODE__ENCOUNTER_DURATION 0
+#define MODE__ENCOUNTER_DURATION 1
 //#define CUCKOOFILTER_FIXED_TEST
 
 #include <assert.h>
@@ -101,6 +101,16 @@ typedef struct {
   dongle_timer_t dongle_time;
   beacon_eph_id_t eph_id;
 } dongle_encounter_entry;
+
+typedef struct {
+  beacon_location_id_t location_id;
+  beacon_id_t beacon_id;
+  beacon_timer_t beacon_time_start;
+  beacon_timer_t beacon_time_end;
+  dongle_timer_t dongle_time_start;
+  dongle_timer_t dongle_time_end;
+  int8_t rssi;
+} dongle_encounter_track_t;
 
 // Timing Constants
 #define MAIN_TIMER_HANDLE 0x00

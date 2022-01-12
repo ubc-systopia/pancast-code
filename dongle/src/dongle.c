@@ -210,6 +210,19 @@ void dongle_hp_timer_add(uint32_t ticks)
   dongle_hp_timer += ms;
 }
 
+void dongle_led_notify(sl_sleeptimer_timer_handle_t *led_timer) {
+  sl_status_t sc;
+  log_infof("%s", "in alert\r\n");
+  sc = sl_sleeptimer_stop_timer(led_timer);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("failed period led timer stop, sc: %d\r\n", sc);
+  }
+  sc = sl_sleeptimer_restart_periodic_timer_ms(led_timer, LED_TIMER_MS/4,
+	dongle_led_timer_handler, (void *) NULL, 0, 0);
+  if (sc != SL_STATUS_OK) {
+	log_errorf("failed period led timer start, sc: %d\r\n", sc);
+  }
+}
 
 // UPDATE
 // For callback-based timers. This is called with the mutex

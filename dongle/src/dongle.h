@@ -164,4 +164,5 @@ void dongle_on_periodic_data_error
 (int8_t rssi);
 void dongle_on_sync_lost();
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry *entry);
+void dongle_led_notify();
 #endif

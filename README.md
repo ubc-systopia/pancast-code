@@ -23,8 +23,8 @@ Application code is found in the various directories of the project.
 * `dongle` -- SiLabs dongle with Gecko SDK
 * `zephyr-beacon` -- Nordic nRF52832 beacon with Zephyr OS (BLE-only beacon)
 * `common` -- common header files
-* `tests` -- unit tests
-* `risk_client` -- raspberry pi client used to download risk data from the backend and forward to the network beacon over a serial connection. For details see the [Raspberry Pi Set-up](https://docs.google.com/document/d/1yTDDE8dWmT4W_3zhqdPPBc3t0FCl_lEvqI6VNVbjvZs/edit?usp=sharing).
+* `test-apps` -- sample Bluetooth applications used for testing and benchmarking
+* `pi-client` -- raspberry pi client used to download risk data from the backend and forward to the network beacon over a serial connection. For details see the [Raspberry Pi Set-up](https://docs.google.com/document/d/1yTDDE8dWmT4W_3zhqdPPBc3t0FCl_lEvqI6VNVbjvZs/edit?usp=sharing).
 
 
 The code is located in the `common`, `beacon`, `zephyr-beacon`, and `dongle` , and `terminal` directories, under `src`. The terminal application is not a full implementation of the PanCast terminal but is rather a demo/testing tool.

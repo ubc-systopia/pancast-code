@@ -145,6 +145,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 #define read(size, dst) (_flash_read_(sto, off, dst, size), off += size)
   read(sizeof(dongle_id_t), &cfg->id);
   read(sizeof(dongle_timer_t), &cfg->t_init);
+  read(sizeof(dongle_timer_t), &cfg->t_cur);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
   log_debugf("bknd key off: %u, size: %u\r\n", off, cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {
@@ -204,6 +205,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 
   write(&cfg->id, sizeof(dongle_id_t));
   write(&cfg->t_init, sizeof(dongle_timer_t));
+  write(&cfg->t_cur, sizeof(dongle_timer_t));
   write(&cfg->backend_pk_size, sizeof(key_size_t));
   write(&cfg->backend_pk, PK_MAX_SIZE);
   write(&cfg->dongle_sk_size, sizeof(key_size_t));

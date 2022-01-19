@@ -64,6 +64,7 @@ typedef uint32_t enctr_entry_counter_t;
 typedef struct {
   dongle_id_t id;
   dongle_timer_t t_init;
+  dongle_timer_t t_cur;
   key_size_t backend_pk_size;     // size of backend public key
   pubkey_t backend_pk;            // Backend public key
   key_size_t dongle_sk_size;      // size of secret key

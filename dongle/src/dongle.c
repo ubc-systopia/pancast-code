@@ -152,13 +152,14 @@ void dongle_init()
   }
   dongle_storage_load_all_encounter(&storage, dongle_print_encounter);
 
-  dongle_time = config.t_init;
+  // set dongle time to current saved time
+  // TODO: determine when this needs to be reset to the init time
+  dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
   stat_start = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
   non_report_entry_count = 0;
   signal_id = 0;
-
 
   dongle_stats_init(&storage);
 
@@ -235,8 +236,10 @@ void dongle_on_clock_update()
     log_debugf("EPOCH STARTED: %lu\r\n", new_epoch);
     epoch = new_epoch;
     signal_id = 0;
-    // TODO: log time to flash
   }
+  // update dongle time in config and save to flash
+  config.t_cur = dongle_time;
+  dongle_storage_save_config(&storage, &config);
 #if MODE__ENCOUNTER_DURATION
   dongle_save_encounters();
 #endif

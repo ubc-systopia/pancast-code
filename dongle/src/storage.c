@@ -105,7 +105,8 @@ void dongle_storage_get_info(dongle_storage *sto)
 
 size_t dongle_storage_max_log_count(dongle_storage *sto)
 {
-  return (TARGET_FLASH_LOG_SIZE / sto->page_size) * ENCOUNTERS_PER_PAGE;
+  size_t encounter_log_size = sto->map.log_end - sto->map.log;
+  return (encounter_log_size / sto->page_size) * ENCOUNTERS_PER_PAGE;
 }
 
 void dongle_storage_init_device(dongle_storage *sto)
@@ -179,9 +180,10 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   sto->map.stat = next_multiple(sto->page_size,
                            sto->map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
   sto->map.log = sto->map.stat + sto->page_size;
-  sto->map.log_end = sto->map.log + FLASH_LOG_SIZE;
+  sto->map.log_end = sto->total_size;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
+  log_infof("    Total Size:    %u\r\n", sto->total_size);
   log_infof("    Flash offset:    %u\r\n", sto->map.config);
   log_infof("    OTP offset:      %u\r\n", sto->map.otp);
   log_infof("    Stat offset:     %u\r\n", sto->map.stat);

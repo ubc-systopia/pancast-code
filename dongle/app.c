@@ -22,7 +22,6 @@
 #include "app_assert.h"
 
 #include "src/dongle.h"
-#include "src/time.h"
 
 #define LOG_LEVEL__DEBUG
 #include "src/common/src/util/log.h"
@@ -69,7 +68,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
   sl_status_t sc;
   switch (SL_BT_MSG_ID(evt->header)) {
     case sl_bt_evt_system_boot_id:
-      dongle_time_init();
       log_debugf("%s", "Bluetooth device booted and ready\r\n");
       dongle_start();
       log_debugf("%s", "Dongle started\r\n");

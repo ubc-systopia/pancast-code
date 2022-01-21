@@ -462,13 +462,12 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry *entr
   return 1;
 }
 
-extern uint32_t timer_freq;
 void dongle_info()
 {
   log_infof("%s", "=== Dongle Info: ===\r\n");
   log_infof("    Dongle ID:                    0x%lx\r\n", config.id);
   log_infof("    Initial clock:                %lu\r\n", config.t_init);
-  log_infof("    Timer frequency:              %u Hz\r\n", timer_freq);
+  log_infof("    Timer frequency:              %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
   log_infof("    Backend public key size:      %lu bytes\r\n",
       config.backend_pk_size);
   log_infof("    Secret key size:              %lu bytes\r\n",

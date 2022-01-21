@@ -24,7 +24,6 @@
  * 1 - enable
  */
 #define MODE__PERIODIC  1
-#define MODE__LEGACY_LOG
 #define MODE__PERIODIC_FIXED_DATA
 #define MODE__ENCOUNTER_DURATION 1
 //#define CUCKOOFILTER_FIXED_TEST

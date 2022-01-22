@@ -141,10 +141,9 @@ typedef struct {
 } timertest_t;
 
 // High-level routine structure
-void dongle_scan(void);
 void dongle_init();
+void dongle_init_scan();
 void dongle_load();
-void dongle_loop();
 void dongle_report();
 void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
 void dongle_lock();

@@ -120,6 +120,7 @@ typedef struct {
 
 // Periodic Scanning & Synchronization
 #define SCAN_PHY 1 // 1M PHY
+#define SCAN_DISCOVER_MODE sl_bt_scanner_discover_observation
 #define SCAN_WINDOW 320
 #define SCAN_INTERVAL 320
 #define SCAN_MODE 0 // passive scan

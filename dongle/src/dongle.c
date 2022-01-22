@@ -77,69 +77,12 @@ float dongle_hp_timer = 0.0;
 extern dongle_stats_t stats;
 extern download_stats_t download_stats;
 
-//
-// ROUTINES
-//
 
-// MAIN
-// Entrypoint of the application
-// Initialize bluetooth, then call advertising and scan routines
-// Assumes that kernel has initialized and bluetooth device is booted.
-void dongle_start()
-{
-  log_infof("%s", "=== Starting Dongle... ===\r\n");
-  // log_infof("Config test: %d, periodic sync: %d\r\n", TEST_DONGLE, MODE__PERIODIC);
-
-  if (access_advertise()) {
-    return;
-  }
-
-  dongle_scan();
-}
-
-// SCAN
-// Call init routine, begin advertising with fixed parameters,
-// and enter the main loop.
-void dongle_scan(void)
-{
-
-  dongle_init();
-
-  // set up LED
-  configure_blinky();
-
-  // Scan Start
-  sl_status_t sc = 0;
-
-#if MODE__PERIODIC
-  // Set scanner timing
-  sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
-  log_debugf("set scanner timing, sc: %d\r\n", sc);
-
-  // Set scanner mode
-  sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
-  log_debugf("set scanner mode, sc: %d\r\n", sc);
-
-  // Set sync parameters
-  sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
-  log_debugf("set sync parameters, sc: %d\r\n", sc);
-
-  // Start scanning
-  sc = sl_bt_scanner_start(SCAN_PHY, scanner_discover_observation);
-  log_debugf("start scan, sc: %d\r\n", sc);
-
-#else
-  sl_bt_scanner_set_timing(gap_1m_phy, // Using 1M PHY - is this correct?
-     DONGLE_SCAN_INTERVAL, DONGLE_SCAN_WINDOW);
-  sl_bt_scanner_set_mode(gap_1m_phy, 0); // passive scan
-  sl_bt_scanner_start(gap_1m_phy,
-    sl_bt_scanner_discover_observation); // scan all devices
-#endif
-}
-
-// INIT
-// Call load routine, and set variables to their
-// initial value. Also initialize timing structs
+/* INIT
+ Assumes that kernel has initialized and bluetooth device is booted.
+ Call load routine, and set variables to their
+ initial value. Also initialize timing structs
+ */
 void dongle_init()
 {
   dongle_load();
@@ -165,6 +108,11 @@ void dongle_init()
 
   dongle_download_init();
 
+  dongle_init_scan();
+
+  // set up LED
+  configure_blinky();
+
   log_infof("%s", "Dongle initialized\r\n");
 
   dongle_info();
@@ -173,8 +121,42 @@ void dongle_init()
   log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 }
 
-// LOAD
-// Load state and configuration into memory
+/* START
+   Start scan
+ */
+void dongle_start()
+{
+  log_infof("%s", "=== Starting Dongle... ===\r\n");
+  sl_status_t sc = 0;
+  sc = sl_bt_scanner_start(SCAN_PHY, SCAN_DISCOVER_MODE);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("error starting scan, sc: 0x%x\r\n", sc);
+  }
+}
+
+void dongle_init_scan()
+{
+  sl_status_t sc = 0;
+
+  sc = sl_bt_scanner_set_timing(SCAN_PHY, SCAN_INTERVAL, SCAN_WINDOW);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("error setting scanner timing, sc: 0x%x\r\n", sc);
+  }
+
+  sc = sl_bt_scanner_set_mode(SCAN_PHY, SCAN_MODE);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("error setting scanner mode, sc: 0x%x\r\n", sc);
+  }
+
+  sc = sl_bt_sync_set_parameters(SYNC_SKIP, SYNC_TIMEOUT, SYNC_FLAGS);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("error setting sync params, sc: 0x%x\r\n", sc);
+  }
+}
+
+/* LOAD
+  Load state and configuration from memory
+ */
 void dongle_load()
 {
   dongle_storage_init(&storage);

@@ -68,9 +68,12 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
   sl_status_t sc;
   switch (SL_BT_MSG_ID(evt->header)) {
     case sl_bt_evt_system_boot_id:
-      log_debugf("%s", "Bluetooth device booted and ready\r\n");
+      dongle_init();
       dongle_start();
-      log_debugf("%s", "Dongle started\r\n");
+
+#if DONGLE_UPLOAD
+      access_advertise();
+#endif
       break;
 
     case sl_bt_evt_scanner_scan_report_id:

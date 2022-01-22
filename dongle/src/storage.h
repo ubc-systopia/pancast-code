@@ -16,11 +16,7 @@
                               sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
                               BEACON_EPH_ID_SIZE)
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-#define FLASH_OFFSET 0x2D000
-#else
 #define FLASH_OFFSET 0x60000
-#endif
 
 // Maximum number of encounters stored at one time
 #define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)
@@ -30,14 +26,8 @@
 // And assumes the size is block-aligned
 #define FLASH_LOG_SIZE (ENCOUNTER_ENTRY_SIZE * MAX_LOG_COUNT)
 
-#ifdef DONGLE_PLATFORM__ZEPHYR
-#include <drivers/flash.h>
-typedef off_t storage_addr_t;
-typedef const struct device flash_device_t;
-#else
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;
-#endif
 
 typedef struct {
   enctr_entry_counter_t tail; // index of oldest stored recent encounter
@@ -53,11 +43,7 @@ typedef struct {
 } _dongle_storage_map_;
 
 typedef struct {
-#ifdef DONGLE_PLATFORM__ZEPHYR
-  flash_device_t *dev;
-#else
   MSC_ExecConfig_TypeDef mscExecConfig;
-#endif
   size_t min_block_size;
   int num_pages;
   size_t page_size;

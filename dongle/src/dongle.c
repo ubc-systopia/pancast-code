@@ -411,7 +411,7 @@ void dongle_save_encounters()
   }
 }
 
-void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
+void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
 {
   // Filter mis-sized packets
   if (data_len != ENCOUNTER_BROADCAST_SIZE + 1) {

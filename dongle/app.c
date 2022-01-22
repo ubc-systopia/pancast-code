@@ -79,7 +79,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
     case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
       // First, log into the legacy decode pipeline
-      dongle_log(&report.address, report.rssi, report.data.data, report.data.len);
+      dongle_on_scan_report(&report.address, report.rssi, report.data.data, report.data.len);
 
 #if MODE__PERIODIC
       // then check for periodic info in packet

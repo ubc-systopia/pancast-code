@@ -145,7 +145,7 @@ void dongle_init();
 void dongle_init_scan();
 void dongle_load();
 void dongle_report();
-void dongle_log(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
+void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
 void dongle_lock();
 void dongle_unlock();
 void dongle_info();

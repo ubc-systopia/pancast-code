@@ -237,11 +237,11 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 }
 
 void inc_head(dongle_storage *sto) {
-  sto->encounters.head = (sto->encounters.head + 1) % dongle_storage_max_log_count(sto);
+  sto->encounters.head = (sto->encounters.head + 1) % (dongle_storage_max_log_count(sto)+1);
 }
 
 void inc_tail(dongle_storage *sto) {
-  sto->encounters.tail = (sto->encounters.tail + 1) % dongle_storage_max_log_count(sto);
+  sto->encounters.tail = (sto->encounters.tail + 1) % (dongle_storage_max_log_count(sto)+1);
 }
 
 void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
@@ -268,7 +268,8 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
   if (sto->encounters.head >= sto->encounters.tail) {
     result = sto->encounters.head - sto->encounters.tail;
   } else {
-    result = dongle_storage_max_log_count(sto) - (sto->encounters.tail - sto->encounters.head);
+    result = dongle_storage_max_log_count(sto) -
+    		(sto->encounters.tail - sto->encounters.head - 1);
   }
   log_debugf("result: %lu\r\n", (uint32_t)result);
   return result;
@@ -318,7 +319,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 storage_addr_t get_encounter_offset(dongle_storage *sto, enctr_entry_counter_t i) {
   storage_addr_t offset = sto->map.log + (i / ENCOUNTERS_PER_PAGE) * sto->page_size +
         (i % ENCOUNTERS_PER_PAGE)*ENCOUNTER_ENTRY_SIZE;
-  if (offset > NVM_OFFSET) {
+  if (offset >= NVM_OFFSET) {
     offset = offset + NVM_SIZE;
   }
   return offset;

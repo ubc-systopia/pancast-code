@@ -68,7 +68,7 @@ void dongle_storage_get_info(dongle_storage *sto)
 
 size_t dongle_storage_max_log_count(dongle_storage *sto)
 {
-  size_t encounter_log_size = sto->map.log_end - sto->map.log;
+  size_t encounter_log_size = sto->map.log_end - sto->map.log - NVM_SIZE;
   return (encounter_log_size / sto->page_size) * ENCOUNTERS_PER_PAGE;
 }
 
@@ -315,6 +315,23 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
     (sto->map.log + (j / ENCOUNTERS_PER_PAGE) * sto->page_size + \
     	(j % ENCOUNTERS_PER_PAGE)*ENCOUNTER_ENTRY_SIZE)
 
+storage_addr_t get_encounter_offset(dongle_storage *sto, enctr_entry_counter_t i) {
+  storage_addr_t offset = sto->map.log + (i / ENCOUNTERS_PER_PAGE) * sto->page_size +
+        (i % ENCOUNTERS_PER_PAGE)*ENCOUNTER_ENTRY_SIZE;
+  if (offset > NVM_OFFSET) {
+    offset = offset + NVM_SIZE;
+  }
+  return offset;
+}
+
+storage_addr_t get_page_offset(dongle_storage *sto, enctr_entry_counter_t i) {
+  storage_addr_t offset = sto->map.log + (i / ENCOUNTERS_PER_PAGE) * sto->page_size;
+  if (offset >= NVM_OFFSET) {
+    offset = offset + NVM_SIZE;
+  }
+  return offset;
+}
+
 void dongle_storage_load_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
@@ -343,7 +360,7 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
     log_errorf("Index for encounter log (%lu) is too large\r\n", (uint32_t)i);
     return;
   }
-  storage_addr_t off = ENCOUNTER_LOG_OFFSET(i);
+  storage_addr_t off = get_encounter_offset(sto, i);
 #define read(size, dst) _flash_read_(sto, off, dst, size), off += size
   read(sizeof(beacon_id_t), &en->beacon_id);
   read(sizeof(beacon_location_id_t), &en->location_id);
@@ -380,8 +397,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 {
   enctr_entry_counter_t num1, num2, num3;
   num1 = dongle_storage_num_encounters_current(sto);
-  storage_addr_t start =
-    ENCOUNTER_LOG_OFFSET(sto->encounters.head);
+  storage_addr_t start = get_encounter_offset(sto, sto->encounters.head);
 
   storage_addr_t off = start;
 
@@ -446,7 +462,7 @@ void dongle_storage_info(dongle_storage *sto)
   log_infof("Total flash space:       %lu bytes\r\n",
       (uint32_t) FLASH_LOG_SIZE);
   log_infof("Maximum enctr entries:   %lu\r\n",
-      (uint32_t) MAX_LOG_COUNT);
+      (uint32_t) dongle_storage_max_log_count(sto));
 }
 
 void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time)

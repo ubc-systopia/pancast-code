@@ -7,6 +7,7 @@
 
 #include "dongle.h"
 #include "common/src/settings.h"
+#include "config/nvm3_default_config.h"
 
 #include <stddef.h>
 
@@ -17,6 +18,9 @@
                               BEACON_EPH_ID_SIZE)
 
 #define FLASH_OFFSET 0x60000
+
+#define NVM_OFFSET 0x78000
+#define NVM_SIZE NVM3_DEFAULT_NVM_SIZE
 
 // Maximum number of encounters stored at one time
 #define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)

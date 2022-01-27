@@ -285,10 +285,10 @@ enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto)
 void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 {
   log_debugf("%s", "deleting...\r\n");
-  dongle_encounter_entry en;
+  dongle_encounter_entry_t en;
   enctr_entry_counter_t i = 0;
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-#define age (cur_time - en.dongle_time)
+#define age (cur_time - (en.dongle_time_start + en.dongle_time_int))
   do {
     if (i >= num) {
         break;
@@ -338,7 +338,7 @@ void dongle_storage_load_encounter(dongle_storage *sto,
 {
   log_debugf("loading log entries starting at (virtual) index %lu\r\n", (uint32_t)i);
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-  dongle_encounter_entry en;
+  dongle_encounter_entry_t en;
   do {
     if (i >= num)
       break;
@@ -354,7 +354,7 @@ void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb 
 }
 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
-    enctr_entry_counter_t i, dongle_encounter_entry *en)
+    enctr_entry_counter_t i, dongle_encounter_entry_t *en)
 {
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
   if (i >= num) {
@@ -362,13 +362,7 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
     return;
   }
   storage_addr_t off = get_encounter_offset(sto, i);
-#define read(size, dst) _flash_read_(sto, off, dst, size), off += size
-  read(sizeof(beacon_id_t), &en->beacon_id);
-  read(sizeof(beacon_location_id_t), &en->location_id);
-  read(sizeof(beacon_timer_t), &en->beacon_time);
-  read(sizeof(dongle_timer_t), &en->dongle_time);
-  read(BEACON_EPH_ID_SIZE, &en->eph_id);
-#undef read
+  _flash_read_(sto, off, en, sizeof(dongle_encounter_entry_t));
 }
 
 void dongle_storage_load_encounters_from_time(dongle_storage *sto,
@@ -376,13 +370,13 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
 {
   log_debugf("loading log entries starting at time %lu\r\n", (uint32_t)min_time);
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-  dongle_encounter_entry en;
+  dongle_encounter_entry_t en;
   enctr_entry_counter_t j = 0;
   for (enctr_entry_counter_t i = 0; i < num; i++) {
     log_debugf("i = %lu\r\n", (uint32_t) i);
     // Can be optimized to track timestamps and avoid extra loads
-    dongle_storage_load_single_encounter(sto, i, &en);
-    if (en.dongle_time >= min_time) {
+  //  dongle_storage_load_single_encounter(sto, i, &en);
+    if (en.dongle_time_start >= min_time) {
       if (!cb(j, &en)) {
         break;
       }
@@ -392,9 +386,7 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
 }
 
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
-    beacon_location_id_t *location_id, beacon_id_t *beacon_id,
-    beacon_timer_t *beacon_time, dongle_timer_t *dongle_time,
-    beacon_eph_id_t *eph_id, int8_t rssi)
+		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en)
 {
   enctr_entry_counter_t num1, num2, num3;
   num1 = dongle_storage_num_encounters_current(sto);
@@ -410,16 +402,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 
 #define write(data, size) _flash_write_(sto, off, data, size), off += size
 
-  write(beacon_id, sizeof(beacon_id_t));
-  write(location_id, sizeof(beacon_location_id_t));
-  write(beacon_time, sizeof(beacon_timer_t));
-  write(dongle_time, sizeof(dongle_timer_t));
-
-  // store RSSI in the last byte slot of ephemeral ID. This byte is currently
-  // unused as we only use 14 byte ephemeral IDs
-  eph_id->bytes[BEACON_EPH_ID_SIZE-1] = rssi;
-
-  write(eph_id, BEACON_EPH_ID_SIZE);
+  write(en, ENCOUNTER_ENTRY_SIZE);
 
 #undef write
 
@@ -430,7 +413,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
   num3 = dongle_storage_num_encounters_current(sto);
   log_debugf("time: %u, %u #entries: %lu -> %lu -> %lu, "
       "H: %lu, T: %lu, off: %u, size: %u %u\r\n",
-      *dongle_time, stat_start, num1, num2, num3,
+      en->dongle_time_start, stat_start, num1, num2, num3,
       sto->encounters.head, sto->encounters.tail,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
 }

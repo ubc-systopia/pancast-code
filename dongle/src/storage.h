@@ -100,7 +100,7 @@ enctr_entry_counter_t dongle_storage_num_encounters_total(dongle_storage *sto);
 // LOAD ENCOUNTER
 // API is defined using a callback structure
 typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
-    dongle_encounter_entry *entry);
+		dongle_encounter_entry_t *entry);
 
 // load function iterates through the records, and calls cb for each
 // variable i is provided as the index into the log
@@ -110,16 +110,17 @@ void dongle_storage_load_encounter(dongle_storage *sto,
 void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb);
 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
-    enctr_entry_counter_t i, dongle_encounter_entry *);
+    enctr_entry_counter_t i, dongle_encounter_entry_t *);
+
+void dongle_storage_load_single_encounter_new(dongle_storage *sto,
+    enctr_entry_counter_t i, dongle_encounter_entry_t *);
 
 void dongle_storage_load_encounters_from_time(dongle_storage *sto,
     dongle_timer_t min_time, dongle_encounter_cb cb);
 
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
-    beacon_location_id_t *loc, beacon_id_t *beacon_id,
-    beacon_timer_t *beacon_time, dongle_timer_t *dongle_time,
-    beacon_eph_id_t *eph_id, int8_t rssi);
+		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en);
 
 #define DONGLE_STORAGE_MAX_PRINT_LEN 64
 

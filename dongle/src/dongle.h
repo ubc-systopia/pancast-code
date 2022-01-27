@@ -86,25 +86,16 @@ typedef struct {
   beacon_timer_t *t;
 } encounter_broadcast_t;
 
-// Structure to consolidate all fields contained in an encounter
-// Used only during testing as copies to this format are expensive
 typedef struct {
   beacon_location_id_t location_id;
   beacon_id_t beacon_id;
-  beacon_timer_t beacon_time;
-  dongle_timer_t dongle_time;
-  beacon_eph_id_t eph_id;
-} dongle_encounter_entry;
-
-typedef struct {
-  beacon_location_id_t location_id;
-  beacon_id_t beacon_id;
-  beacon_timer_t beacon_time_start;
-  beacon_timer_t beacon_time_end;
-  dongle_timer_t dongle_time_start;
-  dongle_timer_t dongle_time_end;
+  uint16_t beacon_time_start;
+  uint16_t dongle_time_start;
+  uint8_t beacon_time_int;
+  uint8_t dongle_time_int;
   int8_t rssi;
-} dongle_encounter_track_t;
+  beacon_eph_id_t eph_id;
+} dongle_encounter_entry_t;
 
 // Timing Constants
 #define MAIN_TIMER_HANDLE 0x00
@@ -157,6 +148,6 @@ void dongle_on_periodic_data
 void dongle_on_periodic_data_error
 (int8_t rssi);
 void dongle_on_sync_lost();
-int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry *entry);
+int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry);
 void dongle_led_notify();
 #endif

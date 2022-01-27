@@ -25,7 +25,7 @@ interact_state state;
 uint8_t dongle_state;
 enctr_entry_counter_t num_recs;
 enctr_entry_counter_t next_rec = 0;
-dongle_encounter_entry send_en;
+dongle_encounter_entry_t send_en;
 
 #ifdef DONGLE_PLATFORM__ZEPHYR
 static const struct bt_data ad[] = {
@@ -220,7 +220,7 @@ void interact_update()
       dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_1;
 
       state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_1;
-      memcpy(state.data.bytes, &send_en.beacon_time, sizeof(beacon_timer_t));
+      memcpy(state.data.bytes, &send_en.beacon_time_start, sizeof(beacon_timer_t));
       peer_update();
       break;
 
@@ -232,7 +232,7 @@ void interact_update()
       dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_2;
 
       state.flags = DONGLE_UPLOAD_DATA_TYPE_DATA_2;
-      memcpy(state.data.bytes, &send_en.dongle_time, sizeof(dongle_timer_t));
+      memcpy(state.data.bytes, &send_en.dongle_time_start, sizeof(dongle_timer_t));
       peer_update();
       break;
 

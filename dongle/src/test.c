@@ -19,7 +19,7 @@ int total_test_encounters = 0;
 /*
  * a simple fifo cache which can be used for matching encounter entries
  */
-dongle_encounter_entry test_encounter_list[TEST_MAX_ENCOUNTERS];
+dongle_encounter_entry_t test_encounter_list[TEST_MAX_ENCOUNTERS];
 
 void dongle_test_encounter(encounter_broadcast_t *enc)
 {
@@ -29,8 +29,8 @@ void dongle_test_encounter(encounter_broadcast_t *enc)
 #define test_en (test_encounter_list[total_test_encounters])
   memcpy(&test_en.location_id, enc->loc, sizeof(beacon_location_id_t));
   test_en.beacon_id = *enc->b;
-  test_en.beacon_time = *enc->t;
-  test_en.dongle_time = dongle_time;
+  test_en.beacon_time_start = *enc->t;
+  test_en.dongle_time_start = dongle_time;
   test_en.eph_id = *enc->eph;
   log_debugf("Test Encounter: (index=%d)\r\n", total_test_encounters);
   //_display_encounter_(&test_en);
@@ -38,16 +38,16 @@ void dongle_test_encounter(encounter_broadcast_t *enc)
   total_test_encounters = (total_test_encounters + 1) % TEST_MAX_ENCOUNTERS;
 }
 
-uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry b)
+uint8_t compare_encounter_entry(dongle_encounter_entry_t a, dongle_encounter_entry_t b)
 {
   uint8_t res = 0;
   log_debugf("%s", "comparing ids\r\n");
 #define check(val, idx) res |= (val << idx)
   check(!(a.beacon_id == b.beacon_id), 0);
   log_debugf("%s", "comparing beacon time\r\n");
-  check(!(a.beacon_time == b.beacon_time), 1);
+  check(!(a.beacon_time_start == b.beacon_time_start), 1);
   log_debugf("%s", "comparing dongle time\r\n");
-  check(!(a.dongle_time == b.dongle_time), 2);
+  check(!(a.dongle_time_start == b.dongle_time_start), 2);
   log_debugf("%s", "comparing location ids\r\n");
   check(!(a.location_id == b.location_id), 3);
   log_debugf("%s", "comparing eph. ids\r\n");
@@ -56,12 +56,12 @@ uint8_t compare_encounter_entry(dongle_encounter_entry a, dongle_encounter_entry
   return res;
 }
 
-int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entry)
+int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry_t *entry)
 {
   //log_infof("%.4lu.", i);
   //_display_encounter_(entry);
   log_debugf("%s", "comparing logged encounter against test record\r\n");
-  dongle_encounter_entry test_en = test_encounter_list[i];
+  dongle_encounter_entry_t test_en = test_encounter_list[i];
   uint8_t comp = compare_encounter_entry(*entry, test_en);
   if (comp) {
     log_infof("FAILED: entry mismatch (index=%lu)\r\n", (uint32_t)i);
@@ -78,11 +78,11 @@ int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry *entr
   return 1;
 }
 
-int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry *entry)
+int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry_t *entry)
 {
-  if ((dongle_time - entry->dongle_time) > DONGLE_MAX_LOG_AGE) {
+  if ((dongle_time - entry->dongle_time_start) > DONGLE_MAX_LOG_AGE) {
     log_infof("FAILED: Encounter at index %lu is too old (age=%lu)\r\n",
-              (uint32_t)i, (uint32_t)entry->dongle_time);
+              (uint32_t)i, (uint32_t)entry->dongle_time_start);
     test_errors++;
     return 0;
   }

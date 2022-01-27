@@ -82,7 +82,7 @@ void dongle_download_fail(download_fail_reason *reason)
 }
 
 int dongle_download_check_match(enctr_entry_counter_t i,
-                                dongle_encounter_entry *entry)
+                                dongle_encounter_entry_t *entry)
 {
   // pad the stored id in case backend entry contains null byte at end
 #define MAX_EPH_ID_SIZE 15

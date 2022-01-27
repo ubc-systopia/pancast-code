@@ -31,17 +31,19 @@ void display_eph_id(beacon_eph_id_t *id)
   id->bytes[10], id->bytes[11], id->bytes[12], id->bytes[13]);
 }
 
-void _display_encounter_(dongle_encounter_entry *entry)
+void _display_encounter_(dongle_encounter_entry_t *entry)
 {
   log_infof("%s", "Encounter data:\r\n");
-  log_infof(" t_d: %lu,", entry->dongle_time);
+  log_infof(" t_d: %u,", entry->dongle_time_start);
+  log_infof(" i_d: %u,", entry->dongle_time_int);
   log_infof(" b: %lu,", entry->beacon_id);
-  log_infof(" t_b: %lu,", entry->beacon_time);
+  log_infof(" t_b: %u,", entry->beacon_time_start);
+  log_infof(" i_b: %u,", entry->beacon_time_int);
   log_infof(" loc: %llu\r\n", entry->location_id);
   display_eph_id_of(entry);
 }
 
-void display_eph_id_of(dongle_encounter_entry *entry)
+void display_eph_id_of(dongle_encounter_entry_t *entry)
 {
   display_eph_id(&entry->eph_id);
 }

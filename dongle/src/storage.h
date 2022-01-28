@@ -13,9 +13,11 @@
 
 // Reflects the total size of the entry in storage while taking
 // minimum alignment into account.
+#define ALIGN_PADDING 1
 #define ENCOUNTER_ENTRY_SIZE (sizeof(beacon_location_id_t) + sizeof(beacon_id_t) + \
-                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +    \
-                              BEACON_EPH_ID_SIZE)
+                              sizeof(beacon_timer_t) + sizeof(dongle_timer_t) +  \
+							  2*sizeof(uint8_t) + sizeof(int8_t) +   		\
+                              BEACON_EPH_ID_SIZE + ALIGN_PADDING)
 
 #define FLASH_OFFSET 0x60000
 

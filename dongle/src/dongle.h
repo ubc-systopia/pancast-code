@@ -89,8 +89,8 @@ typedef struct {
 typedef struct {
   beacon_location_id_t location_id;
   beacon_id_t beacon_id;
-  uint16_t beacon_time_start;
-  uint16_t dongle_time_start;
+  beacon_timer_t beacon_time_start;
+  dongle_timer_t dongle_time_start;
   uint8_t beacon_time_int;
   uint8_t dongle_time_int;
   int8_t rssi;

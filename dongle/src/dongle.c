@@ -363,7 +363,6 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
 
 void dongle_save_encounters()
 {
-#define MIN_TIME_UNSEEN 2
   for (int i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
    dongle_timer_t end_time = cur_encounters[i].dongle_time_start + cur_encounters[i].dongle_time_int;
 //   beacon_eph_id_t *id = &cur_encounters[i].eph_id;
@@ -375,7 +374,7 @@ void dongle_save_encounters()
     // if two time cycles have passed and we haven't seen the eph id again,
     // then count this as the end of the duration and log the encounter
     if (cur_encounters[i].dongle_time_start != 0 &&
-    		dongle_time - end_time > MIN_TIME_UNSEEN) {
+    		dongle_time - end_time > LOG_MIN_WAIT) {
       dongle_save_encounter(&cur_encounters[i], i);
 	}
   }

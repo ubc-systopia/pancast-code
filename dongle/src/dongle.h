@@ -41,6 +41,9 @@
 // number of distinct broadcast ids to keep track of at one time
 #define DONGLE_MAX_BC_TRACKED 16
 
+// Time to wait after not seeing an ID before persisting encounter to storage
+#define LOG_MIN_WAIT 15
+
 // Bluetooth Scanning Parameters
 // These are hard-coded, in ms
 #define DONGLE_SCAN_INTERVAL 0x30

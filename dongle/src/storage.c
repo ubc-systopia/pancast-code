@@ -16,7 +16,7 @@ extern dongle_timer_t dongle_time;
 
 void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 {
-  log_debugf("erasing page at 0x%x\r\n", (offset));
+  log_infof("erasing page at 0x%x\r\n", (offset));
   int status = MSC_ErasePage((uint32_t *)offset);
   if (status != 0) {
     log_debugf("error erasing page: 0x%x", status);
@@ -169,6 +169,8 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   write(&cfg->backend_pk, PK_MAX_SIZE);
   write(&cfg->dongle_sk_size, sizeof(key_size_t));
   write(&cfg->dongle_sk, SK_MAX_SIZE);
+  write(&cfg->en_tail, sizeof(enctr_entry_counter_t));
+  write(&cfg->en_head, sizeof(enctr_entry_counter_t));
 
 #undef write
 
@@ -237,11 +239,11 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 }
 
 void inc_head(dongle_storage *sto) {
-  sto->encounters.head = (sto->encounters.head + 1) % (dongle_storage_max_log_count(sto)+1);
+  sto->encounters.head = (sto->encounters.head + 1) % (dongle_storage_max_log_count(sto));
 }
 
 void inc_tail(dongle_storage *sto) {
-  sto->encounters.tail = (sto->encounters.tail + 1) % (dongle_storage_max_log_count(sto)+1);
+  sto->encounters.tail = (sto->encounters.tail + 1) % (dongle_storage_max_log_count(sto));
 }
 
 void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
@@ -269,7 +271,7 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
     result = sto->encounters.head - sto->encounters.tail;
   } else {
     result = dongle_storage_max_log_count(sto) -
-    		(sto->encounters.tail - sto->encounters.head - 1);
+    		(sto->encounters.tail - sto->encounters.head);
   }
   log_debugf("result: %lu\r\n", (uint32_t)result);
   return result;

@@ -16,7 +16,7 @@ extern dongle_timer_t dongle_time;
 
 void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 {
-  log_infof("erasing page at 0x%x\r\n", (offset));
+  log_debugf("erasing page at 0x%x\r\n", (offset));
   int status = MSC_ErasePage((uint32_t *)offset);
   if (status != 0) {
     log_debugf("error erasing page: 0x%x", status);
@@ -68,7 +68,7 @@ void dongle_storage_get_info(dongle_storage *sto)
 
 size_t dongle_storage_max_log_count(dongle_storage *sto)
 {
-  size_t encounter_log_size = sto->map.log_end - sto->map.log - NVM_SIZE;
+  size_t encounter_log_size = sto->map.log_end - sto->map.log;
   return (encounter_log_size / sto->page_size) * ENCOUNTERS_PER_PAGE;
 }
 
@@ -90,7 +90,9 @@ void dongle_storage_init(dongle_storage *sto)
   dongle_storage_init_device(sto);
   dongle_storage_get_info(sto);
   log_infof("Pages: %d, Page Size: %u\r\n", sto->num_pages, sto->page_size);
-  sto->map.config = FLASH_OFFSET;
+ // sto->map.config = FLASH_OFFSET; // last page
+  sto->map.log = FLASH_OFFSET;
+  sto->map.config = sto->total_size - sto->page_size;
   if (FLASH_OFFSET % sto->page_size != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
         FLASH_OFFSET, sto->page_size);
@@ -136,11 +138,13 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 
 
   sto->map.otp = off;
-  // push onto the next blank page
-  sto->map.stat = next_multiple(sto->page_size,
-                           sto->map.otp + (NUM_OTP * sizeof(dongle_otp_t)));
-  sto->map.log = sto->map.stat + sto->page_size;
-  sto->map.log_end = sto->total_size;
+
+  off += NUM_OTP * sizeof(dongle_otp_t); // add size of OTP
+
+  sto->map.stat = off;
+
+  sto->map.log = FLASH_OFFSET;
+  sto->map.log_end = NVM_OFFSET - 1;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
   log_infof("    Total Size:    %u\r\n", sto->total_size);
@@ -321,17 +325,11 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 storage_addr_t get_encounter_offset(dongle_storage *sto, enctr_entry_counter_t i) {
   storage_addr_t offset = sto->map.log + (i / ENCOUNTERS_PER_PAGE) * sto->page_size +
         (i % ENCOUNTERS_PER_PAGE)*ENCOUNTER_ENTRY_SIZE;
-  if (offset >= NVM_OFFSET) {
-    offset = offset + NVM_SIZE;
-  }
   return offset;
 }
 
 storage_addr_t get_page_offset(dongle_storage *sto, enctr_entry_counter_t i) {
   storage_addr_t offset = sto->map.log + (i / ENCOUNTERS_PER_PAGE) * sto->page_size;
-  if (offset >= NVM_OFFSET) {
-    offset = offset + NVM_SIZE;
-  }
   return offset;
 }
 

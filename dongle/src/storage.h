@@ -41,11 +41,11 @@ typedef struct {
 } _encounter_storage_cursor_;
 
 typedef struct {
+  storage_addr_t log;     // address of first log entry
+  storage_addr_t log_end; // address of next available space after log
   storage_addr_t config;  // address of device configuration
   storage_addr_t otp;     // address of OTP storage
   storage_addr_t stat;    // address of saved statistics
-  storage_addr_t log;     // address of first log entry
-  storage_addr_t log_end; // address of next available space after log
 } _dongle_storage_map_;
 
 typedef struct {

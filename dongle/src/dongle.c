@@ -285,7 +285,6 @@ static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
 //		enc->dongle_time_start, enc->dongle_time_int,
 //		(int8_t) enc->rssi);
 
-  log_infof("%s", "saving encounter with duration!\r\n");
   dongle_storage_log_encounter(&storage, &config, &dongle_time, enc);
   memset(&cur_encounters[i], 0, sizeof(dongle_encounter_entry_t));
 }
@@ -481,8 +480,6 @@ void dongle_report()
   dongle_storage_save_stat(&storage, statbuf,
       sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
   stat_start = dongle_time;
-  dongle_stats_reset();
-  dongle_download_stats_init();
 #endif
 
 #if TEST_DONGLE

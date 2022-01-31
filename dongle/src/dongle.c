@@ -163,7 +163,7 @@ void dongle_load()
   dongle_storage_init(&storage);
   // Config load is required to properly set up the memory maps
   dongle_storage_load_config(&storage, &config);
-#ifdef MODE__SL_DONGLE_TEST_CONFIG
+#if MODE__SL_DONGLE_TEST_CONFIG
   config.id = TEST_DONGLE_ID;
   config.t_init = TEST_DONGLE_INIT_TIME;
   config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
@@ -419,8 +419,9 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
 void dongle_info()
 {
   log_infof("%s", "=== Dongle Info: ===\r\n");
-  log_infof("    Dongle ID:                    0x%lx\r\n", config.id);
+  log_infof("    Dongle ID:                    0x%x\r\n", config.id);
   log_infof("    Initial clock:                %lu\r\n", config.t_init);
+  log_infof("    Current clock:                %lu\r\n", config.t_cur);
   log_infof("    Timer frequency:              %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
   log_infof("    Backend public key size:      %lu bytes\r\n",
       config.backend_pk_size);

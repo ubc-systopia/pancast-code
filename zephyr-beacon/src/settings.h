@@ -8,8 +8,8 @@
  */
 
 /*
- * 0 - init test config
- * 1 - load config from storage
+ * 0 - load config from storage
+ * 1 - use test config
  */
 #define MODE__NRF_BEACON_TEST_CONFIG  1
 

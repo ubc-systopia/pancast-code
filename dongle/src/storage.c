@@ -90,7 +90,6 @@ void dongle_storage_init(dongle_storage *sto)
   dongle_storage_init_device(sto);
   dongle_storage_get_info(sto);
   log_infof("Pages: %d, Page Size: %u\r\n", sto->num_pages, sto->page_size);
- // sto->map.config = FLASH_OFFSET; // last page
   sto->map.log = FLASH_OFFSET;
   sto->map.config = sto->total_size - sto->page_size;
   if (FLASH_OFFSET % sto->page_size != 0) {
@@ -147,8 +146,9 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   sto->map.log_end = NVM_OFFSET - 1;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
+  log_infof("    Flash offset:    %u\r\n", FLASH_OFFSET);
   log_infof("    Total Size:    %u\r\n", sto->total_size);
-  log_infof("    Flash offset:    %u\r\n", sto->map.config);
+  log_infof("    Config offset:    %u\r\n", sto->map.config);
   log_infof("    OTP offset:      %u\r\n", sto->map.otp);
   log_infof("    Stat offset:     %u\r\n", sto->map.stat);
   log_infof("    Log offset:      %u-%u\r\n", sto->map.log, sto->map.log_end);
@@ -394,11 +394,13 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 
   storage_addr_t off = start;
 
-  // TODO: save erased into memory in case the cursor has wrapped around
-  // currently reads corrupted data once the max size is reached
-  // can probably be done with a page buffer, but may lose up to page
-  // of data if dongle is stopped
+  // NOTE: once head has wrapped, erasing the next page before writing
+  // will cause a page of old entries to be lost (204 entries)
+  // currently, storing the old page in an in-memory buffer does not work
+  // because allocating an 8K static or dynamic memory buffer is not
+  // possible
   pre_erase(sto, off, ENCOUNTER_ENTRY_SIZE);
+
 
 #define write(data, size) _flash_write_(sto, off, data, size), off += size
 

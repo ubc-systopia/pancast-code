@@ -52,14 +52,6 @@ int _flash_write_(dongle_storage *sto, storage_addr_t off, void *data, size_t si
   return MSC_WriteWord((uint32_t *)off, data, (uint32_t)size);
 }
 
-void dongle_storage_get_info(dongle_storage *sto)
-{
-  sto->num_pages = FLASH_DEVICE_NUM_PAGES;
-  sto->min_block_size = FLASH_DEVICE_BLOCK_SIZE;
-  sto->page_size = FLASH_DEVICE_PAGE_SIZE;
-  sto->total_size = sto->num_pages * sto->page_size;
-}
-
 // Upper-bound of size of encounter log, in bytes
 #define TARGET_FLASH_LOG_SIZE (sto->total_size - FLASH_OFFSET)
 
@@ -83,14 +75,16 @@ void dongle_storage_init_device(dongle_storage *sto)
 void dongle_storage_init(dongle_storage *sto)
 {
   log_debugf("%s", "Initializing storage...\r\n");
+  dongle_storage_init_device(sto);
   sto->encounters.tail = 0;
   sto->encounters.head = 0;
   sto->total_encounters = 0;
   sto->numErasures = 0;
-  dongle_storage_init_device(sto);
-  dongle_storage_get_info(sto);
+  sto->num_pages = FLASH_DEVICE_NUM_PAGES;
+  sto->min_block_size = FLASH_DEVICE_BLOCK_SIZE;
+  sto->page_size = FLASH_DEVICE_PAGE_SIZE;
+  sto->total_size = sto->num_pages * sto->page_size;
   log_infof("Pages: %d, Page Size: %u\r\n", sto->num_pages, sto->page_size);
-  sto->map.log = FLASH_OFFSET;
   sto->map.config = sto->total_size - sto->page_size;
   if (FLASH_OFFSET % sto->page_size != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",

@@ -87,13 +87,12 @@ void dongle_init()
 
   // Set encounters cursor to loaded config values,
   // then load all stored encounters
-  if (config.en_tail != config.en_head && config.en_tail < dongle_storage_max_log_count(&storage)) {
-    storage.encounters.head = config.en_head;
-    storage.encounters.tail = config.en_tail;
-  } else {
-    storage.encounters.head = 0;
-    storage.encounters.tail = 0;
+  if (config.en_tail > dongle_storage_max_log_count(&storage) ||
+        config.en_tail > dongle_storage_max_log_count(&storage)) {
+    log_errorf("%s", "head or tail larger than max encounters\r\n");
   }
+  storage.encounters.head = config.en_head;
+  storage.encounters.tail = config.en_tail;
   dongle_storage_load_all_encounter(&storage, dongle_print_encounter);
 
   // set dongle time to current saved time

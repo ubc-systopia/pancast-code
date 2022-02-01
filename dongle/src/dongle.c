@@ -442,7 +442,7 @@ void dongle_info()
 
 void dongle_encounter_report()
 {
-  enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
+  enctr_entry_counter_t num = storage.total_encounters;
   enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 
   log_infof("[%lu] last report time: %lu, "
@@ -486,7 +486,7 @@ void dongle_report()
   dongle_test();
 #endif
 
-  non_report_entry_count = dongle_storage_num_encounters_total(&storage);
+  non_report_entry_count = storage.total_encounters;
 }
 
 #undef LOG_LEVEL__INFO

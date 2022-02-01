@@ -132,7 +132,7 @@ void dongle_test()
 #endif
 
   log_infof("%s", "    logged encounters correct?\r\n");
-  enctr_entry_counter_t num = dongle_storage_num_encounters_total(&storage);
+  enctr_entry_counter_t num = storage.total_encounters;
   if (num > non_report_entry_count) {
     // There are new entries logged
     dongle_storage_load_encounters_from_time(&storage, report_time,

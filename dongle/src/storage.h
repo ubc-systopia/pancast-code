@@ -118,7 +118,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 
 int dongle_storage_print(dongle_storage *, storage_addr_t, size_t);
 
-void dongle_storage_save_stat(dongle_storage *sto, void * stat, size_t len);
+void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg, void * stat, size_t len);
 void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
 void dongle_storage_info(dongle_storage *);
 

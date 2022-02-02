@@ -50,6 +50,7 @@ void dongle_unlock(){
 // 2. Config
 dongle_config_t config;
 
+
 // 3. Operation
 dongle_storage storage;
 dongle_storage *get_dongle_storage()
@@ -477,7 +478,7 @@ void dongle_report()
   memcpy(statbuf, (void *) &stats, sizeof(dongle_stats_t));
   memcpy(statbuf+sizeof(dongle_stats_t), (void *) &download_stats,
       sizeof(downloads_stats_t));
-  dongle_storage_save_stat(&storage, statbuf,
+  dongle_storage_save_stat(&storage, &config, statbuf,
       sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
   stat_start = dongle_time;
 #endif

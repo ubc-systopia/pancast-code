@@ -115,7 +115,6 @@ void dongle_test()
   // Restore OTP data
   // Need to re-save config as the shared page must be erased
   dongle_storage_save_config(&storage, &config);
-  dongle_storage_save_otp(&storage, TEST_OTPS);
 
   log_infof("#encounters logged: %d, expected: %d\r\n", test_encounters,
       (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME));

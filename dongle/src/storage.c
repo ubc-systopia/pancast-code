@@ -7,6 +7,7 @@
 #include "common/src/platform/gecko.h"
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
+#include "stats.h"
 
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
@@ -148,31 +149,37 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   log_infof("    Log offset:      %u-%u\r\n", sto->map.log, sto->map.log_end);
 }
 
+#define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
+
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-  log_debugf("%s", "Saving config\r\n");
   storage_addr_t off = sto->map.config;
-  int total_size = sizeof(dongle_id_t) + sizeof(dongle_timer_t) +
-    sizeof(key_size_t)*2 + PK_MAX_SIZE + SK_MAX_SIZE;
+  int total_size = sizeof(dongle_config_t);
+
+  dongle_otp_t otps[NUM_OTP];
+
+  _flash_read_(sto, OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
+
+  char statbuf[sizeof(dongle_stats_t) + sizeof(downloads_stats_t)];
+
+  _flash_read_(sto, sto->map.stat, statbuf, sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
 
   pre_erase(sto, off, total_size);
 
 #define write(data, size) \
   (_flash_write_(sto, off, data, size), off += size)
 
-  write(&cfg->id, sizeof(dongle_id_t));
-  write(&cfg->t_init, sizeof(dongle_timer_t));
-  write(&cfg->t_cur, sizeof(dongle_timer_t));
-  write(&cfg->backend_pk_size, sizeof(key_size_t));
-  write(&cfg->backend_pk, PK_MAX_SIZE);
-  write(&cfg->dongle_sk_size, sizeof(key_size_t));
-  write(&cfg->dongle_sk, SK_MAX_SIZE);
-  write(&cfg->en_tail, sizeof(enctr_entry_counter_t));
-  write(&cfg->en_head, sizeof(enctr_entry_counter_t));
+  // Write config
+  write(cfg, sizeof(dongle_config_t));
 
+  // Write OTPs
+  off = OTP(0);
+  write(otps, sizeof(dongle_otp_t)*NUM_OTP);
+
+  // Write stats
+  off = sto->map.stat;
+  write(statbuf, sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
 #undef write
-
-  log_debugf("off: %u, size: %u\r\n", sto->map.config, total_size);
 }
 
 void dongle_storage_save_cursor(dongle_storage *sto, dongle_config_t *cfg)
@@ -192,29 +199,10 @@ void dongle_storage_save_cursor(dongle_storage *sto, dongle_config_t *cfg)
 #undef write
 }
 
-#define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
 
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 {
   _flash_read_(sto, OTP(i), otp, sizeof(dongle_otp_t));
-}
-
-void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
-{
-  log_debugf("%s", "Saving OTPs\r\n");
-  storage_addr_t off = OTP(0);
-  pre_erase(sto, off, (NUM_OTP * sizeof(dongle_otp_t)));
-
-#define write(data, size) \
-  (_flash_write_(sto, off, data, size), off += size)
-
-  for (int i = 0; i < NUM_OTP; i++) {
-    write(&otps[i], sizeof(dongle_otp_t));
-  }
-
-#undef write
-
-  log_infof("off: %u, size: %u\r\n", OTP(0), (NUM_OTP * sizeof(dongle_otp_t)));
 }
 
 int otp_is_used(dongle_otp_t *otp)
@@ -410,9 +398,15 @@ int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)
   return 0;
 }
 
-void dongle_storage_save_stat(dongle_storage *sto, void * stat, size_t len)
+void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg, void * stat, size_t len)
 {
-  dongle_storage_erase(sto, sto->map.stat);
+  dongle_otp_t otps[NUM_OTP];
+  _flash_read_(sto, OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
+
+  pre_erase(sto, sto->map.config, sizeof(dongle_config_t));
+
+  _flash_write_(sto, sto->map.config, cfg, sizeof(dongle_config_t));
+  _flash_write_(sto, sto->map.otp, otps, NUM_OTP*sizeof(dongle_otp_t));
   _flash_write_(sto, sto->map.stat, stat, len);
 }
 

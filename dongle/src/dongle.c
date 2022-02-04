@@ -408,7 +408,8 @@ void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t da
 // used as callback for dongle_load_encounter
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry)
 {
-  hexdumpen(entry->eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,
+  beacon_eph_id_t *id = &entry->eph_id;
+  hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,
 		  0,
     i, entry->beacon_time_start, entry->beacon_time_int, entry->dongle_time_start,
 	entry->dongle_time_int, entry->rssi);

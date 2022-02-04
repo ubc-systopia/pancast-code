@@ -3,11 +3,11 @@
 rootdir=/Users/nboufford/workspace/pancast
 workdir=/dongle-logs
 
-log_path=$root_dir/$working_dir
+log_path=$rootdir/$workdir
 today=`date +%Y%m%dT%H-%M-%S`
 
 dongle_dir() {
-  if [ -d $1 ]
+  if [ -d $log_path/$1 ]
   then
     :
   else

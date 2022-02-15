@@ -9,6 +9,7 @@
 #include <string.h>
 #include <termios.h>
 #include <pigpio.h>
+#include <stdint.h>
 
 #define PIN  24 /* P1-18 */
 
@@ -16,7 +17,7 @@
 
 #define PAYLOAD_SIZE 250
 #define TEST_SIZE 1000
-#define PACKET_HEADER_LEN 2*sizeof(uint32_t) + sizeof(uint64_t)
+#define PACKET_HEADER_LEN (2*sizeof(uint32_t) + sizeof(uint64_t))
 #define MAX_PACKET_SIZE (PAYLOAD_SIZE - PACKET_HEADER_LEN)  
 #define PACKET_REPLICATION 1
 #define CHUNK_REPLICATION 1

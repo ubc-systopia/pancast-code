@@ -32,9 +32,7 @@ void* receive_log() {
 void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, uint32_t len) {
 
     num_pkts = len / (PAYLOAD_SIZE - PACKET_HEADER_LEN);
-
     //printf("num_pkts: %d\r\n", num_pkts);
-    //printf("len: %u\r\n", len);
 
     uint32_t data_len = PAYLOAD_SIZE - PACKET_HEADER_LEN;
 
@@ -61,7 +59,7 @@ void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, 
       
       uint32_t last_data_len = len - (num_pkts)*(PAYLOAD_SIZE - PACKET_HEADER_LEN);
       // Add data
-      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[data_len*num_pkts-1], last_data_len);
+      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[data_len*num_pkts], last_data_len);
       num_pkts++;
     }
 }
@@ -76,6 +74,11 @@ void make_request() {
 
   memcpy(&num_chunks, chunk_count_data.response, sizeof(uint32_t));
   // printf("num chunks: %u\r\n", num_chunks);
+
+  if (num_chunks == 0) {
+    printf("num chunks is 0! No Request for data.\r\n");
+    return;
+  }
 
   for (int i = 0; i < num_chunks; i++) {
     // make request to backend for the chunk
@@ -132,7 +135,8 @@ void gpio_callback(int gpio, int level, uint32_t tick) {
   double curr_time_sec = ((double)curr_time)/CLOCKS_PER_SEC;
 
   if (curr_time_sec - last_request_time_sec > REQUEST_INTERVAL) {
-    // handle request new data
+    // request new data
+    make_request();
     last_request_time_sec = curr_time_sec;	  
   }
    
@@ -186,10 +190,10 @@ void* uart_main(void* arg) {
   make_request();
 
   // for (int i = 0; i < PAYLOAD_SIZE*num_pkts; i++) {
-  //     if (i % 250 == 0) {
+  //     if (i % 16 == 0) {
   //       printf("\r\n");
   //     }
-  //     printf("0x%x, ", payload_data[i]);
+  //     printf("%x ", payload_data[i]);
   // }
 
   // open port for read and write over UART

@@ -18,7 +18,8 @@ uint8_t payload_data[MAX_PAYLOAD_SIZE];
 
 uint32_t num_pkts;
 
-void* receive_log() {
+void* receive_log() 
+{
   while (1) {
     char c[1];
     int len = read(fd, c, sizeof(char));
@@ -29,7 +30,8 @@ void* receive_log() {
 }
 
 
-void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, uint32_t len) {
+void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, uint32_t len) 
+{
 
     num_pkts = len / (PAYLOAD_SIZE - PACKET_HEADER_LEN);
     //printf("num_pkts: %d\r\n", num_pkts);
@@ -64,7 +66,8 @@ void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, 
     }
 }
 
-void make_request() {
+void make_request() 
+{
 
   data_ready = 0;
 
@@ -100,7 +103,8 @@ void make_request() {
 }
 
 
-void gpio_callback(int gpio, int level, uint32_t tick) {
+void gpio_callback(int gpio, int level, uint32_t tick) 
+{
 
   if (data_ready == 0) {
     return;
@@ -145,7 +149,8 @@ void gpio_callback(int gpio, int level, uint32_t tick) {
 /* Set attributes for serial communication,
     from https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c
  */
-int set_interface_attribs(int fd, int speed) {
+int set_interface_attribs(int fd, int speed) 
+{
   struct termios tty;
 
   if (tcgetattr(fd, &tty) < 0) {
@@ -181,7 +186,8 @@ int set_interface_attribs(int fd, int speed) {
 
 /* Main function for data transfer over UART
  */
-void* uart_main(void* arg) {
+void* uart_main(void* arg) 
+{
 
   char* portname = TERMINAL;
   // struct risk_data* r_data = (struct risk_data*)arg;

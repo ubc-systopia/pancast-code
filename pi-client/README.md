@@ -9,7 +9,7 @@ Note: As of August 19 2021, the UART transfer has been tested with a small test 
 
 ### Setting-up a new Raspberry-Pi
 
-1. Use Raspberry Pi Imager to load OS onto the SD card, further instructions here: https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up/2
+1. Use Raspberry Pi Imager to load OS onto the SD card, further instructions [here](https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up/2)
 2. Connect Raspberry Pi to wifi and enable SSH, further instructions [here](https://phoenixnap.com/kb/enable-ssh-raspberry-pi) for enabling SSH. These will both require a monitor, mouse and keyboard the first time until we can find a headless mode workaround.
 3. SSH into raspberry pi from PC on the same wifi network.
 
@@ -22,6 +22,8 @@ Note: As of August 19 2021, the UART transfer has been tested with a small test 
 5. Install required libraries on Raspberry Pi:
 
     `sudo apt-get install libcurl4-openssl-dev`
+
+6. Export GPIO pin 24 , instructions [here](https://www.ics.com/blog/gpio-programming-using-sysfs-interface).
 
 ## Compiling the Application
 

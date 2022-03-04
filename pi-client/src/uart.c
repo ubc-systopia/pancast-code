@@ -126,8 +126,7 @@ void gpio_callback(int gpio, int level, uint32_t tick)
       printf("chunk_rep_count: %d\r\n", chunk_rep_count);
     }
     if (chunk_rep_count > CHUNK_REPLICATION) {
-     // make_request(); instead want to move some data pointer to the next chunk
-     //  current_chunk_offset = current_chunk_offset + 1;
+      current_chunk_offset = (current_chunk_offset + 1) % num_chunks;
       chunk_rep_count = 0;
     }
   }

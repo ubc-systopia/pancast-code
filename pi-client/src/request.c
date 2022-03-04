@@ -10,8 +10,8 @@ const char request[] = "update";
     nmemb - size of *data
     userdata - argument set by CURLOPT_WRITEDATA
  */
-size_t write_function(char *data, size_t size, size_t nmemb, void *userdata) {
-
+size_t write_function(char *data, size_t size, size_t nmemb, void *userdata) 
+{
   size_t realsize = size * nmemb;
   struct req_data *mem = (struct req_data*)userdata;
  
@@ -32,7 +32,8 @@ size_t write_function(char *data, size_t size, size_t nmemb, void *userdata) {
 /* Handle HTTP request to pancast server
     adapted from https://github.com/CedricFauth/c-client-flask-server-test
  */
-int handle_request(struct req_data *data) {
+int handle_request(struct req_data *data) 
+{
   unsigned url_len = strlen(domain) + strlen(request);
   char *url;
 
@@ -78,13 +79,13 @@ int handle_request(struct req_data *data) {
   curl_global_cleanup();
   free(url);
   return 0;
-
 }
 
 /* Handle HTTP request to pancast server
     adapted from https://github.com/CedricFauth/c-client-flask-server-test
  */
-int handle_request_chunk(struct req_data *data, int chunk) {
+int handle_request_chunk(struct req_data *data, int chunk) 
+{
 #define REQ_ARGS_LEN 9
   unsigned url_len = strlen(domain) + strlen(request);
   char *url;
@@ -143,7 +144,8 @@ int handle_request_chunk(struct req_data *data, int chunk) {
 /* Handle HTTP request to pancast server
     adapted from https://github.com/CedricFauth/c-client-flask-server-test
  */
-int handle_request_count(struct req_data *data) {
+int handle_request_count(struct req_data *data) 
+{
 #define COUNT_LEN 6
   unsigned url_len = strlen(domain) + strlen(request);
   char *url;
@@ -194,52 +196,4 @@ int handle_request_count(struct req_data *data) {
   curl_global_cleanup();
   free(url);
   return 0;
-}
-
-// To be started at a thread in client main
-void *request_main(void *arg) { 
-  struct risk_data *r_data = (struct risk_data *) arg;
-  int err = 0;
-
-  printf("Starting request main\r\n");
-
-  while (1) {
-    struct req_data request = {0};
-
-    // TODO check for errors and retry if necessary
-    int req = handle_request(&request); 
-    if (req == 0) {
-      r_data->data_ready = 1;
-      err = pthread_mutex_lock(&r_data->mutex);
-      if (err != 0) {
-        fprintf(stderr, "pthread_mutex_lock error\r\n");
-      }
-      while (!r_data->uart_ready) {
-        err = pthread_cond_wait(&r_data->uart_ready_cond, &r_data->mutex);
-        if (err != 0) {
-          fprintf(stderr, "pthread_cond_wait error\r\n");
-	}
-      }
-      r_data->uart_ready = 0; 
-      printf("Request copying data...\r\n");
-
-      memcpy(r_data->data.response, &request.response, request.size);
-	    
-      r_data->request_ready = 1;
-      r_data->data_ready = 0;
-
-      printf("Copy complete!\r\n");
-	    
-      err = pthread_cond_signal(&r_data->request_ready_cond);
-      if (err != 0) {
-        fprintf(stderr, "pthread_cond_signal error\r\n");
-      }
-
-      err = pthread_mutex_unlock(&r_data->mutex);
-      if (err != 0) {
-        fprintf(stderr, "pthread_mutex_unlock error\r\n");
-      }
-    }
-  sleep(REQUEST_INTERVAL);
-  }
 }

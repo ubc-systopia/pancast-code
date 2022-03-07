@@ -93,13 +93,13 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 
 #undef MAX_EPH_ID_SIZE
 
-  log_debugf("num buckets: %lu\r\n", num_buckets);
-  //hexdumpn(&download.packet_buffer.buffer, 1736, "filter");
+  log_infof("num buckets: %lu\r\n", num_buckets);
+ // hexdumpn(&download.packet_buffer.buffer.data, 1728, "filter", 0, 0, 0, 0, 0);
   // num_buckets = 4; // for testing (num_buckets cannot be 0)
-  if (lookup(id, &download.packet_buffer.buffer, num_buckets)) {
+  if (lookup(id, download.packet_buffer.buffer.data, num_buckets)) {
     log_infof("====== LOG MATCH [%d]!!! ====== \r\n", i);
   } else {
-//    log_infof("%s", "No match for id\r\n");
+    log_infof("%s", "No match for id\r\n");
 //    hexdumpn(id, BEACON_EPH_ID_HASH_LEN, "checking id");
   }
   return 1;
@@ -201,7 +201,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
 void dongle_download_complete()
 {
-  log_debugf("%s", "Download complete!\r\n");
+  log_infof("%s", "Download complete!\r\n");
   int is_loss = 0;
   int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PACKET_SIZE)+1;
   for (int i = 0; i < actual_pkts_per_filter; i++) {
@@ -244,6 +244,10 @@ void dongle_download_complete()
         download.packet_buffer.chunk_num, sizeof(uint64_t));
   }
   // now we know the payload is the correct size
+
+  if (filter_len > 0) {
+    dongle_update_download_time();
+  }
 
   num_buckets = cf_gadget_num_buckets(filter_len);
 

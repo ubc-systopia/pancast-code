@@ -104,6 +104,7 @@ void dongle_init()
   epoch = 0;
   non_report_entry_count = 0;
   signal_id = 0;
+  download_complete = 0;
 
   dongle_stats_init(&storage);
 
@@ -334,6 +335,13 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
     memset(&cur_encounters[i].beacon_time_int, 0, sizeof(uint8_t));
     memcpy(&cur_encounters[i].rssi, &rssi, sizeof(int8_t));
 
+//    beacon_eph_id_t *id = &cur_encounters[i].eph_id;
+//    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc", cur_encounters[i].beacon_id,
+//        		0, i, cur_encounters[i].beacon_time_start,
+//    			cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
+//    			cur_encounters[i].dongle_time_int,
+//    			cur_encounters[i].rssi);
+
 #ifdef MODE__STAT
     stats.num_obs_ids++;
 #endif
@@ -414,6 +422,22 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
     i, entry->beacon_time_start, entry->beacon_time_int, entry->dongle_time_start,
 	entry->dongle_time_int, entry->rssi);
 
+  return 1;
+}
+
+void dongle_update_download_time()
+{
+  stats.last_download_time = dongle_time;
+}
+
+int dongle_download_complete_status()
+{
+  log_infof("dongle_time - stats.last_download_time: %u\r\n",
+			dongle_time - stats.last_download_time);
+  if (dongle_time - stats.last_download_time >= MIN_DOWNLOAD_WAIT ||
+		  stats.last_download_time == 0) {
+    return 0;
+  }
   return 1;
 }
 

@@ -19,6 +19,7 @@ typedef struct {
   uint32_t total_crc_fail;
   uint32_t total_periodic_data_size; // bytes
   double total_periodic_data_time;   // seconds
+  dongle_timer_t last_download_time;
 
   stat_t scan_rssi;
   stat_t encounter_rssi;

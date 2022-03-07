@@ -28,6 +28,7 @@
 #include "src/common/src/util/util.h"
 
 extern void dongle_start();
+int download_complete = 0;
 
 // Sync handle
 static uint16_t sync_handle = 0;
@@ -37,10 +38,11 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
 {
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
-      dongle_clock_increment();
+    dongle_clock_increment();
+    download_complete = dongle_download_complete_status();
   }
   if (user_handle == PREC_TIMER_HANDLE) {
-      dongle_hp_timer_add(1);
+    dongle_hp_timer_add(1);
   }
 #undef user_handle
 }
@@ -70,6 +72,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
     case sl_bt_evt_system_boot_id:
       dongle_init();
       dongle_start();
+      log_infof("download complete: %u\r\n", download_complete);
+
 
 #if DONGLE_UPLOAD
       access_advertise();
@@ -83,9 +87,9 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
 #if MODE__PERIODIC
       // then check for periodic info in packet
-      if (!synced
+      if (!synced && !download_complete
           && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
-        log_debugf("Opening sync\r\n");
+        log_debugf("%s", "Opening sync\r\n");
         // Open sync
         sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
                        evt->data.evt_scanner_scan_report.address_type,
@@ -126,6 +130,11 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
             evt->data.evt_sync_data.data.len,
             evt->data.evt_sync_data.rssi);
+      }
+      if (dongle_download_complete_status() == 1) {
+    	sl_bt_sync_close(sync_handle);
+    	log_infof("%s", "download completed\r\n");
+    	download_complete = 1;
       }
       break;
 

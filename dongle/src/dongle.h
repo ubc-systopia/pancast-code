@@ -8,7 +8,7 @@
  * 1 - init test config
  * 0 - load config from storage
  */
-#define MODE__SL_DONGLE_TEST_CONFIG      1
+#define MODE__SL_DONGLE_TEST_CONFIG      0
 
 /*
  * 1 - test encounters and OTPs inline
@@ -43,6 +43,9 @@
 
 // Time to wait after not seeing an ID before persisting encounter to storage
 #define LOG_MIN_WAIT 15
+
+// Time to wait after before trying to download again
+#define MIN_DOWNLOAD_WAIT 5
 
 // Bluetooth Scanning Parameters
 // These are hard-coded, in ms
@@ -128,6 +131,8 @@ typedef struct {
   uint64_t diff_ms;
 } timertest_t;
 
+extern int download_complete;
+
 // High-level routine structure
 void dongle_init();
 void dongle_init_scan();
@@ -151,6 +156,8 @@ void dongle_on_periodic_data
 void dongle_on_periodic_data_error
 (int8_t rssi);
 void dongle_on_sync_lost();
+int dongle_download_complete_status();
+void dongle_update_download_time();
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry);
 void dongle_led_notify();
 #endif

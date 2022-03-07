@@ -48,6 +48,7 @@ typedef struct {
     int payloads_started;
     int payloads_complete;
     int payloads_failed;
+    int total_matches;
     download_fail_reason cuckoo_fail;
     download_fail_reason switch_chunk;
     download_stats_t all_download_stats;

@@ -32,6 +32,7 @@
 
 #include "common/src/constants.h"
 #include "sl_bt_api.h"
+#include "sl_sleeptimer.h"
 
 #define DONGLE_NO_OP assert(1);
 
@@ -56,6 +57,9 @@
 
 // Count for number of encounters
 typedef uint32_t enctr_entry_counter_t;
+
+// LED timer
+extern sl_sleeptimer_timer_handle_t *led_timer_handle;
 
 // Fixed configuration info.
 // This is typically loaded from non-volatile storage at app

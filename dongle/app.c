@@ -29,6 +29,7 @@
 
 extern void dongle_start();
 int download_complete = 0;
+extern sl_sleeptimer_timer_handle_t *led_timer_handle;
 
 // Sync handle
 static uint16_t sync_handle = 0;
@@ -50,9 +51,10 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
 /***************************************************************************//**
  * Initialize application.
  ******************************************************************************/
-sl_status_t app_init(void)
+sl_status_t app_init(sl_sleeptimer_timer_handle_t *led_timer)
 {
   log_debugf("%s", "Initialize\r\n");
+  led_timer_handle = led_timer;
   return SL_STATUS_OK;
 }
 

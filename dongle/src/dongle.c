@@ -66,6 +66,7 @@ size_t cur_id_idx;
 dongle_epoch_counter_t epoch; // current epoch
 uint64_t signal_id;           // to identify scan records received, resets each epoch
 extern download_t download;
+sl_sleeptimer_timer_handle_t *led_timer_handle;
 
 // 3. Reporting
 enctr_entry_counter_t non_report_entry_count;
@@ -196,14 +197,14 @@ void dongle_hp_timer_add(uint32_t ticks)
   dongle_hp_timer += ms;
 }
 
-void dongle_led_notify(sl_sleeptimer_timer_handle_t *led_timer) {
+void dongle_led_notify() {
   sl_status_t sc;
   log_infof("%s", "in alert\r\n");
-  sc = sl_sleeptimer_stop_timer(led_timer);
+  sc = sl_sleeptimer_stop_timer(led_timer_handle);
   if (sc != SL_STATUS_OK) {
     log_errorf("failed period led timer stop, sc: %d\r\n", sc);
   }
-  sc = sl_sleeptimer_restart_periodic_timer_ms(led_timer, LED_TIMER_MS/4,
+  sc = sl_sleeptimer_restart_periodic_timer_ms(led_timer_handle, LED_TIMER_MS/4,
 	dongle_led_timer_handler, (void *) NULL, 0, 0);
   if (sc != SL_STATUS_OK) {
 	log_errorf("failed period led timer start, sc: %d\r\n", sc);

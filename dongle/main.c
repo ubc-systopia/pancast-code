@@ -44,9 +44,7 @@ int main(void)
   // this call.
   sl_system_init();
 
-  // Initialize the application.
-  sc = app_init();
-
+  // Initialize timers
 #if defined(SL_CATALOG_KERNEL_PRESENT)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
@@ -80,6 +78,9 @@ int main(void)
     log_errorf("failed period led timer start, sc: %d\r\n", sc);
     return sc;
   }
+
+  // Initialize the application.
+  sc = app_init(&led_timer);
 
   while (sc == SL_STATUS_OK) {
     // Do not remove this call: Silicon Labs components process action routine

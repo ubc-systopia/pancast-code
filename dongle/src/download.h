@@ -11,6 +11,7 @@ typedef struct {
   uint32_t n_syncs_lost;
   uint32_t n_total_packets;
   uint32_t n_corrupt_packets;
+  uint32_t n_matches;
   struct {
     // map of sequence number to packet count for that number
     // used to track completion of the download

@@ -98,6 +98,7 @@ int dongle_download_check_match(enctr_entry_counter_t i,
   // num_buckets = 4; // for testing (num_buckets cannot be 0)
   if (lookup(id, download.packet_buffer.buffer.data, num_buckets)) {
     log_infof("====== LOG MATCH [%d]!!! ====== \r\n", i);
+    download.n_matches++;
   } else {
     log_infof("%s", "No match for id\r\n");
 //    hexdumpn(id, BEACON_EPH_ID_HASH_LEN, "checking id");
@@ -300,6 +301,11 @@ void dongle_download_complete()
   // check existing log entries against the new filter
   dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
 #endif /* CUCKOOFILTER_FIXED_TEST */
+
+  if (download.n_matches > 0) {
+    dongle_led_notify();
+  }
+  download_stats.total_matches = download.n_matches;
 
   dongle_download_reset();
 }

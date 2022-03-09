@@ -17,7 +17,7 @@ dongle_dir() {
 }
 
 screen_log() {
-  screen -L -Logfile $log_path/$1/$today.log $2
+  screen -d -m  -L -Logfile $log_path/$1/$today.log $2 &
 }
 
 declare -A dongles

@@ -77,3 +77,4 @@ Follow the application-specific steps in:
 * [`beacon/README.md`](beacon/README.md)
 * [`dongle/README.md`](dongle/README.md)
 * [`zephyr-beacon/README.md`](zephyr-beacon/README.md)
+* [`pi-client/README.md`](pi-client/README.md)

@@ -31,6 +31,8 @@ The code is located in the `common`, `beacon`, `zephyr-beacon`, and `dongle` , a
 
 ## Setup
 
+The Pancast project currently uses Silicon Labs Gecko SDK version **3.2.0**
+
 ### Gecko (Silicon Labs) Platform
 
 * Install Simplicity Studio 5 from https://www.silabs.com/developers/simplicity-studio. This application is used for development and flashing the boards.

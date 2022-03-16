@@ -17,14 +17,8 @@
 // the value
 #define FLASH_OFFSET 0x60000
 
-#ifdef BEACON_PLATFORM__ZEPHYR
-#include <drivers/flash.h>
-typedef off_t storage_addr_t;
-typedef const struct device flash_device_t;
-#else
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;
-#endif
 
 typedef struct
 {
@@ -35,11 +29,7 @@ typedef struct
 
 typedef struct
 {
-#ifdef BEACON_PLATFORM__ZEPHYR
-  flash_device_t *dev;
-#else
   MSC_ExecConfig_TypeDef mscExecConfig;
-#endif
   size_t min_block_size;
   int num_pages;
   size_t page_size;

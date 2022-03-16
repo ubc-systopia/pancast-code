@@ -7,7 +7,7 @@
 #include "common/src/util/stats.h"
 
 
-#define PERIODIC_TEST // uncomment to send test data
+//#define PERIODIC_TEST // uncomment to send test data
 /*
  * 1 - init test config
  * 0 - load config from storage
@@ -27,14 +27,8 @@
 #include "common/src/constants.h"
 #include "common/src/settings.h"
 #include "common/src/test.h"
-
-#ifdef BEACON_PLATFORM__ZEPHYR
-#include <tinycrypt/sha256.h>
-#include <bluetooth/bluetooth.h>
-#define LOG_LEVEL__INFO
-#else
 #include "./sha-2/sha-256.h"
-#endif
+
 
 typedef struct
 {
@@ -49,22 +43,6 @@ typedef struct
 
 // Advertising interval settings
 // Zephyr-recommended values are used
-#ifdef BEACON_PLATFORM__ZEPHYR
-#define BEACON_ADV_MIN_INTERVAL BT_GAP_ADV_FAST_INT_MIN_1
-#define BEACON_ADV_MAX_INTERVAL BT_GAP_ADV_FAST_INT_MAX_1
-
-// sha256-hashing
-
-typedef struct tc_sha256_state_struct hash_t;
-
-typedef struct
-{
-  uint8_t bytes[TC_SHA256_DIGEST_SIZE];
-} digest_t;
-
-typedef struct bt_data bt_data_t;
-
-#else
 #define BEACON_ADV_MIN_INTERVAL 0x300 // 480ms
 #define BEACON_ADV_MAX_INTERVAL 0x320 // 500ms
 #define LEGACY_TX_POWER GLOBAL_TX_POWER
@@ -82,8 +60,6 @@ typedef struct
   uint8_t type;
   uint8_t data[29];
 } bt_data_t;
-
-#endif
 
 typedef union
 {
@@ -115,16 +91,8 @@ typedef struct
 
 extern beacon_stats_t stats;
 
-#ifdef BEACON_PLATFORM__ZEPHYR
-void main(void);
-#else
 void beacon_start();
-#endif
-#ifdef BEACON_PLATFORM__ZEPHYR
-void _beacon_broadcast_(int);
-#else
 void beacon_broadcast();
-#endif
 void _beacon_info_();
 int _set_adv_data_();
 void add_sent_packet();

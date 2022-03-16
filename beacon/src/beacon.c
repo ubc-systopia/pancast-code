@@ -20,23 +20,8 @@
 
 #include <string.h>
 
-#ifdef BEACON_PLATFORM__ZEPHYR
-#include <zephyr.h>
-#include <stddef.h>
-
-#include <sys/printk.h>
-#include <sys/util.h>
-#include <sys/byteorder.h>
-
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/hci_vs.h>
-
-#include <drivers/flash.h>
-#else
 #include "sl_bluetooth.h"
 #include "app_log.h"
-#endif
 
 #include "storage.h"
 
@@ -49,21 +34,9 @@
 //
 // ENTRY POINT
 //
-
-#ifdef BEACON_PLATFORM__ZEPHYR
-void main(void)
-#else
 void beacon_start()
-#endif
 {
-#ifdef BEACON_PLATFORM__ZEPHYR
-  int err = bt_enable(_beacon_broadcast_);
-  if (err) {
-    log_errorf("Bluetooth Enable Failure: error code = %d\r\n", err);
-  }
-#else
   beacon_broadcast();
-#endif
 }
 
 //
@@ -79,31 +52,10 @@ static beacon_timer_t beacon_time;    // Beacon Clock
 static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
 static beacon_epoch_counter_t epoch;  // track the current time epoch
 static beacon_timer_t cycles;         // total number of updates.
-#ifdef BEACON_PLATFORM__ZEPHYR
-static struct k_timer kernel_time_lp;         // low-precision kernel timer
-static struct k_timer kernel_time_hp;         // high-precision kernel timer
-static struct k_timer kernel_time_alternater; // medium-precision kernel timer used to alternate packet generation
-#endif
 //
 // Bluetooth
-#ifdef BEACON_PLATFORM__ZEPHYR
-static bt_data_t adv_res[] = {
-  BT_DATA(BT_DATA_NAME_COMPLETE,
-  CONFIG_BT_DEVICE_NAME,
-  sizeof(CONFIG_BT_DEVICE_NAME) - 1)
-}; // Advertising response
-// fields for constructing packet
-static uint8_t service_data_type = 0x16;
-static bt_gaen_wrapper_t gaen_payload = {
-  .flags = BT_DATA_BYTES(0x01, 0x1a),
-  .serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd)
-}; // container for gaen broadcast data
-static uint32_t num_ms_in_min = 60000;
-static uint32_t alt_time_in_ms = 1000; // alt clock tick time (currently 1s)
-#else
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
-#endif
 static bt_wrapper_t payload; // container for actual blutooth payload
 
 // Statistics
@@ -265,41 +217,7 @@ void add_sent_packet()
 
 // Set transmission power (zephyr).
 // Yoinked from (https://github.com/zephyrproject-rtos/zephyr/blob/main/samples/bluetooth/hci_pwr_ctrl/src/main.c)
-#ifdef BEACON_PLATFORM__ZEPHYR
-static void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
-{
-  struct bt_hci_cp_vs_write_tx_power_level *cp;
-  struct bt_hci_rp_vs_write_tx_power_level *rp;
-  struct net_buf *buf, *rsp = NULL;
-  int err;
 
-  buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
-                          sizeof(*cp));
-  if (!buf) {
-    printk("Unable to allocate command buffer\n");
-    return;
-  }
-
-  cp = net_buf_add(buf, sizeof(*cp));
-  cp->handle = sys_cpu_to_le16(handle);
-  cp->handle_type = handle_type;
-  cp->tx_power_level = tx_pwr_lvl;
-
-  err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL, buf, &rsp);
-  if (err) {
-    uint8_t reason = rsp ?
-      ((struct bt_hci_rp_vs_write_tx_power_level *) rsp->data)->status
-      : 0;
-    printk("Set Tx power err: %d reason 0x%02x\n", err, reason);
-    return;
-  }
-
-  rp = (void *)rsp->data;
-  printk("Actual Tx Power: %d\n", rp->selected_tx_power);
-
-  net_buf_unref(rsp);
-}
-#endif
 
 // Intermediary transformer to create a well-formed BT data type
 // for using the high-level APIs. Becomes obsolete once advertising
@@ -319,11 +237,6 @@ static void _form_payload_()
 #define en (payload.en_data)
   en.bytes[MAX_BROADCAST_SIZE - 1] = tmp;
 #undef en
-#ifdef BEACON_PLATFORM__ZEPHYR
-  static uint8_t of[MAX_BROADCAST_SIZE - 2];
-  memcpy(of, ((uint8_t *)bt) + 2, MAX_BROADCAST_SIZE - 2);
-  bt->data = (uint8_t *)&of;
-#endif
 #undef bt
 }
 
@@ -358,15 +271,10 @@ static void _gen_ephid_()
 {
   hash_t h;
   digest_t d;
-#ifdef BEACON_PLATFORM__ZEPHYR
-#define init() tc_sha256_init(&h)
-#define add(data, size) tc_sha256_update(&h, (uint8_t *)data, size)
-#define complete() tc_sha256_final(d.bytes, &h)
-#else
 #define init() sha_256_init(&h, d.bytes)
 #define add(data, size) sha_256_write(&h, data, size)
 #define complete() sha_256_close(&h)
-#endif
+
   // Initialize hash
   init();
   // Add relevant data
@@ -384,59 +292,8 @@ static void _gen_ephid_()
 // populates gaen_payload.service_data_internals with procotol specific data fields
 static int _set_adv_data_gaen_()
 {
-#ifdef BEACON_PLATFORM__ZEPHYR
-  char ENS_identifier[2] = "\x6f\xfd";
-  char rolling_proximity_identifier[16] = "\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef\xde\xad\xbe\xef";
-  char associated_encrypted_metadata[4] = "\xaa\xaa\xaa\xaa";
-  for (int i = 0; i < 22; i++) {
-    if (i < 2) {
-      gaen_payload.service_data_internals[i] = ENS_identifier[i];
-    } else if (i >= 18) {
-      gaen_payload.service_data_internals[i] = associated_encrypted_metadata[i - 18];
-    } else {
-      gaen_payload.service_data_internals[i] = rolling_proximity_identifier[i - 2];
-    }
-  }
-  return 0;
-#endif
   return -1;
 }
-
-// procedure to change the type of packet being transmitted
-#ifdef BEACON_PLATFORM__ZEPHYR
-void _alternate_advertisement_content_(uint32_t timer)
-{
-  if (timer % 2 == 1) {
-    // currently transmitting pancast data, switch to gaen data
-    int err = _set_adv_data_gaen_();
-    if (err) {
-      log_errorf("%s", "Failed to obtain gaen advertisement data");
-      return;
-    }
-    bt_data_t serviceData = BT_DATA(service_data_type,
-        gaen_payload.service_data_internals,
-        ARRAY_SIZE(gaen_payload.service_data_internals));
-    bt_data_t flags = BT_DATA_BYTES(0x01, 0x1a);
-    bt_data_t serviceUUID = BT_DATA_BYTES(0x03, 0x6f, 0xfd);
-    bt_data_t data[3] = {flags, serviceUUID, serviceData};
-
-    err = bt_le_adv_update_data(data, ARRAY_SIZE(data), NULL, 0); // has 3 fields
-    if (err) {
-      log_errorf("Advertising failed to start (err %d)\r\n", err);
-      return;
-    }
-  } else {
-    // currently transmitting gaen data, switch to pancast data
-    int err = bt_le_adv_update_data(payload.bt_data, ARRAY_SIZE(payload.bt_data),
-        adv_res, ARRAY_SIZE(adv_res));
-    if (err) {
-      log_errorf("Advertising failed to start (err %d)\r\n", err);
-      return;
-    }
-  }
-  return;
-}
-#endif
 
 static void _beacon_init_()
 {
@@ -458,21 +315,6 @@ static void _beacon_init_()
   }
 #endif
   _beacon_info_();
-
-// Timer Start
-#ifdef BEACON_PLATFORM__ZEPHYR
-  k_timer_init(&kernel_time_lp, NULL, NULL);
-  k_timer_init(&kernel_time_hp, NULL, NULL);
-  k_timer_init(&kernel_time_alternater, NULL, NULL);
-#define DUR_LP K_MSEC(BEACON_TIMER_RESOLUTION)
-#define DUR_HP K_MSEC(1)
-#define DUR_ALT K_MSEC(alt_time_in_ms)
-  k_timer_start(&kernel_time_lp, DUR_LP, DUR_LP);
-  k_timer_start(&kernel_time_hp, DUR_HP, DUR_HP);
-  k_timer_start(&kernel_time_alternater, DUR_ALT, DUR_ALT);
-#undef DUR_HP
-#undef DUR_LP
-#endif
 }
 
 static void _beacon_epoch_()
@@ -495,7 +337,6 @@ static void _beacon_epoch_()
 
 int _set_adv_data_()
 {
-#ifdef BEACON_PLATFORM__GECKO
   log_debugf("%s", "Setting legacy adv data...\r\n");
   print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
   sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
@@ -506,41 +347,12 @@ int _set_adv_data_()
     return -1;
   }
   log_debugf("%s", "Success!\r\n");
-#else
-#endif
   return 0;
 }
 
 static int _beacon_advertise_()
 {
   int err = 0;
-#ifdef BEACON_PLATFORM__ZEPHYR
-  err = bt_le_adv_start(
-      BT_LE_ADV_PARAM(
-        BT_LE_ADV_OPT_USE_IDENTITY |
-        BT_LE_ADV_OPT_DISABLE_CHAN_38 |
-        BT_LE_ADV_OPT_DISABLE_CHAN_39, // use random identity address,
-        BEACON_ADV_MIN_INTERVAL,
-        BEACON_ADV_MAX_INTERVAL,
-        NULL), // undirected advertising
-      payload.bt_data, ARRAY_SIZE(payload.bt_data),
-      adv_res, ARRAY_SIZE(adv_res));
-
-  if (err) {
-    log_errorf("Advertising failed to start (err %d)\r\n", err);
-    return -1;
-  } else {
-    // obtain and report advertisement address
-    char addr_s[BT_ADDR_LE_STR_LEN];
-    bt_addr_le_t addr = {0};
-    size_t count = 1;
-
-    bt_id_get(&addr, &count);
-    bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
-
-    log_debugf("advertising started with address %s\r\n", addr_s);
-  }
-#else
   sl_status_t sc;
   log_debugf("%s", "Creating legacy advertising set\r\n");
   sc = sl_bt_advertiser_create_set(&legacy_set_handle);
@@ -577,7 +389,6 @@ static int _beacon_advertise_()
   if (err) {
     log_errorf("Set adv data, err: %d\r\n", err);
   }
-#endif
   return err;
 }
 
@@ -607,87 +418,20 @@ int beacon_clock_increment(beacon_timer_t time)
   return 0;
 }
 
-#ifdef BEACON_PLATFORM__ZEPHYR
-int beacon_loop()
-{
-  _beacon_update_();
-
-  uint32_t lp_timer_status = 0, hp_timer_status = 0, alt_timer_status = 0;
-
-  int err = 0;
-  while (!err) {
-
-#ifdef BEACON_GAEN_ENABLED
-    alt_timer_status += k_timer_status_get(&kernel_time_alternater);
-    if (alt_timer_status % (num_ms_in_min / alt_time_in_ms) == 0) {
-#endif
-      // get most updated time
-      // Low-precision timer is synced, so accumulate status here
-      lp_timer_status += k_timer_status_get(&kernel_time_lp);
-
-      // update beacon clock using kernel. The addition is the number of
-      // periods elapsed in the internal timer
-      beacon_clock_increment(lp_timer_status);
-
-      // high-precision collects the raw number of expirations
-      hp_timer_status = k_timer_status_get(&kernel_time_hp);
-#ifdef BEACON_GAEN_ENABLED
-    }
-
-    _alternate_advertisement_content_(alt_timer_status);
-    alt_timer_status += k_timer_status_sync(&kernel_time_alternater);
-
-#else
-
-    // // Wait for a clock update, this blocks until the internal timer
-    // // period expires, indicating that at least one unit of relevant beacon
-    // // time has elapsed. timer status is reset here
-    lp_timer_status = k_timer_status_sync(&kernel_time_lp);
-
-#endif
-  }
-  return err;
-}
-#endif
-
 // Primary broadcasting routine
 // Non-zero argument indicates an error setting up the procedure for BT advertising
-#ifdef BEACON_PLATFORM__ZEPHYR
-void _beacon_broadcast_(int err)
-{
-  // check initialization
-  if (err) {
-    log_errorf("Bluetooth init failed (err %d)\r\n", err);
-    return;
-  }
-
-  log_infof("%s", "Bluetooth initialized - starting broadcast\r\n");
-#else
 void beacon_broadcast()
 {
   log_debugf("%s", "Starting broadcast\r\n");
   int err = 0;
-#endif
 
   _beacon_load_(), _beacon_init_();
 
-#ifdef BEACON_PLATFORM__ZEPHYR
-  int8_t tx_power = 4; // has a range of [-40, 4]
-  _beacon_update_();
-  err = _beacon_advertise_();
-  if (err) {
-    log_errorf("Broadcasting failed (err %d)\r\n", err);
-    return;
-  }
-  set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
-  beacon_loop();
-#else
   _beacon_update_();
   err = _beacon_advertise_();
   if (err != 0) {
       log_errorf("%s", "Error starting legacy adv\r\n");
   }
-#endif
 }
 
 beacon_storage *get_beacon_storage()

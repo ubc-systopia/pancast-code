@@ -34,14 +34,6 @@
 #include "sl_iostream.h"
 #include "em_gpio.h"
 
-#define DATA_SIZE 250
-#define READ_SIZE 8
-#define NUM_READS 31
-#define MS_DELAY 1
-#define TICK_DELAY 27
-
-extern void add_sent_packet();
-
 void add_delay_ticks(uint64_t ticks) {
   uint64_t start_delay = sl_sleeptimer_get_tick_count64();
   uint64_t end_delay = sl_sleeptimer_get_tick_count64();
@@ -101,6 +93,9 @@ int main(void)
   extern uint32_t timer_freq;
   extern uint64_t timer_ticks;
 
+  uint8_t *buf = malloc(DATA_SIZE*sizeof(uint8_t));
+  memset(buf, 0, DATA_SIZE*sizeof(uint8_t));
+
   while (1)
   {
 
@@ -131,8 +126,6 @@ int main(void)
 
       GPIO_PinOutSet(gpioPortB, 1);
 
-      uint8_t buf[DATA_SIZE];
-
       for (int i = 0; i < NUM_READS; i++) {
 
         int len = 0;
@@ -146,7 +139,7 @@ int main(void)
           if (loops >= LOOP_BREAK) {
             break;
           }
-          len = read(SL_IOSTREAM_STDIN, &buf[(i*READ_SIZE) + tot_len],
+          len = read(SL_IOSTREAM_STDIN, buf + ((i*READ_SIZE) + tot_len),
               READ_SIZE - tot_len);
           if (len < 0) {
             continue;
@@ -178,7 +171,7 @@ int main(void)
           if (loops >= LOOP_BREAK) {
             break;
           }
-          len = read(SL_IOSTREAM_STDIN, &buf[NUM_READS * READ_SIZE + tot_len],
+          len = read(SL_IOSTREAM_STDIN, buf +(NUM_READS * READ_SIZE + tot_len),
               DATA_SIZE-(NUM_READS * READ_SIZE) - tot_len);
           if (len < 0) {
             continue;
@@ -190,7 +183,7 @@ int main(void)
     //    int last_rlen = read(SL_IOSTREAM_STDIN, &buf[NUM_READS * READ_SIZE], DATA_SIZE-(NUM_READS * READ_SIZE));
 
         if (tot_len < 0) {
-          printf("err in last read\r\n");
+          log_errorf("%s", "err in last read\r\n");
         }
         else {
           rlen = rlen + tot_len;
@@ -199,25 +192,26 @@ int main(void)
 
       GPIO_PinOutClear(gpioPortB, 1);
 
-      uint32_t seq;
-      // extract sequence number
-      memcpy(&seq, buf, sizeof(uint32_t));
-      log_debugf("%s", "sequence: %lu\r\n", seq);
-
-      // extract sequence number
-      memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t));
-      log_debugf("%s", "chunk number: %lu\r\n", seq);
-
-      // extract sequence number
-      memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t));
-      log_debugf("%s", "chunk length: %lu\r\n", seq);
-
-      set_risk_data(rlen, buf);
-
       // End timer
       uint64_t end_time = sl_sleeptimer_get_tick_count64();
       uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-      log_debugf("%s", "READ: %d, TIME: %lu\r\n", rlen, ms);
+      log_debugf("READ: %d, TIME: %lu\r\n", rlen, ms);
+
+      uint32_t seq;
+      // extract sequence number
+      memcpy(&seq, buf, sizeof(uint32_t));
+      log_debugf("sequence: %lu\r\n", seq);
+
+      // extract sequence number
+      memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t));
+      log_debugf("chunk number: %lu\r\n", seq);
+
+      // extract sequence number
+      memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t));
+      log_debugf("chunk length: %lu\r\n", seq);
+
+      set_risk_data(rlen, buf);
+
 
       // Add second delay to sync up with advertising interval
       add_delay_ms(68);

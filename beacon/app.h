@@ -55,6 +55,11 @@
 #define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
 // #define BATCH_SIZE 2
 
+#define DATA_SIZE 250
+#define READ_SIZE 8
+#define NUM_READS DATA_SIZE / READ_SIZE
+#define TICK_DELAY 0
+
 // compute the current time as a float in ms
 #define now() (timer_ticks = sl_sleeptimer_get_tick_count64(), \
                 (((float)timer_ticks)/((float)timer_freq)) * 1000)

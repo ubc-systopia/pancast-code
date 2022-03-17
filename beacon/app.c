@@ -258,7 +258,13 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       log_infof("[Periodic adv] init time: %f ms, adv size: %u\r\n",
           adv_start, PER_ADV_SIZE);
 
-      // beacon_start();
+      // Do not comment out!
+      // The beacon config and storage get initialized in this function.
+      // To disable legacy advertising, comment out the specific advertising
+      // functions within this function.
+      // Beacon refactoring should decouple the beacon initialization from the
+      // legacy advertising
+      beacon_start();
       break;
 
     // Default event handler.

@@ -29,7 +29,8 @@ Bluetooth application for broadcast over BLE.
 
 ## Running the Application
 
-1. Connect the GPIO pins on the raspberry pi to the EXT header pins on the Silicon Labs board using jumper wires. Connect ground to ground and PB00 on 
+1. Make sure the Silicon Labs Start kit is flashed with the beacon app and that the app is set to run in network mode. Instructions for set-up [here](https://github.com/ubc-systopia/pancast-code/tree/main/beacon).
+2. Connect the GPIO pins on the raspberry pi to the EXT header pins on the Silicon Labs board using jumper wires. Connect ground to ground and PB00 on 
     Silicon Labs EXT header to GPIO24 on the Raspberry Pi. 
-2. Make sure that the broadcast device (Silicon Labs board) is connected to the Raspberry Pi via USB and that both devices are on. 
-3. Run the application using `sudo ./client` from the `src` directory where the app has been built.
+3. Make sure that the broadcast device (Silicon Labs board) is connected to the Raspberry Pi via USB and that both devices are on. 
+4. Run the application using `sudo ./client` from the `src` directory where the app has been built.

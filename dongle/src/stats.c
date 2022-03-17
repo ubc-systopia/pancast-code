@@ -81,10 +81,11 @@ void dongle_download_stats()
     return;
 
   log_infof("[Risk broadcast] #downloads: %d, completed: %d, failed: %d"
-      ", decode fail: %d, chunk switch: %d\r\n",
+      ", decode fail: %d, chunk switch: %d, id matches: %d\r\n",
       download_stats.payloads_started, download_stats.payloads_complete,
       download_stats.payloads_failed, download_stats.cuckoo_fail,
-      download_stats.switch_chunk
+      download_stats.switch_chunk,
+      download_stats.total_matches
       );
   stat_show(download_stats.complete_download_stats.periodic_data_avg_payload_lat,
               "[Risk broadcast] download time", "ms");
@@ -94,4 +95,5 @@ void dongle_download_stats()
       "=== [Risk broadcast] failed ===");
   dongle_download_show_stats(&download_stats.all_download_stats,
       "=== [Risk broadcast] overall ===");
+  
 }

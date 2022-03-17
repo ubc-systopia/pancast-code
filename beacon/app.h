@@ -59,6 +59,7 @@
 #define READ_SIZE 8
 #define NUM_READS DATA_SIZE / READ_SIZE
 #define TICK_DELAY 0
+#define DATA_DELAY 68 // determined empirically to sync up with advertising interval
 
 // compute the current time as a float in ms
 #define now() (timer_ticks = sl_sleeptimer_get_tick_count64(), \

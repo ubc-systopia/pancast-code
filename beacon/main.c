@@ -214,7 +214,7 @@ int main(void)
 
 
       // Add second delay to sync up with advertising interval
-      add_delay_ms(68);
+      add_delay_ms(DATA_DELAY);
 
       // End timer
       end_time = sl_sleeptimer_get_tick_count64();

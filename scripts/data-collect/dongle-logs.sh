@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+# To collect logs from dongles:
+# If using a new device, the device identifier should be added
+# to the list of dongles below with the dongle id as key.
+# Use USB connector to plug in 1 or more dongles to the PC. 
+# Next, start the script and press the reset button on each dongle.
+# The screen sessions for each device should run in the background.
+# To view active screen sessions use `screen -ls` command.
+# Unplug the dongle to kill the screen session.
+# Logs will be saved at the path specified in screen_log()
+
 rootdir=/Users/nboufford/workspace/pancast
 workdir=/dongle-logs
 

@@ -19,6 +19,7 @@
 #include "sl_iostream_stdlib_config.h"
 #include "sl_mbedtls.h"
 #include "nvm3_default.h"
+#include "sl_simple_led_instances.h"
 #include "sl_power_manager.h"
 
 void sl_iostream_init_instances(void)
@@ -45,6 +46,7 @@ void sl_platform_init(void)
 
 void sl_driver_init(void)
 {
+  sl_simple_led_init_instances();
 }
 
 void sl_service_init(void)

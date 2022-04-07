@@ -376,6 +376,26 @@
 			<locationURI>STUDIO_SDK_LOC/platform/common/toolchain/src/sl_memory.c</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/leddrv/inc/sl_led.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/leddrv/inc/sl_led.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/leddrv/inc/sl_simple_led.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/leddrv/inc/sl_simple_led.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/leddrv/src/sl_led.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/leddrv/src/sl_led.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/leddrv/src/sl_simple_led.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/leddrv/src/sl_simple_led.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/emdrv/common/inc/ecode.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/emdrv/common/inc/ecode.h</locationURI>

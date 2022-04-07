@@ -22,7 +22,7 @@
 
 #include "sl_bluetooth.h"
 #include "app_log.h"
-
+#include "led.h"
 #include "storage.h"
 
 #include "common/src/constants.h"
@@ -426,6 +426,8 @@ void beacon_broadcast()
   int err = 0;
 
   _beacon_load_(), _beacon_init_();
+
+  configure_blinky();
 
   _beacon_update_();
   err = _beacon_advertise_();

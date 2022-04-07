@@ -34,6 +34,8 @@
 #include "sl_iostream.h"
 #include "em_gpio.h"
 
+#include "src/led.h"
+
 void add_delay_ticks(uint64_t ticks) {
   uint64_t start_delay = sl_sleeptimer_get_tick_count64();
   uint64_t end_delay = sl_sleeptimer_get_tick_count64();
@@ -81,6 +83,14 @@ int main(void)
   } else {
     log_infof("Beacon clock started, resolution: %u, handle=0x%02x\r\n",
         TIMER_1MS * BEACON_TIMER_RESOLUTION, timer);
+  }
+
+  sl_sleeptimer_timer_handle_t led_timer;
+  sc = sl_sleeptimer_start_periodic_timer_ms(&led_timer, LED_TIMER_MS,
+      beacon_led_timer_handler, (void *) NULL, 0, 0);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("failed period led timer start, sc: %d\r\n", sc);
+    return sc;
   }
 
   int risk_timer_started = 0;

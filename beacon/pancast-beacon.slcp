@@ -20,14 +20,16 @@ component:
 - {id: sl_system}
 - {id: iostream_retarget_stdio}
 - {id: brd4182a_b03}
-- {id: brd4001a}
 - {id: bluetooth_feature_gatt_server}
+- {id: brd4001a}
 - {id: bluetooth_feature_advertiser}
 - {id: bluetooth_feature_periodic_adv}
 - {id: bluetooth_feature_sm}
 - {id: bluetooth_feature_gap}
 - {id: bluetooth_feature_system}
 - {id: emlib_eusart}
+- instance: [led0]
+  id: simple_led
 - {id: bluetooth_stack}
 - {id: EFR32MG22C224F512IM40}
 - {id: device_init}

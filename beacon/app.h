@@ -45,7 +45,7 @@
 
 /* Timers */
 #define TIMER_1MS 1
-#define TIMER_1S 1000 // one second in ms, used for timer
+#define LED_TIMER_MS 1000 // one second in ms, used for timer
 #define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1
 #define MAIN_TIMER_PRIORT 1

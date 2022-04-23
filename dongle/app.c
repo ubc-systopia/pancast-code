@@ -84,8 +84,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
     case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
-      // First, log into the legacy decode pipeline
-      dongle_on_scan_report(&report.address, report.rssi, report.data.data, report.data.len);
+      // first, scan on legacy advertisement channel
+      dongle_on_scan_report(&report.address, report.rssi,
+          report.data.data, report.data.len);
+#undef report
 
 #if MODE__PERIODIC
       // then check for periodic info in packet
@@ -102,7 +104,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         }
       }
 #endif
-#undef report
+
       break;
 
     case sl_bt_evt_sync_opened_id:

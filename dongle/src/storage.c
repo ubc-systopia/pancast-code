@@ -228,11 +228,13 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
   return -1;
 }
 
-void inc_head(dongle_storage *sto) {
+void inc_head(dongle_storage *sto)
+{
   sto->encounters.head = (sto->encounters.head + 1) % (dongle_storage_max_log_count(sto));
 }
 
-void inc_tail(dongle_storage *sto) {
+void inc_tail(dongle_storage *sto)
+{
   sto->encounters.tail = (sto->encounters.tail + 1) % (dongle_storage_max_log_count(sto));
 }
 

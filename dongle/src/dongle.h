@@ -16,7 +16,6 @@
  */
 #define TEST_DONGLE 0
 
-//#define MODE__TEST_CONFIG // loads fixed test data instead of from flash
 #define MODE__STAT // enables telemetry aggregation
 /*
  * config for periodic scanning and syncing
@@ -24,8 +23,6 @@
  * 1 - enable
  */
 #define MODE__PERIODIC  1
-#define MODE__PERIODIC_FIXED_DATA
-#define MODE__ENCOUNTER_DURATION 1
 //#define CUCKOOFILTER_FIXED_TEST
 
 #include <assert.h>
@@ -35,14 +32,19 @@
 #include "sl_sleeptimer.h"
 
 // compute the current time as a float in ms
-#define now() (((float) sl_sleeptimer_get_tick_count64()/(float) sl_sleeptimer_get_timer_frequency()) * 1000)
-
-#define DONGLE_NO_OP assert(1);
-
+#define now() (((float) sl_sleeptimer_get_tick_count64()  \
+                / (float) sl_sleeptimer_get_timer_frequency()) * 1000)
 
 // STATIC PARAMETERS
 
-// number of distinct broadcast ids to keep track of at one time
+/*
+ * number of distinct broadcast ids to keep track of at one time.
+ *
+ * for each correct beacon encountered, there is at most one active encounter.
+ * this number indicates max number of beacons encountered simultaneously,
+ * which the dongle can track and log. value is affected by size of memory
+ * allocations possible in silabs
+ */
 #define DONGLE_MAX_BC_TRACKED 16
 
 // Time to wait after not seeing an ID before persisting encounter to storage

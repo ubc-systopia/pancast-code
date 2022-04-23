@@ -27,28 +27,10 @@
 #include "common/src/util/util.h"
 #include "crypto.h"
 
-//
-// GLOBAL MEMORY
-// All of the variables used throughout the main program are allocated here
-
-// 1. Mutual exclusion
-// Access for both central updates and scan interrupts
-// is given on a FIFO basis
-// In the Gecko Platform, locks are no-ops until a firmware implementation
-// can be made to work.
-#define LOCK DONGLE_NO_OP;
-#define UNLOCK DONGLE_NO_OP;
-
-// 2. Config
+// in-memory config
 dongle_config_t config;
-
-
-// 3. Operation
+// in-memory config of on-disk layout
 dongle_storage storage;
-dongle_storage *get_dongle_storage()
-{
-  return &storage;
-}
 
 dongle_epoch_counter_t epoch;
 dongle_timer_t dongle_time; // main dongle timer
@@ -388,18 +370,18 @@ void dongle_save_encounters()
     if (cur_encounters[i].dongle_time_start != 0 &&
     		dongle_time - end_time > LOG_MIN_WAIT) {
       dongle_save_encounter(&cur_encounters[i], i);
-	}
+    }
   }
 }
 
-void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len)
+void dongle_on_scan_report(bd_addr *addr, int8_t rssi,
+    uint8_t *data, uint8_t data_len)
 {
   // Filter mis-sized packets
   if (data_len != ENCOUNTER_BROADCAST_SIZE + 1) {
     // TODO: should check for a periodic packet identifier
     return;
   }
-  LOCK
   log_debugf("%02x,%u,%u,%lu,%02x%02x%02x%02x%02x%02x,%d\r\n",
       TELEM_TYPE_SCAN_RESULT, dongle_time, epoch, signal_id,
       addr->addr[0], addr->addr[1], addr->addr[2], addr->addr[3],
@@ -412,17 +394,15 @@ void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t da
   decode_encounter(&en, (encounter_broadcast_raw_t *)data);
   dongle_track(&en, rssi, signal_id);
   signal_id++;
-  UNLOCK
 }
 
 // used as callback for dongle_load_encounter
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry)
 {
   beacon_eph_id_t *id = &entry->eph_id;
-  hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,
-		  0,
-    i, entry->beacon_time_start, entry->beacon_time_int, entry->dongle_time_start,
-	entry->dongle_time_int, entry->rssi);
+  hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id, 0, i,
+      entry->beacon_time_start, entry->beacon_time_int,
+      entry->dongle_time_start, entry->dongle_time_int, entry->rssi);
 
   return 1;
 }
@@ -533,5 +513,4 @@ void dongle_report()
 }
 
 #undef LOG_LEVEL__INFO
-//#undef TEST_DONGLE
 #undef MODE__STAT

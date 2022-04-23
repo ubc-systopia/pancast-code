@@ -7,6 +7,7 @@
 
 #include "dongle.h"
 #include "common/src/settings.h"
+#include "common/src/platform/gecko.h"
 #include "config/nvm3_default_config.h"
 
 #include <stddef.h>
@@ -20,6 +21,10 @@
 #define NVM_OFFSET 0x78000
 #define NVM_SIZE NVM3_DEFAULT_NVM_SIZE
 
+// Upper-bound of size of encounter log, in bytes
+#define TARGET_FLASH_LOG_SIZE \
+  ((FLASH_DEVICE_NUM_PAGES*FLASH_DEVICE_PAGE_SIZE) - FLASH_OFFSET)
+
 // Maximum number of encounters stored at one time
 #define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)
 
@@ -27,6 +32,9 @@
 // This is multiple of the encounter size
 // And assumes the size is block-aligned
 #define FLASH_LOG_SIZE (ENCOUNTER_ENTRY_SIZE * MAX_LOG_COUNT)
+
+// Number of encounters in each page, with no encounters stored across pages
+#define ENCOUNTERS_PER_PAGE (FLASH_DEVICE_PAGE_SIZE / ENCOUNTER_ENTRY_SIZE)
 
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;

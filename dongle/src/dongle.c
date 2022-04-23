@@ -79,6 +79,9 @@ void dongle_init()
 {
   dongle_load();
 
+  // print basic device info and state
+  dongle_info();
+
   // Set encounters cursor to loaded config values,
   // then load all stored encounters
   if (config.en_tail > dongle_storage_max_log_count(&storage) ||
@@ -99,14 +102,19 @@ void dongle_init()
   signal_id = 0;
   download_complete = 0;
 
+  //===========
+
+  // reset stats
   dongle_stats_init(&storage);
 
+  // reset downloaded space
   dongle_download_init();
-
-  dongle_init_scan();
 
   // set up LED
   configure_blinky();
+
+  // initialize periodic advertisement scanning
+  dongle_init_scan();
 
   log_infof("%s", "Dongle initialized\r\n");
 
@@ -114,11 +122,6 @@ void dongle_init()
   run_mbedtls_benchmark();
   run_psa_benchmark();
 #endif
-
-  //===========
-
-  dongle_info();
-  dongle_storage_info(&storage);
 
   log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 }
@@ -462,6 +465,21 @@ void dongle_info()
   log_infof("    Periodic adv sync skip:       %d\r\n", SYNC_SKIP);
   log_infof("    Periodic adv sync flags:      %d\r\n", SYNC_FLAGS);
   log_infof("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
+
+  log_infof("    Flash offset:                 %u\r\n", FLASH_OFFSET);
+  log_infof("    Total size:                   %u\r\n", storage.total_size);
+  log_infof("    Usable size:                  %u\r\n", (uint32_t) FLASH_LOG_SIZE);
+  log_infof("    Log size:                     %u\r\n",
+      storage.map.log_end - storage.map.log);
+  log_infof("    Max enctr entries:            %lu\r\n",
+      (uint32_t) dongle_storage_max_log_count(&storage));
+  log_infof("    Log range:                    %u-%u\r\n",
+      storage.map.log, storage.map.log_end);
+  log_infof("    Log head:                     %u\r\n", config.en_head);
+  log_infof("    Log tail:                     %u\r\n", config.en_tail);
+  log_infof("    Config offset:                %u\r\n", storage.map.config);
+  log_infof("    OTP offset:                   %u\r\n", storage.map.otp);
+  log_infof("    Stat offset:                  %u\r\n", storage.map.stat);
 }
 
 void dongle_encounter_report()

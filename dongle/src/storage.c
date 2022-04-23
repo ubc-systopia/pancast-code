@@ -53,12 +53,6 @@ int _flash_write_(dongle_storage *sto, storage_addr_t off, void *data, size_t si
   return MSC_WriteWord((uint32_t *)off, data, (uint32_t)size);
 }
 
-// Upper-bound of size of encounter log, in bytes
-#define TARGET_FLASH_LOG_SIZE (sto->total_size - FLASH_OFFSET)
-
-// Number of encounters in each page, with no encounters stored across pages
-#define ENCOUNTERS_PER_PAGE (sto->page_size / ENCOUNTER_ENTRY_SIZE)
-
 size_t dongle_storage_max_log_count(dongle_storage *sto)
 {
   size_t encounter_log_size = sto->map.log_end - sto->map.log;
@@ -127,9 +121,6 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 
   read(sizeof(uint32_t), &cfg->en_tail);
   read(sizeof(uint32_t), &cfg->en_head);
-  log_infof("head: %u\r\n", cfg->en_head);
-  log_infof("tail: %u\r\n", cfg->en_tail);
-
 
   sto->map.otp = off;
 
@@ -141,12 +132,6 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   sto->map.log_end = NVM_OFFSET - 1;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
-  log_infof("    Flash offset:    %u\r\n", FLASH_OFFSET);
-  log_infof("    Total Size:    %u\r\n", sto->total_size);
-  log_infof("    Config offset:    %u\r\n", sto->map.config);
-  log_infof("    OTP offset:      %u\r\n", sto->map.otp);
-  log_infof("    Stat offset:     %u\r\n", sto->map.stat);
-  log_infof("    Log offset:      %u-%u\r\n", sto->map.log, sto->map.log_end);
 }
 
 #define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
@@ -432,14 +417,6 @@ void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg, void * 
 void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len)
 {
   _flash_read_(sto, sto->map.stat, stat, len);
-}
-
-void dongle_storage_info(dongle_storage *sto)
-{
-  log_infof("Total flash space:       %lu bytes\r\n",
-      (uint32_t) FLASH_LOG_SIZE);
-  log_infof("Maximum enctr entries:   %lu\r\n",
-      (uint32_t) dongle_storage_max_log_count(sto));
 }
 
 void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time)

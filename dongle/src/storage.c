@@ -205,6 +205,25 @@ void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
   _flash_read_(sto, OTP(i), otp, sizeof(dongle_otp_t));
 }
 
+void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
+{
+  log_debugf("%s", "Saving OTPs\r\n");
+  storage_addr_t off = OTP(0);
+  pre_erase(sto, off, (NUM_OTP * sizeof(dongle_otp_t)));
+
+#define write(data, size) \
+  (_flash_write_(sto, off, data, size), off += size)
+
+  for (int i = 0; i < NUM_OTP; i++) {
+    write(&otps[i], sizeof(dongle_otp_t));
+  }
+
+#undef write
+
+  log_infof("off: %u, size: %u\r\n", OTP(0), (NUM_OTP * sizeof(dongle_otp_t)));
+}
+
+
 int otp_is_used(dongle_otp_t *otp)
 {
   return !((otp->flags & 0x0000000000000001) >> 0);

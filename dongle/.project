@@ -1156,6 +1156,11 @@
 			<locationURI>STUDIO_SDK_LOC/protocol/bluetooth/lib/EFR32BG22/GCC/libbluetooth.a</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/aes.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/aes.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/check_crypto_config.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/check_crypto_config.h</locationURI>
@@ -1176,14 +1181,34 @@
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/common.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/ctr_drbg.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/ctr_drbg.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/ecp_invasive.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/ecp_invasive.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/entropy.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/entropy.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/entropy_poll.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/entropy_poll.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/error.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/error.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/hmac_drbg.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/hmac_drbg.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/platform.c</name>
@@ -1329,6 +1354,11 @@
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/psa_crypto_storage.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/psa_crypto_storage.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/sha256.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/mbedtls/library/sha256.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/mbedtls/library/ssl_invasive.h</name>
@@ -1971,6 +2001,11 @@
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_alt/include/sl_mbedtls.h</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_alt/source/sl_entropy.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_alt/source/sl_entropy.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_alt/source/sl_mbedtls.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_alt/source/sl_mbedtls.c</locationURI>
@@ -2299,6 +2334,11 @@
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_mbedtls_support/src/mbedtls_ecdsa_ecdh.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_mbedtls_support/src/mbedtls_ecdsa_ecdh.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_mbedtls_support/src/mbedtls_sha.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/util/third_party/crypto/sl_component/sl_mbedtls_support/src/mbedtls_sha.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/util/third_party/crypto/sl_component/sl_protocol_crypto/src/sli_protocol_crypto.h</name>

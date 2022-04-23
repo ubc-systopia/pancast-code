@@ -34,6 +34,9 @@
 #include "sl_bt_api.h"
 #include "sl_sleeptimer.h"
 
+// compute the current time as a float in ms
+#define now() (((float) sl_sleeptimer_get_tick_count64()/(float) sl_sleeptimer_get_timer_frequency()) * 1000)
+
 #define DONGLE_NO_OP assert(1);
 
 

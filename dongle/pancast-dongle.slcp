@@ -24,21 +24,26 @@ component:
 - {id: bluetooth_feature_gatt_server}
 - {id: bluetooth_feature_sm}
 - {id: mpu}
+- {id: mbedtls_cipher_cbc}
 - {id: gatt_configuration}
 - instance: [led0]
   id: simple_led
 - {id: bluetooth_stack}
 - {id: rail_util_pti}
 - {id: bluetooth_feature_gatt}
+- {id: mbedtls_cipher}
 - {id: emlib_iadc}
+- {id: mbedtls_cipher_ctr}
 - {id: app_log}
 - {id: bluetooth_feature_connection}
 - {id: bluetooth_feature_advertiser}
+- {id: mbedtls_random}
 - instance: [vcom]
   id: iostream_usart
 - {id: bluetooth_feature_dynamic_gattdb}
 - {id: bluetooth_feature_system}
 - {id: bluetooth_feature_scanner}
+- {id: mbedtls_cipher_cfb}
 - {id: component_catalog}
 - {id: ota_dfu}
 - {id: brd4184a}

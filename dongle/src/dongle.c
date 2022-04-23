@@ -5,7 +5,7 @@
 // instead interprets and logs payload data from PanCast beacons.
 //
 
-#include "./dongle.h"
+#include "dongle.h"
 
 #include <string.h>
 
@@ -25,6 +25,7 @@
 #include "common/src/constants.h"
 #include "common/src/test.h"
 #include "common/src/util/util.h"
+#include "crypto.h"
 
 //
 // GLOBAL MEMORY
@@ -117,6 +118,13 @@ void dongle_init()
   configure_blinky();
 
   log_infof("%s", "Dongle initialized\r\n");
+
+#if DONGLE_CRYPTO
+  run_mbedtls_benchmark();
+  run_psa_benchmark();
+#endif
+
+  //===========
 
   dongle_info();
   dongle_storage_info(&storage);

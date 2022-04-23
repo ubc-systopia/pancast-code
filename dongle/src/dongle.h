@@ -47,8 +47,12 @@
  */
 #define DONGLE_MAX_BC_TRACKED 16
 
-// Time to wait after not seeing an ID before persisting encounter to storage
-#define LOG_MIN_WAIT 15
+/*
+ * time to wait after not seeing an ID before persisting encounter to storage
+ * this value should be equal to the epoch length, as after turn of one complete
+ * epoch, this encounter id should definitely have "expired".
+ */
+#define LOG_MIN_WAIT BEACON_EPOCH_LENGTH
 
 // Time to wait after before trying to download again
 #define MIN_DOWNLOAD_WAIT 5

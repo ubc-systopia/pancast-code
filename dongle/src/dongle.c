@@ -265,10 +265,12 @@ static int decode_encounter(encounter_broadcast_t *dat,
  */
 static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
 {
-//  hexdumpen(enc->eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "save enc",
-//		  enc->beacon_id, 0, i, enc->beacon_time_start, enc->beacon_time_int,
-//		enc->dongle_time_start, enc->dongle_time_int,
-//		(int8_t) enc->rssi);
+#if 0
+  hexdumpen(enc->eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "log enc",
+    enc->beacon_id, 0, i, enc->beacon_time_start, enc->beacon_time_int,
+    enc->dongle_time_start, enc->dongle_time_int,
+    (int8_t) enc->rssi);
+#endif
 
   dongle_storage_log_encounter(&storage, &config, &dongle_time, enc);
   memset(&cur_encounters[i], 0, sizeof(dongle_encounter_entry_t));
@@ -292,7 +294,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
 
   // determine which tracked id, if any, is a match
   int found = 0, i;
-  for (i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
+  for (i = 0; i < (int) DONGLE_MAX_BC_TRACKED; i++) {
     if (!compare_eph_id(enc->eph, &cur_encounters[i].eph_id)) {
       found = 1;
       break;
@@ -319,25 +321,26 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
     memset(&cur_encounters[i].beacon_time_int, 0, sizeof(uint8_t));
     memcpy(&cur_encounters[i].rssi, &rssi, sizeof(int8_t));
 
-//    beacon_eph_id_t *id = &cur_encounters[i].eph_id;
-//    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc", cur_encounters[i].beacon_id,
-//        		0, i, cur_encounters[i].beacon_time_start,
-//    			cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
-//    			cur_encounters[i].dongle_time_int,
-//    			cur_encounters[i].rssi);
+#if 0
+    beacon_eph_id_t *id = &cur_encounters[i].eph_id;
+    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc", cur_encounters[i].beacon_id,
+      0, i, cur_encounters[i].beacon_time_start,
+      cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
+      cur_encounters[i].dongle_time_int, cur_encounters[i].rssi);
+#endif
 
 #ifdef MODE__STAT
     stats.num_obs_ids++;
 #endif
     log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
-       dongle_time, epoch, signal_id, enc->b, enc->t);
+       dongle_time, epoch, signal_id, *enc->b, *enc->t);
 
     return signal_id;
   }
 
   // when a matching ephemeral id is observed
   log_telemf("%02x,%u,%u,%lu,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
-     dongle_time, epoch, signal_id, enc->b, enc->t);
+     dongle_time, epoch, signal_id, *enc->b, *enc->t);
 
   uint8_t dongle_dur = (uint8_t)(dongle_time - cur_encounters[i].dongle_time_start);
   uint8_t beacon_dur = (uint8_t)(*enc->t - cur_encounters[i].beacon_time_start);
@@ -358,15 +361,20 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
 void dongle_save_encounters()
 {
   for (int i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
-   dongle_timer_t end_time = cur_encounters[i].dongle_time_start + cur_encounters[i].dongle_time_int;
-//   beacon_eph_id_t *id = &cur_encounters[i].eph_id;
-//   hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "save enc", cur_encounters[i].beacon_id,
-//    		0, i, cur_encounters[i].beacon_time_start,
-//			cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
-//			cur_encounters[i].dongle_time_int,
-//			cur_encounters[i].rssi);
-    // if two time cycles have passed and we haven't seen the eph id again,
-    // then count this as the end of the duration and log the encounter
+    dongle_timer_t end_time = cur_encounters[i].dongle_time_start
+      + cur_encounters[i].dongle_time_int;
+#if 0
+   beacon_eph_id_t *id = &cur_encounters[i].eph_id;
+   hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "chk enc", cur_encounters[i].beacon_id,
+     0, i, cur_encounters[i].beacon_time_start,
+     cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
+     cur_encounters[i].dongle_time_int, cur_encounters[i].rssi);
+#endif
+
+    /*
+     * if one epoch has passed and we haven't seen the eph id again,
+     * then count this as the end of the duration and log the encounter
+     */
     if (cur_encounters[i].dongle_time_start != 0 &&
     		dongle_time - end_time > LOG_MIN_WAIT) {
       dongle_save_encounter(&cur_encounters[i], i);
@@ -452,6 +460,8 @@ void dongle_info()
   log_infof("    Usable size:                  %u\r\n", (uint32_t) FLASH_LOG_SIZE);
   log_infof("    Log size:                     %u\r\n",
       storage.map.log_end - storage.map.log);
+  log_infof("    Encounter size:               %u\r\n",
+      sizeof(dongle_encounter_entry_t));
   log_infof("    Max enctr entries:            %lu\r\n",
       (uint32_t) dongle_storage_max_log_count(&storage));
   log_infof("    Log range:                    %u-%u\r\n",

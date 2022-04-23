@@ -39,15 +39,6 @@
 #define LOCK DONGLE_NO_OP;
 #define UNLOCK DONGLE_NO_OP;
 
-void dongle_lock()
-{
-  LOCK
-}
-
-void dongle_unlock(){
-  UNLOCK
-}
-
 // 2. Config
 dongle_config_t config;
 
@@ -188,11 +179,9 @@ void dongle_load()
 
 void dongle_clock_increment()
 {
-  dongle_lock();
   dongle_time++;
   log_debugf("Dongle clock: %lu\r\n", dongle_time);
   dongle_on_clock_update();
-  dongle_unlock();
 }
 
 void dongle_hp_timer_add(uint32_t ticks)

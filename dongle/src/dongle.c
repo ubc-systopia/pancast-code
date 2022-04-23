@@ -113,15 +113,16 @@ void dongle_init()
   // set up LED
   configure_blinky();
 
+#if DONGLE_CRYPTO
+  // run crypto benchmark
+  run_mbedtls_benchmark();
+  run_psa_benchmark();
+#endif
+
   // initialize periodic advertisement scanning
   dongle_init_scan();
 
   log_infof("%s", "Dongle initialized\r\n");
-
-#if DONGLE_CRYPTO
-  run_mbedtls_benchmark();
-  run_psa_benchmark();
-#endif
 
   log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 }

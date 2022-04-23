@@ -29,7 +29,6 @@ void run_mbedtls_benchmark(void)
   char *rand256 = malloc(1024);
   memset(rand256, 0, 1024);
 
-
   static const unsigned char entropy_source_nopr[] =
       { 0x4c, 0xfb, 0x21, 0x86, 0x73, 0x34, 0x6d, 0x9d,
         0x50, 0xc9, 0x22, 0xe4, 0x9b, 0x0d, 0xfc, 0xd0,
@@ -98,8 +97,6 @@ void run_mbedtls_benchmark(void)
   starttick = 0, endtick = 0;
   uint32_t tick256 = 0, sum_tick256 = 0, min_tick256 = 999, max_tick256 = 0;
   mt_ret2 += 1; mt_cnt = 20;
-  char *rand256 = malloc(1024);
-  memset(rand256, 0, 1024);
   for (int tmp = 0; tmp < mt_cnt; tmp++) {
     starttick = sl_sleeptimer_get_tick_count64();
     startts = now();

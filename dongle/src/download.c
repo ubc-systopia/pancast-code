@@ -299,7 +299,9 @@ void dongle_download_complete()
 #else
 
   // check existing log entries against the new filter
-  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
+  dongle_storage_load_encounter(&storage, storage.encounters.tail,
+      dongle_download_check_match);
+//  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
 #endif /* CUCKOOFILTER_FIXED_TEST */
 
   if (download.n_matches > 0) {

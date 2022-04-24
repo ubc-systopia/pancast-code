@@ -148,7 +148,9 @@ void dongle_test()
   } else if (num < 1) {
     log_errorf("%s", "no encounters stored.\r\n");
   } else {
-    dongle_storage_load_all_encounter(&storage, test_check_entry_age);
+    dongle_storage_load_encounter(&storage, storage.encounters.tail,
+        test_check_entry_age);
+//    dongle_storage_load_all_encounter(&storage, test_check_entry_age);
   }
 
   if (test_errors) {

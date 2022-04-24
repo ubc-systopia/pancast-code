@@ -118,8 +118,8 @@ def upload(enctr_raw_arr):
 
         data = {}
         data['EphemeralID'] = enctr_raw_arr[i][IDX_EPHID][2:]
-        data['BeaconId'] = int(enctr_raw_arr[i][IDX_BEACON_ID], 16)
-        data['LocationID'] = int(enctr_raw_arr[i][IDX_LOCATION_ID], 16)
+        data['BeaconID'] = int(enctr_raw_arr[i][IDX_BEACON_ID], 16)
+        data['LocationID'] = int(enctr_raw_arr[i][IDX_BEACON_ID], 16)
         data['DongleClock'] = int(enctr_raw_arr[i][IDX_DONGLE_CLOCK])
         data['BeaconClock'] = int(enctr_raw_arr[i][IDX_BEACON_CLOCK])
         json_data_arr.append(data)

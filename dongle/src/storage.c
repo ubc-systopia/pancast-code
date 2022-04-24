@@ -142,26 +142,25 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   int total_size = sizeof(dongle_config_t);
 
   dongle_otp_t otps[NUM_OTP];
-
   _flash_read_(sto, OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
 
   char statbuf[sizeof(dongle_stats_t) + sizeof(downloads_stats_t)];
-
-  _flash_read_(sto, sto->map.stat, statbuf, sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
+  _flash_read_(sto, sto->map.stat, statbuf,
+      sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
 
   pre_erase(sto, off, total_size);
 
 #define write(data, size) \
   (_flash_write_(sto, off, data, size), off += size)
 
-  // Write config
+  // write config
   write(cfg, sizeof(dongle_config_t));
 
-  // Write OTPs
+  // write OTPs
   off = OTP(0);
   write(otps, sizeof(dongle_otp_t)*NUM_OTP);
 
-  // Write stats
+  // write stats
   off = sto->map.stat;
   write(statbuf, sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
 #undef write
@@ -256,8 +255,6 @@ void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
 
 enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
 {
-  log_debugf("tail: %lu\r\n", (uint32_t)sto->encounters.tail);
-  log_debugf("head: %lu\r\n", (uint32_t)sto->encounters.head);
   enctr_entry_counter_t result;
   if (sto->encounters.head >= sto->encounters.tail) {
     result = sto->encounters.head - sto->encounters.tail;
@@ -265,7 +262,8 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
     result = dongle_storage_max_log_count(sto) -
     		(sto->encounters.tail - sto->encounters.head);
   }
-  log_debugf("result: %lu\r\n", (uint32_t)result);
+  log_debugf("head: %u tail: %u #entries: %u\r\n",
+      sto->encounters.head, sto->encounters.tail, result);
   return result;
 }
 
@@ -308,8 +306,8 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 void dongle_storage_load_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
-  log_debugf("loading log entries starting at (virtual) index %lu\r\n", (uint32_t)i);
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
+  log_infof("loading log entries starting at idx %lu cnt: %lu\r\n", i, num);
   dongle_encounter_entry_t en;
   do {
     if (i >= num)

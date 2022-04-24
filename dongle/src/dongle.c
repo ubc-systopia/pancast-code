@@ -311,7 +311,7 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
     // if no match was found, start tracking the new id, replacing the oldest
     // one currently tracked
     i = cur_id_idx;
-    log_debugf("new ephid, beacon: %lu, tracking idx: %d\r\n", enc->b, i);
+    log_debugf("new ephid, tracking idx: %d\r\n", i);
     print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "new ID");
     cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
 

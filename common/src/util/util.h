@@ -35,7 +35,7 @@
         * 1000 / sl_sleeptimer_get_timer_frequency());                  \
         \
         logf(APP_LOG_TIME_FORMAT APP_LOG_SEPARATOR                      \
-            "%s: 0x ", (time_ms / 3600000),                             \
+            "%s: ", (time_ms / 3600000),                             \
             ((time_ms / 60000) % 60), ((time_ms / 1000) % 60),          \
             (time_ms % 1000), name);                                    \
         \
@@ -45,9 +45,9 @@
         {                                                               \
             logf("%s", "\r\n");                                         \
         }                                                               \
-        logf("%.2x ", ((uint8_t *)data)[i]);                             \
+        logf("%.2x", ((uint8_t *)data)[i]);                             \
     }																	\
-    logf("0x%x %u %u %u %u %u %u %d\r\n", arg1, arg2, arg3, arg4, arg5, arg6, \
+    logf(" 0x%lx %u %u %lu %lu %u %u %d\r\n", arg1, arg2, arg3, arg4, arg5, arg6, \
       arg7, arg8);         \
   }
 

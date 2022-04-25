@@ -68,19 +68,21 @@ def parse_input(ifile):
         i -= 1
 
         if ("UPLOAD LOG START" in line):
+#            print("line {}: {}".format(i+1, line))
+
             start = 1
             j = i+3
             while (j < len(buf)):
                 line = buf[j].strip('\r').strip('\n')
                 j += 1
 
-                if ("read" not in line):
-                    continue
-
                 if ("UPLOAD LOG END" in line):
 #                    print("line {}: {}".format(j-1, line))
                     done = 1
                     break
+
+                if ("read" not in line):
+                    continue
 
                 enctr_raw_arr.append(line.split(' ')[2:])
 

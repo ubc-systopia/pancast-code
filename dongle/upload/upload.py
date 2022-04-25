@@ -64,26 +64,25 @@ def parse_input(ifile):
     start = 0
     done = 0
     while (i >= 0):
-        line = buf[i]
+        line = buf[i].strip('\r').strip('\n')
         i -= 1
 
-        ## reverse search for last instance of LOG START
-        if ("==== UPLOAD LOG START ====" not in line and start == 0):
-            continue
-
-        ## found the last LOG START, now scan fwd until LOG END
-        if ("==== UPLOAD LOG START ====" in line):
+        if ("UPLOAD LOG START" in line):
             start = 1
-            j = i+2
+            j = i+3
             while (j < len(buf)):
-                line = buf[j]
+                line = buf[j].strip('\r').strip('\n')
                 j += 1
 
-                if ("==== UPLOAD LOG END ====" in line):
+                if ("read" not in line):
+                    continue
+
+                if ("UPLOAD LOG END" in line):
+#                    print("line {}: {}".format(j-1, line))
                     done = 1
                     break
 
-                enctr_raw_arr.append(line.strip('\n').split(' ')[2:])
+                enctr_raw_arr.append(line.split(' ')[2:])
 
         if (done == 1):
             break
@@ -117,7 +116,7 @@ def upload(enctr_raw_arr):
         '''
 
         data = {}
-        data['EphemeralID'] = enctr_raw_arr[i][IDX_EPHID][2:]
+        data['EphemeralID'] = enctr_raw_arr[i][IDX_EPHID]
         data['BeaconID'] = int(enctr_raw_arr[i][IDX_BEACON_ID], 16)
         data['LocationID'] = int(enctr_raw_arr[i][IDX_BEACON_ID], 16)
         data['DongleClock'] = int(enctr_raw_arr[i][IDX_DONGLE_CLOCK])

@@ -1,7 +1,10 @@
 #include "request.h"
 
+//const char domain[] = "https://127.0.0.1:8081/";
 const char domain[] = "https://pancast.cs.ubc.ca:443/";
 const char request[] = "update";
+#define DOMAIN_LEN strnlen(domain, 64)
+#define REQUEST_LEN strnlen(request, 16)
 
 /*
  * Write data from stream, from CURLOPT_WRITEFUNCTION example

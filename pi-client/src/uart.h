@@ -25,7 +25,10 @@
 
 #define REQ_HEADER_SIZE 8
 
-#define REQUEST_INTERVAL 86400 // how often in seconds to request data from backend
+/*
+ * interval in seconds to request new risk data from backend
+ */
+#define REQUEST_INTERVAL 86400
 
 extern void* uart_main(void* arg);
 

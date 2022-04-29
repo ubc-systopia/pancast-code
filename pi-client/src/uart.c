@@ -18,7 +18,7 @@ uint8_t payload_data[MAX_PAYLOAD_SIZE];
 
 uint32_t num_pkts;
 
-void* receive_log() 
+void *receive_log(void)
 {
   while (1) {
     char c[1];
@@ -30,7 +30,8 @@ void* receive_log()
 }
 
 
-void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, uint32_t len) 
+void convert_chunk_to_pkts(char *chunk, uint32_t chunk_number,
+    uint32_t offset, uint32_t len)
 {
 
     num_pkts = len / (PAYLOAD_SIZE - PACKET_HEADER_LEN);
@@ -49,8 +50,8 @@ void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, 
       // Add data
       memcpy(payload_data + offset + i*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[i*data_len], data_len);
     }
-    
-    // add last packet if data does not fit evenly 
+
+    // add last packet if data does not fit evenly
     if (len % (PAYLOAD_SIZE - PACKET_HEADER_LEN) != 0) {
       // Add sequence number
       memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE, &num_pkts, sizeof(uint32_t));
@@ -58,7 +59,7 @@ void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, 
       memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_number, sizeof(uint32_t));
       // Add chunk length
       memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
-      
+
       uint32_t last_data_len = len - (num_pkts)*(PAYLOAD_SIZE - PACKET_HEADER_LEN);
       // Add data
       memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[data_len*num_pkts], last_data_len);
@@ -66,7 +67,7 @@ void convert_chunk_to_pkts(char* chunk, uint32_t chunk_number, uint32_t offset, 
     }
 }
 
-void make_request() 
+void make_request()
 {
 
   data_ready = 0;
@@ -91,19 +92,20 @@ void make_request()
     uint32_t data_size = req_chunk.size - REQ_HEADER_SIZE;
 
     // load chunk into payload_data[]
-    convert_chunk_to_pkts(req_chunk.response + sizeof(uint64_t), i, i*PAYLOAD_SIZE*num_pkts, data_size);
-    printf("total chunk size: %u\r\n", PAYLOAD_SIZE*num_pkts);	  
+    convert_chunk_to_pkts(req_chunk.response + sizeof(uint64_t), i,
+        i*PAYLOAD_SIZE*num_pkts, data_size);
+    printf("total chunk size: %u\r\n", PAYLOAD_SIZE*num_pkts);
   }
 
   clock_t last_request_time = clock();
-  last_request_time_sec = ((double)last_request_time)/CLOCKS_PER_SEC;
+  last_request_time_sec = ((double) last_request_time) / CLOCKS_PER_SEC;
   printf("request at time: %f\r\n", last_request_time_sec);
 
   data_ready = 1;
 }
 
 
-void gpio_callback(int gpio, int level, uint32_t tick) 
+void gpio_callback(int gpio, int level, uint32_t tick)
 {
 
   if (data_ready == 0) {
@@ -140,15 +142,15 @@ void gpio_callback(int gpio, int level, uint32_t tick)
   if (curr_time_sec - last_request_time_sec > REQUEST_INTERVAL) {
     // request new data
     make_request();
-    last_request_time_sec = curr_time_sec;	  
+    last_request_time_sec = curr_time_sec;
   }
-   
 }
 
-/* Set attributes for serial communication,
-    from https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c
+/*
+ * Set attributes for serial communication, from
+ * https://stackoverflow.com/questions/6947413/how-to-open-read-and-write-from-serial-port-in-c
  */
-int set_interface_attribs(int fd, int speed) 
+int set_interface_attribs(int fd, int speed)
 {
   struct termios tty;
 
@@ -183,12 +185,13 @@ int set_interface_attribs(int fd, int speed)
   return 0;
 }
 
-/* Main function for data transfer over UART
+/*
+ * Main function for data transfer over UART
  */
-void* uart_main(void* arg) 
+void *uart_main(void *arg)
 {
 
-  char* portname = TERMINAL;
+  char *portname = TERMINAL;
   // struct risk_data* r_data = (struct risk_data*)arg;
 
   // make request to backend and fill payload_data

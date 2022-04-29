@@ -42,9 +42,8 @@ int handle_request_chunk(struct req_data *data, int chunk)
   memset(url, 0, MAX_URL_LEN);
   sprintf(url, "%s%s?chunk=%d", domain, request, chunk);
 
+  dprintf(LVL_DBG, "Making request to server: %s\r\n", url);
 
-  printf("Making request to server: %s\r\n", url);
-    
   curl_global_init(CURL_GLOBAL_ALL);
 
   CURL *curl = curl_easy_init();
@@ -90,9 +89,8 @@ int handle_request_count(struct req_data *data)
   memset(url, 0, MAX_URL_LEN);
   sprintf(url, "%s%s/count", domain, request);
 
+  dprintf(LVL_DBG, "Making request to server: %s\r\n", url);
 
-  printf("Making request to server: %s\r\n", url);
-    
   curl_global_init(CURL_GLOBAL_ALL);
 
   CURL *curl = curl_easy_init();

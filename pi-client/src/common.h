@@ -25,4 +25,16 @@ struct risk_data {
     struct req_data data;
 };
 
+#define LVL_EXP 0
+#define LVL_DBG 1
+
+#define LOG_LVL LVL_EXP
+
+#define dprintf(DBG_LVL, F, A...) \
+  do {  \
+    if (LOG_LVL >= DBG_LVL) { \
+      printf("%s:%d " F, __func__, __LINE__, A); \
+    } \
+  } while (0)
+
 #endif // COMMON_H

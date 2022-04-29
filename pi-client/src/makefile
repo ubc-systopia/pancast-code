@@ -5,14 +5,18 @@ CFLAGS=-g -Wall
 
 INCLUDE = -I/usr/local/include
 LDFLAGS=-lcurl -lpthread -lpigpio
-OBJECTS=client.o request.o uart.o
+HDR=client.h request.h uart.h common.h
+SRC=client.c request.c uart.c
+#OBJECTS=client.o request.o uart.o
 TARGET=client
 
-all: $(TARGET)
+all: $(TARGET) $(HDR)
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
+OBJ=$(SRC:.c=.o)
+
+$(TARGET): $(OBJ) $(HDR)
+#	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
 clean:
-	$(RM) ./$(TARGET) *.o *~
+	$(RM) $(TARGET) $(OBJ) *~
 

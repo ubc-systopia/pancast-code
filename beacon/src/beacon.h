@@ -19,7 +19,12 @@
  */
 #define MODE__SL_BEACON_TEST_CONFIG  1
 
-#define BEACON_MODE__NETWORK    // comment to build as non-network beacon
+/*
+ * config to enable periodic advertising in network beacon
+ * 1 - enable periodic advertising
+ * 0 - disable periodic advertising
+ */
+#define BEACON_MODE__NETWORK    1
 
 // #define BEACON_GAEN_ENABLED
 

@@ -109,7 +109,7 @@ int main(void)
   while (1)
   {
 
-#ifdef BEACON_MODE__NETWORK
+#if BEACON_MODE__NETWORK
     if (adv_start >= 0 && !risk_timer_started) {
       time = now();
       delta = time - ADV_START;

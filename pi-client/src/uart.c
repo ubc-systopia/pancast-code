@@ -73,22 +73,21 @@ void make_request()
   handle_request_count(&chunk_count_data);
 
   memcpy(&num_chunks, chunk_count_data.response, sizeof(uint32_t));
-  // printf("num chunks: %u\r\n", num_chunks);
+  printf("#chunks: %u\r\n", num_chunks);
 
-  if (num_chunks == 0) {
-    printf("num chunks is 0! No Request for data.\r\n");
+  if (num_chunks == 0)
     return;
-  }
 
   for (int i = 0; i < num_chunks; i++) {
     // make request to backend for the chunk
     struct req_data req_chunk = {0};
     handle_request_chunk(&req_chunk, i);
 
-    uint32_t data_size = req_chunk.size - REQ_HEADER_SIZE;
+//    uint32_t data_size = req_chunk.size - REQ_HEADER_SIZE;
+    uint32_t data_size = ((uint64_t *) req_chunk.response)[0];
 
     // load chunk into payload_data[]
-    convert_chunk_to_pkts(req_chunk.response + sizeof(uint64_t), i,
+    convert_chunk_to_pkts(req_chunk.response + REQ_HEADER_SIZE, i,
         i*PAYLOAD_SIZE*num_pkts, data_size);
     printf("total chunk size: %u\r\n", PAYLOAD_SIZE*num_pkts);
   }
@@ -123,6 +122,7 @@ void gpio_callback(int gpio, int level, uint32_t tick)
       chunk_rep_count++;
       printf("chunk_rep_count: %d\r\n", chunk_rep_count);
     }
+
     if (chunk_rep_count > CHUNK_REPLICATION) {
       current_chunk_offset = (current_chunk_offset + 1) % num_chunks;
       chunk_rep_count = 0;
@@ -132,14 +132,14 @@ void gpio_callback(int gpio, int level, uint32_t tick)
     // no action
   }
 
-  clock_t curr_time = clock();
-  double curr_time_sec = ((double)curr_time)/CLOCKS_PER_SEC;
+  double curr_time_sec = ((double) clock()) / CLOCKS_PER_SEC;
 
-  if (curr_time_sec - last_request_time_sec > REQUEST_INTERVAL) {
-    // request new data
-    make_request();
-    last_request_time_sec = curr_time_sec;
-  }
+  if (curr_time_sec - last_request_time_sec < REQUEST_INTERVAL)
+    return;
+
+  // request new data
+  make_request();
+  last_request_time_sec = curr_time_sec;
 }
 
 /*

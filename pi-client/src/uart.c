@@ -18,7 +18,7 @@ uint8_t payload_data[MAX_PAYLOAD_SIZE];
 
 uint32_t num_pkts;
 
-void *receive_log(void)
+void *receive_log(int fd)
 {
   while (1) {
     char c[1];
@@ -209,7 +209,6 @@ void *uart_main(void *arg)
 
   if (fd == -1) {
     fprintf(stderr, "Error opening %s: %s\n", portname, strerror(errno));
-    fprintf(stderr, "Is broadcast device connected?\r\n");
     return 0;
   }
 
@@ -228,7 +227,7 @@ void *uart_main(void *arg)
   gpioSetAlertFunc(PIN, gpio_callback);
 
   // read logs from beacon
-  receive_log();
+  receive_log(fd);
 
   // should not get here
   return 0;

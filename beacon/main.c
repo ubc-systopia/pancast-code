@@ -205,23 +205,17 @@ int main(void)
       // End timer
       uint64_t end_time = sl_sleeptimer_get_tick_count64();
       uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
-      log_debugf("READ: %d, TIME: %lu\r\n", rlen, ms);
 
-      uint32_t seq;
       // extract sequence number
+      uint32_t seq = 0, chunk_id = 0, chunk_len = 0;
+      seq = ((uint32_t *) buf)[0];
+      chunk_id = ((uint32_t *) buf)[1];
+      chunk_len = ((uint32_t *) buf)[2];
       memcpy(&seq, buf, sizeof(uint32_t));
-      log_debugf("sequence: %lu\r\n", seq);
-
-      // extract sequence number
-      memcpy(&seq, buf + sizeof(uint32_t), sizeof(uint32_t));
-      log_debugf("chunk number: %lu\r\n", seq);
-
-      // extract sequence number
-      memcpy(&seq, buf + 2*sizeof(uint32_t), sizeof(uint32_t));
-      log_debugf("chunk length: %lu\r\n", seq);
+      log_infof("rlen: %lu, seq: %lu, chunk: %lu, len: %lu time: %lu\r\n",
+          rlen, seq, chunk_id, chunk_len, ms);
 
       set_risk_data(rlen, buf);
-
 
       // Add second delay to sync up with advertising interval
       add_delay_ms(DATA_DELAY);

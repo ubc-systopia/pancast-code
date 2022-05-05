@@ -227,11 +227,9 @@ static void _form_payload_()
   const size_t len = ENCOUNTER_BROADCAST_SIZE - 1;
 #define bt (payload.bt_data)
   uint8_t tmp;
-#ifdef BEACON_PLATFORM__GECKO
   tmp = bt->data_len;
   bt->data_len = bt->type;
   bt->type = tmp;
-#endif
   tmp = bt->data_len;
   bt->data_len = len;
 #define en (payload.en_data)

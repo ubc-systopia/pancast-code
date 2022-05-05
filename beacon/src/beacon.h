@@ -20,10 +20,6 @@
 #define MODE__SL_BEACON_TEST_CONFIG  1
 
 #define BEACON_MODE__NETWORK    // comment to build as non-network beacon
-//#define BEACON_MODE__FILL_MISSING_DOWNLOAD_DATA
-
-
-#define BEACON_PLATFORM__GECKO
 
 // #define BEACON_GAEN_ENABLED
 

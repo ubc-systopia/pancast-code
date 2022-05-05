@@ -199,21 +199,17 @@ void beacon_log_counters()
   sl_bt_system_get_counters(1, &tx_packets, &rx_packets,
       &crc_errors, &failures);
 
-  stat_total_packets_sent = stat_total_packets_sent + (uint32_t)tx_packets;
-  stat_crc_errors = stat_crc_errors + (uint32_t)crc_errors;
-  stat_failures = stat_failures + (uint32_t)failures;
+  stat_total_packets_sent += (uint32_t) tx_packets;
+  stat_crc_errors += (uint32_t) crc_errors;
+  stat_failures += (uint32_t) failures;
 
+  stat_sent_broadcast_packets++;
   // log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
 }
 
 void beacon_reset_counters()
 {
   sl_bt_system_get_counters(1, 0, 0, 0, 0);
-}
-
-void add_sent_packet()
-{
-	stat_sent_broadcast_packets++;
 }
 
 // Set transmission power (zephyr).

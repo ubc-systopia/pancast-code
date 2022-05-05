@@ -101,6 +101,5 @@ void beacon_start();
 void beacon_broadcast();
 void _beacon_info_();
 int _set_adv_data_();
-void add_sent_packet();
 int beacon_clock_increment(beacon_timer_t time);
 #endif

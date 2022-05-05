@@ -47,32 +47,34 @@ int handle_request_chunk(struct req_data *data, int chunk)
   curl_global_init(CURL_GLOBAL_ALL);
 
   CURL *curl = curl_easy_init();
-  if (curl) {
+  if (!curl)
+    return -EINVAL;
 
-    CURLcode res;
-    curl_easy_setopt(curl, CURLOPT_URL, url);
+  CURLcode res;
+  curl_easy_setopt(curl, CURLOPT_URL, url);
 
-    // Disable SSL verification for now
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+  // disable SSL verification for now
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
 
-    // send all data to write function
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
+  // send all data to write function
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
 
-    // pass 'data' struct to the callback function
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)data);
+  // pass 'data' struct to the callback function
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) data);
 
-    res = curl_easy_perform(curl);
-    if(res != CURLE_OK) {	
-      fprintf(stderr, "error: %s\r\n", curl_easy_strerror(res));
-      return -1;
-    }
-
-    printf("Request success! Data size: %d\r\n", (int)data->size);
-
-    curl_easy_cleanup(curl);
+  res = curl_easy_perform(curl);
+  if (res != CURLE_OK) {
+    fprintf(stderr, "error: %s\r\n", curl_easy_strerror(res));
+    return -1;
   }
+
+  dprintf(LVL_EXP, "res: %d, data size: %d buf hdr: %llu\r\n", res,
+      (int) data->size, ((uint64_t *) data->response)[0]);
+
+  curl_easy_cleanup(curl);
   curl_global_cleanup();
+
   return 0;
 }
 

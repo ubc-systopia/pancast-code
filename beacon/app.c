@@ -76,7 +76,7 @@ void set_risk_data(int len, uint8_t *data)
   }
 }
 
-#ifdef PERIODIC_TEST
+#if PERIODIC_TEST
 
 #define PACKET_REPLICATION 1
 #define CHUNK_REPLICATION 1
@@ -92,11 +92,9 @@ void set_risk_data(int len, uint8_t *data)
   uint32_t chunk_len = TEST_FILTER_LEN - 8;
   uint8_t test_data[PER_ADV_SIZE];
   uint8_t test_filter[MAX_FILTER_SIZE];
-#endif
 
 void send_test_risk_data()
 {
-#ifdef PERIODIC_TEST
   float starttime = now();
 
   if (seq_num == 0) {
@@ -154,8 +152,8 @@ void send_test_risk_data()
   // payload transmission complete
   chunk_num = 0;
   log_debugf("switched to transmit chunk %lu\r\n", chunk_num);
-#endif
 }
+#endif /* PERIODIC_TEST */
 
 float adv_start = -1;
 

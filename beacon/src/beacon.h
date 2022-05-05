@@ -6,8 +6,13 @@
 #include "common/src/settings.h"
 #include "common/src/util/stats.h"
 
+/*
+ * config to broadcast test risk data
+ * 1 - test risk data
+ * 0 - real risk data from backend
+ */
+#define PERIODIC_TEST   0
 
-//#define PERIODIC_TEST // uncomment to send test data
 /*
  * 1 - init test config
  * 0 - load config from storage

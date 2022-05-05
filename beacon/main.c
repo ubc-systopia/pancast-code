@@ -127,7 +127,7 @@ int main(void)
     } else if (adv_start >= 0 && risk_timer_started) {
       /* Beacon application code starts here */
 
-#ifndef PERIODIC_TEST
+#if (PERIODIC_TEST == 0)
 
       int rlen = 0;
 
@@ -231,7 +231,7 @@ int main(void)
       ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
       log_debugf("%s", "READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
 
-#else // !PERIODIC_TEST
+#else // PERIODIC_TEST
 
       // Start timer
       float starttime = now();

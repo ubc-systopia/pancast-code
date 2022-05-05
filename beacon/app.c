@@ -280,8 +280,19 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       // To disable legacy advertising, comment out the specific advertising
       // functions within this function.
       // Beacon refactoring should decouple the beacon initialization from the
-      // legacy advertising
       beacon_start();
+
+#if BEACON_MODE__NETWORK == 0
+      /*
+       * legacy advertising
+       */
+      _beacon_update_();
+      err = _beacon_advertise_();
+      if (err != 0) {
+          log_errorf("%s", "Error starting legacy adv\r\n");
+      }
+#endif
+
       break;
 
     // Default event handler.

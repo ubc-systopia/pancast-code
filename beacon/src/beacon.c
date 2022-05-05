@@ -400,7 +400,9 @@ int beacon_clock_increment(beacon_timer_t time)
 {
   beacon_time += time;
   log_debugf("beacon timer: %u\r\n", beacon_time);
+#if BEACON_MODE__NETWORK == 0
   _beacon_update_();
+#endif
   _beacon_pause_();
   return 0;
 }
@@ -416,12 +418,6 @@ void beacon_start()
   _beacon_load_(), _beacon_init_();
 
   configure_blinky();
-
-  _beacon_update_();
-  err = _beacon_advertise_();
-  if (err != 0) {
-      log_errorf("%s", "Error starting legacy adv\r\n");
-  }
 }
 
 beacon_storage *get_beacon_storage()

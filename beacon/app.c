@@ -161,7 +161,7 @@ void sl_timer_on_expire(
     __attribute__ ((unused)) sl_sleeptimer_timer_handle_t *handle,
     void *data)
 {
-#define user_handle (*((uint8_t*)data))
+#define user_handle (*((uint8_t *) data))
   // handle main clock
   if (user_handle == MAIN_TIMER_HANDLE) {
     beacon_clock_increment(1);
@@ -185,41 +185,57 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
     // Do not call any stack command before receiving this boot event!
     case sl_bt_evt_system_boot_id:
 
-      // Extract unique ID from BT Address.
+      /*
+       * extract unique ID from BT address.
+       */
       sc = sl_bt_system_get_identity_address(&address, &address_type);
 
-      log_debugf("address: %X %X %X %X %X %X\r\n", address.addr[5], address.addr[4],
-    		  address.addr[3], address.addr[2], address.addr[1],
-			  address.addr[0]);
+      log_debugf("address: %X %X %X %X %X %X\r\n",
+          address.addr[5], address.addr[4], address.addr[3],
+          address.addr[2], address.addr[1], address.addr[0]);
 
-
-      // comment to use random channel selection
-      sc = sl_bt_gap_set_data_channel_classification(CHAN_MAP_SIZE, chan_map);
+      /*
+       * comment to use random channel selection
+       */
+      sc = sl_bt_gap_set_data_channel_classification(CHAN_MAP_SIZE,
+          chan_map);
 
       if (sc != 0) {
         log_errorf("error setting channel map, sc: 0x%X", sc);
       }
 
+      /*
+       * set system tx power level
+       */
       int16_t set_min;
       int16_t set_max;
-      sc = sl_bt_system_set_tx_power(MIN_TX_POWER, MAX_TX_POWER, &set_min, &set_max);
-      log_debugf("Set min tx power: %d, max tx power: %d", set_min, set_max);
+      sc = sl_bt_system_set_tx_power(MIN_TX_POWER, MAX_TX_POWER,
+          &set_min, &set_max);
+      log_debugf("min tx power: %d, max tx power: %d", set_min, set_max);
       if (sc != 0) {
         log_errorf("error setting system tx power, sc: 0x%X", sc);
       }
 
-      // Create an advertising set.
-      //  printf("Creating advertising set...\r\n");
+      /*
+       * create an advertising set object
+       */
       sc = sl_bt_advertiser_create_set(&advertising_set_handle);
       if (sc != 0) {
         log_errorf("error creating advertising set, sc: 0x%X", sc);
       }
 
-      // Set PHY
-//        sc = sl_bt_advertiser_set_phy(advertising_set_handle, sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
-//        app_assert_status(sc);
+#if 0
+      /*
+       * set PHY config
+       */
+      sc = sl_bt_advertiser_set_phy(advertising_set_handle,
+          sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
+      app_assert_status(sc);
+#endif
 
-      // Set Power Level
+      /*
+       * set advertising power Level
+       */
       int16_t set_power;
       sc = sl_bt_advertiser_set_tx_power(advertising_set_handle,
           PER_TX_POWER, &set_power);
@@ -227,7 +243,9 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         log_errorf("error setting advertiser tx power, sc: 0x%X", sc);
       }
 
-      // Set advertising interval to 100ms.
+      /*
+       * set advertising interval to 100ms.
+       */
       sc = sl_bt_advertiser_set_timing(advertising_set_handle,
           MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
           MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
@@ -240,15 +258,16 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       log_debugf("%s", "Starting periodic advertising...\r\n");
 
       adv_start = now();
-      sc = sl_bt_advertiser_start_periodic_advertising(advertising_set_handle,
-          PER_ADV_INTERVAL, PER_ADV_INTERVAL, PER_FLAGS);
+      sc = sl_bt_advertiser_start_periodic_advertising(
+          advertising_set_handle, PER_ADV_INTERVAL, PER_ADV_INTERVAL,
+          PER_FLAGS);
 
       if (sc != 0) {
         log_errorf("Error setting channel map, sc: 0x%X", sc);
       }
 
-      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, PER_ADV_SIZE,
-          &risk_data[adv_index * PER_ADV_SIZE]);
+      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
+          PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
       if (sc != 0) {
         log_errorf("Error setting channel map, sc: 0x%X", sc);
       }

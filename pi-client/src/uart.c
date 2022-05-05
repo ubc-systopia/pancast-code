@@ -33,38 +33,34 @@ void *receive_log(int fd)
 void convert_chunk_to_pkts(char *chunk, uint32_t chunk_number,
     uint32_t offset, uint32_t len)
 {
+  uint32_t data_len = PAYLOAD_SIZE - PACKET_HEADER_LEN;
+//  int total_num_pkts = ((len-1) / data_len) + 1;
+  num_pkts = ((len-1) / data_len) + 1;
+//  num_pkts = len / data_len;
+  dprintf(LVL_EXP, "#pkts: %d\r\n", num_pkts);
 
-    num_pkts = len / (PAYLOAD_SIZE - PACKET_HEADER_LEN);
-    //printf("num_pkts: %d\r\n", num_pkts);
+  uint8_t *ptr = payload_data + offset;
+  int i = 0;
 
-    uint32_t data_len = PAYLOAD_SIZE - PACKET_HEADER_LEN;
+  int tot_len = 0, wlen = 0, woff = 0;
 
-    for (int i = 0; i < num_pkts; i++) {
-      // Add sequence number
-      memcpy(payload_data + offset + i*PAYLOAD_SIZE, &i, sizeof(uint32_t));
-      // Add chunk number
-      memcpy(payload_data + offset + i*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_number, sizeof(uint32_t));
-      // Add chunk length
-      memcpy(payload_data + offset + i*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
+  while (tot_len < len)
+  {
+    wlen = (len - tot_len > data_len) ? data_len : (len - tot_len);
 
-      // Add data
-      memcpy(payload_data + offset + i*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[i*data_len], data_len);
-    }
+    ((uint32_t *) (ptr + woff))[0] = i;
+    ((uint32_t *) (ptr + woff))[1] = chunk_number;
+    ((uint64_t *) (ptr + woff))[1] = len;
+    woff += PACKET_HEADER_LEN;
 
-    // add last packet if data does not fit evenly
-    if (len % (PAYLOAD_SIZE - PACKET_HEADER_LEN) != 0) {
-      // Add sequence number
-      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE, &num_pkts, sizeof(uint32_t));
-      // Add chunk number
-      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + sizeof(uint32_t), &chunk_number, sizeof(uint32_t));
-      // Add chunk length
-      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + 2*sizeof(uint32_t), &len, sizeof(uint64_t));
+    memcpy(ptr + woff, chunk, wlen);
+    woff += data_len;
+    tot_len += data_len;
+    dprintf(LVL_EXP, "[%d:%d] chunklen: %u pkt len: %u\r\n", chunk_number, i, len,
+        wlen);
 
-      uint32_t last_data_len = len - (num_pkts)*(PAYLOAD_SIZE - PACKET_HEADER_LEN);
-      // Add data
-      memcpy(payload_data + offset + (num_pkts)*PAYLOAD_SIZE + PACKET_HEADER_LEN, &chunk[data_len*num_pkts], last_data_len);
-      num_pkts++;
-    }
+    i++;
+  }
 }
 
 void make_request()

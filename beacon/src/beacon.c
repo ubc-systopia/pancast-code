@@ -32,14 +32,6 @@
 #include "common/src/test.h"
 
 //
-// ENTRY POINT
-//
-void beacon_start()
-{
-  beacon_broadcast();
-}
-
-//
 // GLOBAL MEMORY
 //
 
@@ -413,11 +405,12 @@ int beacon_clock_increment(beacon_timer_t time)
   return 0;
 }
 
-// Primary broadcasting routine
-// Non-zero argument indicates an error setting up the procedure for BT advertising
-void beacon_broadcast()
+/*
+ * Initialize Pancast-specific beacon configs
+ */
+void beacon_start()
 {
-  log_debugf("%s", "Starting broadcast\r\n");
+  log_debugf("%s", "Init beacon\r\n");
   int err = 0;
 
   _beacon_load_(), _beacon_init_();

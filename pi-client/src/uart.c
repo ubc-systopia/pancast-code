@@ -68,9 +68,10 @@ void prep_next_pkt(rpi_sl_buf *rsb, char *inbuf, int inoff, int inlen,
   uint8_t *ptr = rsb->pkt_arr[idx].payload_data;
   rsb->pkt_arr[idx].payload_size = inlen + PACKET_HEADER_LEN;
 
-  ((uint32_t *) ptr)[0] = pkt_seq;
-  ((uint32_t *) ptr)[1] = chunkid;
-  ((uint64_t *) ptr)[1] = chunklen;
+  rpi_ble_hdr *rbh = (rpi_ble_hdr *) ptr;
+  rbh->pkt_seq = pkt_seq;
+  rbh->chunkid = chunkid;
+  rbh->chunklen = chunklen;
   ptr += PACKET_HEADER_LEN;
   memcpy(ptr, inbuf+inoff, inlen);
 

@@ -16,17 +16,13 @@
 
 #define TERMINAL "/dev/ttyACM0"
 
-#define PAYLOAD_SIZE 250
-#define PACKET_HEADER_LEN (2*sizeof(uint32_t) + sizeof(uint64_t))
-#define MAX_PACKET_SIZE (PAYLOAD_SIZE - PACKET_HEADER_LEN)  
+#define MAX_PACKET_SIZE 250
 #define CHUNK_REPLICATION 1
 
 /*
  * max number of packets that rpi can hold for risk broadcast
  */
 #define MAX_PKTS 10000
-
-#define REQ_HEADER_SIZE 8
 
 /*
  * interval in seconds to request new risk data from backend

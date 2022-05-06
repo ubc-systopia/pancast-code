@@ -18,7 +18,7 @@ void *receive_log(int fd)
 // ====
 
 typedef struct ble_pkt {
-  uint8_t payload_data[PAYLOAD_SIZE];
+  uint8_t payload_data[MAX_PACKET_SIZE];
   uint8_t payload_size;
 } ble_pkt;
 
@@ -66,13 +66,13 @@ void prep_next_pkt(rpi_sl_buf *rsb, char *inbuf, int inoff, int inlen,
 
   int idx = rsb->pktidx_w;
   uint8_t *ptr = rsb->pkt_arr[idx].payload_data;
-  rsb->pkt_arr[idx].payload_size = inlen + PACKET_HEADER_LEN;
+  rsb->pkt_arr[idx].payload_size = inlen + sizeof(rpi_ble_hdr);
 
   rpi_ble_hdr *rbh = (rpi_ble_hdr *) ptr;
   rbh->pkt_seq = pkt_seq;
   rbh->chunkid = chunkid;
   rbh->chunklen = chunklen;
-  ptr += PACKET_HEADER_LEN;
+  ptr += sizeof(rpi_ble_hdr);
   memcpy(ptr, inbuf+inoff, inlen);
 
   idx = (idx + 1) % MAX_PKTS;
@@ -82,12 +82,14 @@ void prep_next_pkt(rpi_sl_buf *rsb, char *inbuf, int inoff, int inlen,
 void prep_pkts_from_chunk(rpi_sl_buf *rsb, int chunk_id,
     char *chunk_data, uint64_t chunk_size)
 {
+#define MAX_PAYLOAD_SIZE (MAX_PACKET_SIZE - sizeof(rpi_ble_hdr))
+
   int woff = 0, wlen = 0, tot_len = 0;
   uint32_t seq = 0;
 
   rsb->chunk_arr[rsb->chnkidx_w].pkt_arr_idx = rsb->pktidx_w;
   while (tot_len < chunk_size) {
-    wlen = (chunk_size - tot_len > MAX_PACKET_SIZE) ? MAX_PACKET_SIZE :
+    wlen = (chunk_size - tot_len > MAX_PAYLOAD_SIZE) ? MAX_PAYLOAD_SIZE :
       (chunk_size - tot_len);
     prep_next_pkt(rsb, chunk_data, woff, wlen, chunk_id, chunk_size, seq);
     woff += wlen;
@@ -121,11 +123,11 @@ void make_request(rpi_sl_buf *rsb)
     struct req_data req_chunk = {0};
     handle_request_chunk(&req_chunk, i);
 
-//    uint32_t data_size = req_chunk.size - REQ_HEADER_SIZE;
-    uint64_t data_size = ((uint64_t *) req_chunk.response)[0];
+    chunk_hdr *chdr = (chunk_hdr *) req_chunk.response;
+    uint64_t data_size = chdr->payload_len;
 
     // load chunk into payload_data[]
-    char *risk_payload = req_chunk.response + REQ_HEADER_SIZE;
+    char *risk_payload = req_chunk.response + sizeof(chunk_hdr);
     int chunkidx = rsb->chnkidx_w;
     prep_pkts_from_chunk(rsb, i, risk_payload, data_size);
     dprintf(LVL_EXP, "chunk size: %llu, pkt arr idx: %u cnt: %u\r\n", data_size,
@@ -162,7 +164,7 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   ble_pkt *pkt = &rsb->pkt_arr[pktidx];
   uint8_t *ptr = pkt->payload_data;
 //  int outlen = pkt->payload_size;
-  int outlen = PAYLOAD_SIZE;
+  int outlen = MAX_PACKET_SIZE;
   int wlen = write(fd, ptr, outlen);
   if (wlen != outlen) {
     fprintf(stderr, "write error, len: %d wlen: %d\r\n", outlen, wlen);

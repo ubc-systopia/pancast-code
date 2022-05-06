@@ -28,6 +28,7 @@
 
 #include "src/common/src/constants.h"
 #include "src/common/src/util/log.h"
+#include "src/common/src/pancast/riskinfo.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -207,14 +208,10 @@ int main(void)
       uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
 
       // extract sequence number
-      uint32_t seq = 0, chunk_id = 0, chunk_len = 0;
-      seq = ((uint32_t *) buf)[0];
-      chunk_id = ((uint32_t *) buf)[1];
-      chunk_len = ((uint32_t *) buf)[2];
-      memcpy(&seq, buf, sizeof(uint32_t));
+      rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
       log_infof("rlen: %ld, tot_len: %d, "
           "seq: %lu, chunk: %lu, len: %lu time: %lu\r\n",
-          rlen, tot_len, seq, chunk_id, chunk_len, ms);
+          rlen, tot_len, rbh->pkt_seq, rbh->chunkid, rbh->chunklen, ms);
 
       set_risk_data(rlen, buf);
 

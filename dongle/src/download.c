@@ -7,6 +7,7 @@
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
 #include "common/src/test.h"
+#include "common/src/pancast/riskinfo.h"
 
 extern dongle_stats_t stats;
 extern downloads_stats_t download_stats;
@@ -132,55 +133,49 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   if (data_len < PACKET_HEADER_LEN) {
     log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
                dongle_hp_timer, rssi, data_len);
-//        log_errorf("%s", "not enough data to read sequence numbers\r\n");
-//        log_errorf("%s", "len: %d\r\n", data_len);
     download.n_corrupt_packets++;
     return;
   }
 
   // extract seq number, chunk number, and chunk len
-  uint32_t seq, chunk, chunk_len, off = 0;
-  memcpy(&seq, data+off, sizeof(uint32_t));
-  off += sizeof(uint32_t);
-  memcpy(&chunk, data+off, sizeof(uint32_t));
-  off += sizeof(uint32_t);
-  memcpy(&chunk_len, data+off, sizeof(uint64_t));
-  off += sizeof(uint64_t);
-
-  log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-                     dongle_hp_timer, rssi, data_len, seq, chunk, chunk_len);
+  rpi_ble_hdr *rbh = (rpi_ble_hdr *) data;
+  log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n",
+      TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
+      rbh->pkt_seq, rbh->chunkid, rbh->chunklen);
 
   stats.total_periodic_data_size += data_len;
   stats.num_periodic_data++;
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
 
-  if (download.is_active && chunk != download.packet_buffer.chunk_num) {
+  if (download.is_active &&
+      rbh->chunkid != download.packet_buffer.chunk_num) {
     // forced to switch chunks
 
     dongle_download_fail(&download_stats.switch_chunk);
 
-    log_debugf("Downloading chunk %lu\r\n", chunk);
-    download.packet_buffer.chunk_num = chunk;
+    log_debugf("Downloading chunk %lu\r\n", rbh->chunkid);
+    download.packet_buffer.chunk_num = rbh->chunkid;
   } else if (download.is_active
-      && chunk_len != download.packet_buffer.buffer.data_len) {
+      && rbh->chunklen != download.packet_buffer.buffer.data_len) {
     log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
-               download.packet_buffer.buffer.data_len, chunk_len);
+               download.packet_buffer.buffer.data_len, rbh->chunklen);
   }
 
-  if (seq >= MAX_NUM_PACKETS_PER_FILTER) {
-    log_errorf("Error: sequence number %d out of bounds %d\r\n", seq,
-        MAX_NUM_PACKETS_PER_FILTER);
+  if (rbh->pkt_seq >= MAX_NUM_PACKETS_PER_FILTER) {
+    log_errorf("Error: sequence number %d out of bounds %d\r\n",
+        rbh->pkt_seq, MAX_NUM_PACKETS_PER_FILTER);
     return;
   }
 
   if (!download.is_active) {
     dongle_download_start();
-    download.packet_buffer.buffer.data_len = chunk_len;
+    download.packet_buffer.buffer.data_len = rbh->chunklen;
   }
+
   download.n_total_packets++;
-  int prev = download.packet_buffer.counts[seq];
-  download.packet_buffer.counts[seq]++;
+  int prev = download.packet_buffer.counts[rbh->pkt_seq];
+  download.packet_buffer.counts[rbh->pkt_seq]++;
   // duplicate packet
   if (prev > 0)
     return;
@@ -188,8 +183,9 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   // this is an unseen packet
   download.packet_buffer.num_distinct++;
   uint8_t len = data_len - PACKET_HEADER_LEN;
-  memcpy(download.packet_buffer.buffer.data + (seq * MAX_PACKET_SIZE),
-         data + PACKET_HEADER_LEN, len);
+  memcpy(
+    download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PACKET_SIZE),
+    data + PACKET_HEADER_LEN, len);
   download.packet_buffer.received += len;
   log_debugf("download progress: %.2f\r\n",
     ((float) download.packet_buffer.received

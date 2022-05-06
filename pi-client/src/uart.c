@@ -4,20 +4,6 @@ int fd;
 
 int data_ready = 0;
 
-struct req_data request_data;
-double last_request_time_sec;
-
-uint32_t prev_seq_num = 0;
-uint32_t seq_num = 0;
-uint32_t chunk_num = 0;
-uint8_t chunk_rep_count = 0;
-uint32_t num_chunks;
-uint32_t current_chunk_offset = 0;
-
-uint8_t payload_data[MAX_PAYLOAD_SIZE];
-
-uint32_t num_pkts;
-
 void *receive_log(int fd)
 {
   while (1) {
@@ -29,117 +15,193 @@ void *receive_log(int fd)
   }
 }
 
+// ====
 
-void convert_chunk_to_pkts(char *chunk, uint32_t chunk_number,
-    uint32_t offset, uint32_t len)
+typedef struct ble_pkt {
+  uint8_t payload_data[PAYLOAD_SIZE];
+  uint8_t payload_size;
+} ble_pkt;
+
+typedef struct chunk {
+  uint8_t pkt_arr_idx;
+  uint8_t pkt_cnt;
+} chunk;
+
+typedef struct rpi_sl_buf {
+  ble_pkt pkt_arr[MAX_PKTS];
+  int pktidx_w;
+  int chnkidx_w;
+  int pktidx_r;
+  int chnkidx_r;
+  int curr_chnk_repcnt;
+  int num_chunks;
+  double last_req_time_s;
+  chunk *chunk_arr;
+} rpi_sl_buf;
+
+static inline void init_rpi_sl_buf(rpi_sl_buf *rsb)
 {
-  uint32_t data_len = PAYLOAD_SIZE - PACKET_HEADER_LEN;
-//  int total_num_pkts = ((len-1) / data_len) + 1;
-  num_pkts = ((len-1) / data_len) + 1;
-//  num_pkts = len / data_len;
-  dprintf(LVL_EXP, "#pkts: %d\r\n", num_pkts);
+  if (!rsb)
+    return;
 
-  uint8_t *ptr = payload_data + offset;
-  int i = 0;
-
-  int tot_len = 0, wlen = 0, woff = 0;
-
-  while (tot_len < len)
-  {
-    wlen = (len - tot_len > data_len) ? data_len : (len - tot_len);
-
-    ((uint32_t *) (ptr + woff))[0] = i;
-    ((uint32_t *) (ptr + woff))[1] = chunk_number;
-    ((uint64_t *) (ptr + woff))[1] = len;
-    woff += PACKET_HEADER_LEN;
-
-    memcpy(ptr + woff, chunk, wlen);
-    woff += data_len;
-    tot_len += data_len;
-    dprintf(LVL_EXP, "[%d:%d] chunklen: %u pkt len: %u\r\n", chunk_number, i, len,
-        wlen);
-
-    i++;
-  }
+  memset(rsb, 0, sizeof(rpi_sl_buf));
 }
 
-void make_request()
+static void reset_rpi_sl_buf(rpi_sl_buf *rsb)
 {
+  if (!rsb)
+    return;
 
-  data_ready = 0;
+  if (rsb->chunk_arr)
+    free(rsb->chunk_arr);
+
+  init_rpi_sl_buf(rsb);
+}
+
+void prep_next_pkt(rpi_sl_buf *rsb, char *inbuf, int inoff, int inlen,
+    uint32_t chunkid, uint64_t chunklen, uint32_t pkt_seq)
+{
+  if (!rsb || !inbuf || !inlen)
+    return;
+
+  int idx = rsb->pktidx_w;
+  uint8_t *ptr = rsb->pkt_arr[idx].payload_data;
+  rsb->pkt_arr[idx].payload_size = inlen + PACKET_HEADER_LEN;
+
+  ((uint32_t *) ptr)[0] = pkt_seq;
+  ((uint32_t *) ptr)[1] = chunkid;
+  ((uint64_t *) ptr)[1] = chunklen;
+  ptr += PACKET_HEADER_LEN;
+  memcpy(ptr, inbuf+inoff, inlen);
+
+  idx = (idx + 1) % MAX_PKTS;
+  rsb->pktidx_w = idx;
+}
+
+void prep_pkts_from_chunk(rpi_sl_buf *rsb, int chunk_id,
+    char *chunk_data, uint64_t chunk_size)
+{
+  int woff = 0, wlen = 0, tot_len = 0;
+  uint32_t seq = 0;
+
+  rsb->chunk_arr[rsb->chnkidx_w].pkt_arr_idx = rsb->pktidx_w;
+  while (tot_len < chunk_size) {
+    wlen = (chunk_size - tot_len > MAX_PACKET_SIZE) ? MAX_PACKET_SIZE :
+      (chunk_size - tot_len);
+    prep_next_pkt(rsb, chunk_data, woff, wlen, chunk_id, chunk_size, seq);
+    woff += wlen;
+    tot_len += wlen;
+    seq += 1;
+  }
+  rsb->chunk_arr[rsb->chnkidx_w].pkt_cnt = (rsb->pktidx_w -
+      rsb->chunk_arr[rsb->chnkidx_w].pkt_arr_idx);
+  rsb->chnkidx_w = (rsb->chnkidx_w+1) % rsb->num_chunks;
+}
+
+void make_request(rpi_sl_buf *rsb)
+{
+  reset_rpi_sl_buf(rsb);
 
   // get number of chunks in payload from backend
   struct req_data chunk_count_data = {0};
   handle_request_count(&chunk_count_data);
 
-  memcpy(&num_chunks, chunk_count_data.response, sizeof(uint32_t));
-  printf("#chunks: %u\r\n", num_chunks);
+  rsb->num_chunks = ((uint32_t *) chunk_count_data.response)[0];
 
-  if (num_chunks == 0)
+  if (rsb->num_chunks == 0)
     return;
 
-  for (int i = 0; i < num_chunks; i++) {
+  rsb->chunk_arr = (chunk *) malloc(sizeof(chunk) * rsb->num_chunks);
+  memset(rsb->chunk_arr, 0, sizeof(chunk) * rsb->num_chunks);
+
+  for (int i = 0; i < rsb->num_chunks; i++) {
+
     // make request to backend for the chunk
     struct req_data req_chunk = {0};
     handle_request_chunk(&req_chunk, i);
 
 //    uint32_t data_size = req_chunk.size - REQ_HEADER_SIZE;
-    uint32_t data_size = ((uint64_t *) req_chunk.response)[0];
+    uint64_t data_size = ((uint64_t *) req_chunk.response)[0];
 
     // load chunk into payload_data[]
-    convert_chunk_to_pkts(req_chunk.response + REQ_HEADER_SIZE, i,
-        i*PAYLOAD_SIZE*num_pkts, data_size);
-    printf("total chunk size: %u\r\n", PAYLOAD_SIZE*num_pkts);
+    char *risk_payload = req_chunk.response + REQ_HEADER_SIZE;
+    int chunkidx = rsb->chnkidx_w;
+    prep_pkts_from_chunk(rsb, i, risk_payload, data_size);
+    dprintf(LVL_EXP, "chunk size: %llu, pkt arr idx: %u cnt: %u\r\n", data_size,
+        rsb->chunk_arr[chunkidx].pkt_arr_idx, rsb->chunk_arr[chunkidx].pkt_cnt);
   }
 
-  clock_t last_request_time = clock();
-  last_request_time_sec = ((double) last_request_time) / CLOCKS_PER_SEC;
-  printf("request at time: %f\r\n", last_request_time_sec);
+  rsb->last_req_time_s = ((double) clock()) / CLOCKS_PER_SEC;
+  dprintf(LVL_EXP, "[%04.6f]: #chunks: %d\r\n", rsb->last_req_time_s,
+      rsb->num_chunks);
 
   data_ready = 1;
 }
 
 
-void gpio_callback(int gpio, int level, uint32_t tick)
+void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
 {
-
   if (data_ready == 0) {
     return;
   }
 
-  if (level == 1) {
+  rpi_sl_buf *rsb = (rpi_sl_buf *) rsb_p;
+  double curr_time_sec;
 
-    int wlen = write(fd, &payload_data[seq_num*PAYLOAD_SIZE], PAYLOAD_SIZE);
-    if (wlen != PAYLOAD_SIZE) {
-      fprintf(stderr, "Full len not written, len:%d\r\n", wlen);
-    }
-    printf("wrote %d bytes\r\n", wlen);
-
-    // update sequence
-    prev_seq_num = seq_num;
-    seq_num = (seq_num + 1) % num_pkts;
-    if (prev_seq_num > seq_num) {
-      chunk_rep_count++;
-      printf("chunk_rep_count: %d\r\n", chunk_rep_count);
-    }
-
-    if (chunk_rep_count > CHUNK_REPLICATION) {
-      current_chunk_offset = (current_chunk_offset + 1) % num_chunks;
-      chunk_rep_count = 0;
-    }
-  }
-  else if (level == 0) {
-    // no action
+  if (level == 0) {
+    dprintf(LVL_DBG, "G: %d, T: %u, chnk w: %u r: %u pkt w: %u r: %u rep: %u\r\n",
+        gpio, tick, rsb->chnkidx_w, rsb->chnkidx_r, rsb->pktidx_w, rsb->pktidx_r,
+        rsb->curr_chnk_repcnt);
+    goto make_req;
   }
 
-  double curr_time_sec = ((double) clock()) / CLOCKS_PER_SEC;
+  int chunkidx = rsb->chnkidx_r;
+  chunk *chnk = &rsb->chunk_arr[chunkidx];
+  int pktidx = rsb->pktidx_r;
+  ble_pkt *pkt = &rsb->pkt_arr[pktidx];
+  uint8_t *ptr = pkt->payload_data;
+//  int outlen = pkt->payload_size;
+  int outlen = PAYLOAD_SIZE;
+  int wlen = write(fd, ptr, outlen);
+  if (wlen != outlen) {
+    fprintf(stderr, "write error, len: %d wlen: %d\r\n", outlen, wlen);
+  }
+  dprintf(LVL_EXP, "[%u:%d] len: %llu wlen: %d "
+      "chnk w: %u r: %u pkt w: %u r: %u chnk[idx,cnt]: [%u,%u] rep: %u\r\n",
+      ((uint32_t *) ptr)[1], ((uint32_t *) ptr)[0], ((uint64_t *) ptr)[1], wlen,
+      rsb->chnkidx_w, rsb->chnkidx_r, rsb->pktidx_w, rsb->pktidx_r,
+      chnk->pkt_arr_idx, chnk->pkt_cnt,
+      rsb->curr_chnk_repcnt);
 
-  if (curr_time_sec - last_request_time_sec < REQUEST_INTERVAL)
+  // next packet
+  pktidx = (pktidx+1) % MAX_PKTS;
+
+  // repeat chunk
+  if (pktidx >= ((chnk->pkt_arr_idx + chnk->pkt_cnt) % MAX_PKTS)) {
+    rsb->curr_chnk_repcnt++;
+    pktidx = chnk->pkt_arr_idx;
+  }
+
+  // move to next chunk
+  if (rsb->curr_chnk_repcnt >= CHUNK_REPLICATION) {
+    chunkidx = (chunkidx+1) % rsb->num_chunks;
+    rsb->curr_chnk_repcnt = 0;
+
+    pktidx = rsb->chunk_arr[chunkidx].pkt_arr_idx;
+  }
+
+  rsb->pktidx_r = pktidx;
+  rsb->chnkidx_r = chunkidx;
+
+make_req:
+
+  curr_time_sec = ((double) clock()) / CLOCKS_PER_SEC;
+  if (curr_time_sec - rsb->last_req_time_s < REQUEST_INTERVAL)
     return;
 
-  // request new data
-  make_request();
-  last_request_time_sec = curr_time_sec;
+  // request new risk data from backend after INTERVAL
+  make_request(rsb);
+  rsb->last_req_time_s = curr_time_sec;
 }
 
 /*
@@ -186,19 +248,10 @@ int set_interface_attribs(int fd, int speed)
  */
 void *uart_main(void *arg)
 {
+  rpi_sl_buf rsb;
+  init_rpi_sl_buf(&rsb);
 
   char *portname = TERMINAL;
-  // struct risk_data* r_data = (struct risk_data*)arg;
-
-  // make request to backend and fill payload_data
-  make_request();
-
-  // for (int i = 0; i < PAYLOAD_SIZE*num_pkts; i++) {
-  //     if (i % 16 == 0) {
-  //       printf("\r\n");
-  //     }
-  //     printf("%x ", payload_data[i]);
-  // }
 
   // open port for read and write over UART
   fd = open(portname, O_RDWR);
@@ -219,8 +272,13 @@ void *uart_main(void *arg)
     return 0;
   }
 
+  data_ready = 0;
+
   gpioSetMode(PIN, PI_INPUT);
-  gpioSetAlertFunc(PIN, gpio_callback);
+  gpioSetAlertFuncEx(PIN, gpio_callback, (void *) &rsb);
+
+  // make request to backend and fill payload_data
+  make_request(&rsb);
 
   // read logs from beacon
   receive_log(fd);

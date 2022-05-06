@@ -117,8 +117,8 @@ int handle_request_count(struct req_data *data)
       return -1;
     }
 
-    printf("Request success! Data size: %d\r\n", (int) data->size);
-    printf("Response: %d\r\n", *(uint32_t *) data->response);
+    dprintf(LVL_EXP, "res: %d, size: %d #chunk: %d\r\n", res, (int) data->size,
+        *(uint32_t *) data->response);
 
     curl_easy_cleanup(curl);
   }

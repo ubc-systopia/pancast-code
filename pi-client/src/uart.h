@@ -20,6 +20,11 @@
 #define MAX_PACKET_SIZE (PAYLOAD_SIZE - PACKET_HEADER_LEN)  
 #define CHUNK_REPLICATION 1
 
+/*
+ * max number of packets that rpi can hold for risk broadcast
+ */
+#define MAX_PKTS 10000
+
 #define REQ_HEADER_SIZE 8
 
 /*

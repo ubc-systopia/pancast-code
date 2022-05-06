@@ -103,11 +103,11 @@ int main(void)
   extern uint32_t timer_freq;
   extern uint64_t timer_ticks;
 
-  uint8_t *buf = malloc(DATA_SIZE*sizeof(uint8_t));
-  memset(buf, 0, DATA_SIZE*sizeof(uint8_t));
+  uint8_t *buf = malloc(DATA_SIZE);
 
-  while (1)
-  {
+  while (1) {
+
+    memset(buf, 0, DATA_SIZE);
 
 #if BEACON_MODE__NETWORK
     if (adv_start >= 0 && !risk_timer_started) {
@@ -212,8 +212,9 @@ int main(void)
       chunk_id = ((uint32_t *) buf)[1];
       chunk_len = ((uint32_t *) buf)[2];
       memcpy(&seq, buf, sizeof(uint32_t));
-      log_infof("rlen: %lu, seq: %lu, chunk: %lu, len: %lu time: %lu\r\n",
-          rlen, seq, chunk_id, chunk_len, ms);
+      log_infof("rlen: %ld, tot_len: %d, "
+          "seq: %lu, chunk: %lu, len: %lu time: %lu\r\n",
+          rlen, tot_len, seq, chunk_id, chunk_len, ms);
 
       set_risk_data(rlen, buf);
 

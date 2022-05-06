@@ -19,7 +19,7 @@ Bluetooth application for broadcast over BLE.
 
 5. Install required libraries on Raspberry Pi:
 
-    `sudo apt-get install libcurl4-openssl-dev`
+    `sudo apt-get install libcurl4-openssl-dev pigpio`
 
 6. Export GPIO pin 24 , instructions [here](https://www.ics.com/blog/gpio-programming-using-sysfs-interface).
 

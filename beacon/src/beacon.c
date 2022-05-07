@@ -325,8 +325,7 @@ int _set_adv_data_()
   log_debugf("%s", "Setting legacy adv data...\r\n");
   print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
   sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
-                                             0, 31,
-                                             payload.en_data.bytes);
+      0, 31, payload.en_data.bytes);
   if (sc != 0) {
     log_errorf("Error, sc: 0x%lx\r\n", sc);
     return -1;
@@ -348,7 +347,8 @@ static int _beacon_advertise_()
 
   // Set Power Level
   int16_t set_power;
-  sc = sl_bt_advertiser_set_tx_power(legacy_set_handle, LEGACY_TX_POWER, &set_power);
+  sc = sl_bt_advertiser_set_tx_power(legacy_set_handle,
+      LEGACY_TX_POWER, &set_power);
 
   log_infof("Tx power: %d\r\n", set_power);
 

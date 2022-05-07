@@ -55,30 +55,40 @@ void add_delay_ms(uint32_t ms) {
 int main(void)
 {
   sl_status_t sc = 0;
-  // Initialize Silicon Labs device, system, service(s) and protocol stack(s).
-  // Note that if the kernel is present, processing task(s) will be created by
-  // this call.
+  /*
+   * Initialize Silicon Labs device, system, service(s) and
+   * protocol stack(s). Note that if the kernel is present,
+   * processing task(s) will be created by this call.
+   */
   sl_system_init();
 
-  // Initialize the application. For example, create periodic timer(s) or
-  // task(s) if the kernel is present.
+  /*
+   * Initialize the application. For example, create periodic
+   * timer(s) or task(s) if the kernel is present.
+   */
   app_init();
 
 #if defined(SL_CATALOG_KERNEL_PRESENT)
-  // Start the kernel. Task(s) created in app_init() will start running.
+  /*
+   * Start the kernel. Task(s) created in app_init() will start running.
+   */
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
 #endif //
 
-  // Set pin PB01 for output
+  /*
+   * set pin PB01 for output
+   */
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
 
-  // Main timer (for main clock)
+  /*
+   * main timer (for main clock)
+   */
   uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
   sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-      TIMER_1MS * BEACON_TIMER_RESOLUTION, sl_timer_on_expire, &main_timer_handle,
-      MAIN_TIMER_PRIORT, 0);
+      TIMER_1MS * BEACON_TIMER_RESOLUTION, sl_timer_on_expire,
+      &main_timer_handle, MAIN_TIMER_PRIORT, 0);
   if (sc != SL_STATUS_OK) {
     log_errorf("Error starting main timer %d\r\n", sc);
   } else {
@@ -107,20 +117,22 @@ int main(void)
 
     memset(buf, 0, DATA_SIZE);
 
+#define half_I ((((float)PER_ADV_INTERVAL)*1.25) / 2)
 #if BEACON_MODE__NETWORK
     if (adv_start >= 0 && !risk_timer_started) {
       time = now();
       delta = time - ADV_START;
-#define half_I ((((float)PER_ADV_INTERVAL)*1.25) / 2)
       int num_intervals = ((delta - 1) / half_I) + 1;
       int next_interval = num_intervals + (num_intervals % 2 == 0 ? 1: 2);
       wait = next_interval * half_I;
-#undef half_I
-      while (time = now(), (delta = time - ADV_START), delta < wait) {
-        continue; // spin
-      }
+
+      // spin
+      while (time = now(), (delta = time - ADV_START), delta < wait)
+        continue;
+
       risk_timer_started = 1;
-      log_infof("Risk timer started at %f ms delta=%f ms \r\n", time, delta);
+      log_infof("[periodic adv] risk timer start: %f ms delta: %f ms\r\n",
+          time, delta);
       // TODO: make sure that the interval is synced properly below
     } else if (adv_start >= 0 && risk_timer_started) {
       /* Beacon application code starts here */
@@ -236,7 +248,7 @@ int main(void)
 
       // extract sequence number
       rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
-      log_infof("rlen: %d tot_len: %d seq: %u chunk: %u "
+      log_infof("[periodic adv] rlen: %d tot_len: %d seq: %u chunk: %u "
           "len: %u time: %lu\r\n", rlen, tot_len, rbh->pkt_seq,
           rbh->chunkid, (uint32_t) rbh->chunklen, ms);
 

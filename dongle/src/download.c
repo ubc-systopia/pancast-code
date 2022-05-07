@@ -133,7 +133,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
 
 //    log_bytes(printf, printf, data, data_len, "data");
-  if (data_len < PACKET_HEADER_LEN) {
+  if (data_len < sizeof(rpi_ble_hdr)) {
     log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
                dongle_hp_timer, rssi, data_len);
     download.n_corrupt_packets++;
@@ -196,10 +196,10 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
   // this is an unseen packet
   download.packet_buffer.num_distinct++;
-  uint8_t len = data_len - PACKET_HEADER_LEN;
+  uint8_t len = data_len - sizeof(rpi_ble_hdr);
   memcpy(
     download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PACKET_SIZE),
-    data + PACKET_HEADER_LEN, len);
+    data + sizeof(rpi_ble_hdr), len);
   download.packet_buffer.received += len;
   log_debugf("download progress: %.2f\r\n",
     ((float) download.packet_buffer.received

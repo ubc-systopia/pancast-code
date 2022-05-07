@@ -29,6 +29,7 @@
 #include "src/common/src/test.h"
 #include "src/beacon.h"
 
+#include "src/common/src/pancast/riskinfo.h"
 // The advertising set handle allocated from Bluetooth stack.
 static uint8_t advertising_set_handle = PER_ADV_HANDLE;
 
@@ -96,27 +97,21 @@ void send_test_risk_data()
     beacon_storage_read_test_filter(get_beacon_storage(), test_filter);
   }
 
-  uint32_t off = 0;
-  // sequence number
-  memcpy(test_data+off, &seq_num, sizeof(uint32_t));
-  off += sizeof(uint32_t);
-  // chunk number
-  memcpy(test_data+off, &chunk_num, sizeof(uint32_t));
-  off += sizeof(uint32_t);
-  // chunk length
-  memcpy(test_data+off, &chunk_len, sizeof(uint64_t));
-  off += sizeof(uint64_t);
+  rpi_ble_hdr *rbh = (rpi_ble_hdr *) test_data;
+  rbh->pkt_seq = seq_num;
+  rbh->chunkid = chunk_num;
+  rbh->chunklen = chunk_len;
 
   // data
-#define min(a,b) (b < a ? b : a)
+#define min(a,b) ((b) < (a) ? (b) : (a))
   pkt_len = min(MAX_PACKET_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
 #undef min
 
-  memcpy(test_data+PACKET_HEADER_LEN,
+  memcpy(test_data+sizeof(rpi_ble_hdr),
       test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
 
   // set
-  set_risk_data(PACKET_HEADER_LEN + pkt_len, test_data);
+  set_risk_data(sizeof(rpi_ble_hdr)+pkt_len, test_data);
 
   float endtime = now();
   stat_add((endtime - starttime), stats.broadcast_payload_update_duration);

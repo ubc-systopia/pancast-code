@@ -129,14 +129,44 @@ int main(void)
       /* Beacon application code starts here */
 
 #if (PERIODIC_TEST == 0)
+/*
+ * XXX: this is a hack!
+ * we should only need this for the first couple of minutes
+ */
+#define LOOP_BREAK 10000
 
-      int rlen = 0;
+      int rlen = 0, len = 0, tot_len = 0, off = 0, loops = 0;
 
       // Start timer
       uint64_t start_time = sl_sleeptimer_get_tick_count64();
 
       GPIO_PinOutSet(gpioPortB, 1);
 
+      while (tot_len < DATA_SIZE) {
+        len = (DATA_SIZE - tot_len > READ_SIZE) ?
+          READ_SIZE : (DATA_SIZE - tot_len);
+
+        int r = 0;
+        while (r < len) {
+          loops++;
+          if (loops >= LOOP_BREAK)
+            break;
+
+          rlen = read(SL_IOSTREAM_STDIN, buf+off+r, len-r);
+          if (rlen < 0)
+            continue;
+
+          r += rlen;
+        }
+
+        off += len;
+        tot_len += len;
+        loops = 0;
+
+        // Add delay after read
+        add_delay_ticks(TICK_DELAY);
+      }
+#if 0
       for (int i = 0; i < NUM_READS; i++) {
 
         int len = 0;
@@ -144,7 +174,6 @@ int main(void)
         int tot_len = 0;
         int loops = 0;
 
-#define LOOP_BREAK 10000 // we should only need this for the first couple of minutes
         while (tot_len < READ_SIZE) {
           loops++;
           if (loops >= LOOP_BREAK) {
@@ -200,6 +229,7 @@ int main(void)
           rlen = rlen + tot_len;
         }
       }
+#endif
 
       GPIO_PinOutClear(gpioPortB, 1);
 
@@ -209,11 +239,12 @@ int main(void)
 
       // extract sequence number
       rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
-      log_infof("rlen: %ld, tot_len: %d, "
-          "seq: %lu, chunk: %lu, len: %lu time: %lu\r\n",
-          rlen, tot_len, rbh->pkt_seq, rbh->chunkid, rbh->chunklen, ms);
+      log_infof("rlen: %d tot_len: %d seq: %u chunk: %u "
+          "len: %u time: %lu\r\n", rlen, tot_len, rbh->pkt_seq,
+          rbh->chunkid, (uint32_t) rbh->chunklen, ms);
 
-      set_risk_data(rlen, buf);
+      if (rlen > 0)
+        set_risk_data(rlen, buf);
 
       // Add second delay to sync up with advertising interval
       add_delay_ms(DATA_DELAY);

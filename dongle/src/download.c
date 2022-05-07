@@ -137,17 +137,28 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     return;
   }
 
+  /*
+   * XXX: something is wrong with directly reading from data,
+   * and we are forced to copy the data into a local buffer first
+   * and print from it
+   */
+  char buf[PER_ADV_SIZE];
+  memset(buf, 0, PER_ADV_SIZE);
+  memcpy(buf, data, data_len);
   // extract seq number, chunk number, and chunk len
-  rpi_ble_hdr *rbh = (rpi_ble_hdr *) data;
-  log_telemf("%02x,%.0f,%d,%d,%lu,%lu,%lu\r\n",
-      TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
-      rbh->pkt_seq, rbh->chunkid, rbh->chunklen);
+  rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
 
   stats.total_periodic_data_size += data_len;
   stats.num_periodic_data++;
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
 
+  log_infof("%02x %.0f %d %d dwnld active: %d pktseq: %u "
+      "chunkid: %u, chunknum: %u chunklen: %u data len: %u\r\n",
+      TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
+      download.is_active, rbh->pkt_seq, rbh->chunkid,
+      download.packet_buffer.chunk_num, (uint32_t) rbh->chunklen,
+      (uint32_t) download.packet_buffer.buffer.data_len);
   if (download.is_active &&
       rbh->chunkid != download.packet_buffer.chunk_num) {
     // forced to switch chunks

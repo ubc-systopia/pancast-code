@@ -332,15 +332,14 @@ int _set_adv_data_()
   return 0;
 }
 
-static int _beacon_advertise_()
+sl_status_t beacon_legacy_advertise()
 {
-  int err = 0;
   sl_status_t sc;
   log_debugf("%s", "Creating legacy advertising set\r\n");
   sc = sl_bt_advertiser_create_set(&legacy_set_handle);
   if (sc != 0) {
     log_errorf("Error, sc: 0x%lx\r\n", sc);
-    return -1;
+    return sc;
   }
 
   // Set Power Level
@@ -359,20 +358,24 @@ static int _beacon_advertise_()
       0);                      // max. num. adv. events
   if (sc != 0) {
     log_errorf("Error, sc: 0x%lx\r\n", sc);
-    return -1;
+    return sc;
   }
   // Start legacy advertising
   sc = sl_bt_advertiser_start(legacy_set_handle, advertiser_user_data,
       advertiser_non_connectable);
   if (sc != 0) {
     log_errorf("Error starting advertising, sc: 0x%lx\r\n", sc);
-    return -1;
+    return sc;
   }
+
+  return sc;
+#if 0
   err = _set_adv_data_();
   if (err) {
     log_errorf("Set adv data, err: %d\r\n", err);
   }
   return err;
+#endif
 }
 
 static int _beacon_pause_()

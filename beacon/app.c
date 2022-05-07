@@ -276,11 +276,11 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       /*
        * legacy advertising
        */
-      _beacon_update_();
-      err = _beacon_advertise_();
-      if (err != 0) {
-          log_errorf("%s", "Error starting legacy adv\r\n");
+      sc = beacon_legacy_advertise();
+      if (sc != 0) {
+          log_errorf("Error starting legacy adv: %d\r\n", sc);
       }
+      _beacon_update_();
 #endif
 
       break;

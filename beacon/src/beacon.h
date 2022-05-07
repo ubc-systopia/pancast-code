@@ -3,6 +3,7 @@
 
 #include <assert.h>
 
+#include "sl_bluetooth.h"
 #include "common/src/settings.h"
 #include "common/src/util/stats.h"
 
@@ -102,4 +103,5 @@ void beacon_broadcast();
 void _beacon_info_();
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
+sl_status_t beacon_legacy_advertise();
 #endif

@@ -32,6 +32,10 @@
 //
 // GLOBAL MEMORY
 //
+extern float adv_start;
+
+// The advertising set handle allocated from Bluetooth stack.
+static uint8_t advertising_set_handle = PER_ADV_HANDLE;
 
 // Config
 beacon_config_t config;
@@ -421,6 +425,86 @@ void beacon_start()
 beacon_storage *get_beacon_storage()
 {
   return &storage;
+}
+
+void beacon_periodic_advertise()
+{
+  int sc = 0;
+
+  /*
+   * create an advertising set object
+   */
+  sc = sl_bt_advertiser_create_set(&advertising_set_handle);
+  if (sc != 0) {
+    log_errorf("error creating advertising set, sc: 0x%X", sc);
+  }
+
+#if 0
+  /*
+   * set PHY config
+   */
+  sc = sl_bt_advertiser_set_phy(advertising_set_handle,
+      sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
+  app_assert_status(sc);
+#endif
+
+  /*
+   * set advertising power Level
+   */
+  int16_t set_power;
+  sc = sl_bt_advertiser_set_tx_power(advertising_set_handle,
+      PER_TX_POWER, &set_power);
+  if (sc != 0) {
+    log_errorf("error setting advertiser tx power, sc: 0x%X", sc);
+  }
+
+  /*
+   * set advertising interval to 100ms.
+   */
+  sc = sl_bt_advertiser_set_timing(advertising_set_handle,
+      MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
+      MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
+      NO_MAX_DUR,       // adv. duration
+      NO_MAX_EVT);      // max. num. adv. events
+  if (sc != 0) {
+    log_errorf("Error setting channel map, sc: 0x%X", sc);
+  }
+
+  log_debugf("%s", "Starting periodic advertising...\r\n");
+
+  sc = sl_bt_advertiser_start_periodic_advertising(
+      advertising_set_handle, PER_ADV_INTERVAL, PER_ADV_INTERVAL,
+      PER_FLAGS);
+
+  if (sc != 0) {
+    log_errorf("Error setting channel map, sc: 0x%X", sc);
+  }
+
+#if 0
+  sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
+      PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
+  if (sc != 0) {
+    log_errorf("Error setting channel map, sc: 0x%X", sc);
+  }
+#endif
+}
+
+/*
+ * Update risk data after receive from raspberry pi client
+ */
+void set_risk_data(int len, uint8_t *data)
+{
+  sl_status_t sc = 0;
+
+  // cannot send more than PER_ADV_SIZE bytes at a time
+  // we expect the caller to chunk the data into appropriate size
+  if (len > PER_ADV_SIZE)
+    return;
+
+  sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, len, data);
+  if (sc != 0) {
+    log_infof("[periodic adv] set data err, sc: 0x%lx\r\n", sc);
+  }
 }
 
 #undef MODE__STAT

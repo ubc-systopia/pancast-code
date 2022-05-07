@@ -104,4 +104,6 @@ void _beacon_info_();
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
 sl_status_t beacon_legacy_advertise();
+void beacon_periodic_advertise();
+void set_risk_data(int len, uint8_t *data);
 #endif

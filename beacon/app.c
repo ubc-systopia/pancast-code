@@ -28,10 +28,7 @@
 #include "src/common/src/util/log.h"
 #include "src/common/src/test.h"
 #include "src/beacon.h"
-
 #include "src/common/src/pancast/riskinfo.h"
-// The advertising set handle allocated from Bluetooth stack.
-static uint8_t advertising_set_handle = PER_ADV_HANDLE;
 
 // Risk Broadcast Data
 uint8_t risk_data[RISK_DATA_SIZE];
@@ -40,7 +37,7 @@ int risk_data_len;
 // Current index of periodic data broadcast
 // Periodic advertising data to transmit is
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
-int adv_index;
+int adv_index = 1;
 
 // Channel map is 5 bytes and contains 37 1-bit fields.
 // The nth field (in the range 0 to 36) contains the value for the link layer
@@ -56,20 +53,6 @@ void app_init(void)
 
   // Set pin PB01 for output
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
-}
-
-/* Update risk data after receive from raspberry pi client */
-void set_risk_data(int len, uint8_t *data)
-{
-  sl_status_t sc = 0;
-
-  if (len <= PER_ADV_SIZE) {
-    sc = sl_bt_advertiser_set_data(advertising_set_handle, 8, len, &data[0]);
-  }
-
-  if (sc != 0) {
-    printf("Error setting periodic advertising data, sc: 0x%lx\r\n", sc);
-  }
 }
 
 #if PERIODIC_TEST
@@ -206,65 +189,6 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         log_errorf("error setting system tx power, sc: 0x%X", sc);
       }
 
-      /*
-       * create an advertising set object
-       */
-      sc = sl_bt_advertiser_create_set(&advertising_set_handle);
-      if (sc != 0) {
-        log_errorf("error creating advertising set, sc: 0x%X", sc);
-      }
-
-#if 0
-      /*
-       * set PHY config
-       */
-      sc = sl_bt_advertiser_set_phy(advertising_set_handle,
-          sl_bt_gap_1m_phy, sl_bt_gap_2m_phy);
-      app_assert_status(sc);
-#endif
-
-      /*
-       * set advertising power Level
-       */
-      int16_t set_power;
-      sc = sl_bt_advertiser_set_tx_power(advertising_set_handle,
-          PER_TX_POWER, &set_power);
-      if (sc != 0) {
-        log_errorf("error setting advertiser tx power, sc: 0x%X", sc);
-      }
-
-      /*
-       * set advertising interval to 100ms.
-       */
-      sc = sl_bt_advertiser_set_timing(advertising_set_handle,
-          MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
-          MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
-          NO_MAX_DUR,       // adv. duration
-          NO_MAX_EVT);      // max. num. adv. events
-      if (sc != 0) {
-        log_errorf("Error setting channel map, sc: 0x%X", sc);
-      }
-
-      log_debugf("%s", "Starting periodic advertising...\r\n");
-
-      adv_start = now();
-      sc = sl_bt_advertiser_start_periodic_advertising(
-          advertising_set_handle, PER_ADV_INTERVAL, PER_ADV_INTERVAL,
-          PER_FLAGS);
-
-      if (sc != 0) {
-        log_errorf("Error setting channel map, sc: 0x%X", sc);
-      }
-
-      sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-          PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
-      if (sc != 0) {
-        log_errorf("Error setting channel map, sc: 0x%X", sc);
-      }
-
-      log_infof("[Periodic adv] init time: %f ms, adv size: %u\r\n",
-          adv_start, PER_ADV_SIZE);
-
       // Do not comment out!
       // The beacon config and storage get initialized in this function.
       // To disable legacy advertising, comment out the specific advertising
@@ -272,6 +196,13 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       // Beacon refactoring should decouple the beacon initialization from the
       beacon_start();
 
+//#if BEACON_MODE__NETWORK
+      // set up periodic advertising
+      beacon_periodic_advertise();
+      adv_start = now();
+      log_infof("[periodic adv] init time: %f ms, adv size: %u\r\n",
+          adv_start, PER_ADV_SIZE);
+//#else
 #if BEACON_MODE__NETWORK == 0
       /*
        * legacy advertising

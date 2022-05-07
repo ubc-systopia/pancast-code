@@ -14,8 +14,6 @@
 
 #define MODE__STAT
 
-//#define MODE__DISABLE_LEGACY_DATA
-
 #define LOG_LEVEL__DEBUG
 
 #include <string.h>
@@ -411,7 +409,6 @@ int beacon_clock_increment(beacon_timer_t time)
 void beacon_start()
 {
   log_debugf("%s", "Init beacon\r\n");
-  int err = 0;
 
   _beacon_load_(), _beacon_init_();
 

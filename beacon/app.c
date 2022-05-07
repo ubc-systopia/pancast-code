@@ -68,7 +68,7 @@ void app_init(void)
   uint8_t pkt_rep_count = 0;
   uint32_t seq_num = 0;
   uint32_t pkt_len;
-  uint32_t chunk_len = TEST_FILTER_LEN - 8;
+  uint32_t chunk_len = TEST_FILTER_LEN - HDR_SIZE_BYTES;
   uint8_t test_data[PER_ADV_SIZE];
   uint8_t test_filter[MAX_FILTER_SIZE];
 
@@ -97,7 +97,8 @@ void send_test_risk_data()
   set_risk_data(sizeof(rpi_ble_hdr)+pkt_len, test_data);
 
   float endtime = now();
-  stat_add((endtime - starttime), stats.broadcast_payload_update_duration);
+  stat_add((endtime - starttime),
+      stats.broadcast_payload_update_duration);
 
   // update sequence
   pkt_rep_count++;

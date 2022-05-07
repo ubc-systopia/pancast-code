@@ -83,7 +83,7 @@ void dongle_download_fail(download_fail_reason *reason)
 }
 
 int dongle_download_check_match(enctr_entry_counter_t i,
-                                dongle_encounter_entry_t *entry)
+    dongle_encounter_entry_t *entry)
 {
   // pad the stored id in case backend entry contains null byte at end
 #define MAX_EPH_ID_SIZE 15
@@ -92,18 +92,21 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 
   memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
 
-#undef MAX_EPH_ID_SIZE
-
-  log_infof("num buckets: %lu\r\n", num_buckets);
- // hexdumpn(&download.packet_buffer.buffer.data, 1728, "filter", 0, 0, 0, 0, 0);
-  // num_buckets = 4; // for testing (num_buckets cannot be 0)
+  log_debugf("num buckets: %lu\r\n", num_buckets);
   if (lookup(id, download.packet_buffer.buffer.data, num_buckets)) {
-    log_infof("====== LOG MATCH [%d]!!! ====== \r\n", i);
+    hexdumpen(id, MAX_EPH_ID_SIZE, " hit", entry->beacon_id,
+        0, i, entry->beacon_time_start, entry->beacon_time_int,
+        entry->dongle_time_start, entry->dongle_time_int,
+        (int8_t) entry->rssi);
     download.n_matches++;
   } else {
-    log_infof("%s", "No match for id\r\n");
-//    hexdumpn(id, BEACON_EPH_ID_HASH_LEN, "checking id");
+    hexdumpen(id, MAX_EPH_ID_SIZE, "miss", entry->beacon_id,
+        0, i, entry->beacon_time_start, entry->beacon_time_int,
+        entry->dongle_time_start, entry->dongle_time_int,
+        (int8_t) entry->rssi);
   }
+
+#undef MAX_EPH_ID_SIZE
   return 1;
 }
 

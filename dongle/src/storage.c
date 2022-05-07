@@ -139,8 +139,9 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 {
   storage_addr_t off = sto->map.config;
-  int total_size = sizeof(dongle_config_t) + (NUM_OTP*sizeof(dongle_otp_t))
-    + sizeof(dongle_stats_t) + sizeof(downloads_stats_t);
+  int total_size = sizeof(dongle_config_t) +
+    (NUM_OTP*sizeof(dongle_otp_t)) + sizeof(dongle_stats_t) +
+    sizeof(downloads_stats_t);
 
   dongle_otp_t otps[NUM_OTP];
   _flash_read_(sto, OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));

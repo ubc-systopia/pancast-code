@@ -490,19 +490,11 @@ void dongle_encounter_report()
   enctr_entry_counter_t num = storage.total_encounters;
   enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 
-  log_infof("[%lu] last report time: %lu, "
+  log_infof("[%lu] last report time: %lu, head: %u tail: %u, "
       "#encounters [delta, total, stored]: %lu, %lu, %lu\r\n",
-      dongle_time, stats.start, (num - non_report_entry_count), num, cur);
-#if 0
-  // Large integers here are casted for formatting compatabilty. This may result in false
-  // output for large values.
-  log_infof("    Encounters logged since last report: %lu\r\n",
-      (uint32_t) (num - non_report_entry_count));
-  log_infof("    Total Encounters logged (All-time):  %lu\r\n", (uint32_t) num);
-
-  log_infof("    Total Encounters logged (Stored):    %lu%s\r\n", (uint32_t) cur,
-    cur == dongle_storage_max_log_count(&storage) ? " (MAX)" : "");
-#endif
+      dongle_time, stats.start,
+      storage.encounters.head, storage.encounters.tail,
+      (num - non_report_entry_count), num, cur);
 }
 
 void dongle_report()

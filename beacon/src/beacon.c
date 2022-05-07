@@ -82,7 +82,6 @@ static void _beacon_load_()
 #endif
 }
 
-extern uint32_t timer_freq;
 void _beacon_info_()
 {
   log_infof("%s", "=== Beacon Info: ===\r\n");
@@ -98,7 +97,8 @@ void _beacon_info_()
   log_infof("    Beacon ID:                0x%x\r\n", config.beacon_id);
   log_infof("    Location ID:              0x%lx\r\n", config.beacon_location_id);
   log_infof("    Initial clock:            %u\r\n", config.t_init);
-  log_infof("    Timer frequency:          %u Hz\r\n", timer_freq);
+  log_infof("    Timer frequency:          %u Hz\r\n",
+      sl_sleeptimer_get_timer_frequency());
   log_infof("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);
   log_infof("    Secret key size:          %u bytes\r\n", config.beacon_sk_size);
   log_infof("    Timer resolution:         %u ms\r\n", BEACON_TIMER_RESOLUTION);

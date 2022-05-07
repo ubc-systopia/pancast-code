@@ -41,9 +41,6 @@ int risk_data_len;
 // risk_data[index]:risk_data[index+PER_ADV_SIZE]
 int adv_index;
 
-uint32_t timer_freq = 0;
-uint64_t timer_ticks;
-
 // Channel map is 5 bytes and contains 37 1-bit fields.
 // The nth field (in the range 0 to 36) contains the value for the link layer
 // channel index n.
@@ -58,8 +55,6 @@ void app_init(void)
 
   // Set pin PB01 for output
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
-
-  timer_freq = sl_sleeptimer_get_timer_frequency(); // Hz
 }
 
 /* Update risk data after receive from raspberry pi client */

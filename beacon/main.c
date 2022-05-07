@@ -101,9 +101,6 @@ int main(void)
   float time;      // cur time
   float delta;
 
-  extern uint32_t timer_freq;
-  extern uint64_t timer_ticks;
-
   uint8_t *buf = malloc(DATA_SIZE);
 
   while (1) {

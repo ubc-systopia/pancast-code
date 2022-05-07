@@ -62,8 +62,8 @@
 #define DATA_DELAY 68 // determined empirically to sync up with advertising interval
 
 // compute the current time as a float in ms
-#define now() (timer_ticks = sl_sleeptimer_get_tick_count64(), \
-                (((float)timer_ticks)/((float)timer_freq)) * 1000)
+#define now() ((((float) sl_sleeptimer_get_tick_count64()) /  \
+                ((float) sl_sleeptimer_get_timer_frequency())) * 1000)
 
 // stands for the time at which advertising started
 #define ADV_START adv_start

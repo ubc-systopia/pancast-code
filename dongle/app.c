@@ -119,26 +119,24 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_data_id:
-      // Log info
-      log_debugf("Received data, len :%d\r\n",
-                   evt->data.evt_sync_data.data.len);
-      log_debugf("Status: %d\r\n",
-                         evt->data.evt_sync_data.data_status);
+      log_debugf("len: %d status: %d rssi: %d\r\n",
+          evt->data.evt_sync_data.data.len,
+          evt->data.evt_sync_data.data_status,
+          evt->data.evt_sync_data.rssi);
 
 #define ERROR_STATUS 0x02
       if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
         dongle_on_periodic_data_error(evt->data.evt_sync_data.rssi);
-      }
-#undef ERROR_STATUS
-      else {
+      } else {
         dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
             evt->data.evt_sync_data.data.len,
             evt->data.evt_sync_data.rssi);
       }
+#undef ERROR_STATUS
       if (dongle_download_complete_status() == 1) {
-    	sl_bt_sync_close(sync_handle);
-    	log_infof("%s", "download completed\r\n");
-    	download_complete = 1;
+        sl_bt_sync_close(sync_handle);
+        log_infof("%s", "download completed\r\n");
+        download_complete = 1;
       }
       break;
 

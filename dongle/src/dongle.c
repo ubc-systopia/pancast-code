@@ -329,10 +329,13 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
 
 #if 0
     beacon_eph_id_t *id = &cur_encounters[i].eph_id;
-    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc", cur_encounters[i].beacon_id,
-      0, i, cur_encounters[i].beacon_time_start,
-      cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
-      cur_encounters[i].dongle_time_int, cur_encounters[i].rssi);
+    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc",
+        cur_encounters[i].beacon_id, 0, i,
+        cur_encounters[i].beacon_time_start,
+        cur_encounters[i].dongle_time_start,
+        cur_encounters[i].beacon_time_int,
+        cur_encounters[i].dongle_time_int,
+        cur_encounters[i].rssi);
 #endif
 
 #ifdef MODE__STAT
@@ -371,10 +374,13 @@ void dongle_save_encounters()
       + cur_encounters[i].dongle_time_int;
 #if 0
    beacon_eph_id_t *id = &cur_encounters[i].eph_id;
-   hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "chk enc", cur_encounters[i].beacon_id,
-     0, i, cur_encounters[i].beacon_time_start,
-     cur_encounters[i].dongle_time_start, cur_encounters[i].beacon_time_int,
-     cur_encounters[i].dongle_time_int, cur_encounters[i].rssi);
+   hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "chk enc",
+       cur_encounters[i].beacon_id, 0, i,
+       cur_encounters[i].beacon_time_start,
+       cur_encounters[i].dongle_time_start,
+       cur_encounters[i].beacon_time_int,
+       cur_encounters[i].dongle_time_int,
+       cur_encounters[i].rssi);
 #endif
 
     /*

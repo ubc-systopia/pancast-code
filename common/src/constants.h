@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "pancast/constants.h"
+#include "pancast/riskinfo.h"
 
 #define BITS_PER_BYTE       8
 #define Kbps    1000
@@ -72,12 +73,27 @@ typedef struct
 static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
 // Risk Broadcast
-#define RISK_BROADCAST_LEN_SIZE 8 // number of bytes used to indicate data len
 
 #define MAX_FILTER_SIZE 2048 // 2kb
 #define PER_ADV_SIZE 250
-#define PACKET_HEADER_LEN (2*sizeof(uint32_t) + sizeof(uint64_t))
+#define PACKET_HEADER_LEN (sizeof(rpi_ble_hdr))
 #define MAX_PACKET_SIZE (PER_ADV_SIZE - PACKET_HEADER_LEN)              // S
 #define MAX_NUM_PACKETS_PER_FILTER (((MAX_FILTER_SIZE-1) / MAX_PACKET_SIZE) + 1)
 
-#endif
+/*
+ * =======================
+ * cuckoo filter constants
+ * =======================
+ */
+
+#define FINGERPRINT_BITS    27
+
+#define NUM_CF_BUCKETS      128
+#define ENTRIES_PER_BUCKET  4
+
+#define CF_SIZE_BYTES       \
+  (NUM_CF_BUCKETS * FINGERPRINT_BITS * ENTRIES_PER_BUCKET)/(BITS_PER_BYTE)
+
+#define HDR_SIZE_BYTES      8
+
+#endif /* COMMON_CONSTANTS__H */

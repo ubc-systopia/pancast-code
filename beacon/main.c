@@ -104,12 +104,14 @@ int main(void)
     return sc;
   }
 
+#if BEACON_MODE__NETWORK
   int risk_timer_started = 0;
 
   extern float adv_start;
   float wait = -1; // wait time
   float time;      // cur time
   float delta;
+#endif
 
   uint8_t *buf = malloc(DATA_SIZE);
 

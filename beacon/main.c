@@ -28,6 +28,7 @@
 
 #include "src/common/src/constants.h"
 #include "src/common/src/util/log.h"
+#include "src/common/src/util/util.h"
 #include "src/common/src/pancast/riskinfo.h"
 
 #include <stdio.h>
@@ -190,8 +191,10 @@ int main(void)
           "len: %u time: %lu\r\n", rlen, tot_len, rbh->pkt_seq,
           rbh->chunkid, (uint32_t) rbh->chunklen, ms);
 
-      if (rlen > 0)
+      if (rlen > 0) {
+//        info_bytes(buf, tot_len, "bknd risk");
         set_risk_data(tot_len, buf);
+      }
 
       // Add second delay to sync up with advertising interval
       add_delay_ms(DATA_DELAY);

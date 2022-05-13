@@ -152,9 +152,10 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   double curr_time_sec;
 
   if (level == 0) {
-    dprintf(LVL_DBG, "G: %d, T: %u, chnk w: %u r: %u pkt w: %u r: %u rep: %u\r\n",
-        gpio, tick, rsb->chnkidx_w, rsb->chnkidx_r, rsb->pktidx_w, rsb->pktidx_r,
-        rsb->curr_chnk_repcnt);
+    dprintf(LVL_DBG, "G: %d, T: %u, chnk w: %u r: %u "
+        "pkt w: %u r: %u rep: %u\r\n",
+        gpio, tick, rsb->chnkidx_w, rsb->chnkidx_r,
+        rsb->pktidx_w, rsb->pktidx_r, rsb->curr_chnk_repcnt);
     goto make_req;
   }
 
@@ -169,11 +170,11 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   if (wlen != outlen) {
     fprintf(stderr, "write error, len: %d wlen: %d\r\n", outlen, wlen);
   }
-  dprintf(LVL_EXP, "[%u:%d] len: %llu wlen: %d "
-      "chnk w: %u r: %u pkt w: %u r: %u chnk[idx,cnt]: [%u,%u] rep: %u\r\n",
-      ((uint32_t *) ptr)[1], ((uint32_t *) ptr)[0], ((uint64_t *) ptr)[1], wlen,
-      rsb->chnkidx_w, rsb->chnkidx_r, rsb->pktidx_w, rsb->pktidx_r,
-      chnk->pkt_arr_idx, chnk->pkt_cnt,
+  dprintf(LVL_EXP, "[%u:%d] len: %llu wlen: %d chnk w: %u r: %u "
+      "pkt w: %u r: %u chnk[idx,cnt]: [%u,%u] rep: %u\r\n",
+      ((uint32_t *) ptr)[1], ((uint32_t *) ptr)[0],
+      ((uint64_t *) ptr)[1], wlen, rsb->chnkidx_w, rsb->chnkidx_r,
+      rsb->pktidx_w, rsb->pktidx_r, chnk->pkt_arr_idx, chnk->pkt_cnt,
       rsb->curr_chnk_repcnt);
 
   // next packet

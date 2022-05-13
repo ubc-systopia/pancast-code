@@ -191,7 +191,7 @@ int main(void)
           rbh->chunkid, (uint32_t) rbh->chunklen, ms);
 
       if (rlen > 0)
-        set_risk_data(rlen, buf);
+        set_risk_data(tot_len, buf);
 
       // Add second delay to sync up with advertising interval
       add_delay_ms(DATA_DELAY);

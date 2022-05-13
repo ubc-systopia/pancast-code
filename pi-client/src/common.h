@@ -37,4 +37,23 @@ struct risk_data {
     } \
   } while (0)
 
+static inline void hexdump(char *buf, int buflen)
+{
+  if (!buf || !buflen)
+    return;
+
+//  char *prtbuf = malloc(buflen*2+1);
+//  if (!prtbuf)
+//    return;
+//
+//  memset(prtbuf, 0, buflen*2+1);
+  int i;
+  for (i = 0; i < buflen; i++) {
+    printf("%02x ", buf[i]);
+    if (i > 0 && (i % 16) == 0)
+      printf("\n");
+  }
+  printf("\n");
+}
+
 #endif // COMMON_H

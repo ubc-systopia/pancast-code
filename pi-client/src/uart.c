@@ -166,6 +166,9 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   uint8_t *ptr = pkt->payload_data;
 //  int outlen = pkt->payload_size;
   int outlen = MAX_PACKET_SIZE;
+
+//  hexdump((char *) ptr, outlen);
+
   int wlen = write(fd, ptr, outlen);
   if (wlen != outlen) {
     fprintf(stderr, "write error, len: %d wlen: %d\r\n", outlen, wlen);

@@ -18,7 +18,7 @@ void *receive_log(int fd)
 // ====
 
 typedef struct ble_pkt {
-  uint8_t payload_data[MAX_PACKET_SIZE];
+  uint8_t payload_data[PER_ADV_SIZE];
   uint8_t payload_size;
 } ble_pkt;
 
@@ -82,7 +82,7 @@ void prep_next_pkt(rpi_sl_buf *rsb, char *inbuf, int inoff, int inlen,
 void prep_pkts_from_chunk(rpi_sl_buf *rsb, int chunk_id,
     char *chunk_data, uint64_t chunk_size)
 {
-#define MAX_PAYLOAD_SIZE (MAX_PACKET_SIZE - sizeof(rpi_ble_hdr))
+#define MAX_PAYLOAD_SIZE (PER_ADV_SIZE - sizeof(rpi_ble_hdr))
 
   int woff = 0, wlen = 0, tot_len = 0;
   uint32_t seq = 0;
@@ -165,7 +165,7 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   ble_pkt *pkt = &rsb->pkt_arr[pktidx];
   uint8_t *ptr = pkt->payload_data;
 //  int outlen = pkt->payload_size;
-  int outlen = MAX_PACKET_SIZE;
+  int outlen = PER_ADV_SIZE;
 
 //  hexdump((char *) ptr, outlen);
 

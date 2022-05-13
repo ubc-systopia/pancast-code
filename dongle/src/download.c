@@ -40,7 +40,7 @@ float dongle_download_esimtate_loss(download_t *d)
    * only if some packet is never received
    */
   int num_errs = 0;
-  int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PACKET_SIZE)+1;
+  int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
   for (int i = 0; i < actual_pkts_per_filter; i++) {
     if (d->packet_buffer.counts[i] == 0)
       num_errs++;
@@ -198,7 +198,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   download.packet_buffer.num_distinct++;
   uint8_t len = data_len - sizeof(rpi_ble_hdr);
   memcpy(
-    download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PACKET_SIZE),
+    download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PAYLOAD_SIZE),
     data + sizeof(rpi_ble_hdr), len);
   download.packet_buffer.received += len;
   log_debugf("download progress: %.2f\r\n",
@@ -214,7 +214,7 @@ void dongle_download_complete()
 {
   log_infof("%s", "Download complete!\r\n");
   int is_loss = 0;
-  int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PACKET_SIZE)+1;
+  int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
   for (int i = 0; i < actual_pkts_per_filter; i++) {
     if (download.packet_buffer.counts[i] <= 0)
       is_loss = 1;

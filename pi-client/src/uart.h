@@ -16,7 +16,7 @@
 
 #define TERMINAL "/dev/ttyACM0"
 
-#define MAX_PACKET_SIZE 250
+#define PER_ADV_SIZE 250
 #define CHUNK_REPLICATION 1
 
 /*

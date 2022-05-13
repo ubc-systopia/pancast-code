@@ -61,7 +61,7 @@ void app_init(void)
 #define CHUNK_REPLICATION 1
 
 #define TEST_NUM_PACKETS_PER_FILTER \
-  (1 + ((TEST_FILTER_LEN - 1) / MAX_PACKET_SIZE))                       // N
+  (1 + ((TEST_FILTER_LEN - 1) / MAX_PAYLOAD_SIZE))                       // N
 
   uint8_t chunk_rep_count = 0;
   uint32_t chunk_num = 0;
@@ -87,11 +87,11 @@ void send_test_risk_data()
 
   // data
 #define min(a,b) ((b) < (a) ? (b) : (a))
-  pkt_len = min(MAX_PACKET_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PACKET_SIZE));
+  pkt_len = min(MAX_PAYLOAD_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PAYLOAD_SIZE));
 #undef min
 
   memcpy(test_data+sizeof(rpi_ble_hdr),
-      test_filter + (seq_num*MAX_PACKET_SIZE), pkt_len);
+      test_filter + (seq_num*MAX_PAYLOAD_SIZE), pkt_len);
 
   // set
   set_risk_data(sizeof(rpi_ble_hdr)+pkt_len, test_data);

@@ -1,6 +1,16 @@
 #ifndef COMMON_SETTINGS__H
 #define COMMON_SETTINGS__H
 
+#include "include/constants.h"
+
+/*
+ * Broadcasting constants
+ * This defines a pseudo-unique identifier for
+ * filtering out BLE packets received during operation.
+ */
+#define BROADCAST_SERVICE_ID 0x2222
+static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
+
 /*
  * ==============
  * CONFIGURATIONS
@@ -44,6 +54,17 @@
  */
 #define BEACON_EPOCH_LENGTH 15
 
+/*
+ * Tx power config limits for Nordic beacon
+ */
+#define MIN_TX_POWER -40
+#define MAX_TX_POWER -20
+
 #endif /* PANCAST__TEST */
+
+#define FINGERPRINT_BITS    27
+
+#define NUM_CF_BUCKETS      128
+#define ENTRIES_PER_BUCKET  4
 
 #endif /* COMMON_SETTINGS__H */

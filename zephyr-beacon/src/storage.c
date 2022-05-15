@@ -1,3 +1,5 @@
+#include "settings.h"
+#include "test.h"
 #include "storage.h"
 
 #include <string.h>

@@ -8,7 +8,6 @@
  */
 
 #include "beacon.h"
-#include "test.h"
 
 #include <stddef.h>
 

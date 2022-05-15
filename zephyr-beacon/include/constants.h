@@ -61,6 +61,11 @@ typedef struct
 } seckey_t;
 
 /*
+ * Beacon Secret Key
+ */
+typedef seckey_t beacon_sk_t;
+
+/*
  * ==================
  * epoch counter type
  * ==================

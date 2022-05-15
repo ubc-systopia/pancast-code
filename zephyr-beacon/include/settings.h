@@ -23,4 +23,10 @@
   ((DONGLE_MAX_LOG_AGE_DAYS) * 24 * 60) / (BEACON_EPOCH_LENGTH)
 #define DONGLE_ENCOUNTER_MIN_TIME 1         // minutes
 
+/*
+ * Tx power config limits for Nordic beacon
+ */
+#define MIN_TX_POWER -40
+#define MAX_TX_POWER -20
+
 #endif

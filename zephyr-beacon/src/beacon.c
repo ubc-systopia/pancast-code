@@ -302,8 +302,8 @@ static void _encode_encounter_()
   copy(&config.beacon_location_id, sizeof(beacon_location_id_t));
   copy(&beacon_eph_id, sizeof(beacon_eph_id_t));
 #undef copy
-  hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
-      config.beacon_id, config.beacon_location_id, beacon_time);
+  hexdumpen(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
+      config.beacon_id, (uint32_t) config.beacon_location_id, beacon_time);
 }
 
 static void _beacon_encode_()
@@ -401,7 +401,7 @@ static void _gaen_encode_(bt_data_t *data)
   data[0] = flags;
   data[1] = serviceUUID;
   data[2] = serviceData;
-  hexdumpn(gaen_payload.service_data_internals,
+  hexdumpen(gaen_payload.service_data_internals,
       ARRAY_SIZE(gaen_payload.service_data_internals), "gaenID",
       config.beacon_id, (uint64_t) (*(uint16_t *) serviceUUID.data), beacon_time);
 }

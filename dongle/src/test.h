@@ -4,6 +4,7 @@
 #include "dongle.h"
 #include "storage.h"
 
+#if TEST_DONGLE
 static otp_set TEST_OTPS = {
   {0xffffffffffffffff,
    11111111},
@@ -41,5 +42,6 @@ static otp_set TEST_OTPS = {
 
 void dongle_test();
 void dongle_test_encounter(encounter_broadcast_t *enc);
+#endif /* TEST_DONGLE */
 
 #endif

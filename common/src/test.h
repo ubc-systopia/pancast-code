@@ -18,16 +18,7 @@
 
 #define TEST_BACKEND_KEY_SIZE 8
 
-static pubkey_t TEST_BACKEND_PK = {
-  {0xad, 0xf4, 0xca, 0x6c, 0xa6, 0xd9, 0x11, 0x22}
-};
-
 #define TEST_BEACON_SK_SIZE 16
-
-static beacon_sk_t TEST_BEACON_SK = {
-  {0xcb, 0x43, 0xf7, 0x56, 0x16, 0x25, 0xb3, 0xd0,
-   0xd0, 0xbe, 0xad, 0xf4, 0x55, 0x66, 0x77, 0x99}
-};
 
 #define TEST_DONGLE_SK_SIZE 16
 
@@ -43,12 +34,5 @@ typedef uint32_t test_filter_size_t;
 //#define TEST_FILTER_LEN   1736
 
 #define TEST_N_FILTERS_PER_PAYLOAD 1
-
-// Ephemeral IDs known to be in the test filter
-static char *TEST_ID_EXIST_1 = "\x08\xb5\xec\x97\xaa\x06\xf8\x82\x27\xeb\x4e\x5a\x83\x72\x5b";
-static char *TEST_ID_EXIST_2 = "\x3d\xbd\xb9\xc4\xf4\xe0\x9f\x1d\xc4\x30\x66\xda\xb8\x25\x3a";
-// not in filter
-static char *TEST_ID_NEXIST_1 = "blablablablabla";
-static char *TEST_ID_NEXIST_2 = "tralalalalalala";
 
 #endif

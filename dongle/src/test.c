@@ -89,6 +89,7 @@ int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry_t *entr
   return 1;
 }
 
+#if TEST_DONGLE
 void dongle_test()
 {
   // Run Tests
@@ -164,3 +165,4 @@ void dongle_test()
   test_encounters = 0;
   total_test_encounters = 0;
 }
+#endif /* TEST_DONGLE */

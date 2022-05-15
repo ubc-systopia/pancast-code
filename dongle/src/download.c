@@ -18,6 +18,15 @@ download_t download;
 cf_t cf;
 uint32_t num_buckets;
 
+#ifdef CUCKOOFILTER_FIXED_TEST
+// Ephemeral IDs known to be in the test filter
+static char *TEST_ID_EXIST_1 = "\x08\xb5\xec\x97\xaa\x06\xf8\x82\x27\xeb\x4e\x5a\x83\x72\x5b";
+static char *TEST_ID_EXIST_2 = "\x3d\xbd\xb9\xc4\xf4\xe0\x9f\x1d\xc4\x30\x66\xda\xb8\x25\x3a";
+// not in filter
+static char *TEST_ID_NEXIST_1 = "blablablablabla";
+static char *TEST_ID_NEXIST_2 = "tralalalalalala";
+#endif
+
 
 float dongle_download_esimtate_loss(download_t *d)
 {

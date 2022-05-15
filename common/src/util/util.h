@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#define log_bytes(log, logf, data, len, name)                           \
+#define log_bytes(logf, data, len, name)                           \
   {                                                                     \
     uint32_t time_ms = (uint32_t) (sl_sleeptimer_get_tick_count64()     \
         * 1000 / sl_sleeptimer_get_timer_frequency());                  \
@@ -26,7 +26,7 @@
     }                                                                   \
   }
 
-#define log_en_bytes(log, logf, data, len, name, arg1, arg2, arg3, arg4, arg5, \
+#define log_en_bytes(logf, data, len, name, arg1, arg2, arg3, arg4, arg5, \
                          arg6, arg7, arg8)                                    \
   {                                                                     \
     uint32_t time_ms = (uint32_t) (sl_sleeptimer_get_tick_count64()     \
@@ -49,13 +49,13 @@
   }
 
 #define print_bytes(data, len, name) \
-  log_bytes(log_debugf, log_debugf, data, len, name)
+  log_bytes(log_debugf, data, len, name)
 
 #define hexdumpn(data, len, name)   \
-  log_bytes(printf, printf, data, len, name)
+  log_bytes(printf, data, len, name)
 
 #define hexdumpen(data, len, name, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)   \
-  log_en_bytes(printf, printf, data, len, name, arg1, arg2, arg3, arg4, arg5,  \
+  log_en_bytes(printf, data, len, name, arg1, arg2, arg3, arg4, arg5,  \
 		  arg6, arg7, arg8)
 
 #endif

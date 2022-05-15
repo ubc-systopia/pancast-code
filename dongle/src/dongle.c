@@ -417,10 +417,7 @@ void dongle_on_scan_report(bd_addr *addr, int8_t rssi,
       TELEM_TYPE_SCAN_RESULT, dongle_time, epoch, signal_id,
       addr->addr[0], addr->addr[1], addr->addr[2], addr->addr[3],
       addr->addr[4], addr->addr[5], rssi);
-  //print_bytes(dat, data_len, "scan-data pre-decode");
-//    hexdumpn(dat, 31, "raw");
   decode_payload(data);
-  //print_bytes(dat, data_len, "scan-data decoded");
   encounter_broadcast_t en;
   decode_encounter(&en, (encounter_broadcast_raw_t *)data);
   dongle_track(&en, rssi, signal_id);

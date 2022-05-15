@@ -261,7 +261,6 @@ static void _beacon_encode_()
 {
   // Load broadcast into bluetooth payload
   _encode_encounter_();
-  //print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data pre-encode");
   _form_payload_();
 }
 

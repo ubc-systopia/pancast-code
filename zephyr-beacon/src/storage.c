@@ -41,9 +41,9 @@ void pre_erase(beacon_storage *sto, storage_addr_t off, size_t write_size)
   if ((off % sto->page_size) == 0) {
     beacon_storage_erase(sto, off);
   } else if (page_num(off + write_size) > page_num(off)) {
-#undef page_num
     beacon_storage_erase(sto, next_multiple(sto->page_size, off));
   }
+#undef page_num
 }
 
 int _flash_read_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
@@ -53,6 +53,11 @@ int _flash_read_(beacon_storage *sto, storage_addr_t off, void *data, size_t siz
   return flash_read(sto->dev, off, data, size);
 }
 
+/*
+ * writes must be done in multiples of
+ * flash_get_write_block_size(sto-dev),
+ * which is 4 for nordic beacons
+ */
 int _flash_write_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
 {
   int ret = flash_write(sto->dev, off, data, size);
@@ -80,7 +85,9 @@ void beacon_storage_init(beacon_storage *sto)
   sto->numErasures = 0;
   beacon_storage_init_device(sto);
   beacon_storage_get_info(sto);
-  log_infof("Pages: %d, Page Size: %u\r\n", sto->num_pages, sto->page_size);
+  log_infof("#pages: %d, page size: %u, write blk size: %u\r\n",
+      sto->num_pages, sto->page_size,
+      flash_get_write_block_size(sto->dev));
   sto->map.config = FLASH_OFFSET;
   if (FLASH_OFFSET % sto->page_size != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",

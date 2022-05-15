@@ -79,7 +79,7 @@ void dongle_storage_init(dongle_storage *sto)
   sto->min_block_size = FLASH_DEVICE_BLOCK_SIZE;
   sto->page_size = FLASH_DEVICE_PAGE_SIZE;
   sto->total_size = sto->num_pages * sto->page_size;
-  log_infof("Pages: %d, Page Size: %u\r\n", sto->num_pages, sto->page_size);
+  log_infof("#pages: %d, page size: %u\r\n", sto->num_pages, sto->page_size);
   sto->map.config = sto->total_size - sto->page_size;
   if (FLASH_OFFSET % sto->page_size != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",

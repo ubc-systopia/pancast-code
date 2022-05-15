@@ -26,9 +26,9 @@ void pre_erase(beacon_storage *sto, storage_addr_t off, size_t write_size)
   if ((off % sto->page_size) == 0) {
     beacon_storage_erase(sto, off);
   } else if (page_num(off + write_size) > page_num(off)) {
-#undef page_num
     beacon_storage_erase(sto, next_multiple(sto->page_size, off));
   }
+#undef page_num
 }
 
 int _flash_read_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
@@ -68,7 +68,7 @@ void beacon_storage_init(beacon_storage *sto)
   sto->numErasures = 0;
   beacon_storage_init_device(sto);
   beacon_storage_get_info(sto);
-  log_infof("Pages: %d, Page Size: %u\r\n", sto->num_pages, sto->page_size);
+  log_infof("#pages: %d, page size: %u\r\n", sto->num_pages, sto->page_size);
   sto->map.config = FLASH_OFFSET;
   if (FLASH_OFFSET % sto->page_size != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
@@ -119,9 +119,10 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
       sto->test_filter_size = TEST_FILTER_LEN;
   }
   sto->map.test_filter = off;
+
   /*
-   * important to place stats on a separate page that can be repeatedly
-   * erased and written to in order to ensure persistence of stats correctly.
+   * place stats on a separate page that can be repeatedly erased
+   * and written to in order to ensure persistence of stats correctly.
    */
   sto->map.stat = next_multiple(sto->page_size,
       sto->map.test_filter + sto->test_filter_size);

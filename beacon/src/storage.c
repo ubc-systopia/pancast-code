@@ -134,6 +134,40 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   log_infof("    Stat offset:         %u\r\n", sto->map.stat);
 }
 
+void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
+{
+  storage_addr_t off = sto->map.config;
+  int total_size = sizeof(beacon_config_t) +
+    sizeof(test_filter_size_t);
+
+  // erase from the beginning of config page
+  pre_erase(sto, off, total_size);
+
+#define write(data, size) \
+  (_flash_write_(sto, off, data, size), off += size)
+
+  /*
+   * write config to flash
+   *
+   * XXX: for some reason, using write(cfg, sizeof(beacon_config_t))
+   * does not store the config correctly to flash.
+   */
+  write(&cfg->beacon_id, sizeof(beacon_id_t));
+  write(&cfg->beacon_location_id, sizeof(beacon_location_id_t));
+  write(&cfg->t_init, sizeof(beacon_timer_t));
+  write(&cfg->backend_pk_size, sizeof(key_size_t));
+  write(&cfg->backend_pk, cfg->backend_pk_size);
+  off += PK_MAX_SIZE - cfg->backend_pk_size;
+  write(&cfg->beacon_sk_size, sizeof(key_size_t));
+  write(&cfg->beacon_sk, cfg->beacon_sk_size);
+  off += SK_MAX_SIZE - cfg->beacon_sk_size;
+
+  // write test filter len
+  write(&sto->test_filter_size, sizeof(test_filter_size_t));
+
+}
+
+
 void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)
 {
   beacon_storage_erase(sto, sto->map.stat);

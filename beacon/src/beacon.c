@@ -81,6 +81,7 @@ static void _beacon_load_()
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
   memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
   storage.test_filter_size = TEST_FILTER_LEN;
+  beacon_storage_save_config(&storage, &config);
 #endif
 }
 

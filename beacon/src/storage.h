@@ -50,6 +50,7 @@ void beacon_storage_init(beacon_storage *sto);
 // Should load application configuration data into the provided
 // container, and set the map to allow load_otp to be used.
 void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg);
+void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg);
 
 void beacon_storage_save_stat(beacon_storage *sto, void * stat, size_t len);
 void beacon_storage_read_stat(beacon_storage *sto, void * stat, size_t len);

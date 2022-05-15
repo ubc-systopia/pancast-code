@@ -32,7 +32,7 @@ float dongle_download_esimtate_loss(download_t *d)
 {
 #if 1
   uint32_t max_count = d->packet_buffer.counts[0];
-  for (int i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
+  for (uint32_t i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
     if (d->packet_buffer.counts[i] > max_count) {
         max_count = d->packet_buffer.counts[i];
     }

@@ -287,12 +287,6 @@ static void _gen_ephid_()
 #undef init
 }
 
-// populates gaen_payload.service_data_internals with procotol specific data fields
-static int _set_adv_data_gaen_()
-{
-  return -1;
-}
-
 static void _beacon_init_()
 {
   epoch = 0;

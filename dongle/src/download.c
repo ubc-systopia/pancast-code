@@ -104,16 +104,16 @@ int dongle_download_check_match(enctr_entry_counter_t i,
   log_debugf("num buckets: %lu\r\n", num_buckets);
   if (lookup(id, download.packet_buffer.buffer.data, num_buckets)) {
     hexdumpen(id, MAX_EPH_ID_SIZE, " hit", entry->beacon_id,
-        (uint32_t) entry->location_id, i,
-        entry->beacon_time_start, entry->beacon_time_int,
-        entry->dongle_time_start, entry->dongle_time_int,
+        (uint32_t) entry->location_id, (uint16_t) i,
+        (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
+        (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
         (int8_t) entry->rssi);
     download.n_matches++;
   } else {
     hexdumpen(id, MAX_EPH_ID_SIZE, "miss", entry->beacon_id,
-        (uint32_t) entry->location_id, i,
-        entry->beacon_time_start, entry->beacon_time_int,
-        entry->dongle_time_start, entry->dongle_time_int,
+        (uint32_t) entry->location_id, (uint16_t) i,
+        (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
+        (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
         (int8_t) entry->rssi);
   }
 

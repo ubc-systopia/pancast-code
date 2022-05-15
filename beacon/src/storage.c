@@ -97,7 +97,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, &cfg->backend_pk);
-  hexdumpn(cfg->backend_pk.bytes, 16, "   Server PK", 0, 0, 0, 0, 0);
+  hexdumpn(cfg->backend_pk.bytes, 16, "   Server PK");
   // slide through the extra space for a pubkey
   off += PK_MAX_SIZE - cfg->backend_pk_size;
 
@@ -109,7 +109,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     cfg->beacon_sk_size = SK_MAX_SIZE;
   }
   read(cfg->beacon_sk_size, &cfg->beacon_sk);
-  hexdumpn(cfg->beacon_sk.bytes, 16, "Si Beacon SK", 0, 0, 0, 0, 0);
+  hexdumpn(cfg->beacon_sk.bytes, 16, "Si Beacon SK");
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 

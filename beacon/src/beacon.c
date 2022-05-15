@@ -252,8 +252,9 @@ static void _encode_encounter_()
   copy(&config.beacon_location_id, sizeof(beacon_location_id_t));
   copy(&beacon_eph_id, sizeof(beacon_eph_id_t));
 #undef copy
-  hexdumpn(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
-      config.beacon_id, 0, beacon_time, 0, 0);
+  hexdumpen(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
+      config.beacon_id, (uint32_t) config.beacon_location_id, 0,
+      (uint32_t) beacon_time, 0, (uint32_t) 0, 0, 0);
 }
 
 static void _beacon_encode_()

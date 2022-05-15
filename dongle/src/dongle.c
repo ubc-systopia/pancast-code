@@ -281,9 +281,9 @@ static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
 {
 #if 0
   hexdumpen(enc->eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "log enc",
-    enc->beacon_id, (uint32_t) enc->location_id, i,
-    enc->beacon_time_start, enc->beacon_time_int,
-    enc->dongle_time_start, enc->dongle_time_int,
+    enc->beacon_id, (uint32_t) enc->location_id, (uint16_t) i,
+    (uint32_t) enc->beacon_time_start, enc->beacon_time_int,
+    (uint32_t) enc->dongle_time_start, enc->dongle_time_int,
     (int8_t) enc->rssi);
 #endif
 
@@ -339,13 +339,13 @@ static uint64_t dongle_track(encounter_broadcast_t *enc,
 #if 0
     beacon_eph_id_t *id = &cur_encounters[i].eph_id;
     hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc",
-        cur_encounters[i].beacon_id,
-        (uint32_t) cur_encounters[i].location_id, i,
-        cur_encounters[i].beacon_time_start,
-        cur_encounters[i].dongle_time_start,
-        cur_encounters[i].beacon_time_int,
-        cur_encounters[i].dongle_time_int,
-        cur_encounters[i].rssi);
+      cur_encounters[i].beacon_id,
+      (uint32_t) cur_encounters[i].location_id, (uint16_t) i,
+      (uint32_t) cur_encounters[i].beacon_time_start,
+      cur_encounters[i].beacon_time_int,
+      (uint32_t) cur_encounters[i].dongle_time_start,
+      cur_encounters[i].dongle_time_int,
+      (int8_t) cur_encounters[i].rssi);
 #endif
 
 #ifdef MODE__STAT
@@ -385,13 +385,13 @@ void dongle_save_encounters()
 #if 0
    beacon_eph_id_t *id = &cur_encounters[i].eph_id;
    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "chk enc",
-       cur_encounters[i].beacon_id,
-       (uint32_t) cur_encounters[i].location_id, i,
-       cur_encounters[i].beacon_time_start,
-       cur_encounters[i].dongle_time_start,
-       cur_encounters[i].beacon_time_int,
-       cur_encounters[i].dongle_time_int,
-       cur_encounters[i].rssi);
+     cur_encounters[i].beacon_id,
+     (uint32_t) cur_encounters[i].location_id, (uint16_t) i,
+     (uint32_t) cur_encounters[i].beacon_time_start,
+     cur_encounters[i].beacon_time_int,
+     (uint32_t) cur_encounters[i].dongle_time_start,
+     cur_encounters[i].dongle_time_int,
+     (int8_t) cur_encounters[i].rssi);
 #endif
 
     /*
@@ -432,9 +432,10 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
 {
   beacon_eph_id_t *id = &entry->eph_id;
   hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,
-      (uint32_t) entry->location_id, i,
-      entry->beacon_time_start, entry->beacon_time_int,
-      entry->dongle_time_start, entry->dongle_time_int, entry->rssi);
+    (uint32_t) entry->location_id, (uint16_t) i,
+    (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
+    (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
+    (int8_t) entry->rssi);
 
   return 1;
 }

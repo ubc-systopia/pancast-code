@@ -5,8 +5,9 @@
 // payload to broadcast relevant information. See white-paper for
 // details.
 //
-
+#include "settings.h"
 #include "beacon.h"
+#include "test.h"
 #include <include/stats.h>
 #include <include/constants.h>
 
@@ -96,6 +97,20 @@ static uint32_t num_ms_in_min = 60000;
 // Advertising handle
 static uint8_t legacy_set_handle = 0xf1;
 #endif
+
+#if MODE__NRF_BEACON_TEST_CONFIG
+
+static pubkey_t TEST_BACKEND_PK = {
+  {0xad, 0xf4, 0xca, 0x6c, 0xa6, 0xd9, 0x11, 0x22}
+};
+
+static beacon_sk_t TEST_BEACON_SK = {
+  {0xcb, 0x43, 0xf7, 0x56, 0x16, 0x25, 0xb3, 0xd0,
+   0xd0, 0xbe, 0xad, 0xf4, 0x55, 0x66, 0x77, 0x88}
+};
+
+#endif /* MODE__NRF_BEACON_TEST_CONFIG */
+
 static bt_wrapper_t payload; // container for actual blutooth payload
 //
 // Reporting
@@ -114,6 +129,7 @@ static beacon_timer_t stat_epochs;
 
 static void _beacon_load_()
 {
+  memset(&config, 0, sizeof(beacon_config_t));
   beacon_storage_init(&storage);
   // Load data
   beacon_storage_load_config(&storage, &config);
@@ -122,9 +138,11 @@ static void _beacon_load_()
   config.beacon_location_id = TEST_BEACON_LOC_ID;
   config.t_init = TEST_BEACON_INIT_TIME;
   config.backend_pk_size = TEST_BEACON_BACKEND_KEY_SIZE;
-  memcpy(&config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
+  memset(&config.backend_pk, 0, config.backend_pk_size);
+  config.backend_pk = TEST_BACKEND_PK;
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
-  memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
+  memset(&config.beacon_sk, 0, config.beacon_sk_size);
+  config.beacon_sk = TEST_BEACON_SK;
   storage.test_filter_size = TEST_FILTER_LEN;
 #endif
 }

@@ -76,7 +76,7 @@ static void _beacon_load_()
   config.beacon_id = TEST_BEACON_ID;
   config.beacon_location_id = TEST_BEACON_LOC_ID;
   config.t_init = TEST_BEACON_INIT_TIME;
-  config.backend_pk_size = TEST_BEACON_BACKEND_KEY_SIZE;
+  config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
   memcpy(&config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
   memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);

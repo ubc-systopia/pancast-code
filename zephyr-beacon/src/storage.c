@@ -96,9 +96,11 @@ void beacon_storage_init(beacon_storage *sto)
 //  sto->map.stat = sto->total_size - (3*sto->page_size);
 }
 
-// Read data from flashed storage
-// Format matches the fixed structure which is also used as a protocol when appending non-app
-// data to the device image.
+/*
+ * Read data from flashed storage
+ * Format matches the fixed structure which is also used as a
+ * protocol when appending non-app data to the device image.
+ */
 void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
 {
   log_debugf("%s", "Loading config...\r\n");
@@ -139,16 +141,16 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   }
   sto->map.test_filter = off;
   /*
-   * important to place stats on a separate page that can be repeatedly
-   * erased and written to in order to ensure persistence of stats correctly.
+   * place stats on a separate page that can be repeatedly erased
+   * and written to in order to ensure persistence of stats correctly.
    */
   sto->map.stat = next_multiple(sto->page_size,
       sto->map.test_filter + sto->test_filter_size);
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
-  log_infof("    Flash offset:        %u\r\n", sto->map.config);
-  log_infof("    Test filter offset:  %u\r\n", sto->map.test_filter);
-  log_infof("    Stat offset:         %u\r\n", sto->map.stat);
+  log_infof("  Flash offset:        %u\r\n", sto->map.config);
+  log_infof("  Test filter offset:  %u\r\n", sto->map.test_filter);
+  log_infof("  Stat offset:         %u\r\n", sto->map.stat);
 }
 
 void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)

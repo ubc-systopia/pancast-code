@@ -54,11 +54,6 @@
 #define print_bytes(data, len, name) \
   log_bytes(log_debugf, log_debugf, data, len, name, 0, 0, 0, 0, 0)
 
-#define info_bytes(data, len, name) \
-  log_bytes(log_infof, log_infof, data, len, name, 0, 0, 0, 0, 0)
-
-#define print_ptr(p, name) log_debugf("%s: %p\r\n", name, (void *)p)
-
 #define hexdumpn(data, len, name, arg1, arg2, arg3, arg4, arg5)   \
   log_bytes(printf, printf, data, len, name, arg1, arg2, arg3, arg4, arg5)
 

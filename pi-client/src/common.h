@@ -49,11 +49,40 @@ static inline void hexdump(char *buf, int buflen)
 //  memset(prtbuf, 0, buflen*2+1);
   int i;
   for (i = 0; i < buflen; i++) {
-    printf("%02x ", buf[i]);
     if (i > 0 && (i % 16) == 0)
       printf("\n");
+    printf("%02x ", buf[i]);
   }
   printf("\n");
+}
+
+/*
+ * https://stackoverflow.com/a/3208376
+ */
+#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
+#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
+    (((i) & 0x80ll) ? '1' : '0'), \
+    (((i) & 0x40ll) ? '1' : '0'), \
+    (((i) & 0x20ll) ? '1' : '0'), \
+    (((i) & 0x10ll) ? '1' : '0'), \
+    (((i) & 0x08ll) ? '1' : '0'), \
+    (((i) & 0x04ll) ? '1' : '0'), \
+    (((i) & 0x02ll) ? '1' : '0'), \
+    (((i) & 0x01ll) ? '1' : '0')
+
+static inline void bitdump(char *buf, int buflen)
+{
+  if (!buf || !buflen)
+    return;
+
+  int i;
+  for (i = 0; i < buflen; i++) {
+    if (i > 0 && (i % 16) == 0)
+      printf("\n");
+
+    printf(PRINTF_BINARY_PATTERN_INT8 " ", PRINTF_BYTE_TO_BINARY_INT8(buf[i]));
+  }
+	printf("\n");
 }
 
 #endif // COMMON_H

@@ -1,4 +1,5 @@
 #include "uart.h"
+#include "common.h"
 
 int fd;
 
@@ -128,6 +129,9 @@ void make_request(rpi_sl_buf *rsb)
 
     // load chunk into payload_data[]
     char *risk_payload = req_chunk.response + sizeof(chunk_hdr);
+
+//    hexdump(risk_payload, data_size);
+    bitdump(risk_payload, data_size);
     int chunkidx = rsb->chnkidx_w;
     prep_pkts_from_chunk(rsb, i, risk_payload, data_size);
     dprintf(LVL_EXP, "chunk size: %llu, pkt arr idx: %u cnt: %u\r\n", data_size,
@@ -173,7 +177,7 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   if (wlen != outlen) {
     fprintf(stderr, "write error, len: %d wlen: %d\r\n", outlen, wlen);
   }
-  dprintf(LVL_EXP, "[%u:%d] len: %llu wlen: %d chnk w: %u r: %u "
+  dprintf(LVL_DBG, "[%u:%d] len: %llu wlen: %d chnk w: %u r: %u "
       "pkt w: %u r: %u chnk[idx,cnt]: [%u,%u] rep: %u\r\n",
       ((uint32_t *) ptr)[1], ((uint32_t *) ptr)[0],
       ((uint64_t *) ptr)[1], wlen, rsb->chnkidx_w, rsb->chnkidx_r,

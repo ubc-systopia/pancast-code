@@ -239,6 +239,12 @@ void inc_tail(dongle_storage *sto)
   sto->encounters.tail = (sto->encounters.tail + 1) % (dongle_storage_max_log_count(sto));
 }
 
+int inc_idx(dongle_storage *sto, int idx)
+{
+  idx = ((idx + 1) % (dongle_storage_max_log_count(sto)));
+  return idx;
+}
+
 void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
 {
   inc_head(sto);
@@ -308,6 +314,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 void dongle_storage_load_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
+  enctr_entry_counter_t prev_idx;
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
   log_infof("loading log entries starting at idx %lu cnt: %lu\r\n", i, num);
   dongle_encounter_entry_t en;
@@ -316,8 +323,10 @@ void dongle_storage_load_encounter(dongle_storage *sto,
       break;
 
     dongle_storage_load_single_encounter(sto, i, &en);
-    i++;
-  } while (cb(i - 1, &en));
+
+    prev_idx = i;
+    i = inc_idx(sto, i);
+  } while (cb(prev_idx, &en));
 }
 
 void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb)

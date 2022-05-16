@@ -168,11 +168,12 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   stat_add(rssi, stats.periodic_data_rssi);
 
   log_infof("%02x %.0f %d %d dwnld active: %d pktseq: %u "
-      "chunkid: %u, chunknum: %u chunklen: %u data len: %u\r\n",
+      "chunkid: %u, chunknum: %u chunklen: %u data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
       download.is_active, rbh->pkt_seq, rbh->chunkid,
       download.packet_buffer.chunk_num, (uint32_t) rbh->chunklen,
-      (uint32_t) download.packet_buffer.buffer.data_len);
+      (uint32_t) download.packet_buffer.buffer.data_len,
+      download.packet_buffer.received);
   if (download.is_active &&
       rbh->chunkid != download.packet_buffer.chunk_num) {
     // forced to switch chunks
@@ -212,9 +213,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PAYLOAD_SIZE),
     data + sizeof(rpi_ble_hdr), len);
   download.packet_buffer.received += len;
-  log_debugf("download progress: %.2f\r\n",
-    ((float) download.packet_buffer.received
-     / download.packet_buffer.buffer.data_len) * 100);
   if (download.packet_buffer.received >= download.packet_buffer.buffer.data_len) {
     // there may be extra data in the packet
     dongle_download_complete();
@@ -250,6 +248,9 @@ void dongle_download_complete()
   stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
 
   // check the content using cuckoofilter decoder
+
+//  bitdump(download.packet_buffer.buffer.data,
+//      download.packet_buffer.buffer.data_len, "risk chunk");
 
   uint64_t filter_len = download.packet_buffer.buffer.data_len;
 

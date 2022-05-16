@@ -197,10 +197,12 @@ void dongle_hp_timer_add(uint32_t ticks)
 void dongle_led_notify() {
   sl_status_t sc;
   log_infof("%s", "in alert\r\n");
+#if 0
   sc = sl_sleeptimer_stop_timer(&led_timer);
   if (sc != SL_STATUS_OK) {
     log_errorf("failed period led timer stop, sc: %d\r\n", sc);
   }
+#endif
   sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS/4,
       dongle_led_timer_handler, (void *) NULL, 0, 0);
   if (sc != SL_STATUS_OK) {

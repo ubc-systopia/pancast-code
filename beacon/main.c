@@ -105,6 +105,8 @@ int main(void)
     return sc;
   }
 
+  uint8_t *buf = malloc(DATA_SIZE);
+
 #if BEACON_MODE__NETWORK
   int risk_timer_started = 0;
 
@@ -113,8 +115,6 @@ int main(void)
   float time;      // cur time
   float delta;
 #endif
-
-  uint8_t *buf = malloc(DATA_SIZE);
 
   while (1) {
 
@@ -138,7 +138,12 @@ int main(void)
           time, delta);
       // TODO: make sure that the interval is synced properly below
     } else if (adv_start >= 0 && risk_timer_started) {
-      /* Beacon application code starts here */
+
+      /*
+       * ===================================
+       * Beacon application code starts here
+       * ===================================
+       */
 
 #if (PERIODIC_TEST == 0)
 /*
@@ -175,13 +180,13 @@ int main(void)
         tot_len += len;
         loops = 0;
 
-        // Add delay after read
+        // add delay after read
         add_delay_ticks(TICK_DELAY);
       }
 
       GPIO_PinOutClear(gpioPortB, 1);
 
-      // End timer
+      // end timer
       uint64_t end_time = sl_sleeptimer_get_tick_count64();
       uint32_t ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
 
@@ -192,21 +197,20 @@ int main(void)
           rbh->chunkid, (uint32_t) rbh->chunklen, ms);
 
       if (rlen > 0) {
-//        info_bytes(buf, tot_len, "bknd risk");
         set_risk_data(tot_len, buf);
       }
 
-      // Add second delay to sync up with advertising interval
+      // add second delay to sync up with advertising interval
       add_delay_ms(DATA_DELAY);
 
-      // End timer
+      // end timer
       end_time = sl_sleeptimer_get_tick_count64();
       ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
       log_debugf("%s", "READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
 
 #else // PERIODIC_TEST
 
-      // Start timer
+      // start timer
       float starttime = now();
       send_test_risk_data();
       add_delay_ms(PER_ADV_INTERVAL * 1.25);
@@ -219,10 +223,17 @@ int main(void)
     }
 #endif // BEACON_MODE__NETWORK
 
-    /* Application code ends here */
+    /*
+     * ==========================
+     * application code ends here
+     * ==========================
+     */
 
-    // Do not remove this call: Silicon Labs components process action routine
-    // must be called from the super loop.
+    /*
+     * XXX: Do not remove this call.
+     * Silicon Labs components process action routine
+     * which must be called from the super loop.
+     */
     sl_system_process_action();
 
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)

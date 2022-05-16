@@ -30,21 +30,29 @@
 #include "src/beacon.h"
 #include "src/common/src/pancast/riskinfo.h"
 
-// Risk Broadcast Data
+/*
+ * BLE periodic adv. buffer; will transmit risk broadcast data
+ */
 uint8_t risk_data[RISK_DATA_SIZE];
 int risk_data_len;
 
-// Current index of periodic data broadcast
-// Periodic advertising data to transmit is
-// risk_data[index]:risk_data[index+PER_ADV_SIZE]
+/*
+ * Current index of periodic data broadcast
+ * Periodic advertising data to transmit is
+ * risk_data[index]:risk_data[index+PER_ADV_SIZE]
+ */
 int adv_index = 1;
 
-// Channel map is 5 bytes and contains 37 1-bit fields.
-// The nth field (in the range 0 to 36) contains the value for the link layer
-// channel index n.
+/*
+ * Channel map is 5 bytes and contains 37 1-bit fields.
+ * The nth field (in the range 0 to 36) contains the value
+ * for the link layer channel index n.
+ */
 const uint8_t chan_map[CHAN_MAP_SIZE] = { 0x04, 0x40, 0x00, 0x00, 0x00 };
 
-/* Initialize application */
+/*
+ * Initialize application
+ */
 void app_init(void)
 {
   app_iostream_eusart_init();
@@ -63,14 +71,14 @@ void app_init(void)
 #define TEST_NUM_PACKETS_PER_FILTER \
   (1 + ((TEST_FILTER_LEN - 1) / MAX_PAYLOAD_SIZE))                       // N
 
-  uint8_t chunk_rep_count = 0;
-  uint32_t chunk_num = 0;
-  uint8_t pkt_rep_count = 0;
-  uint32_t seq_num = 0;
-  uint32_t pkt_len;
-  uint32_t chunk_len = TEST_FILTER_LEN - HDR_SIZE_BYTES;
-  uint8_t test_data[PER_ADV_SIZE];
-  uint8_t test_filter[MAX_FILTER_SIZE];
+uint8_t chunk_rep_count = 0;
+uint32_t chunk_num = 0;
+uint8_t pkt_rep_count = 0;
+uint32_t seq_num = 0;
+uint32_t pkt_len;
+uint32_t chunk_len = TEST_FILTER_LEN - HDR_SIZE_BYTES;
+uint8_t test_data[PER_ADV_SIZE];
+uint8_t test_filter[MAX_FILTER_SIZE];
 
 void send_test_risk_data()
 {
@@ -87,13 +95,14 @@ void send_test_risk_data()
 
   // data
 #define min(a,b) ((b) < (a) ? (b) : (a))
-  pkt_len = min(MAX_PAYLOAD_SIZE, TEST_FILTER_LEN - (seq_num * MAX_PAYLOAD_SIZE));
+  pkt_len = min(TEST_FILTER_LEN - (seq_num * MAX_PAYLOAD_SIZE),
+      MAX_PAYLOAD_SIZE);
 #undef min
 
   memcpy(test_data+sizeof(rpi_ble_hdr),
       test_filter + (seq_num*MAX_PAYLOAD_SIZE), pkt_len);
 
-  // set
+  // set in BLE payload
   set_risk_data(sizeof(rpi_ble_hdr)+pkt_len, test_data);
 
   float endtime = now();
@@ -143,10 +152,11 @@ void sl_timer_on_expire(
 #undef user_handle
 }
 
-/* Bluetooth stack event handler.
-  This overrides the dummy weak implementation.
-  @param[in] evt Event coming from the Bluetooth stack.
-*/
+/*
+ * Bluetooth stack event handler.
+ * This overrides the dummy weak implementation.
+ * @param[in] evt Event coming from the Bluetooth stack.
+ */
 void sl_bt_on_event(sl_bt_msg_t *evt)
 {
   sl_status_t sc;
@@ -190,11 +200,15 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
         log_errorf("error setting system tx power, sc: 0x%X", sc);
       }
 
-      // Do not comment out!
-      // The beacon config and storage get initialized in this function.
-      // To disable legacy advertising, comment out the specific advertising
-      // functions within this function.
-      // Beacon refactoring should decouple the beacon initialization from the
+      /*
+       * XXX: Do not comment out!
+       * The beacon config and storage get initialized in this function.
+       * To disable legacy advertising, comment out the specific advertising
+       * functions within this function.
+       * Code refactoring should decouple beacon initialization from
+       * advertising code.
+       */
+
       beacon_start();
 
 //#if BEACON_MODE__NETWORK

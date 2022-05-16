@@ -30,7 +30,6 @@
 #include "app_assert.h"
 
 #include "./src/dongle.h"
-#include "./src/led.h"
 
 #include "src/common/src/constants.h"
 #include "src/common/src/settings.h"
@@ -51,37 +50,10 @@ int main(void)
 #else // SL_CATALOG_KERNEL_PRESENT
   log_debugf("%s", "=== Kernel start ===\r\n");
 
-  // Initialize the main timer
-  uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
-  sl_sleeptimer_timer_handle_t timer;
-  sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-      DONGLE_TIMER_RESOLUTION, sl_timer_on_expire,
-      &main_timer_handle, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed periodic timer start main, sc: %d\r\n", sc);
-    return sc;
-  }
-
-  // Initialize higher precision timer
-  uint8_t prec_timer_handle = PREC_TIMER_HANDLE;
-  sl_sleeptimer_timer_handle_t precision_timer;
-  sc = sl_sleeptimer_start_periodic_timer_ms(&precision_timer,
-      PREC_TIMER_TICK_MS, sl_timer_on_expire, &prec_timer_handle, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed periodic timer start hp, sc: %d\r\n", sc);
-    return sc;
-  }
-
-  sl_sleeptimer_timer_handle_t led_timer;
-  sc = sl_sleeptimer_start_periodic_timer_ms(&led_timer, LED_TIMER_MS,
-      dongle_led_timer_handler, (void *) NULL, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed period led timer start, sc: %d\r\n", sc);
-    return sc;
-  }
-
-  // Initialize the application.
-  sc = app_init(&led_timer);
+  /*
+   * Initialize the application.
+   */
+  sc = app_init();
 
   while (sc == SL_STATUS_OK) {
     // Do not remove this call: Silicon Labs components process action routine

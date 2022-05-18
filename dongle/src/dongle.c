@@ -50,6 +50,7 @@ float dongle_hp_timer = 0.0;
 extern dongle_stats_t stats;
 extern download_stats_t download_stats;
 
+#if MODE__SL_DONGLE_TEST_CONFIG
 static pubkey_t TEST_BACKEND_PK = {
   {0xad, 0xf4, 0xca, 0x6c, 0xa6, 0xd9, 0x11, 0x22}
 };
@@ -58,6 +59,7 @@ static beacon_sk_t TEST_DONGLE_SK = {
   {0xdc, 0x34, 0x6a, 0xdd, 0xa3, 0x41, 0xf4, 0x23,
    0x33, 0xc0, 0xf0, 0xcf, 0x61, 0xc6, 0xd6, 0xd5}
 };
+#endif
 
 /* INIT
  Assumes that kernel has initialized and bluetooth device is booted.
@@ -462,6 +464,8 @@ void dongle_info()
   log_infof("    Periodic adv sync flags:      %d\r\n", SYNC_FLAGS);
   log_infof("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
 
+  log_infof("    Flash page size, count:       %u B, %u\r\n",
+      storage.page_size, storage.num_pages);
   log_infof("    Flash offset:                 %u\r\n", FLASH_OFFSET);
   log_infof("    Total size:                   %u\r\n", storage.total_size);
   log_infof("    Usable size:                  %u\r\n", (uint32_t) FLASH_LOG_SIZE);

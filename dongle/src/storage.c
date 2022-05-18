@@ -168,7 +168,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 #undef write
 }
 
-void dongle_storage_save_cursor(dongle_storage *sto, dongle_config_t *cfg)
+void dongle_storage_save_cursor_clock(dongle_storage *sto, dongle_config_t *cfg)
 {
   dongle_storage_save_config(sto, cfg);
 
@@ -184,7 +184,6 @@ void dongle_storage_save_cursor(dongle_storage *sto, dongle_config_t *cfg)
 #undef write
 #endif
 }
-
 
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 {
@@ -258,7 +257,7 @@ void _log_increment_(dongle_storage *sto, dongle_config_t *cfg)
   // save head and tail to flash
   cfg->en_head = sto->encounters.head;
   cfg->en_tail = sto->encounters.tail;
-  dongle_storage_save_cursor(sto, cfg);
+  dongle_storage_save_cursor_clock(sto, cfg);
 }
 
 enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)

@@ -111,6 +111,7 @@ void _beacon_info_()
   log_infof("    Beacon ID:                0x%x\r\n", config.beacon_id);
   log_infof("    Location ID:              0x%lx\r\n", config.beacon_location_id);
   log_infof("    Initial clock:            %u\r\n", config.t_init);
+  log_infof("    Current clock:            %u\r\n", config.t_cur);
   log_infof("    Timer frequency:          %u Hz\r\n",
       sl_sleeptimer_get_timer_frequency());
   log_infof("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);
@@ -299,11 +300,6 @@ static void _gen_ephid_()
 
 static void _beacon_init_()
 {
-  epoch = 0;
-  cycles = 0;
-
-  beacon_time = config.t_init;
-
 #ifdef MODE__STAT
   stat_epochs = 0;
   stat_start = beacon_time;
@@ -420,6 +416,9 @@ int beacon_clock_increment(beacon_timer_t time)
 #if BEACON_MODE__NETWORK == 0
   _beacon_update_();
 #endif
+  // update beacon time in config and save to flash
+  config.t_cur = beacon_time;
+  beacon_storage_save_config(&storage, &config);
   _beacon_pause_();
   return 0;
 }
@@ -432,6 +431,12 @@ void beacon_start()
   log_debugf("%s", "Init beacon\r\n");
 
   _beacon_load_(), _beacon_init_();
+
+  epoch = 0;
+  cycles = 0;
+
+  beacon_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
+
 
   configure_blinky();
 }

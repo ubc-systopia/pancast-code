@@ -123,7 +123,16 @@ void _beacon_info_()
   log_infof("    Legacy adv interval:      %x-%x ms\r\n",
       BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
   log_infof("    Periodic adv pkt size:    %u bytes\r\n", PER_ADV_SIZE);
-  log_infof("    Test Filter Length:       %lu\r\n", storage.test_filter_size);
+
+  log_infof("    Flash page size, count:   %u B, %u\r\n",
+      storage.page_size, storage.num_pages);
+  log_infof("    Flash offset:             %u\r\n", storage.map.config);
+  log_infof("    Total size:               %u\r\n", storage.total_size);
+  log_infof("    Test filter offset:       %u\r\n", storage.map.test_filter);
+
+  log_infof("    Test filter length:       %lu\r\n", storage.test_filter_size);
+  log_infof("    Config offset:            %u\r\n", storage.map.config);
+  log_infof("    Stat offset:              %u\r\n", storage.map.stat);
 #ifdef MODE__STAT
   log_infof("%s", "    Statistics mode enabled\r\n");
 #endif

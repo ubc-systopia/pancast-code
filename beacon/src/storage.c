@@ -68,8 +68,6 @@ void beacon_storage_init(beacon_storage *sto)
   sto->numErasures = 0;
   beacon_storage_init_device(sto);
   beacon_storage_get_info(sto);
-  log_infof("#pages: %d, page size: %u\r\n",
-      sto->num_pages, sto->page_size);
   sto->map.config = FLASH_OFFSET;
   if (FLASH_OFFSET % sto->page_size != 0) {
     log_errorf("storage start addr %u is not page (%u) aligned!\r\n",
@@ -128,10 +126,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   sto->map.stat = next_multiple(sto->page_size,
       sto->map.test_filter + sto->test_filter_size);
 #undef read
-  log_debugf("%s", "Config loaded.\r\n");
-  log_infof("    Flash offset:        %u\r\n", sto->map.config);
-  log_infof("    Test filter offset:  %u\r\n", sto->map.test_filter);
-  log_infof("    Stat offset:         %u\r\n", sto->map.stat);
 }
 
 void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)

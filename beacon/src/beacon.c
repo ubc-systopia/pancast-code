@@ -78,7 +78,7 @@ static beacon_sk_t TEST_BEACON_SK = {
 // ROUTINES
 //
 
-static void _beacon_load_()
+static void beacon_load()
 {
   beacon_storage_init(&storage);
   // Load data
@@ -96,7 +96,7 @@ static void _beacon_load_()
 #endif
 }
 
-void _beacon_info_()
+void beacon_info()
 {
   log_infof("%s", "=== Beacon Info: ===\r\n");
   log_infof("    Platform:                 %s\r\n", "Zephyr OS");
@@ -150,7 +150,7 @@ void _beacon_periodic_info()
 #ifdef MODE__STAT
 beacon_stats_t stats;
 
-void beacon_stats_init()
+void beacon_stats_reset()
 {
   memset(&stats, 0, sizeof(beacon_stats_t));
 }
@@ -170,7 +170,7 @@ void beacon_stat_update()
   stats.failures = stat_failures;
 }
 
-static void _beacon_stats_()
+static void beacon_stats()
 {
   log_infof("[%lu] last report time: %lu, #cycles: %u, "
       "#epochs: %u chksum: %u\r\n",
@@ -193,9 +193,9 @@ static void _beacon_report_()
     return;
 
   beacon_stat_update();
-  _beacon_stats_();
+  beacon_stats();
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-  beacon_stats_init();
+  beacon_stats_reset();
   stat_start = beacon_time;
   stat_cycles = 0;
   stat_epochs = 0;
@@ -298,7 +298,7 @@ static void _gen_ephid_()
 #undef init
 }
 
-static void _beacon_init_()
+static void beacon_stats_init()
 {
 #ifdef MODE__STAT
   stat_epochs = 0;
@@ -306,13 +306,12 @@ static void _beacon_init_()
   beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");
-    _beacon_stats_();
+    beacon_stats();
   } else {
     log_errorf("init stats checksum: 0x%0x\r\n", stats.storage_checksum);
-    beacon_stats_init();
+    beacon_stats_reset();
   }
 #endif
-  _beacon_info_();
 }
 
 static void _beacon_epoch_()
@@ -385,7 +384,7 @@ sl_status_t beacon_legacy_advertise()
 
   return sc;
 #if 0
-  // TODO: check if this needed, given payload set in _beacon_update_()
+  // TODO: check if this needed, given payload set in beacon_on_clock_update()
   err = _set_adv_data_();
   log_infof("set adv data, err: %d\r\n", err);
   return err;
@@ -402,7 +401,7 @@ static int _beacon_pause_()
   return 0;
 }
 
-void _beacon_update_()
+void beacon_on_clock_update()
 {
   _beacon_epoch_();
   _beacon_encode_();
@@ -414,7 +413,7 @@ int beacon_clock_increment(beacon_timer_t time)
   beacon_time += time;
   log_debugf("beacon timer: %u\r\n", beacon_time);
 #if BEACON_MODE__NETWORK == 0
-  _beacon_update_();
+  beacon_on_clock_update();
 #endif
   // update beacon time in config and save to flash
   config.t_cur = beacon_time;
@@ -426,17 +425,19 @@ int beacon_clock_increment(beacon_timer_t time)
 /*
  * Initialize Pancast-specific beacon configs
  */
-void beacon_start()
+void beacon_init()
 {
   log_debugf("%s", "Init beacon\r\n");
 
-  _beacon_load_(), _beacon_init_();
+  beacon_load();
+  beacon_info();
 
   epoch = 0;
   cycles = 0;
 
   beacon_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
 
+  beacon_stats_init();
 
   configure_blinky();
 }

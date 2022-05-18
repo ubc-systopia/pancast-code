@@ -99,9 +99,8 @@ typedef struct
 
 extern beacon_stats_t stats;
 
-void beacon_start();
+void beacon_init();
 void beacon_broadcast();
-void _beacon_info_();
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
 sl_status_t beacon_legacy_advertise();

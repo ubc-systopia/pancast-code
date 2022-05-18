@@ -209,7 +209,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
        * advertising code.
        */
 
-      beacon_start();
+      beacon_init();
 
 //#if BEACON_MODE__NETWORK
       // set up periodic advertising

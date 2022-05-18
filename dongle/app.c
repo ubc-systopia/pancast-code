@@ -77,13 +77,6 @@ sl_status_t app_init(void)
     return sc;
   }
 
-  sc = sl_sleeptimer_start_periodic_timer_ms(&led_timer, LED_TIMER_MS,
-      dongle_led_timer_handler, (void *) NULL, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed period led timer start, sc: %d\r\n", sc);
-    return sc;
-  }
-
   return SL_STATUS_OK;
 }
 

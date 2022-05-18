@@ -172,5 +172,4 @@ void dongle_on_sync_lost();
 int dongle_download_complete_status();
 void dongle_update_download_time();
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry);
-void dongle_led_notify();
 #endif

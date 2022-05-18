@@ -2,6 +2,7 @@
 
 
 #include "cuckoofilter-gadget/cf-gadget.h"
+#include "led.h"
 #include "stats.h"
 #include "telemetry.h"
 #include "common/src/util/log.h"

@@ -499,14 +499,6 @@ void beacon_periodic_advertise()
   if (sc != 0) {
     log_errorf("Error setting channel map, sc: 0x%X", sc);
   }
-
-#if 0
-  sc = sl_bt_advertiser_set_data(advertising_set_handle, 8,
-      PER_ADV_SIZE, &risk_data[adv_index * PER_ADV_SIZE]);
-  if (sc != 0) {
-    log_errorf("Error setting channel map, sc: 0x%X", sc);
-  }
-#endif
 }
 
 /*

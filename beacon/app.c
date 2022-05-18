@@ -31,19 +31,6 @@
 #include "src/common/src/pancast/riskinfo.h"
 
 /*
- * BLE periodic adv. buffer; will transmit risk broadcast data
- */
-uint8_t risk_data[RISK_DATA_SIZE];
-int risk_data_len;
-
-/*
- * Current index of periodic data broadcast
- * Periodic advertising data to transmit is
- * risk_data[index]:risk_data[index+PER_ADV_SIZE]
- */
-int adv_index = 1;
-
-/*
  * Channel map is 5 bytes and contains 37 1-bit fields.
  * The nth field (in the range 0 to 36) contains the value
  * for the link layer channel index n.
@@ -56,8 +43,6 @@ const uint8_t chan_map[CHAN_MAP_SIZE] = { 0x04, 0x40, 0x00, 0x00, 0x00 };
 void app_init(void)
 {
   app_iostream_eusart_init();
-  risk_data_len = RISK_DATA_SIZE;
-  memset(&risk_data, 0, risk_data_len);
 
   // Set pin PB01 for output
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);

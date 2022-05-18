@@ -22,7 +22,6 @@
 #include "app_assert.h"
 
 #include "src/dongle.h"
-#include "src/led.h"
 
 #define LOG_LEVEL__DEBUG
 #include "src/common/src/util/log.h"

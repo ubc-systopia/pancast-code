@@ -16,7 +16,6 @@ static inline void dongle_led_timer_handler(
     __attribute__ ((unused)) sl_sleeptimer_timer_handle_t *handle,
     __attribute__ ((unused)) void *data)
 {
-//  sl_led_toggle(&sl_led_led0);
   sl_led_toggle(SL_SIMPLE_LED_INSTANCE(0));
 }
 
@@ -27,7 +26,6 @@ static inline void dongle_led_timer_handler(
  */
 static inline void configure_blinky(void)
 {
-//  sl_led_init(&sl_led_led0);
   sl_simple_led_init_instances();
   sl_simple_led_context_t *ctx = sl_led_led0.context;
   sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS,

@@ -97,14 +97,6 @@ int main(void)
         TIMER_1MS * BEACON_TIMER_RESOLUTION, timer);
   }
 
-  sl_sleeptimer_timer_handle_t led_timer;
-  sc = sl_sleeptimer_start_periodic_timer_ms(&led_timer, LED_TIMER_MS,
-      beacon_led_timer_handler, (void *) NULL, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed period led timer start, sc: %d\r\n", sc);
-    return sc;
-  }
-
   uint8_t *buf = malloc(DATA_SIZE);
 
 #if BEACON_MODE__NETWORK

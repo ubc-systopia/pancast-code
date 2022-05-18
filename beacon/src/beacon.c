@@ -42,6 +42,8 @@ beacon_config_t config;
 
 // Default Operation
 beacon_storage storage;
+sl_sleeptimer_timer_handle_t led_timer;
+
 static beacon_timer_t beacon_time;    // Beacon Clock
 static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
 static beacon_epoch_counter_t epoch;  // track the current time epoch

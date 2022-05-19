@@ -22,11 +22,16 @@
 #include "app_assert.h"
 
 #include "src/dongle.h"
+#include "src/stats.h"
+#include "src/download.h"
 
 #define LOG_LEVEL__DEBUG
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
 
+extern download_t download;
+extern dongle_timer_t dongle_time;
+extern dongle_stats_t stats;
 extern void dongle_start();
 int download_complete = 0;
 
@@ -40,6 +45,10 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
   if (user_handle == MAIN_TIMER_HANDLE) {
     dongle_clock_increment();
     download_complete = dongle_download_complete_status();
+    log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
+        "download complete: %d active: %d\r\n",
+        dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
+        download_complete, download.is_active);
   }
   if (user_handle == PREC_TIMER_HANDLE) {
     dongle_hp_timer_add(1);
@@ -152,11 +161,27 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_sync_data.rssi);
       }
 #undef ERROR_STATUS
+
+      download_complete = dongle_download_complete_status();
+      /*
+       * second clause for the case when on re-sync, dongle still not able to
+       * download periodic data (e.g., len of download is 0). may happen because
+       * the periodic intervals were not properly aligned?
+       */
+      if (download_complete == 1 || (dongle_time - stats.last_download_time > 10)) {
+        log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
+          "download complete: %d active: %d handle: %d\r\n",
+          dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
+          download_complete, download.is_active, sync_handle);
+        sl_bt_sync_close(sync_handle);
+      }
+#if 0
       if (dongle_download_complete_status() == 1) {
         sl_bt_sync_close(sync_handle);
-        log_infof("%s", "download completed\r\n");
         download_complete = 1;
+        log_infof("%s", "download completed\r\n");
       }
+#endif
       break;
 
     default:

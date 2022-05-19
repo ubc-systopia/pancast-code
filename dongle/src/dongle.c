@@ -426,8 +426,6 @@ void dongle_update_download_time()
 
 int dongle_download_complete_status()
 {
-  log_debugf("dongle_time - stats.last_download_time: %u\r\n",
-			dongle_time - stats.last_download_time);
   if (dongle_time - stats.last_download_time >= MIN_DOWNLOAD_WAIT ||
 		  stats.last_download_time == 0) {
     return 0;

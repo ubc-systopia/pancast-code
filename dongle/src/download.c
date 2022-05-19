@@ -11,7 +11,6 @@
 #include "common/src/pancast/riskinfo.h"
 
 extern dongle_stats_t stats;
-extern downloads_stats_t download_stats;
 extern float dongle_hp_timer;
 extern dongle_storage storage;
 extern dongle_timer_t dongle_time;
@@ -78,15 +77,15 @@ void dongle_download_start()
   download.is_active = 1;
   log_debugf("Download started! (chunk=%lu)\r\n",
       download.packet_buffer.chunk_num);
-  download_stats.payloads_started++;
+  stats.payloads_started++;
 }
 
 void dongle_download_fail(download_fail_reason *reason)
 {
   if (download.is_active) {
-    download_stats.payloads_failed++;
-    dongle_update_download_stats(download_stats.all_download_stats, download);
-    dongle_update_download_stats(download_stats.failed_download_stats, download);
+    stats.payloads_failed++;
+    dongle_update_download_stats(stats.all_download_stats, download);
+    dongle_update_download_stats(stats.failed_download_stats, download);
     *reason = *reason + 1;
 //    dongle_download_info();
     dongle_download_reset();
@@ -168,8 +167,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   // extract seq number, chunk number, and chunk len
   rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
 
-  stats.total_periodic_data_size += data_len;
-  stats.num_periodic_data++;
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
 
@@ -185,7 +182,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     if (rbh->chunkid != download.packet_buffer.chunk_num) {
       log_errorf("forced chunk switch, prev: %u new: %u\r\n",
           download.packet_buffer.chunk_num, rbh->chunkid);
-      dongle_download_fail(&download_stats.switch_chunk);
+      dongle_download_fail(&stats.switch_chunk);
       download.packet_buffer.chunk_num = rbh->chunkid;
     }
 
@@ -247,7 +244,7 @@ void dongle_download_complete()
 
   if (num_buckets == 0) {
     log_debugf("%s", "num buckets is 0!!!\r\n");
-    dongle_download_fail(&download_stats.cuckoo_fail);
+    dongle_download_fail(&stats.cuckoo_fail);
     return;
   }
 
@@ -307,13 +304,13 @@ void dongle_download_complete()
   /*
    * XXX: increment global stats, not assignment
    */
-  download_stats.total_matches = download.n_matches;
-  download_stats.payloads_complete++;
+  stats.total_matches = download.n_matches;
+  stats.payloads_complete++;
   // compute latency
   double lat = download.time;
-  dongle_update_download_stats(download_stats.all_download_stats, download);
-  dongle_update_download_stats(download_stats.complete_download_stats.download_stats, download);
-  stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
+  dongle_update_download_stats(stats.all_download_stats, download);
+  dongle_update_download_stats(stats.completed_download_stats, download);
+  stat_add(lat, stats.completed_periodic_data_avg_payload_lat);
 
   dongle_download_reset();
 }

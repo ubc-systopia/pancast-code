@@ -60,6 +60,9 @@ typedef struct {
   storage_addr_t total_size;
   _dongle_storage_map_ map;
   _encounter_storage_cursor_ encounters;
+  /*
+   * in-memory count of new encounters logged since last reboot
+   */
   enctr_entry_counter_t total_encounters;
   uint64_t numErasures;
 } dongle_storage;

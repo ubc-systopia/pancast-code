@@ -6,29 +6,7 @@
 #include "storage.h"
 #include "common/src/util/stats.h"
 
-
-typedef struct {
-  uint8_t storage_checksum; // zero for valid stat data
-
-  dongle_timer_t start;
-  uint32_t num_obs_ids;
-  uint32_t num_scan_results;
-  uint32_t num_periodic_data;
-  uint32_t num_periodic_data_error;
-  uint32_t total_packets_rx;
-  uint32_t total_crc_fail;
-  uint32_t total_periodic_data_size; // bytes
-  double total_periodic_data_time;   // seconds
-  dongle_timer_t last_download_time;
-
-  stat_t scan_rssi;
-  stat_t encounter_rssi;
-  stat_t periodic_data_size;
-  stat_t periodic_data_rssi;
-
-  double periodic_data_avg_thrpt;
-
-} dongle_stats_t;
+typedef int download_fail_reason;
 
 typedef struct {
   stat_t pkt_duplication;
@@ -37,24 +15,82 @@ typedef struct {
   stat_t est_pkt_loss;
 } download_stats_t;
 
-typedef int download_fail_reason;
-
 typedef struct {
-  download_stats_t download_stats;
-  stat_t periodic_data_avg_payload_lat; // download time
-} complete_download_stats_t;
+  uint8_t storage_checksum; // zero for valid stat data
 
-typedef struct {
-    int payloads_started;
-    int payloads_complete;
-    int payloads_failed;
-    int total_matches;
-    download_fail_reason cuckoo_fail;
-    download_fail_reason switch_chunk;
-    download_stats_t all_download_stats;
-    download_stats_t failed_download_stats;
-    complete_download_stats_t complete_download_stats;
-} downloads_stats_t;
+  /*
+   * last report time
+   */
+  dongle_timer_t last_report_time;
+  /*
+   * last periodic adv. download time
+   */
+  dongle_timer_t last_download_time;
+  /*
+   * # unique ephids seen
+   * persisted on storage only periodically, so may lose some stats
+   * in case of an unclean shutdown
+   */
+  uint32_t num_obs_ids;
+  /*
+   * number of periodic adv. channel scans where scan returned an error
+   */
+  uint32_t num_periodic_data_error;
+  /*
+   * hw counters for total #pkts rcvd, crc failures
+   */
+  uint32_t total_hw_rx;
+  uint32_t total_hw_crc_fail;
+  /*
+   * # of periodic payload downloads started
+   */
+  int payloads_started;
+  /*
+   * # of periodic payload downloads completed
+   */
+  int payloads_complete;
+  /*
+   * # of periodic payload downloads failed (e.g., due to pkt loss, corruption)
+   */
+  int payloads_failed;
+  /*
+   * # of ephids matching with the risk data entries
+   */
+  int total_matches;
+  /*
+   * # of periodic payload download failures with incorrect CF payload
+   */
+  download_fail_reason cuckoo_fail;
+  /*
+   * # of periodic payload download failures due to missed chunk
+   */
+  download_fail_reason switch_chunk;
+  double total_periodic_data_time;   // seconds
+
+  /*
+   * rssi stats for all legacy adv. scans invoked by dongle for pancast
+   * (regardless of whether the ephemeral id is unique or not)
+   */
+  stat_t scan_rssi;
+  /*
+   * periodic data payload size stats
+   */
+  stat_t periodic_data_size;
+  /*
+   * periodic data rssi stats
+   */
+  stat_t periodic_data_rssi;
+  /*
+   * stats for download latency for periodic data (completed downloads only)
+   */
+  stat_t completed_periodic_data_avg_payload_lat;
+  /*
+   * detailed stats for periodic data downloads
+   */
+  download_stats_t all_download_stats;
+  download_stats_t failed_download_stats;
+  download_stats_t completed_download_stats;
+} dongle_stats_t;
 
 void dongle_stats_init(dongle_storage *sto);
 void dongle_stats();

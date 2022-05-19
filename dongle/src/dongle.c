@@ -181,7 +181,7 @@ void dongle_clock_increment()
 
 void dongle_hp_timer_add(uint32_t ticks)
 {
-  double ms = ((double)ticks * PREC_TIMER_TICK_MS);
+  double ms = ((double) ticks * PREC_TIMER_TICK_MS);
   stats.total_periodic_data_time += (ms / 1000.0);
   if (download.is_active) {
     download.time += ms;
@@ -217,8 +217,8 @@ void dongle_log_counters()
 
   sl_bt_system_get_counters(1, &tx_packets, &rx_packets, &crc_errors, &failures);
 
-  stats.total_packets_rx = stats.total_packets_rx + (uint32_t)rx_packets;
-  stats.total_crc_fail = stats.total_crc_fail + (uint32_t)crc_errors;
+  stats.total_hw_rx += (uint32_t) rx_packets;
+  stats.total_hw_crc_fail += (uint32_t)crc_errors;
 
   log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n",
       tx_packets, rx_packets, crc_errors, failures);
@@ -282,7 +282,6 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   }
 
 #ifdef MODE__STAT
-  stats.num_scan_results++;
   stat_add(rssi, stats.scan_rssi);
 #endif
 
@@ -347,9 +346,6 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   memcpy(&cur_encounters[i].dongle_time_int, &dongle_dur, sizeof(uint8_t));
   memcpy(&cur_encounters[i].beacon_time_int, &beacon_dur, sizeof(uint8_t));
 
-#ifdef MODE__STAT
-  stat_add(rssi, stats.encounter_rssi);
-#endif
   log_telemf("%02x,%u,%u,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
      dongle_time, epoch, enc->b, enc->t, dur);
 
@@ -497,10 +493,7 @@ void dongle_report()
   char statbuf[1024];
   memset(statbuf, 0, 1024);
   memcpy(statbuf, (void *) &stats, sizeof(dongle_stats_t));
-  memcpy(statbuf+sizeof(dongle_stats_t), (void *) &download_stats,
-      sizeof(downloads_stats_t));
-  dongle_storage_save_stat(&storage, &config, statbuf,
-      sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
+  dongle_storage_save_stat(&storage, &config, statbuf, sizeof(dongle_stats_t));
   last_stat_time = dongle_time;
 #endif
 

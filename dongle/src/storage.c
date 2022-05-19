@@ -139,15 +139,13 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 {
   storage_addr_t off = sto->map.config;
   int total_size = sizeof(dongle_config_t) +
-    (NUM_OTP*sizeof(dongle_otp_t)) + sizeof(dongle_stats_t) +
-    sizeof(downloads_stats_t);
+    (NUM_OTP*sizeof(dongle_otp_t)) + sizeof(dongle_stats_t);
 
   dongle_otp_t otps[NUM_OTP];
   _flash_read_(sto, OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
 
-  char statbuf[sizeof(dongle_stats_t) + sizeof(downloads_stats_t)];
-  _flash_read_(sto, sto->map.stat, statbuf,
-      sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
+  char statbuf[sizeof(dongle_stats_t)];
+  _flash_read_(sto, sto->map.stat, statbuf, sizeof(dongle_stats_t));
 
   pre_erase(sto, off, total_size);
 
@@ -163,7 +161,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 
   // write stats
   off = sto->map.stat;
-  write(statbuf, sizeof(dongle_stats_t) + sizeof(downloads_stats_t));
+  write(statbuf, sizeof(dongle_stats_t));
 #undef write
 }
 
@@ -414,7 +412,7 @@ int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)
 void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg, void * stat, size_t len)
 {
   int total_size = sizeof(dongle_config_t) + (NUM_OTP*sizeof(dongle_otp_t))
-    + sizeof(dongle_stats_t) + sizeof(downloads_stats_t);
+    + sizeof(dongle_stats_t);
 
   dongle_otp_t otps[NUM_OTP];
   _flash_read_(sto, OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));

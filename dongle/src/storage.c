@@ -12,7 +12,7 @@
 #define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
-extern dongle_timer_t stat_start;
+extern dongle_timer_t last_stat_time;
 extern dongle_timer_t dongle_time;
 
 void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
@@ -394,7 +394,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
   num3 = dongle_storage_num_encounters_current(sto);
   log_debugf("time: %u, %u #entries: %lu -> %lu -> %lu, "
       "H: %lu, T: %lu, off: %u, size: %u %u\r\n",
-      en->dongle_time_start, stat_start, num1, num2, num3,
+      en->dongle_time_start, last_stat_time, num1, num2, num3,
       sto->encounters.head, sto->encounters.tail,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
 }

@@ -14,6 +14,7 @@ extern dongle_stats_t stats;
 extern downloads_stats_t download_stats;
 extern float dongle_hp_timer;
 extern dongle_storage storage;
+extern dongle_timer_t dongle_time;
 
 download_t download;
 cf_t cf;
@@ -144,10 +145,14 @@ void dongle_on_periodic_data_error(int8_t rssi)
 void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
 
-//    log_bytes(printf, printf, data, data_len, "data");
   if (data_len < sizeof(rpi_ble_hdr)) {
-    log_telemf("%02x,%.0f,%d,%d\r\n", TELEM_TYPE_PERIODIC_PKT_DATA,
-               dongle_hp_timer, rssi, data_len);
+    log_infof("%02x %.0f %d %d dwnld active: %d "
+      "data len: %u rcvd: %u\r\n",
+      TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
+      download.is_active, download.packet_buffer.chunk_num,
+      (uint32_t) download.packet_buffer.buffer.data_len,
+      download.packet_buffer.received);
+
     download.n_corrupt_packets++;
     return;
   }
@@ -175,6 +180,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
       download.packet_buffer.chunk_num, (uint32_t) rbh->chunklen,
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
+
+#if 0
   if (download.is_active &&
       rbh->chunkid != download.packet_buffer.chunk_num) {
     // forced to switch chunks
@@ -188,17 +195,32 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
     log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
                download.packet_buffer.buffer.data_len, rbh->chunklen);
   }
+#endif
 
-  if (rbh->pkt_seq >= MAX_NUM_PACKETS_PER_FILTER) {
-    log_errorf("Error: sequence number %d out of bounds %d\r\n",
-        rbh->pkt_seq, MAX_NUM_PACKETS_PER_FILTER);
+  if (download.is_active) {
+    if (rbh->chunkid != download.packet_buffer.chunk_num) {
+      log_errorf("forced chunk switch, prev: %u new: %u\r\n",
+          download.packet_buffer.chunk_num, rbh->chunkid);
+      dongle_download_fail(&download_stats.switch_chunk);
+      download.packet_buffer.chunk_num = rbh->chunkid;
+    }
+
+    if (rbh->chunklen != download.packet_buffer.buffer.data_len) {
+      log_errorf("chunk len mismatch, prev: %u new: %u\r\n",
+          download.packet_buffer.buffer.data_len, rbh->chunklen);
+    }
+  }
+
+  if (rbh->pkt_seq >= MAX_NUM_PACKETS_PER_FILTER || (int64_t) rbh->chunklen < 0) {
+    log_errorf("seq#: %d, max pkts: %d, chunklen: %d\r\n",
+        rbh->pkt_seq, MAX_NUM_PACKETS_PER_FILTER, rbh->chunklen);
     return;
   }
 
   if (!download.is_active) {
     dongle_download_start();
-    download.packet_buffer.buffer.data_len = rbh->chunklen;
   }
+  download.packet_buffer.buffer.data_len = rbh->chunklen;
 
   download.n_total_packets++;
   int prev = download.packet_buffer.counts[rbh->pkt_seq];
@@ -210,8 +232,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   // this is an unseen packet
   download.packet_buffer.num_distinct++;
   uint8_t len = data_len - sizeof(rpi_ble_hdr);
-  memcpy(
-    download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PAYLOAD_SIZE),
+  memcpy(download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PAYLOAD_SIZE),
     data + sizeof(rpi_ble_hdr), len);
   download.packet_buffer.received += len;
   if (download.packet_buffer.received >= download.packet_buffer.buffer.data_len) {
@@ -222,17 +243,25 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
 void dongle_download_complete()
 {
-  log_infof("%s", "Download complete!\r\n");
-  int is_loss = 0;
+  log_infof("[%u] Download complete! last dnwld time: %u data len: %d\r\n",
+      dongle_time, stats.last_download_time, download.packet_buffer.buffer.data_len);
   int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
   for (int i = 0; i < actual_pkts_per_filter; i++) {
-    if (download.packet_buffer.counts[i] <= 0)
-      is_loss = 1;
+    if (download.packet_buffer.counts[i] > 0)
+      continue;
+
+    log_errorf("[%d] chunkid: %d count: %d #distinct: %d total: %d\r\n",
+        i, download.packet_buffer.chunk_num, download.packet_buffer.counts[i],
+        download.packet_buffer.num_distinct, download.n_total_packets);
   }
 
+#if 0
   if (is_loss) {
     log_debugf("#distinct: %d, #total: %d, count/pkts: ",
         download.packet_buffer.num_distinct, download.n_total_packets);
+    log_debugf("len: %lu, ", download.packet_buffer.buffer.data_len);
+    log_debugf("chunk: %lu, sz(u64): %u\r\n",
+        download.packet_buffer.chunk_num, sizeof(uint64_t));
     for (int i = 0; i < actual_pkts_per_filter; i++) {
       if (download.packet_buffer.counts[i] <= 0)
         log_debugf("%d ", i);
@@ -241,39 +270,26 @@ void dongle_download_complete()
     log_debugf("%s", "\r\n");
   }
 
-  download_stats.payloads_complete++;
-  // compute latency
-  double lat = download.time;
-  dongle_update_download_stats(download_stats.all_download_stats, download);
-  dongle_update_download_stats(download_stats.complete_download_stats.download_stats, download);
-  stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
-
-  // check the content using cuckoofilter decoder
-
-//  bitdump(download.packet_buffer.buffer.data,
-//      download.packet_buffer.buffer.data_len, "risk chunk");
-
-  uint64_t filter_len = download.packet_buffer.buffer.data_len;
-
-  if (filter_len > download.packet_buffer.received) {
+  /*
+   * XXX: technically, this should not happen because we only invoke
+   * dongle_download_complete when the condition is exactly opposite
+   * of the one checked below.
+   */
+  if (download.packet_buffer.buffer.data_len > download.packet_buffer.received) {
     log_errorf("%s", "Filter length mismatch (%lu/%lu)\r\n",
-        download.packet_buffer.received, filter_len);
+        download.packet_buffer.received, download.packet_buffer.buffer.data_len);
     dongle_download_fail(&download_stats.cuckoo_fail);
     return;
   }
+#endif
 
-  if (is_loss) {
-    log_debugf("len: %lu, ", filter_len);
-    log_debugf("chunk: %lu, sz(u64): %u\r\n",
-        download.packet_buffer.chunk_num, sizeof(uint64_t));
-  }
   // now we know the payload is the correct size
 
-  if (filter_len > 0) {
+  if (download.packet_buffer.buffer.data_len > 0) {
     dongle_update_download_time();
   }
 
-  num_buckets = cf_gadget_num_buckets(filter_len);
+  num_buckets = cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 
   if (num_buckets == 0) {
     log_debugf("%s", "num buckets is 0!!!\r\n");
@@ -281,11 +297,14 @@ void dongle_download_complete()
     return;
   }
 
+  // check the content using cuckoofilter decoder
+
+//  bitdump(download.packet_buffer.buffer.data,
+//      download.packet_buffer.buffer.data_len, "risk chunk");
+
 #ifdef CUCKOOFILTER_FIXED_TEST
 
   uint8_t *filter = download.packet_buffer.buf;
-
-  //hexdump(filter, filter_len + 8);
 
   int status = 0;
 
@@ -324,13 +343,23 @@ void dongle_download_complete()
   // check existing log entries against the new filter
   dongle_storage_load_encounter(&storage, storage.encounters.tail,
       dongle_download_check_match);
-//  dongle_storage_load_all_encounter(&storage, dongle_download_check_match);
+
 #endif /* CUCKOOFILTER_FIXED_TEST */
 
   if (download.n_matches > 0) {
     dongle_led_notify();
   }
+
+  /*
+   * XXX: increment global stats, not assignment
+   */
   download_stats.total_matches = download.n_matches;
+  download_stats.payloads_complete++;
+  // compute latency
+  double lat = download.time;
+  dongle_update_download_stats(download_stats.all_download_stats, download);
+  dongle_update_download_stats(download_stats.complete_download_stats.download_stats, download);
+  stat_add(lat, download_stats.complete_download_stats.periodic_data_avg_payload_lat);
 
   dongle_download_reset();
 }

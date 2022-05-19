@@ -38,17 +38,28 @@ int download_complete = 0;
 // Sync handle
 static uint16_t sync_handle = 0;
 
+int synced = 0; // no concurrency control but acts as an eventual state signal
+
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     __attribute__ ((unused)) void *data)
 {
+  sl_status_t sc;
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
     dongle_clock_increment();
     download_complete = dongle_download_complete_status();
     log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
-        "download complete: %d active: %d\r\n",
+        "download complete: %d active: %d synced: %d handle: %d\r\n",
         dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
-        download_complete, download.is_active);
+        download_complete, download.is_active, synced, sync_handle);
+    if (download_complete == 0 && synced == 1) {
+      sc = sl_bt_sync_close(sync_handle);
+      log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
+        "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
+        dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
+        download_complete, download.is_active, synced, sync_handle, sc);
+      synced = 0;
+    }
   }
   if (user_handle == PREC_TIMER_HANDLE) {
     dongle_hp_timer_add(1);
@@ -70,8 +81,6 @@ sl_status_t app_init(void)
 void app_process_action(void)
 {
 }
-
-int synced = 0; // no concurrency control but acts as an eventual state signal
 
 void sl_bt_on_event (sl_bt_msg_t *evt)
 {
@@ -170,9 +179,9 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
        */
       if (download_complete == 1 || (dongle_time - stats.last_download_time > 10)) {
         log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
-          "download complete: %d active: %d handle: %d\r\n",
+          "download complete: %d active: %d synced: %d handle: %d\r\n",
           dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
-          download_complete, download.is_active, sync_handle);
+          download_complete, download.is_active, synced, sync_handle);
         sl_bt_sync_close(sync_handle);
       }
 #if 0

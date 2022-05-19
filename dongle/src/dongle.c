@@ -33,16 +33,12 @@ dongle_config_t config;
 dongle_storage storage;
 sl_sleeptimer_timer_handle_t led_timer;
 
-dongle_epoch_counter_t epoch;
+dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
 dongle_timer_t stat_start;
 dongle_encounter_entry_t cur_encounters[DONGLE_MAX_BC_TRACKED];
 size_t cur_id_idx;
-dongle_epoch_counter_t epoch; // current epoch
 extern download_t download;
-
-// 3. Reporting
-enctr_entry_counter_t non_report_entry_count;
 
 // 5. Statistics and Telemetry
 // Global high-precision timer, in milliseconds
@@ -95,7 +91,6 @@ void dongle_init()
   stat_start = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
-  non_report_entry_count = 0;
   download_complete = 0;
 
   //===========
@@ -480,14 +475,11 @@ void dongle_info()
 
 void dongle_encounter_report()
 {
-  enctr_entry_counter_t num = storage.total_encounters;
-  enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
-
-  log_infof("[%lu] last report time: %lu, last download time: %u, head: %u tail: %u, "
-      "#encounters [delta, total, stored]: %lu, %lu, %lu\r\n",
-      dongle_time, stats.start, stats.last_download_time,
-      storage.encounters.head, storage.encounters.tail,
-      (num - non_report_entry_count), num, cur);
+  log_infof("[%lu] last report time: %lu download time: %u head: %u tail: %u "
+    "#encounters [new, stored]: %lu, %lu\r\n",
+    dongle_time, stats.last_report_time, stats.last_download_time,
+    storage.encounters.head, storage.encounters.tail, storage.total_encounters,
+    dongle_storage_num_encounters_current(&storage));
 }
 
 void dongle_report()
@@ -515,8 +507,6 @@ void dongle_report()
 #if TEST_DONGLE
   dongle_test();
 #endif
-
-  non_report_entry_count = storage.total_encounters;
 }
 
 #undef LOG_LEVEL__INFO

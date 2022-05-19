@@ -8,9 +8,10 @@
 
 extern dongle_storage storage;
 extern dongle_config_t config;
-extern enctr_entry_counter_t non_report_entry_count;
 extern dongle_timer_t dongle_time;
 extern dongle_timer_t report_time;
+
+enctr_entry_counter_t non_report_entry_count = 0;
 
 int test_errors = 0;
 #define TEST_MAX_ENCOUNTERS 16
@@ -132,11 +133,11 @@ void dongle_test()
 #endif
 
   log_infof("%s", "    logged encounters correct?\r\n");
-  enctr_entry_counter_t num = storage.total_encounters;
-  if (num > non_report_entry_count) {
+  if (storage.total_encounters > non_report_entry_count) {
     // There are new entries logged
     dongle_storage_load_encounters_from_time(&storage, report_time,
                                              test_compare_entry_idx);
+    non_report_entry_count = storage.total_encounters;
   } else {
     log_errorf("%s", "no new encounters logged.\r\n");
   }

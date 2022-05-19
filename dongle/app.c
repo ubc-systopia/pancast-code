@@ -49,6 +49,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
     dongle_clock_increment();
+    dongle_log_counters();
     download_complete = dongle_download_complete_status();
     log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d\r\n",

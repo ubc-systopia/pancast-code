@@ -68,10 +68,11 @@ void dongle_download_stats()
   if (stats.payloads_started == 0)
     return;
 
-  log_infof("[Risk broadcast] started: %d, completed: %d, failed: %d"
-      ", decode fail: %d, chunk switch: %d, id matches: %d\r\n",
+  log_infof("[Risk broadcast] started: %d completed: %d failed: %d "
+      "decode fail: %d chunk switch: %d hwrx: %d crc fail: %d id matches: %d\r\n",
       stats.payloads_started, stats.payloads_complete, stats.payloads_failed,
-      stats.cuckoo_fail, stats.switch_chunk, stats.total_matches);
+      stats.cuckoo_fail, stats.switch_chunk, stats.total_hw_rx,
+      stats.total_hw_crc_fail, stats.total_matches);
 
   stat_show(stats.completed_periodic_data_avg_payload_lat,
               "[Risk broadcast] payload download time", "ms");

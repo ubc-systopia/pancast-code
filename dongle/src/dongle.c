@@ -31,6 +31,7 @@
 dongle_config_t config;
 // in-memory config of on-disk layout
 dongle_storage storage;
+sl_sleeptimer_timer_handle_t led_timer;
 
 dongle_epoch_counter_t epoch;
 dongle_timer_t dongle_time; // main dongle timer

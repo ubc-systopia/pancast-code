@@ -29,7 +29,6 @@
 
 extern void dongle_start();
 int download_complete = 0;
-sl_sleeptimer_timer_handle_t led_timer;
 
 // Sync handle
 static uint16_t sync_handle = 0;
@@ -53,29 +52,6 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
  ******************************************************************************/
 sl_status_t app_init(void)
 {
-  sl_status_t sc;
-
-  // Initialize the main timer
-  uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
-  sl_sleeptimer_timer_handle_t timer;
-  sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-      DONGLE_TIMER_RESOLUTION, sl_timer_on_expire,
-      &main_timer_handle, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed periodic timer start main, sc: %d\r\n", sc);
-    return sc;
-  }
-
-  // Initialize higher precision timer
-  uint8_t prec_timer_handle = PREC_TIMER_HANDLE;
-  sl_sleeptimer_timer_handle_t precision_timer;
-  sc = sl_sleeptimer_start_periodic_timer_ms(&precision_timer,
-      PREC_TIMER_TICK_MS, sl_timer_on_expire, &prec_timer_handle, 0, 0);
-  if (sc != SL_STATUS_OK) {
-    log_errorf("failed periodic timer start hp, sc: %d\r\n", sc);
-    return sc;
-  }
-
   return SL_STATUS_OK;
 }
 

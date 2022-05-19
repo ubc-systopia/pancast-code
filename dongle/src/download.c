@@ -181,22 +181,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
 
-#if 0
-  if (download.is_active &&
-      rbh->chunkid != download.packet_buffer.chunk_num) {
-    // forced to switch chunks
-
-    dongle_download_fail(&download_stats.switch_chunk);
-
-    log_debugf("Downloading chunk %lu\r\n", rbh->chunkid);
-    download.packet_buffer.chunk_num = rbh->chunkid;
-  } else if (download.is_active
-      && rbh->chunklen != download.packet_buffer.buffer.data_len) {
-    log_errorf("Chunk length mismatch: previous: %lu, new: %lu\r\n",
-               download.packet_buffer.buffer.data_len, rbh->chunklen);
-  }
-#endif
-
   if (download.is_active) {
     if (rbh->chunkid != download.packet_buffer.chunk_num) {
       log_errorf("forced chunk switch, prev: %u new: %u\r\n",
@@ -255,39 +239,9 @@ void dongle_download_complete()
         download.packet_buffer.num_distinct, download.n_total_packets);
   }
 
-#if 0
-  if (is_loss) {
-    log_debugf("#distinct: %d, #total: %d, count/pkts: ",
-        download.packet_buffer.num_distinct, download.n_total_packets);
-    log_debugf("len: %lu, ", download.packet_buffer.buffer.data_len);
-    log_debugf("chunk: %lu, sz(u64): %u\r\n",
-        download.packet_buffer.chunk_num, sizeof(uint64_t));
-    for (int i = 0; i < actual_pkts_per_filter; i++) {
-      if (download.packet_buffer.counts[i] <= 0)
-        log_debugf("%d ", i);
-      //printf("%d ", download.packet_buffer.counts[i]);
-    }
-    log_debugf("%s", "\r\n");
-  }
-
-  /*
-   * XXX: technically, this should not happen because we only invoke
-   * dongle_download_complete when the condition is exactly opposite
-   * of the one checked below.
-   */
-  if (download.packet_buffer.buffer.data_len > download.packet_buffer.received) {
-    log_errorf("%s", "Filter length mismatch (%lu/%lu)\r\n",
-        download.packet_buffer.received, download.packet_buffer.buffer.data_len);
-    dongle_download_fail(&download_stats.cuckoo_fail);
-    return;
-  }
-#endif
-
   // now we know the payload is the correct size
 
-  if (download.packet_buffer.buffer.data_len > 0) {
-    dongle_update_download_time();
-  }
+  dongle_update_download_time();
 
   num_buckets = cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 

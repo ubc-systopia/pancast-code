@@ -71,8 +71,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
     case sl_bt_evt_system_boot_id:
       dongle_init();
       dongle_start();
-      log_infof("download complete: %u\r\n", download_complete);
-
 
 #if DONGLE_UPLOAD
       access_advertise();
@@ -93,15 +91,36 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       // then check for periodic info in packet
       if (!synced && !download_complete
           && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
-        log_debugf("%s", "Opening sync\r\n");
         // Open sync
         sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
                        evt->data.evt_scanner_scan_report.address_type,
                        evt->data.evt_scanner_scan_report.adv_sid,
                        &sync_handle);
+        log_infof("open sync addr[%d]: %0x:%0x:%0x:%0x:%0x:%0x "
+            "sid: %u pkt type: 0x%0x phy(%d, %d) "
+            "tx power: %d rssi: %d chan: %d intvl: %d handle: %d sc: 0x%x\r\n",
+            evt->data.evt_scanner_scan_report.address_type,
+            evt->data.evt_scanner_scan_report.address.addr[0],
+            evt->data.evt_scanner_scan_report.address.addr[1],
+            evt->data.evt_scanner_scan_report.address.addr[2],
+            evt->data.evt_scanner_scan_report.address.addr[3],
+            evt->data.evt_scanner_scan_report.address.addr[4],
+            evt->data.evt_scanner_scan_report.address.addr[5],
+            evt->data.evt_scanner_scan_report.adv_sid,
+            evt->data.evt_scanner_scan_report.packet_type,
+            evt->data.evt_scanner_scan_report.primary_phy,
+            evt->data.evt_scanner_scan_report.secondary_phy,
+            evt->data.evt_scanner_scan_report.tx_power,
+            evt->data.evt_scanner_scan_report.rssi,
+            evt->data.evt_scanner_scan_report.channel,
+            evt->data.evt_scanner_scan_report.periodic_interval,
+            sync_handle, sc);
+#if 0
         if (sc != 0) {
-          log_errorf("sync not opened: sc: 0x%x\r\n", sc);
+          log_errorf("sync not opened, interval: %u sc: 0x%x\r\n",
+              evt->data.evt_scanner_scan_report.periodic_interval, sc);
         }
+#endif
       }
 #endif
 

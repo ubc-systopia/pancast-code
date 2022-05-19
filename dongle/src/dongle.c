@@ -484,9 +484,9 @@ void dongle_encounter_report()
   enctr_entry_counter_t num = storage.total_encounters;
   enctr_entry_counter_t cur = dongle_storage_num_encounters_current(&storage);
 
-  log_infof("[%lu] last report time: %lu, head: %u tail: %u, "
+  log_infof("[%lu] last report time: %lu, last download time: %u, head: %u tail: %u, "
       "#encounters [delta, total, stored]: %lu, %lu, %lu\r\n",
-      dongle_time, stats.start,
+      dongle_time, stats.start, stats.last_download_time,
       storage.encounters.head, storage.encounters.tail,
       (num - non_report_entry_count), num, cur);
 }

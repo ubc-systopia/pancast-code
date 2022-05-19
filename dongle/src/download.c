@@ -14,6 +14,7 @@ extern dongle_stats_t stats;
 extern float dongle_hp_timer;
 extern dongle_storage storage;
 extern dongle_timer_t dongle_time;
+float payload_start_ticks = 0, payload_end_ticks = 0;
 
 download_t download;
 cf_t cf;
@@ -224,8 +225,10 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 
 void dongle_download_complete()
 {
-  log_infof("[%u] Download complete! last dnwld time: %u data len: %d\r\n",
-      dongle_time, stats.last_download_time, download.packet_buffer.buffer.data_len);
+  log_infof("[%u] Download complete! last dnwld time: %u "
+      "data len: %d curr dwnld lat: %f\r\n",
+      dongle_time, stats.last_download_time, download.packet_buffer.buffer.data_len,
+      (double) (dongle_hp_timer - payload_start_ticks));
   int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
   for (int i = 0; i < actual_pkts_per_filter; i++) {
     if (download.packet_buffer.counts[i] > 0)
@@ -247,6 +250,8 @@ void dongle_download_complete()
     dongle_download_fail(&stats.cuckoo_fail);
     return;
   }
+
+  payload_end_ticks = dongle_hp_timer;
 
   // check the content using cuckoofilter decoder
 
@@ -307,7 +312,7 @@ void dongle_download_complete()
   stats.total_matches = download.n_matches;
   stats.payloads_complete++;
   // compute latency
-  double lat = download.time;
+  double lat = (double) (payload_end_ticks - payload_start_ticks);
   dongle_update_download_stats(stats.all_download_stats, download);
   dongle_update_download_stats(stats.completed_download_stats, download);
   stat_add(lat, stats.completed_periodic_data_avg_payload_lat);

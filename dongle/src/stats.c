@@ -74,7 +74,7 @@ void dongle_download_stats()
       stats.cuckoo_fail, stats.switch_chunk, stats.total_matches);
 
   stat_show(stats.completed_periodic_data_avg_payload_lat,
-              "[Risk broadcast] download time", "ms");
+              "[Risk broadcast] payload download time", "ms");
   dongle_download_show_stats(&stats.completed_download_stats,
                              "=== [Risk broadcast] completed ===");
   dongle_download_show_stats(&stats.failed_download_stats,

@@ -34,6 +34,8 @@ extern dongle_timer_t dongle_time;
 extern dongle_stats_t stats;
 extern void dongle_start();
 int download_complete = 0;
+extern float payload_start_ticks, payload_end_ticks;
+extern float dongle_hp_timer;
 
 // Sync handle
 static uint16_t sync_handle = 0;
@@ -133,6 +135,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_scanner_scan_report.channel,
             evt->data.evt_scanner_scan_report.periodic_interval,
             sync_handle, sc);
+
+        payload_start_ticks = dongle_hp_timer;
 #if 0
         if (sc != 0) {
           log_errorf("sync not opened, interval: %u sc: 0x%x\r\n",

@@ -118,7 +118,7 @@ static beacon_timer_t stat_epochs;
 // ROUTINES
 //
 
-static void _beacon_load_()
+static void beacon_load()
 {
   memset(&config, 0, sizeof(beacon_config_t));
   beacon_storage_init(&storage);
@@ -139,7 +139,7 @@ static void _beacon_load_()
 #endif
 }
 
-void _beacon_info_()
+void beacon_info()
 {
   char addr_s[BT_ADDR_LE_STR_LEN];
   bt_addr_le_t addr = {0};
@@ -181,7 +181,7 @@ void _beacon_info_()
 #ifdef MODE__STAT
 beacon_stats_t stats;
 
-void beacon_stats_init()
+void beacon_stats_reset()
 {
   memset(&stats, 0, sizeof(beacon_stats_t));
 }
@@ -197,7 +197,7 @@ void beacon_stat_update()
   stats.epochs = stat_epochs;
 }
 
-static void _beacon_stats_()
+static void beacon_stats()
 {
   log_infof("[%u] last report time: %u, #cycles: %u, #epochs: %u chksum: %u\r\n",
       beacon_time, stats.start, stats.cycles, stats.epochs, stats.storage_checksum);
@@ -211,9 +211,9 @@ static void _beacon_report_()
 
 #ifdef MODE__STAT
   beacon_stat_update();
-  _beacon_stats_();
+  beacon_stats();
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-  beacon_stats_init();
+  beacon_stats_reset();
   stat_start = beacon_time;
   stat_cycles = 0;
   stat_epochs = 0;
@@ -347,6 +347,10 @@ static void _beacon_epoch_()
   }
 }
 
+/*
+ * unused, instead relying on the function that allows for
+ * alternating between GAEN and PanCast ephids
+ */
 void _beacon_update_()
 {
   _beacon_epoch_();
@@ -447,7 +451,7 @@ void _alternate_advertisement_content_(int type)
   return;
 }
 
-static void _beacon_init_()
+static void beacon_stats_init()
 {
 #ifdef MODE__STAT
   stat_epochs = 0;
@@ -455,45 +459,26 @@ static void _beacon_init_()
   beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");
-    _beacon_stats_();
+    beacon_stats();
   } else {
     log_errorf("init stats checksum: 0x%0x\r\n", stats.storage_checksum);
-    beacon_stats_init();
+    beacon_stats_reset();
   }
 #endif
-  _beacon_info_();
-
-// Timer Start
-  k_timer_init(&kernel_time_lp, NULL, NULL);
-  k_timer_init(&kernel_time_alternater, NULL, NULL);
-  k_timer_init(&led_timer, beacon_led_timeout_handler, NULL);
-
-  k_timer_start(&kernel_time_lp, K_MSEC(BEACON_TIMER_RESOLUTION),
-      K_MSEC(BEACON_TIMER_RESOLUTION));
-  k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
-      K_MSEC(PAYLOAD_ALTERNATE_TIMER));
-  k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
 }
 
 int _set_adv_data_()
 {
-#ifdef BEACON_PLATFORM__GECKO
-  log_debugf("%s", "Setting legacy adv data...\r\n");
-  print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
-  sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
-                                             0, 31,
-                                             payload.en_data.bytes);
-  if (sc != 0) {
-    log_errorf("Error, sc: 0x%lx\r\n", sc);
+  int err = bt_le_adv_update_data(payload.bt_data, ARRAY_SIZE(payload.bt_data),
+      adv_res, ARRAY_SIZE(adv_res));
+  if (err) {
+    log_errorf("advertising failed to start (err %d)\r\n", err);
     return -1;
   }
-  log_debugf("%s", "Success!\r\n");
-#else
-#endif
   return 0;
 }
 
-static int _beacon_advertise_()
+static int beacon_legacy_advertise()
 {
   int err = 0;
   err = bt_le_adv_start(
@@ -557,17 +542,32 @@ void beacon_gaen_pancast_loop()
 void _beacon_broadcast_(int err)
 {
   int8_t tx_power = MAX_TX_POWER;
-  _beacon_load_();
-  _beacon_init_();
-  err = _beacon_advertise_();
   set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
+
+  beacon_load();
+  beacon_info();
 
   epoch = 0;
   cycles = 0;
 
   beacon_time = config.t_init;
 
+  // Timer Start
+  k_timer_init(&kernel_time_lp, NULL, NULL);
+  k_timer_init(&kernel_time_alternater, NULL, NULL);
+  k_timer_init(&led_timer, beacon_led_timeout_handler, NULL);
+
+  k_timer_start(&kernel_time_lp, K_MSEC(BEACON_TIMER_RESOLUTION),
+      K_MSEC(BEACON_TIMER_RESOLUTION));
+  k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
+      K_MSEC(PAYLOAD_ALTERNATE_TIMER));
+  k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
+
+  beacon_stats_init();
+
   configure_blinky();
+
+  err = beacon_legacy_advertise();
 #ifdef BEACON_GAEN_ENABLED
   beacon_gaen_pancast_loop();
 #else

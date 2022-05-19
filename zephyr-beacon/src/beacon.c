@@ -107,9 +107,6 @@ static beacon_sk_t TEST_BEACON_SK = {
 
 static bt_wrapper_t payload; // container for actual blutooth payload
 //
-// Reporting
-static beacon_timer_t report_time; // Report tracking clock
-//
 // Statistics
 #ifdef MODE__STAT
 static beacon_timer_t stat_start;
@@ -209,10 +206,9 @@ static void _beacon_stats_()
 
 static void _beacon_report_()
 {
-  if (beacon_time - report_time < BEACON_REPORT_INTERVAL)
+  if (beacon_time - stat_start < BEACON_REPORT_INTERVAL)
     return;
 
-  report_time = beacon_time;
 #ifdef MODE__STAT
   beacon_stat_update();
   _beacon_stats_();
@@ -453,12 +449,6 @@ void _alternate_advertisement_content_(int type)
 
 static void _beacon_init_()
 {
-  epoch = 0;
-  cycles = 0;
-
-  beacon_time = config.t_init;
-  report_time = beacon_time;
-
 #ifdef MODE__STAT
   stat_epochs = 0;
   stat_start = beacon_time;
@@ -571,6 +561,12 @@ void _beacon_broadcast_(int err)
   _beacon_init_();
   err = _beacon_advertise_();
   set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
+
+  epoch = 0;
+  cycles = 0;
+
+  beacon_time = config.t_init;
+
   configure_blinky();
 #ifdef BEACON_GAEN_ENABLED
   beacon_gaen_pancast_loop();

@@ -88,13 +88,13 @@ int main(void)
   uint8_t main_timer_handle = MAIN_TIMER_HANDLE;
   sl_sleeptimer_timer_handle_t timer;
   sc = sl_sleeptimer_start_periodic_timer_ms(&timer,
-      TIMER_1MS * BEACON_TIMER_RESOLUTION, sl_timer_on_expire,
+      BEACON_TIMER_RESOLUTION, sl_timer_on_expire,
       &main_timer_handle, MAIN_TIMER_PRIORT, 0);
   if (sc != SL_STATUS_OK) {
     log_errorf("Error starting main timer %d\r\n", sc);
   } else {
     log_infof("Beacon clock started, resolution: %u, handle=0x%02x\r\n",
-        TIMER_1MS * BEACON_TIMER_RESOLUTION, timer);
+        BEACON_TIMER_RESOLUTION, timer);
   }
 
   uint8_t *buf = malloc(DATA_SIZE);

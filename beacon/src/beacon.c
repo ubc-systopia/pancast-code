@@ -385,12 +385,6 @@ sl_status_t beacon_legacy_advertise()
   }
 
   return sc;
-#if 0
-  // TODO: check if this needed, given payload set in beacon_on_clock_update()
-  err = _set_adv_data_();
-  log_infof("set adv data, err: %d\r\n", err);
-  return err;
-#endif
 }
 
 static int _beacon_pause_()

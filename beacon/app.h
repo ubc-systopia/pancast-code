@@ -44,7 +44,6 @@
 #define NO_MAX_EVT 0 // 0 for no max events
 
 /* Timers */
-#define TIMER_1MS 1
 #define LED_TIMER_MS 1000 // one second in ms, used for timer
 #define MAIN_TIMER_HANDLE 0
 #define RISK_TIMER_HANDLE 1

@@ -75,7 +75,6 @@ void main(void)
 
 //
 // Bluetooth
-#ifdef BEACON_PLATFORM__ZEPHYR
 static bt_data_t adv_res[] = {
   { BT_DATA_NAME_COMPLETE,
   (sizeof(CONFIG_BT_DEVICE_NAME) - 1),
@@ -92,11 +91,6 @@ static bt_gaen_wrapper_t gaen_payload = {
 }; // container for gaen broadcast data
 static uint32_t num_ms_in_min = 60000;
 #endif /* BEACON_GAEN_ENABLED */
-
-#else
-// Advertising handle
-static uint8_t legacy_set_handle = 0xf1;
-#endif
 
 #if MODE__NRF_BEACON_TEST_CONFIG
 

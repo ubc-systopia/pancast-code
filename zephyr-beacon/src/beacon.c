@@ -424,6 +424,7 @@ void _alternate_advertisement_content_(int type)
       log_errorf("advertising failed to start (err %d)\r\n", err);
       return;
     }
+    stats.sent_broadcast_packets++;
 #ifdef BEACON_GAEN_ENABLED
   }
 #endif

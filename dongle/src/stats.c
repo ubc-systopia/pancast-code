@@ -51,10 +51,6 @@ void dongle_stats()
 
 void dongle_download_show_stats(download_stats_t * stats, char *name)
 {
-  if (stats->pkt_duplication.n == 0 && stats->n_bytes.n == 0 &&
-      stats->syncs_lost.n == 0 && stats->est_pkt_loss.n == 0)
-    return;
-
   log_infof("%s:\r\n", name);
   stat_show(stats->pkt_duplication, "Packet Duplication", "packet copies");
   stat_show(stats->est_pkt_loss, "Estimated loss rate", "% packets");
@@ -79,9 +75,14 @@ void dongle_download_stats()
               "[Risk broadcast] payload download time", "ms");
   dongle_download_show_stats(&stats.completed_download_stats,
                              "=== [Risk broadcast] completed ===");
-  dongle_download_show_stats(&stats.failed_download_stats,
-      "=== [Risk broadcast] failed ===");
-  dongle_download_show_stats(&stats.all_download_stats,
-      "=== [Risk broadcast] overall ===");
-  
+
+  if (!(stats.failed_download_stats.pkt_duplication.n == 0 &&
+      stats.failed_download_stats.n_bytes.n == 0 &&
+      stats.failed_download_stats.syncs_lost.n == 0 &&
+      stats.failed_download_stats.est_pkt_loss.n == 0)) {
+    dongle_download_show_stats(&stats.failed_download_stats,
+        "=== [Risk broadcast] failed ===");
+    dongle_download_show_stats(&stats.all_download_stats,
+        "=== [Risk broadcast] overall ===");
+  }
 }

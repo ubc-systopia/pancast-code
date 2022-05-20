@@ -24,6 +24,7 @@
         }                                                               \
         logf("%.2x ", ((uint8_t *)data)[i]);                            \
     }                                                                   \
+    logf("%s", "\r\n");                                                 \
   }
 
 #define log_en_bytes(logf, data, len, name, arg1, arg2, arg3, arg4, arg5, \

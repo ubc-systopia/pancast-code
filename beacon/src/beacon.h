@@ -84,12 +84,18 @@ typedef union
 
 typedef struct
 {
-  uint8_t storage_checksum; // zero for valid stat data
-  beacon_timer_t duration;
+  /*
+   * zero for valid stat data
+   */
+  uint8_t storage_checksum;
   beacon_timer_t start;
-  beacon_timer_t end;
-  uint32_t cycles;
+  /*
+   * total number of epochs elapsed
+   */
   uint32_t epochs;
+  /*
+   * total number of legacy adv. packets sent
+   */
   uint32_t sent_broadcast_packets;
   uint32_t total_packets_sent;
   uint32_t crc_errors;
@@ -106,6 +112,5 @@ int beacon_clock_increment(beacon_timer_t time);
 sl_status_t beacon_legacy_advertise();
 void beacon_periodic_advertise();
 void set_risk_data(int len, uint8_t *data);
-void beacon_log_counters(void);
 
 #endif

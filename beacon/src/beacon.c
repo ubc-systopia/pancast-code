@@ -54,17 +54,6 @@ static beacon_timer_t cycles;         // total number of updates.
 static uint8_t legacy_set_handle = 0xf1;
 static bt_wrapper_t payload; // container for actual blutooth payload
 
-// Statistics
-#ifdef MODE__STAT
-static beacon_timer_t stat_start;
-static beacon_timer_t stat_cycles;
-static beacon_timer_t stat_epochs;
-uint32_t stat_sent_broadcast_packets = 0;
-uint32_t stat_total_packets_sent = 0;
-uint32_t stat_crc_errors = 0;
-uint32_t stat_failures = 0;
-#endif
-
 #if MODE__SL_BEACON_TEST_CONFIG
 static pubkey_t TEST_BACKEND_PK = {
   {0xad, 0xf4, 0xca, 0x6c, 0xa6, 0xd9, 0x11, 0x22}
@@ -157,27 +146,28 @@ void beacon_stats_reset()
   memset(&stats, 0, sizeof(beacon_stats_t));
 }
 
-void beacon_stat_update()
+void beacon_stats_update()
 {
-  // Copy data
-  // TODO use the stats containers from the start
-  stats.duration = beacon_time - stat_start;
-  stats.start = stat_start;
-  stats.end = beacon_time;
-  stats.cycles = stat_cycles;
-  stats.epochs = stat_epochs;
-  stats.sent_broadcast_packets = stat_sent_broadcast_packets;
-  stats.total_packets_sent = stat_total_packets_sent;
-  stats.crc_errors = stat_crc_errors;
-  stats.failures = stat_failures;
+  uint16_t tx_packets;
+  uint16_t rx_packets;
+  uint16_t crc_errors;
+  uint16_t failures;
+
+  /*
+   * log hardware counters
+   */
+  sl_bt_system_get_counters(1, &tx_packets, &rx_packets,
+      &crc_errors, &failures);
+
+  stats.total_packets_sent += (uint32_t) tx_packets;
+  stats.crc_errors += (uint32_t) crc_errors;
+  stats.failures += (uint32_t) failures;
 }
 
-static void beacon_stats()
+static void beacon_stats_print()
 {
-  log_infof("[%lu] last report time: %lu, #cycles: %u, "
-      "#epochs: %u chksum: %u\r\n",
-      beacon_time, stats.start, stats.cycles,
-      stats.epochs, stats.storage_checksum);
+  log_infof("[%lu] last report time: %lu #epochs: %u chksum: %u\r\n",
+      beacon_time, stats.start, stats.epochs, stats.storage_checksum);
   log_infof("sent broadcast packets: %u, total sent packets: %u, "
 		  "crc errors: %u, failures: %u\r\n",
 		  stats.sent_broadcast_packets, stats.total_packets_sent,
@@ -191,36 +181,16 @@ static void beacon_stats()
 static void _beacon_report_()
 {
 #ifdef MODE__STAT
-  if (beacon_time - stat_start < BEACON_REPORT_INTERVAL)
+  if (beacon_time - stats.start < BEACON_REPORT_INTERVAL)
     return;
 
-  beacon_stat_update();
-  beacon_stats();
+  beacon_stats_update();
+  beacon_stats_print();
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-  beacon_stats_reset();
-  stat_start = beacon_time;
-  stat_cycles = 0;
-  stat_epochs = 0;
+//  beacon_stats_reset();
+//  stat_epochs = 1;
+  stats.start = beacon_time;
 #endif
-}
-
-/* Log system counters */
-void beacon_log_counters()
-{
-  uint16_t tx_packets;
-  uint16_t rx_packets;
-  uint16_t crc_errors;
-  uint16_t failures;
-
-  sl_bt_system_get_counters(1, &tx_packets, &rx_packets,
-      &crc_errors, &failures);
-
-  stat_total_packets_sent += (uint32_t) tx_packets;
-  stat_crc_errors += (uint32_t) crc_errors;
-  stat_failures += (uint32_t) failures;
-
-  stat_sent_broadcast_packets++;
-  // log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n", tx_packets, rx_packets, crc_errors, failures);
 }
 
 void beacon_reset_counters()
@@ -303,16 +273,20 @@ static void _gen_ephid_()
 static void beacon_stats_init()
 {
 #ifdef MODE__STAT
-  stat_epochs = 0;
-  stat_start = beacon_time;
+  stats.epochs = 1;
+  stats.start = beacon_time;
   beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");
-    beacon_stats();
+    beacon_stats_print();
   } else {
     log_errorf("init stats checksum: 0x%0x\r\n", stats.storage_checksum);
     beacon_stats_reset();
   }
+#endif
+#if MODE__SL_BEACON_TEST_CONFIG
+  beacon_stats_reset();
+  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
 #endif
 }
 
@@ -327,7 +301,7 @@ static void _beacon_epoch_()
     _gen_ephid_();
     if (epoch != old_epoch) {
 #ifdef MODE__STAT
-      stat_epochs++;
+      stats.epochs++;
 #endif
     }
     // TODO: log time to flash
@@ -344,6 +318,9 @@ int _set_adv_data_()
     log_errorf("Error, sc: 0x%lx\r\n", sc);
     return -1;
   }
+
+  stats.sent_broadcast_packets++;
+
   log_debugf("%s", "Success!\r\n");
   return 0;
 }
@@ -376,6 +353,7 @@ sl_status_t beacon_legacy_advertise()
     log_errorf("Error, sc: 0x%lx\r\n", sc);
     return sc;
   }
+
   // Start legacy advertising
   sc = sl_bt_advertiser_start(legacy_set_handle, advertiser_user_data,
       advertiser_non_connectable);

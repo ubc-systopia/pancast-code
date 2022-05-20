@@ -192,13 +192,14 @@ int main(void)
         set_risk_data(tot_len, buf);
       }
 
-      // add second delay to sync up with advertising interval
-      add_delay_ms(DATA_DELAY);
-
       // end timer
       end_time = sl_sleeptimer_get_tick_count64();
       ms = sl_sleeptimer_tick_to_ms(end_time-start_time);
+      stat_add(ms, stats.broadcast_payload_update_duration);
       log_debugf("%s", "READ: %d, LOOP TIME: %lu\r\n", rlen, ms);
+
+      // add second delay to sync up with advertising interval
+      add_delay_ms(DATA_DELAY);
 
 #else // PERIODIC_TEST
 
@@ -210,8 +211,6 @@ int main(void)
       log_debugf("LOOP TIME: %f\r\n", (endtime - starttime));
 
 #endif // PERIODIC_TEST
-
-      beacon_log_counters();
     }
 #endif // BEACON_MODE__NETWORK
 

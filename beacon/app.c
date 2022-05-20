@@ -211,7 +211,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       if (sc != 0) {
           log_errorf("Error starting legacy adv: %d\r\n", sc);
       }
-      _beacon_update_();
+      beacon_on_clock_update();
 #endif
 
       break;

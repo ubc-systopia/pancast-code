@@ -112,6 +112,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   read(sizeof(beacon_id_t), &cfg->beacon_id);
   read(sizeof(beacon_location_id_t), &cfg->beacon_location_id);
   read(sizeof(beacon_timer_t), &cfg->t_init);
+  read(sizeof(beacon_timer_t), &cfg->t_cur);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
   log_debugf("bknd key off: %u, size: %u\r\n",
       off, cfg->backend_pk_size);
@@ -195,6 +196,7 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
   write(&cfg->beacon_id, sizeof(beacon_id_t));
   write(&cfg->beacon_location_id, sizeof(beacon_location_id_t));
   write(&cfg->t_init, sizeof(beacon_timer_t));
+  write(&cfg->t_cur, sizeof(beacon_timer_t));
   write(&cfg->backend_pk_size, sizeof(key_size_t));
   write(&cfg->backend_pk, cfg->backend_pk_size);
   off += PK_MAX_SIZE - cfg->backend_pk_size;
@@ -208,10 +210,6 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
 #if 0
   // write test filter
   write(test_filter, sto->test_filter_size);
-
-//  beacon_config_t local_cfg;
-//  memset(&local_cfg, 0, sizeof(beacon_config_t));
-  beacon_storage_load_config(sto, cfg);
 #endif
 }
 

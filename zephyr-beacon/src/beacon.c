@@ -158,6 +158,7 @@ void beacon_info()
       (unsigned long) config.beacon_location_id);
   log_infof("  MAC addr:                 %s\r\n", addr_s);
   log_infof("  Initial clock:            %u\r\n", config.t_init);
+  log_infof("  Current clock:            %u\r\n", config.t_cur);
   log_infof("  Timer frequency:          %u Hz\r\n", timer_freq);
   log_infof("  Backend public key size:  %u bytes\r\n",
       config.backend_pk_size);
@@ -501,6 +502,11 @@ int beacon_clock_increment(beacon_timer_t time)
   beacon_time += time;
   log_debugf("beacon timer: %u\r\n", beacon_time);
 //  _beacon_update_();
+
+  // update beacon time in config and save to flash
+  config.t_cur = beacon_time;
+  beacon_storage_save_config(&storage, &config);
+
   _beacon_pause_();
   return 0;
 }
@@ -550,7 +556,7 @@ void _beacon_broadcast_(int err)
   epoch = 0;
   cycles = 0;
 
-  beacon_time = config.t_init;
+  beacon_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
 
   // Timer Start
   k_timer_init(&kernel_time_lp, NULL, NULL);

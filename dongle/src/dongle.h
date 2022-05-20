@@ -54,8 +54,21 @@
  */
 #define LOG_MIN_WAIT BEACON_EPOCH_LENGTH
 
-// Time to wait after before trying to download again
+/*
+ * time to wait after before trying to download again on periodic adv. channel
+ */
 #define MIN_DOWNLOAD_WAIT 5
+/*
+ * threshold between consecutive sync open and sync close events,
+ * below which there is a strong chance that the dongle is not able to
+ * sync because there is no network beacon nearby
+ */
+#define PERIODIC_SYNC_FAIL_LATENCY  1
+/*
+ * max # of periodic adv. sync attempts tried in close succession before
+ * pausing because there is probably no network beacon nearby
+ */
+#define NUM_SYNC_ATTEMPTS  5
 
 // Bluetooth Scanning Parameters
 // These are hard-coded, in ms

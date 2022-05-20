@@ -39,6 +39,9 @@ extern float dongle_hp_timer;
 
 // Sync handle
 static uint16_t sync_handle = 0;
+static uint16_t prev_sync_handle = -1;
+static uint16_t num_sync_open_attempts = 0;
+dongle_timer_t last_sync_open_time = 0, last_sync_close_time = 0;
 
 int synced = 0; // no concurrency control but acts as an eventual state signal
 
@@ -57,6 +60,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
         download_complete, download.is_active, synced, sync_handle);
     if (download_complete == 0 && synced == 1) {
       sc = sl_bt_sync_close(sync_handle);
+      last_sync_close_time = dongle_time;
       synced = 0;
       log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
@@ -109,15 +113,24 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 #undef report
 
 #if MODE__PERIODIC
+      if (last_sync_close_time - last_sync_open_time < PERIODIC_SYNC_FAIL_LATENCY) {
+        num_sync_open_attempts++;
+      } else {
+        num_sync_open_attempts = 0;
+      }
+
       // then check for periodic info in packet
-      if (!synced && !download_complete
-          && evt->data.evt_scanner_scan_report.periodic_interval != 0) {
+      if (!synced && !download_complete &&
+          evt->data.evt_scanner_scan_report.periodic_interval != 0 &&
+          num_sync_open_attempts < NUM_SYNC_ATTEMPTS) {
         // Open sync
         sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
                        evt->data.evt_scanner_scan_report.address_type,
                        evt->data.evt_scanner_scan_report.adv_sid,
                        &sync_handle);
-        log_infof("open sync addr[%d]: %0x:%0x:%0x:%0x:%0x:%0x "
+        last_sync_open_time = dongle_time;
+        if (prev_sync_handle != sync_handle) {
+          log_infof("open sync addr[%d]: %0x:%0x:%0x:%0x:%0x:%0x "
             "sid: %u pkt type: 0x%0x phy(%d, %d) "
             "tx power: %d rssi: %d chan: %d intvl: %d handle: %d sc: 0x%x\r\n",
             evt->data.evt_scanner_scan_report.address_type,
@@ -136,6 +149,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_scanner_scan_report.channel,
             evt->data.evt_scanner_scan_report.periodic_interval,
             sync_handle, sc);
+          prev_sync_handle = sync_handle;
+        }
 
         payload_start_ticks = dongle_hp_timer;
 #if 0
@@ -144,6 +159,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
               evt->data.evt_scanner_scan_report.periodic_interval, sc);
         }
 #endif
+      } else if (num_sync_open_attempts >= NUM_SYNC_ATTEMPTS &&
+          ((dongle_time - last_sync_open_time) >= MIN_DOWNLOAD_WAIT)) {
+        num_sync_open_attempts = 0;
+        last_sync_open_time = dongle_time;
       }
 #endif
 
@@ -184,6 +203,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
        */
       if (download_complete == 1 || (dongle_time - stats.last_download_time > 10)) {
         sc = sl_bt_sync_close(sync_handle);
+        last_sync_close_time = dongle_time;
         log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
           "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
           dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,

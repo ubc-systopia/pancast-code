@@ -327,7 +327,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 #endif
 
 #ifdef MODE__STAT
-    stats.num_obs_ids++;
+    stat_add(rssi, stats.enctr_rssi);
 #endif
     log_telemf("%02x,%u,%u,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
        dongle_time, epoch, *enc->b, *enc->t);

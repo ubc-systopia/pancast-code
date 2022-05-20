@@ -27,12 +27,6 @@ typedef struct {
    */
   dongle_timer_t last_download_time;
   /*
-   * # unique ephids seen
-   * persisted on storage only periodically, so may lose some stats
-   * in case of an unclean shutdown
-   */
-  uint32_t num_obs_ids;
-  /*
    * number of periodic adv. channel scans where scan returned an error
    */
   uint32_t num_periodic_data_error;
@@ -72,6 +66,11 @@ typedef struct {
    * (regardless of whether the ephemeral id is unique or not)
    */
   stat_t scan_rssi;
+  /*
+   * rssi stats for unique encounters on legacy adv. scans
+   * invoked by dongle for pancast
+   */
+  stat_t enctr_rssi;
   /*
    * periodic data payload size stats
    */

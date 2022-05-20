@@ -37,8 +37,9 @@ void dongle_stats()
   double xput = ((double) stats.periodic_data_size.mu * stats.periodic_data_size.n
       * BITS_PER_BYTE) / stats.total_periodic_data_time / Kbps;
   log_infof("[Legacy adv] #ephids: %d, #scan results: %lu\r\n",
-      stats.num_obs_ids, stats.scan_rssi.n);
+      stats.enctr_rssi.n, stats.scan_rssi.n);
   stat_show(stats.scan_rssi, "[Legacy adv] Scan RSSI", "");
+  stat_show(stats.enctr_rssi, "[Legacy adv] Enctr RSSI", "");
   stat_show(stats.periodic_data_rssi, "[Period adv] Data RSSI", "");
   stat_show(stats.periodic_data_size, "[Period adv] Pkt size", "bytes");
   log_infof("[Period adv] #rcvd: %f, #error: %lu, #bytes: %f"

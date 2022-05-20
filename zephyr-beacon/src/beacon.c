@@ -445,6 +445,10 @@ static void beacon_stats_init()
     beacon_stats_reset();
   }
 #endif
+#if MODE__NRF_BEACON_TEST_CONFIG
+  beacon_stats_reset();
+  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+#endif
 }
 
 int _set_adv_data_()

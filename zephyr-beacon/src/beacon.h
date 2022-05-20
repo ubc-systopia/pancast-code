@@ -59,12 +59,20 @@ typedef union
 
 typedef struct
 {
-  uint8_t storage_checksum; // zero for valid stat data
-  beacon_timer_t duration;
+  /*
+   * zero for valid stat data
+   */
+  uint8_t storage_checksum;
   beacon_timer_t start;
   beacon_timer_t end;
-  uint32_t cycles;
+  /*
+   * total number of epochs elapsed
+   */
   uint32_t epochs;
+  /*
+   * total number of legacy adv. packets sent
+   */
+  uint32_t sent_broadcast_packets;
 } beacon_stats_t;
 
 extern beacon_stats_t stats;

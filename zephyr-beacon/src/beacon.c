@@ -110,7 +110,6 @@ static bt_wrapper_t payload; // container for actual blutooth payload
 // Statistics
 #ifdef MODE__STAT
 static beacon_timer_t stat_start;
-static beacon_timer_t stat_cycles;
 static beacon_timer_t stat_epochs;
 #endif
 
@@ -187,21 +186,20 @@ void beacon_stats_reset()
   memset(&stats, 0, sizeof(beacon_stats_t));
 }
 
-void beacon_stat_update()
+void beacon_stats_update()
 {
   // Copy data
   // TODO use the stats containers from the start
-  stats.duration = beacon_time - stat_start;
   stats.start = stat_start;
   stats.end = beacon_time;
-  stats.cycles = stat_cycles;
   stats.epochs = stat_epochs;
 }
 
-static void beacon_stats()
+static void beacon_stats_print()
 {
-  log_infof("[%u] last report time: %u, #cycles: %u, #epochs: %u chksum: %u\r\n",
-      beacon_time, stats.start, stats.cycles, stats.epochs, stats.storage_checksum);
+  log_infof("[%u] last report time: %u #epochs: %u #pkts: %u chksum: 0x%0x\r\n",
+      beacon_time, stats.start, stats.epochs, stats.sent_broadcast_packets,
+      stats.storage_checksum);
 }
 #endif
 
@@ -211,12 +209,11 @@ static void _beacon_report_()
     return;
 
 #ifdef MODE__STAT
-  beacon_stat_update();
-  beacon_stats();
+  beacon_stats_update();
+  beacon_stats_print();
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
   beacon_stats_reset();
   stat_start = beacon_time;
-  stat_cycles = 0;
   stat_epochs = 0;
 #endif
 }
@@ -352,21 +349,11 @@ static void _beacon_epoch_()
  * unused, instead relying on the function that allows for
  * alternating between GAEN and PanCast ephids
  */
-void _beacon_update_()
+void beacon_on_clock_update()
 {
   _beacon_epoch_();
   _beacon_encode_();
   _set_adv_data_();
-}
-
-static int _beacon_pause_()
-{
-  cycles++;
-#ifdef MODE__STAT
-  stat_cycles++;
-#endif
-  _beacon_report_();
-  return 0;
 }
 
 #ifdef BEACON_GAEN_ENABLED
@@ -436,7 +423,7 @@ void _alternate_advertisement_content_(int type)
                          CONFIG_BT_DEVICE_NAME,
                          sizeof(CONFIG_BT_DEVICE_NAME) - 1) };
 #endif
-//    _beacon_update_();
+//    beacon_on_clock_update();
     _beacon_epoch_();
     _beacon_encode_();
     // currently transmitting gaen data, switch to pancast data
@@ -460,7 +447,7 @@ static void beacon_stats_init()
   beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");
-    beacon_stats();
+    beacon_stats_print();
   } else {
     log_errorf("init stats checksum: 0x%0x\r\n", stats.storage_checksum);
     beacon_stats_reset();
@@ -501,13 +488,16 @@ int beacon_clock_increment(beacon_timer_t time)
 {
   beacon_time += time;
   log_debugf("beacon timer: %u\r\n", beacon_time);
-//  _beacon_update_();
+//  beacon_on_clock_update();
 
   // update beacon time in config and save to flash
   config.t_cur = beacon_time;
   beacon_storage_save_config(&storage, &config);
 
-  _beacon_pause_();
+  // update stats and save to flash
+  cycles++;
+  _beacon_report_();
+
   return 0;
 }
 

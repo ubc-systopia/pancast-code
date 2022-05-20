@@ -31,7 +31,7 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 /*
  * uncomment to set global params for testing
  */
-#define PANCAST__TEST
+//#define PANCAST__TEST
 
 #ifndef PANCAST__TEST
 

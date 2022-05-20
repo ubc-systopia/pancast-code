@@ -171,7 +171,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
 
-  log_infof("%02x %.0f %d %d dwnld active: %d pktseq: %u "
+  log_debugf("%02x %.0f %d %d dwnld active: %d pktseq: %u "
       "chunkid: %u, chunknum: %u chunklen: %u data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
       download.is_active, rbh->pkt_seq, rbh->chunkid,

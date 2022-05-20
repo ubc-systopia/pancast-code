@@ -57,11 +57,11 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
         download_complete, download.is_active, synced, sync_handle);
     if (download_complete == 0 && synced == 1) {
       sc = sl_bt_sync_close(sync_handle);
+      synced = 0;
       log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
         dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle, sc);
-      synced = 0;
     }
   }
   if (user_handle == PREC_TIMER_HANDLE) {
@@ -155,7 +155,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_closed_id:
-      app_log_info("Sync lost...\r\n");
+      log_infof("Sync lost...\r\n");
       dongle_on_sync_lost();
       synced = 0;
       break;
@@ -183,11 +183,11 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
        * the periodic intervals were not properly aligned?
        */
       if (download_complete == 1 || (dongle_time - stats.last_download_time > 10)) {
+        sc = sl_bt_sync_close(sync_handle);
         log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
-          "download complete: %d active: %d synced: %d handle: %d\r\n",
+          "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
           dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
-          download_complete, download.is_active, synced, sync_handle);
-        sl_bt_sync_close(sync_handle);
+          download_complete, download.is_active, synced, sync_handle, sc);
       }
 #if 0
       if (dongle_download_complete_status() == 1) {

@@ -18,7 +18,7 @@
  * 1 - init test config
  * 0 - load config from storage
  */
-#define MODE__SL_BEACON_TEST_CONFIG  1
+#define MODE__SL_BEACON_TEST_CONFIG  0
 
 /*
  * config to enable periodic advertising in network beacon
@@ -108,6 +108,7 @@ extern beacon_stats_t stats;
 void beacon_init();
 void beacon_broadcast();
 int _set_adv_data_();
+void beacon_on_clock_update(void);
 int beacon_clock_increment(beacon_timer_t time);
 sl_status_t beacon_legacy_advertise();
 void beacon_periodic_advertise();

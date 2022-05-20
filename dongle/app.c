@@ -51,7 +51,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     dongle_clock_increment();
     dongle_log_counters();
     download_complete = dongle_download_complete_status();
-    log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
+    log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d\r\n",
         dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle);

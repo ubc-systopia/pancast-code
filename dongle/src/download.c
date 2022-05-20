@@ -146,14 +146,16 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
 
   if (data_len < sizeof(rpi_ble_hdr)) {
-    log_infof("%02x %.0f %d %d dwnld active: %d "
+    log_debugf("%02x %.0f %d %d dwnld active: %d "
       "data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
       download.is_active, download.packet_buffer.chunk_num,
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
 
-    download.n_corrupt_packets++;
+    if (data_len > 0)
+      download.n_corrupt_packets++;
+
     return;
   }
 

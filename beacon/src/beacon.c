@@ -387,16 +387,6 @@ sl_status_t beacon_legacy_advertise()
   return sc;
 }
 
-static int _beacon_pause_()
-{
-  cycles++;
-#ifdef MODE__STAT
-  stat_cycles++;
-#endif
-  _beacon_report_();
-  return 0;
-}
-
 void beacon_on_clock_update()
 {
   _beacon_epoch_();
@@ -408,13 +398,19 @@ int beacon_clock_increment(beacon_timer_t time)
 {
   beacon_time += time;
   log_debugf("beacon timer: %u\r\n", beacon_time);
+
 #if BEACON_MODE__NETWORK == 0
   beacon_on_clock_update();
 #endif
+
   // update beacon time in config and save to flash
   config.t_cur = beacon_time;
   beacon_storage_save_config(&storage, &config);
-  _beacon_pause_();
+
+  // update stats and save to flash
+  cycles++;
+  _beacon_report_();
+
   return 0;
 }
 

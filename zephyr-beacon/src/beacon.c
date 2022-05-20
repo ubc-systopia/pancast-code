@@ -5,9 +5,6 @@
 // payload to broadcast relevant information. See white-paper for
 // details.
 //
-#include "settings.h"
-#include "beacon.h"
-#include "test.h"
 #include <include/stats.h>
 #include <include/constants.h>
 
@@ -34,11 +31,11 @@
 
 #include <drivers/flash.h>
 
+#include "beacon.h"
+#include "test.h"
 #include "storage.h"
 
-#include "constants.h"
 #include "settings.h"
-#include "test.h"
 #include "led.h"
 
 #include <include/util.h>

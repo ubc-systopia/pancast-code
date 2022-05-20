@@ -45,7 +45,6 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
 // clock resolution in ms - this corresponds to a single time 'unit'
 #define BEACON_TIMER_RESOLUTION 60000
-#define DONGLE_TIMER_RESOLUTION 60000
 #define PAYLOAD_ALTERNATE_TIMER  1000
 #define LED_TIMER 1000
 

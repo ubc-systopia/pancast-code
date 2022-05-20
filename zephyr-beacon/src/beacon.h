@@ -4,7 +4,6 @@
 #include <assert.h>
 
 #include "settings.h"
-#include "constants.h"
 
 #include <include/stats.h>
 

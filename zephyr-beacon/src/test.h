@@ -5,8 +5,6 @@
 
 #include <stdint.h>
 #include "settings.h"
-#include "constants.h"
-
 
 #define TEST_BEACON_ID ((BROADCAST_SERVICE_ID << 16) + 2)
 //12345678987654321

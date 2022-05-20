@@ -13,7 +13,6 @@
  */
 
 #define BEACON_TIMER_RESOLUTION 60000       // ms
-#define DONGLE_TIMER_RESOLUTION 60000       // ms
 #define PAYLOAD_ALTERNATE_TIMER  1000       // ms
 #define LED_TIMER 1000
 

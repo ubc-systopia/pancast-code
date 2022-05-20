@@ -64,7 +64,6 @@ typedef struct
    */
   uint8_t storage_checksum;
   beacon_timer_t start;
-  beacon_timer_t end;
   /*
    * total number of epochs elapsed
    */

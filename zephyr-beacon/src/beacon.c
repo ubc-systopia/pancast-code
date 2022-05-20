@@ -106,12 +106,6 @@ static beacon_sk_t TEST_BEACON_SK = {
 #endif /* MODE__NRF_BEACON_TEST_CONFIG */
 
 static bt_wrapper_t payload; // container for actual blutooth payload
-//
-// Statistics
-#ifdef MODE__STAT
-static beacon_timer_t stat_start;
-static beacon_timer_t stat_epochs;
-#endif
 
 //
 // ROUTINES
@@ -186,13 +180,10 @@ void beacon_stats_reset()
   memset(&stats, 0, sizeof(beacon_stats_t));
 }
 
-void beacon_stats_update()
+// deprecated
+static inline void beacon_stats_update()
 {
-  // Copy data
-  // TODO use the stats containers from the start
-  stats.start = stat_start;
-  stats.end = beacon_time;
-  stats.epochs = stat_epochs;
+  return;
 }
 
 static void beacon_stats_print()
@@ -205,16 +196,16 @@ static void beacon_stats_print()
 
 static void _beacon_report_()
 {
-  if (beacon_time - stat_start < BEACON_REPORT_INTERVAL)
+  if (beacon_time - stats.start < BEACON_REPORT_INTERVAL)
     return;
 
 #ifdef MODE__STAT
   beacon_stats_update();
   beacon_stats_print();
   beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
-  beacon_stats_reset();
-  stat_start = beacon_time;
-  stat_epochs = 0;
+//  beacon_stats_reset();
+//  stat_epochs = 1;
+  stats.start = beacon_time;
 #endif
 }
 
@@ -338,7 +329,7 @@ static void _beacon_epoch_()
     _gen_ephid_();
     if (epoch != old_epoch) {
 #ifdef MODE__STAT
-      stat_epochs++;
+      stats.epochs++;
 #endif
     }
     // TODO: log time to flash
@@ -442,8 +433,8 @@ void _alternate_advertisement_content_(int type)
 static void beacon_stats_init()
 {
 #ifdef MODE__STAT
-  stat_epochs = 0;
-  stat_start = beacon_time;
+  stats.epochs = 1;
+  stats.start = beacon_time;
   beacon_storage_read_stat(&storage, &stats, sizeof(beacon_stats_t));
   if (!stats.storage_checksum) {
     log_infof("%s", "Existing Statistics Found\r\n");

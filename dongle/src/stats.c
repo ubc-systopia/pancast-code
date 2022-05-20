@@ -30,6 +30,10 @@ void dongle_stats_init(dongle_storage *sto)
   } else {
     dongle_stats_reset();
   }
+#if MODE__SL_DONGLE_TEST_CONFIG
+  dongle_stats_reset();
+  dongle_storage_save_stat(&storage, &stats, sizeof(dongle_stats_t));
+#endif
 }
 
 void dongle_stats()

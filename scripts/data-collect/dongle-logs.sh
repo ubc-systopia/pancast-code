@@ -14,44 +14,38 @@ rootdir=/Users/nboufford/workspace/pancast
 workdir=/dongle-logs
 
 log_path=$rootdir/$workdir
-today=`date +%Y%m%dT%H-%M-%S`
+today=`date +%y%m%dT-%H%M`
+outdir="$log_path/$today"
 
-dongle_dir() {
-  if [ -d $log_path/$1 ]
-  then
-    :
-  else
-    echo "making new dongle dir"
-    mkdir $1
-  fi  
-}
+mkdir -p $outdir
 
 screen_log() {
-  screen -d -m  -L -Logfile $log_path/$1/$today.log $2 &
+#  screen -d -m  -L -Logfile $log_path/$1/$today.log $2 &
+  screen -d -m  -L -Logfile $outdir/$1.log $2 &
 }
 
-declare -A dongles
-
-dongles[d0]='/dev/tty.usbmodem0004401856281'
-dongles[d1]='/dev/tty.usbmodem0004401848491'
-dongles[d2]='/dev/tty.usbmodem0004401848771'
-dongles[d3]='/dev/tty.usbmodem0004401853561'
-dongles[d4]='/dev/tty.usbmodem0004401850581'
-dongles[d5]='/dev/tty.usbmodem0004401851911'
-dongles[d6]='/dev/tty.usbmodem0004401850921'
-dongles[d7]='/dev/tty.usbmodem0004401856151'
-dongles[d8]='/dev/tty.usbmodem0004401849221'
-dongles[d9]='/dev/tty.usbmodem0004401843111'
+declare -a dongles
+dongles=(
+  '/dev/tty.usbmodem0004401843111'
+  '/dev/tty.usbmodem0004401848491'
+  '/dev/tty.usbmodem0004401848771'
+  '/dev/tty.usbmodem0004401849221'
+  '/dev/tty.usbmodem0004401850581'
+  '/dev/tty.usbmodem0004401850921'
+  '/dev/tty.usbmodem0004401851911'
+  '/dev/tty.usbmodem0004401853561'
+  '/dev/tty.usbmodem0004401856151'
+  '/dev/tty.usbmodem0004401856281'
+)
 
 for i in "${!dongles[@]}"
 do
   ls ${dongles[$i]} 2> /dev/null
-  if [[ $? -eq 1 ]]
-  then
-    echo "${dongles[$i]} not found"
-  else
-    dongle_dir $i
-    screen_log $i ${dongles[$i]}
-  fi   
+  if [[ $? -eq 1 ]]; then
+    echo "[d$i] ${dongles[$i]} not found"
+    continue
+  fi
+
+  screen_log "d$i" ${dongles[$i]}
 done
 

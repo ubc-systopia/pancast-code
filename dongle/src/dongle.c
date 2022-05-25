@@ -83,6 +83,11 @@ void dongle_init()
   epoch = 0;
   download_complete = 0;
 
+#if TEST_DONGLE
+  // test
+  dongle_test_enctr_storage();
+#endif
+
   storage.encounters.head = config.en_head;
   storage.encounters.tail = config.en_tail;
 
@@ -470,11 +475,5 @@ void dongle_report()
   memcpy(statbuf, (void *) &stats, sizeof(dongle_stats_t));
   dongle_storage_save_stat(&storage, &config, statbuf, sizeof(dongle_stats_t));
   last_stat_time = dongle_time;
-#endif
-
-#if 0
-#if TEST_DONGLE
-  dongle_test();
-#endif
 #endif
 }

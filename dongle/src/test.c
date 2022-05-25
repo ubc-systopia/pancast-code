@@ -4,6 +4,7 @@
 #include "encounter.h"
 
 #include "common/src/util/log.h"
+#include "common/src/util/util.h"
 #include "common/src/test.h"
 
 extern dongle_storage storage;
@@ -88,6 +89,48 @@ int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry_t *entr
     return 0;
   }
   return 1;
+}
+
+void dongle_test_enctr_storage(void)
+{
+  uint8_t byte_arr[BEACON_EPH_ID_HASH_LEN] = {1, 2, 3, 4, 5, 6, 7, 8,
+    9, 10, 11, 12, 0, 0};
+  uint16_t *last_two = (uint16_t *) &byte_arr[BEACON_EPH_ID_HASH_LEN-2];
+
+  dongle_encounter_entry_t test_en = (dongle_encounter_entry_t) {
+    .beacon_id = TEST_BEACON_ID+1,
+    .location_id = TEST_BEACON_ID+1,
+    .beacon_time_start = 10,
+    .beacon_time_int = 2,
+    .dongle_time_start = 11,
+    .dongle_time_int = 2,
+    .rssi = -64
+  };
+
+//  int max_enctrs = dongle_storage_max_log_count(&storage);
+  int i;
+  int start_offset = ENCOUNTERS_PER_PAGE * 3;
+  int max_enctrs = ENCOUNTERS_PER_PAGE * TARGET_FLASH_LOG_NUM_PAGES - start_offset;
+  storage.encounters.head = start_offset;
+  log_infof("update off: %u cnt: %u\r\n", start_offset, max_enctrs);
+  for (i = 0; i < max_enctrs; i++) {
+    *last_two = i;
+    memcpy(&test_en.eph_id.bytes, byte_arr, BEACON_EPH_ID_HASH_LEN);
+#if 0
+    hexdumpen(&test_en.eph_id, BEACON_EPH_ID_HASH_LEN, "test",
+        test_en.beacon_id, (uint32_t) test_en.location_id,
+        (uint16_t) (start_offset+i),
+        (uint32_t) test_en.beacon_time_start, test_en.beacon_time_int,
+        (uint32_t) test_en.dongle_time_start, test_en.dongle_time_int,
+        (int8_t) test_en.rssi,
+        ENCOUNTER_LOG_OFFSET(&storage, (start_offset+i)));
+#endif
+    dongle_storage_log_encounter(&storage, &config, &dongle_time, &test_en);
+  }
+
+  // read back all log storage
+  dongle_storage_load_encounter(&storage, 580,
+      dongle_print_encounter);
 }
 
 #if TEST_DONGLE

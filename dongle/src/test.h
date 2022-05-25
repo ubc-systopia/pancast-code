@@ -42,6 +42,9 @@ static otp_set TEST_OTPS = {
 
 void dongle_test();
 void dongle_test_encounter(encounter_broadcast_t *enc);
+
 #endif /* TEST_DONGLE */
+
+void dongle_test_enctr_storage(void);
 
 #endif

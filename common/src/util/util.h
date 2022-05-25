@@ -28,7 +28,7 @@
   }
 
 #define log_en_bytes(logf, data, len, name, arg1, arg2, arg3, arg4, arg5, \
-                         arg6, arg7, arg8)                                    \
+               arg6, arg7, arg8, arg9)                                    \
   {                                                                     \
     uint32_t time_ms = (uint32_t) (sl_sleeptimer_get_tick_count64()     \
         * 1000 / sl_sleeptimer_get_timer_frequency());                  \
@@ -45,8 +45,8 @@
         }                                                               \
         logf("%.2x", ((uint8_t *)data)[i]);                             \
     }																	\
-    logf(" 0x%lx 0x%lx %u %lu %u %lu %u %d\r\n", arg1, arg2, arg3, arg4, arg5, arg6, \
-      arg7, arg8);         \
+    logf(" 0x%lx 0x%lx %u %lu %u %lu %u %d [%lu]\r\n", arg1, arg2, arg3, \
+        arg4, arg5, arg6, arg7, arg8, arg9);      \
   }
 
 #define print_bytes(data, len, name) \
@@ -55,9 +55,10 @@
 #define hexdumpn(data, len, name)   \
   log_bytes(printf, data, len, name)
 
-#define hexdumpen(data, len, name, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)   \
-  log_en_bytes(printf, data, len, name, arg1, arg2, arg3, arg4, arg5,  \
-		  arg6, arg7, arg8)
+#define hexdumpen(data, len, name, arg1, arg2, arg3, arg4, arg5, arg6,  \
+                  arg7, arg8, arg9)                                     \
+  log_en_bytes(printf, data, len, name, arg1, arg2, arg3, arg4, arg5,   \
+		  arg6, arg7, arg8, arg9)
 
 
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"

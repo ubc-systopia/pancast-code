@@ -21,21 +21,27 @@
 #define NVM_OFFSET 0x78000
 #define NVM_SIZE NVM3_DEFAULT_NVM_SIZE
 
-// Upper-bound of size of encounter log, in bytes
-#define TARGET_FLASH_LOG_SIZE \
-  ((FLASH_DEVICE_NUM_PAGES*FLASH_DEVICE_PAGE_SIZE) - FLASH_OFFSET)
+/*
+ * space available for encounter log (in bytes)
+ */
+#define TARGET_FLASH_LOG_SIZE (NVM_OFFSET - FLASH_OFFSET)
 
-// Maximum number of encounters stored at one time
-#define MAX_LOG_COUNT (TARGET_FLASH_LOG_SIZE / ENCOUNTER_ENTRY_SIZE)
+/*
+ * number of flash pages for encounter log
+ */
+#define TARGET_FLASH_LOG_NUM_PAGES  \
+  (TARGET_FLASH_LOG_SIZE / FLASH_DEVICE_PAGE_SIZE)
 
-// Maximum number of bytes used to store encounters
-// This is multiple of the encounter size
-// And assumes the size is block-aligned
-#define FLASH_LOG_SIZE (ENCOUNTER_ENTRY_SIZE * MAX_LOG_COUNT)
-
-// Number of encounters in each page, with no encounters stored across pages
+/*
+ * number of encounters that can be stored per flash page
+ * no encounters straddle pages
+ */
 #define ENCOUNTERS_PER_PAGE (FLASH_DEVICE_PAGE_SIZE / ENCOUNTER_ENTRY_SIZE)
 
+/*
+ * max number of encounters that can be stored in a dongle
+ */
+#define MAX_LOG_COUNT (TARGET_FLASH_LOG_NUM_PAGES * ENCOUNTERS_PER_PAGE)
 
 /*
  * physical addr of an encounter entry in flash:

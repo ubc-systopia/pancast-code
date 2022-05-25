@@ -128,7 +128,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   sto->map.stat = off;
 
   sto->map.log = FLASH_OFFSET;
-  sto->map.log_end = NVM_OFFSET - 1;
+  sto->map.log_end = NVM_OFFSET;
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
 }

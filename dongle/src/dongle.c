@@ -71,8 +71,7 @@ void dongle_init()
 
   // Set encounters cursor to loaded config values,
   // then load all stored encounters
-  if (config.en_head > dongle_storage_max_log_count(&storage) ||
-        config.en_tail > dongle_storage_max_log_count(&storage)) {
+  if (config.en_head > MAX_LOG_COUNT || config.en_tail > MAX_LOG_COUNT) {
     log_errorf("%s", "head or tail larger than max encounters\r\n");
   }
 
@@ -441,8 +440,7 @@ void dongle_info()
     storage.map.log, storage.map.log_end, (storage.map.log_end - storage.map.log));
   log_infof("    Encounter size:               %u\r\n",
       sizeof(dongle_encounter_entry_t));
-  log_infof("    Max enctr entries:            %lu\r\n",
-      (uint32_t) dongle_storage_max_log_count(&storage));
+  log_infof("    Max enctr entries:            %lu\r\n", MAX_LOG_COUNT);
   log_infof("    Log head, tail:               %u, %u\r\n",
       config.en_head, config.en_tail);
   log_infof("    Config offset:                0x%0x\r\n", storage.map.config);

@@ -52,12 +52,6 @@ int _flash_write_(dongle_storage *sto, storage_addr_t off, void *data, size_t si
   return MSC_WriteWord((uint32_t *)off, data, (uint32_t)size);
 }
 
-size_t dongle_storage_max_log_count(dongle_storage *sto)
-{
-  size_t encounter_log_size = sto->map.log_end - sto->map.log;
-  return (encounter_log_size / sto->page_size) * ENCOUNTERS_PER_PAGE;
-}
-
 void dongle_storage_init_device(dongle_storage *sto)
 {
   MSC_ExecConfig_TypeDef execConfig = MSC_EXECCONFIG_DEFAULT;
@@ -214,17 +208,17 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 
 void inc_head(dongle_storage *sto)
 {
-  sto->encounters.head = (sto->encounters.head + 1) % (dongle_storage_max_log_count(sto));
+  sto->encounters.head = (sto->encounters.head + 1) % MAX_LOG_COUNT;
 }
 
 void inc_tail(dongle_storage *sto)
 {
-  sto->encounters.tail = (sto->encounters.tail + 1) % (dongle_storage_max_log_count(sto));
+  sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT;
 }
 
 int inc_idx(dongle_storage *sto, int idx)
 {
-  idx = ((idx + 1) % (dongle_storage_max_log_count(sto)));
+  idx = ((idx + 1) % MAX_LOG_COUNT);
   return idx;
 }
 
@@ -250,8 +244,7 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
   if (sto->encounters.head >= sto->encounters.tail) {
     result = sto->encounters.head - sto->encounters.tail;
   } else {
-    result = dongle_storage_max_log_count(sto) -
-    		(sto->encounters.tail - sto->encounters.head);
+    result = MAX_LOG_COUNT - (sto->encounters.tail - sto->encounters.head);
   }
   log_debugf("head: %u tail: %u #entries: %u\r\n",
       sto->encounters.head, sto->encounters.tail, result);

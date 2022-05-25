@@ -302,11 +302,6 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 #undef age
 }
 
-// Encounter offset is page number + offset in page
-#define ENCOUNTER_LOG_OFFSET(j) \
-    (sto->map.log + (j / ENCOUNTERS_PER_PAGE) * sto->page_size + \
-    	(j % ENCOUNTERS_PER_PAGE)*ENCOUNTER_ENTRY_SIZE)
-
 void dongle_storage_load_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_cb cb)
 {
@@ -338,7 +333,7 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
     log_errorf("Index for encounter log (%lu) is too large\r\n", (uint32_t)i);
     return;
   }
-  storage_addr_t off = ENCOUNTER_LOG_OFFSET(i);
+  storage_addr_t off = ENCOUNTER_LOG_OFFSET(sto, i);
   _flash_read_(sto, off, en, sizeof(dongle_encounter_entry_t));
 }
 
@@ -367,7 +362,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 {
   enctr_entry_counter_t num1, num2, num3;
   num1 = dongle_storage_num_encounters_current(sto);
-  storage_addr_t start = ENCOUNTER_LOG_OFFSET(sto->encounters.head);
+  storage_addr_t start = ENCOUNTER_LOG_OFFSET(sto, sto->encounters.head);
 
   storage_addr_t off = start;
 

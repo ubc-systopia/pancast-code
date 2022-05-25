@@ -262,7 +262,7 @@ static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
     enc->beacon_id, (uint32_t) enc->location_id, (uint16_t) i,
     (uint32_t) enc->beacon_time_start, enc->beacon_time_int,
     (uint32_t) enc->dongle_time_start, enc->dongle_time_int,
-    (int8_t) enc->rssi);
+    (int8_t) enc->rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
 #endif
 
   dongle_storage_log_encounter(&storage, &config, &dongle_time, enc);
@@ -319,7 +319,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
       cur_encounters[i].beacon_time_int,
       (uint32_t) cur_encounters[i].dongle_time_start,
       cur_encounters[i].dongle_time_int,
-      (int8_t) cur_encounters[i].rssi);
+      (int8_t) cur_encounters[i].rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
 #endif
 
 #ifdef MODE__STAT
@@ -353,7 +353,7 @@ void dongle_save_encounters()
      cur_encounters[i].beacon_time_int,
      (uint32_t) cur_encounters[i].dongle_time_start,
      cur_encounters[i].dongle_time_int,
-     (int8_t) cur_encounters[i].rssi);
+     (int8_t) cur_encounters[i].rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
 #endif
 
     /*
@@ -393,7 +393,7 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
     (uint32_t) entry->location_id, (uint16_t) i,
     (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
     (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
-    (int8_t) entry->rssi);
+    (int8_t) entry->rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
 
   return 1;
 }

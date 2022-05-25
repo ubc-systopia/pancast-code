@@ -36,6 +36,15 @@
 // Number of encounters in each page, with no encounters stored across pages
 #define ENCOUNTERS_PER_PAGE (FLASH_DEVICE_PAGE_SIZE / ENCOUNTER_ENTRY_SIZE)
 
+
+/*
+ * physical addr of an encounter entry in flash:
+ * flash page number + offset in page
+ */
+#define ENCOUNTER_LOG_OFFSET(sto, j) \
+    ((sto)->map.log + (((j) / ENCOUNTERS_PER_PAGE) * (sto)->page_size) + \
+     ((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE)
+
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;
 

@@ -476,8 +476,10 @@ void dongle_report()
   last_stat_time = dongle_time;
 #endif
 
+#if 0
 #if TEST_DONGLE
   dongle_test();
+#endif
 #endif
 }
 

@@ -4,8 +4,6 @@
 #include "sl_simple_led_instances.h"
 #include "sl_bluetooth.h"
 
-#define LOG_LEVEL__INFO
-
 #include "dongle.h"
 #include "src/common/src/util/log.h"
 

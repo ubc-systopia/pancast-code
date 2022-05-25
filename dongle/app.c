@@ -25,7 +25,6 @@
 #include "src/stats.h"
 #include "src/download.h"
 
-#define LOG_LEVEL__DEBUG
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
 

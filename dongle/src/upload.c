@@ -5,7 +5,6 @@
 #include "encounter.h"
 #include "storage.h"
 
-#define LOG_LEVEL__INFO
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
 

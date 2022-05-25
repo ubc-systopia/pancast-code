@@ -1,5 +1,3 @@
-#define LOG_LEVEL__INFO
-
 #include "storage.h"
 
 #include <string.h>

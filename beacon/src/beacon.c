@@ -119,13 +119,13 @@ void beacon_info()
 
   log_infof("    Flash page size, count:   %u B, %u\r\n",
       storage.page_size, storage.num_pages);
-  log_infof("    Flash offset:             %u\r\n", storage.map.config);
+  log_infof("    Flash offset:             0x%0x\r\n", storage.map.config);
   log_infof("    Total size:               %u\r\n", storage.total_size);
-  log_infof("    Test filter offset:       %u\r\n", storage.map.test_filter);
+  log_infof("    Test filter offset:       0x%0x\r\n", storage.map.test_filter);
 
   log_infof("    Test filter length:       %lu\r\n", storage.test_filter_size);
-  log_infof("    Config offset:            %u\r\n", storage.map.config);
-  log_infof("    Stat offset:              %u\r\n", storage.map.stat);
+  log_infof("    Config offset:            0x%0x\r\n", storage.map.config);
+  log_infof("    Stat offset:              0x%0x\r\n", storage.map.stat);
 #ifdef MODE__STAT
   log_infof("%s", "    Statistics mode enabled\r\n");
 #endif

@@ -438,22 +438,19 @@ void dongle_info()
 
   log_infof("    Flash page size, count:       %u B, %u\r\n",
       storage.page_size, storage.num_pages);
-  log_infof("    Flash offset:                 %u\r\n", FLASH_OFFSET);
+  log_infof("    Flash offset:                 0x%0x\r\n", FLASH_OFFSET);
   log_infof("    Total size:                   %u\r\n", storage.total_size);
-  log_infof("    Usable size:                  %u\r\n", (uint32_t) FLASH_LOG_SIZE);
-  log_infof("    Log size:                     %u\r\n",
-      storage.map.log_end - storage.map.log);
+  log_infof("    Log range, size:              0x%0x-0x%0x, %u\r\n",
+    storage.map.log, storage.map.log_end, (storage.map.log_end - storage.map.log));
   log_infof("    Encounter size:               %u\r\n",
       sizeof(dongle_encounter_entry_t));
   log_infof("    Max enctr entries:            %lu\r\n",
       (uint32_t) dongle_storage_max_log_count(&storage));
-  log_infof("    Log range:                    %u-%u\r\n",
-      storage.map.log, storage.map.log_end);
   log_infof("    Log head, tail:               %u, %u\r\n",
       config.en_head, config.en_tail);
-  log_infof("    Config offset:                %u\r\n", storage.map.config);
-  log_infof("    OTP offset:                   %u\r\n", storage.map.otp);
-  log_infof("    Stat offset:                  %u\r\n", storage.map.stat);
+  log_infof("    Config offset:                0x%0x\r\n", storage.map.config);
+  log_infof("    OTP offset:                   0x%0x\r\n", storage.map.otp);
+  log_infof("    Stat offset:                  0x%0x\r\n", storage.map.stat);
 }
 
 void dongle_encounter_report()

@@ -76,6 +76,14 @@ void dongle_init()
     log_errorf("%s", "head or tail larger than max encounters\r\n");
   }
 
+  // set dongle time to current saved time
+  // TODO: determine when this needs to be reset to the init time
+  dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
+  last_stat_time = dongle_time;
+  cur_id_idx = 0;
+  epoch = 0;
+  download_complete = 0;
+
   storage.encounters.head = config.en_head;
   storage.encounters.tail = config.en_tail;
 
@@ -84,14 +92,6 @@ void dongle_init()
       dongle_print_encounter);
   log_infof("%s", "==== UPLOAD LOG END ====\r\n");
 //  dongle_storage_load_all_encounter(&storage, dongle_print_encounter);
-
-  // set dongle time to current saved time
-  // TODO: determine when this needs to be reset to the init time
-  dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
-  last_stat_time = dongle_time;
-  cur_id_idx = 0;
-  epoch = 0;
-  download_complete = 0;
 
   //===========
 
@@ -300,15 +300,13 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 
     // copy eph id bytes into tracking array
     memcpy(&cur_encounters[i].eph_id, enc->eph->bytes, BEACON_EPH_ID_HASH_LEN);
-
-    // copy beacon info into tracking array
-    memcpy(&cur_encounters[i].beacon_id, enc->b, sizeof(beacon_id_t));
-    memcpy(&cur_encounters[i].location_id, enc->loc, sizeof(beacon_location_id_t));
-    memcpy(&cur_encounters[i].beacon_time_start, enc->t, sizeof(beacon_timer_t));
-    memcpy(&cur_encounters[i].dongle_time_start, &dongle_time, sizeof(dongle_timer_t));
-    memset(&cur_encounters[i].dongle_time_int, 0, sizeof(uint8_t));
-    memset(&cur_encounters[i].beacon_time_int, 0, sizeof(uint8_t));
-    memcpy(&cur_encounters[i].rssi, &rssi, sizeof(int8_t));
+    cur_encounters[i].beacon_id = *(enc->b);
+    cur_encounters[i].location_id = *(enc->loc);
+    cur_encounters[i].beacon_time_start = *(enc->t);
+    cur_encounters[i].dongle_time_start = dongle_time;
+    cur_encounters[i].dongle_time_int = 0;
+    cur_encounters[i].beacon_time_int = 0;
+    cur_encounters[i].rssi = rssi;
 
 #if 0
     beacon_eph_id_t *id = &cur_encounters[i].eph_id;
@@ -332,9 +330,8 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   uint8_t dongle_dur = (uint8_t)(dongle_time - cur_encounters[i].dongle_time_start);
   uint8_t beacon_dur = (uint8_t)(*enc->t - cur_encounters[i].beacon_time_start);
 
-  // set the end obs time to the current dongle time and beacon time
-  memcpy(&cur_encounters[i].dongle_time_int, &dongle_dur, sizeof(uint8_t));
-  memcpy(&cur_encounters[i].beacon_time_int, &beacon_dur, sizeof(uint8_t));
+  cur_encounters[i].dongle_time_int = dongle_dur;
+  cur_encounters[i].beacon_time_int = beacon_dur;
 
   return;
 }

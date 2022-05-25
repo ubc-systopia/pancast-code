@@ -149,8 +149,8 @@ void dongle_init_scan()
   }
 }
 
-/* LOAD
-  Load state and configuration from memory
+/*
+ * Load state and configuration from flash
  */
 void dongle_load()
 {
@@ -449,7 +449,7 @@ void dongle_info()
       (uint32_t) dongle_storage_max_log_count(&storage));
   log_infof("    Log range:                    %u-%u\r\n",
       storage.map.log, storage.map.log_end);
-  log_infof("    Log head, tail:               %u\r\n",
+  log_infof("    Log head, tail:               %u, %u\r\n",
       config.en_head, config.en_tail);
   log_infof("    Config offset:                %u\r\n", storage.map.config);
   log_infof("    OTP offset:                   %u\r\n", storage.map.otp);

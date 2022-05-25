@@ -18,7 +18,7 @@ static inline void dongle_storage_erase(dongle_storage *sto, storage_addr_t offs
 {
   int status = MSC_ErasePage((uint32_t *)offset);
   if (status != 0) {
-    log_debugf("error erasing page: 0x%x", status);
+    log_errorf("error erasing page: 0x%x", status);
   }
   sto->numErasures++;
 }
@@ -56,7 +56,6 @@ void dongle_storage_init_device(dongle_storage *sto)
 
 void dongle_storage_init(dongle_storage *sto)
 {
-  log_debugf("%s", "Initializing storage...\r\n");
   dongle_storage_init_device(sto);
   sto->encounters.tail = 0;
   sto->encounters.head = 0;
@@ -75,7 +74,6 @@ void dongle_storage_init(dongle_storage *sto)
 
 void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-  log_debugf("%s", "Loading config...\r\n");
   storage_addr_t off = sto->map.config;
 #define read(size, dst) (_flash_read_(off, dst, size), off += size)
   read(sizeof(dongle_id_t), &cfg->id);
@@ -117,7 +115,6 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   sto->map.log = FLASH_OFFSET;
   sto->map.log_end = NVM_OFFSET;
 #undef read
-  log_debugf("%s", "Config loaded.\r\n");
 }
 
 #define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
@@ -166,7 +163,6 @@ void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 
 void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
 {
-  log_debugf("%s", "Saving OTPs\r\n");
   storage_addr_t off = OTP(0);
   pre_erase(sto, off, (NUM_OTP * sizeof(dongle_otp_t)));
 
@@ -228,10 +224,6 @@ static inline void _log_increment_(dongle_storage *sto)
     log_errorf("Encounter storage full; idx=%lu\r\n", sto->encounters.head);
     inc_tail(sto);
   }
-  // save head and tail to flash
-  cfg->en_head = sto->encounters.head;
-  cfg->en_tail = sto->encounters.tail;
-  dongle_storage_save_cursor_clock(sto, cfg);
 }
 
 enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
@@ -249,7 +241,6 @@ enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
 // age criteria
 void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 {
-  log_debugf("%s", "deleting...\r\n");
   dongle_encounter_entry_t en;
   enctr_entry_counter_t i = 0;
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
@@ -259,7 +250,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
         break;
     }
 
-    uint32_t old_tail = sto->encounters.tail;
+//    uint32_t old_tail = sto->encounters.tail;
     // tail is updated during loop, so reference first index every time
     dongle_storage_load_single_encounter(sto, 0, &en);
 
@@ -268,8 +259,8 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
 
     // delete old logs
     inc_tail(sto);
-    log_debugf("[%u] age: %u > %u, head: %u, tail: %u -> %u\r\n", i, age,
-        DONGLE_MAX_LOG_AGE, sto->encounters.head, old_tail, sto->encounters.tail);
+//    log_debugf("[%u] age: %u > %u, head: %u, tail: %u -> %u\r\n", i, age,
+//        DONGLE_MAX_LOG_AGE, sto->encounters.head, old_tail, sto->encounters.tail);
 
     i++;
   } while (sto->encounters.tail != sto->encounters.head);
@@ -334,11 +325,9 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en)
 {
-  enctr_entry_counter_t num1, num2, num3;
-  num1 = dongle_storage_num_encounters_current(sto);
-  storage_addr_t start = ENCOUNTER_LOG_OFFSET(sto, sto->encounters.head);
-
-  storage_addr_t off = start;
+//  enctr_entry_counter_t num1, num2, num3;
+//  num1 = dongle_storage_num_encounters_current(sto);
+  storage_addr_t off = ENCOUNTER_LOG_OFFSET(sto, sto->encounters.head);
 
   // NOTE: once head has wrapped, erasing the next page before writing
   // will cause a page of old entries to be lost (204 entries)
@@ -356,14 +345,21 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 
   sto->total_encounters++;
   _log_increment_(sto);
-  num2 = dongle_storage_num_encounters_current(sto);
+//  num2 = dongle_storage_num_encounters_current(sto);
   _delete_old_encounters_(sto, *dongle_time);
-  num3 = dongle_storage_num_encounters_current(sto);
-  log_debugf("time: %u, %u #entries: %lu -> %lu -> %lu, "
+//  num3 = dongle_storage_num_encounters_current(sto);
+#if 0
+  log_debugf("curr time: %u, en end time: %u, %u #entries: %lu -> %lu -> %lu, "
       "H: %lu, T: %lu, off: %u, size: %u %u\r\n",
-      en->dongle_time_start, last_stat_time, num1, num2, num3,
+      *dongle_time, en->dongle_time_start+en->dongle_time_int,
+      last_stat_time, num1, num2, num3,
       sto->encounters.head, sto->encounters.tail,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
+#endif
+  // save head and tail to flash
+  cfg->en_head = sto->encounters.head;
+  cfg->en_tail = sto->encounters.tail;
+  dongle_storage_save_cursor_clock(sto, cfg);
 }
 
 void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,

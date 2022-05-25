@@ -172,7 +172,6 @@ void dongle_load()
 void dongle_clock_increment()
 {
   dongle_time++;
-  log_debugf("Dongle clock: %lu\r\n", dongle_time);
   dongle_on_clock_update();
 }
 
@@ -194,7 +193,6 @@ void dongle_on_clock_update()
   // update epoch
   dongle_epoch_counter_t new_epoch = epoch_i(dongle_time, config.t_init);
   if (new_epoch != epoch) {
-    log_debugf("EPOCH STARTED: %lu\r\n", new_epoch);
     epoch = new_epoch;
   }
   // update dongle time in config and save to flash
@@ -217,8 +215,8 @@ void dongle_log_counters()
   stats.total_hw_rx += (uint32_t) rx_packets;
   stats.total_hw_crc_fail += (uint32_t)crc_errors;
 
-  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n",
-      tx_packets, rx_packets, crc_errors, failures);
+//  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n",
+//      tx_packets, rx_packets, crc_errors, failures);
 }
 
 void dongle_reset_counters()
@@ -293,8 +291,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
     // if no match was found, start tracking the new id, replacing the oldest
     // one currently tracked
     i = cur_id_idx;
-    log_debugf("new ephid, tracking idx: %d\r\n", i);
-    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "new ID");
+//    print_bytes(enc->eph->bytes, BEACON_EPH_ID_HASH_LEN, "new ID");
     cur_id_idx = (cur_id_idx + 1) % DONGLE_MAX_BC_TRACKED;
 
     // copy eph id bytes into tracking array
@@ -371,10 +368,7 @@ void dongle_on_scan_report(bd_addr *addr, int8_t rssi,
     // TODO: should check for a periodic packet identifier
     return;
   }
-  log_debugf("%02x,%u,%u,%02x%02x%02x%02x%02x%02x,%d\r\n",
-      TELEM_TYPE_SCAN_RESULT, dongle_time, epoch,
-      addr->addr[0], addr->addr[1], addr->addr[2], addr->addr[3],
-      addr->addr[4], addr->addr[5], rssi);
+
   decode_payload(data);
   encounter_broadcast_t en;
   decode_encounter(&en, (encounter_broadcast_raw_t *)data);

@@ -48,7 +48,7 @@ int main(void)
   // Start the kernel. Task(s) created in app_init() will start running.
   sl_system_kernel_start();
 #else // SL_CATALOG_KERNEL_PRESENT
-  log_debugf("%s", "=== Kernel start ===\r\n");
+//  log_debugf("%s", "=== Kernel start ===\r\n");
 
   // Initialize the main timer
   uint8_t main_timer_handle = MAIN_TIMER_HANDLE;

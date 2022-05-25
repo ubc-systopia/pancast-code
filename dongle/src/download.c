@@ -76,8 +76,6 @@ void dongle_download_init()
 void dongle_download_start()
 {
   download.is_active = 1;
-  log_debugf("Download started! (chunk=%lu)\r\n",
-      download.packet_buffer.chunk_num);
   stats.payloads_started++;
 }
 
@@ -103,7 +101,6 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 
   memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
 
-  log_debugf("num buckets: %lu\r\n", num_buckets);
   if (lookup(id, download.packet_buffer.buffer.data, num_buckets)) {
     hexdumpen(id, MAX_EPH_ID_SIZE, " hit", entry->beacon_id,
         (uint32_t) entry->location_id, (uint16_t) i,
@@ -144,13 +141,14 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
 {
 
   if (data_len < sizeof(rpi_ble_hdr)) {
+#if 0
     log_debugf("%02x %.0f %d %d dwnld active: %d "
       "data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
       download.is_active, download.packet_buffer.chunk_num,
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
-
+#endif
     if (data_len > 0)
       download.n_corrupt_packets++;
 
@@ -171,6 +169,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
 
+#if 0
   log_debugf("%02x %.0f %d %d dwnld active: %d pktseq: %u "
       "chunkid: %u, chunknum: %u chunklen: %u data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
@@ -178,6 +177,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
       download.packet_buffer.chunk_num, (uint32_t) rbh->chunklen,
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
+#endif
 
   if (download.is_active) {
     if (rbh->chunkid != download.packet_buffer.chunk_num) {
@@ -246,7 +246,6 @@ void dongle_download_complete()
   num_buckets = cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 
   if (num_buckets == 0) {
-    log_debugf("%s", "num buckets is 0!!!\r\n");
     dongle_download_fail(&stats.cuckoo_fail);
     return;
   }

@@ -54,10 +54,12 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     dongle_clock_increment();
     dongle_log_counters();
     download_complete = dongle_download_complete_status();
+#if 0
     log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d\r\n",
         dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle);
+#endif
     if (download_complete == 0 && synced == 1) {
       sc = sl_bt_sync_close(sync_handle);
       last_sync_close_time = dongle_time;
@@ -107,9 +109,12 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       // first, scan on legacy advertisement channel
       dongle_on_scan_report(&report.address, report.rssi,
           report.data.data, report.data.len);
+#if 0
       log_debugf("periodic interval: %u synced: %u dwnld complete: %u\r\n",
           evt->data.evt_scanner_scan_report.periodic_interval,
           synced, download_complete);
+#endif
+
 #undef report
 
 #if MODE__PERIODIC
@@ -169,7 +174,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_opened_id:
-      log_debugf("new sync opened!\r\n");
+//      log_debugf("new sync opened!\r\n");
       synced = 1;
       break;
 
@@ -180,10 +185,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_data_id:
-      log_debugf("len: %d status: %d rssi: %d\r\n",
-          evt->data.evt_sync_data.data.len,
-          evt->data.evt_sync_data.data_status,
-          evt->data.evt_sync_data.rssi);
+//      log_debugf("len: %d status: %d rssi: %d\r\n",
+//          evt->data.evt_sync_data.data.len,
+//          evt->data.evt_sync_data.data_status,
+//          evt->data.evt_sync_data.rssi);
 
 #define ERROR_STATUS 0x02
       if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
@@ -219,7 +224,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     default:
-      log_debugf("%s", "Unhandled bluetooth event\r\n");
+//      log_debugf("%s", "Unhandled bluetooth event\r\n");
       break;
   }
 }

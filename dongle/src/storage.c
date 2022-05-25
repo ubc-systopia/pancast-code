@@ -163,6 +163,7 @@ void dongle_storage_save_cursor_clock(dongle_storage *sto, dongle_config_t *cfg)
   dongle_storage_save_config(sto, cfg);
 }
 
+#if 0
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
 {
   _flash_read_(sto, OTP(i), otp, sizeof(dongle_otp_t));
@@ -186,7 +187,6 @@ void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
   log_infof("off: %u, size: %u\r\n", OTP(0), (NUM_OTP * sizeof(dongle_otp_t)));
 }
 
-
 int otp_is_used(dongle_otp_t *otp)
 {
   return !((otp->flags & 0x0000000000000001) >> 0);
@@ -205,6 +205,7 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
   }
   return -1;
 }
+#endif
 
 void inc_head(dongle_storage *sto)
 {
@@ -317,10 +318,11 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
   _flash_read_(sto, off, en, sizeof(dongle_encounter_entry_t));
 }
 
+#if 0
 void dongle_storage_load_encounters_from_time(dongle_storage *sto,
     dongle_timer_t min_time, dongle_encounter_cb cb)
 {
-  log_debugf("loading log entries starting at time %lu\r\n", (uint32_t)min_time);
+  log_debugf("loading log entries starting at time %lu\r\n", min_time);
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
   dongle_encounter_entry_t en;
   enctr_entry_counter_t j = 0;
@@ -336,6 +338,7 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
     }
   }
 }
+#endif
 
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en)

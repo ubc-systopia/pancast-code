@@ -97,6 +97,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg);
 // Write an existing config to storage
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg);
 
+#if 0
 // LOAD OTP
 // Should read the data associated with the ith OTP code into
 // the container.
@@ -114,6 +115,7 @@ int otp_is_used(dongle_otp_t *otp);
 // If an unused OTP exists with the given value, returns its index
 // and marks the code as used. Otherwise returns a negative value
 int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);
+#endif
 
 // Determine the number of encounters currently logged
 enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto);
@@ -133,8 +135,10 @@ void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_entry_t *);
 
+#if 0
 void dongle_storage_load_encounters_from_time(dongle_storage *sto,
     dongle_timer_t min_time, dongle_encounter_cb cb);
+#endif
 
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,

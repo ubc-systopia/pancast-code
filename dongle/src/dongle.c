@@ -274,7 +274,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
     return;
   }
 
-#ifdef MODE__STAT
+#if MODE__STAT
   stat_add(rssi, stats.scan_rssi);
 #endif
 
@@ -316,7 +316,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
       (int8_t) cur_encounters[i].rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
 #endif
 
-#ifdef MODE__STAT
+#if MODE__STAT
     stat_add(rssi, stats.enctr_rssi);
 #endif
 
@@ -360,7 +360,7 @@ void dongle_save_encounters()
   }
 }
 
-void dongle_on_scan_report(bd_addr *addr, int8_t rssi,
+void dongle_on_scan_report(bd_addr *addr __attribute__((unused)), int8_t rssi,
     uint8_t *data, uint8_t data_len)
 {
   // Filter mis-sized packets
@@ -388,7 +388,7 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
   return 1;
 }
 
-void dongle_update_download_time()
+void dongle_update_download_time(void)
 {
   stats.last_download_time = dongle_time;
 }
@@ -444,11 +444,13 @@ void dongle_info()
 
 void dongle_encounter_report()
 {
+#if MODE__STAT
   log_infof("[%lu] last report time: %lu download time: %u head: %u tail: %u "
     "#encounters [new, stored]: %lu, %lu\r\n",
     dongle_time, stats.last_report_time, stats.last_download_time,
     storage.encounters.head, storage.encounters.tail, storage.total_encounters,
     dongle_storage_num_encounters_current(&storage));
+#endif
 }
 
 void dongle_report()
@@ -476,6 +478,3 @@ void dongle_report()
 #endif
 #endif
 }
-
-#undef LOG_LEVEL__INFO
-#undef MODE__STAT

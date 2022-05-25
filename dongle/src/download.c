@@ -76,16 +76,21 @@ void dongle_download_init()
 void dongle_download_start()
 {
   download.is_active = 1;
+#if MODE__STAT
   stats.payloads_started++;
+#endif
 }
 
-void dongle_download_fail(download_fail_reason *reason)
+void dongle_download_fail(download_fail_reason *reason __attribute__((unused)))
 {
   if (download.is_active) {
+#if MODE__STAT
     stats.payloads_failed++;
     dongle_update_download_stats(stats.all_download_stats, download);
     dongle_update_download_stats(stats.failed_download_stats, download);
     *reason = *reason + 1;
+#endif
+
 //    dongle_download_info();
     dongle_download_reset();
   }
@@ -128,16 +133,16 @@ void dongle_on_sync_lost()
   }
 }
 
-void dongle_on_periodic_data_error(int8_t rssi)
+void dongle_on_periodic_data_error(int8_t rssi __attribute__((unused)))
 {
-#ifdef MODE__STAT
+#if MODE__STAT
   stats.num_periodic_data_error++;
   stat_add(rssi, stats.periodic_data_rssi);
   download.n_corrupt_packets++;
 #endif
 }
 
-void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attribute__((unused)))
 {
 
   if (data_len < sizeof(rpi_ble_hdr)) {
@@ -166,8 +171,10 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi)
   // extract seq number, chunk number, and chunk len
   rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
 
+#if MODE__STAT
   stat_add(data_len, stats.periodic_data_size);
   stat_add(rssi, stats.periodic_data_rssi);
+#endif
 
 #if 0
   log_debugf("%02x %.0f %d %d dwnld active: %d pktseq: %u "
@@ -305,6 +312,7 @@ void dongle_download_complete()
     dongle_led_notify();
   }
 
+#if MODE__STAT
   /*
    * XXX: increment global stats, not assignment
    */
@@ -315,6 +323,7 @@ void dongle_download_complete()
   dongle_update_download_stats(stats.all_download_stats, download);
   dongle_update_download_stats(stats.completed_download_stats, download);
   stat_add(lat, stats.completed_periodic_data_avg_payload_lat);
+#endif
 
   dongle_download_reset();
 }

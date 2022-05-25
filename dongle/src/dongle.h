@@ -16,7 +16,11 @@
  */
 #define TEST_DONGLE 0
 
-#define MODE__STAT // enables telemetry aggregation
+/*
+ * stats aggregation
+ */
+#define MODE__STAT  1
+
 /*
  * config for periodic scanning and syncing
  * 0 - disable

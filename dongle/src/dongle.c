@@ -470,10 +470,7 @@ void dongle_report()
 #ifdef MODE__STAT
   dongle_stats();
   dongle_download_stats();
-  char statbuf[1024];
-  memset(statbuf, 0, 1024);
-  memcpy(statbuf, (void *) &stats, sizeof(dongle_stats_t));
-  dongle_storage_save_stat(&storage, &config, statbuf, sizeof(dongle_stats_t));
+  dongle_storage_save_stat(&storage, &config, &stats, sizeof(dongle_stats_t));
   last_stat_time = dongle_time;
 #endif
 }

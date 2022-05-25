@@ -125,7 +125,6 @@ int dongle_download_check_match(enctr_entry_counter_t i,
 
 void dongle_on_sync_lost()
 {
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_SYNC_LOST, dongle_hp_timer);
   if (download.is_active) {
     log_infof("%s", "Download failed - lost sync.\r\n");
     download.n_syncs_lost++;
@@ -134,7 +133,6 @@ void dongle_on_sync_lost()
 
 void dongle_on_periodic_data_error(int8_t rssi)
 {
-  log_telemf("%02x,%.0f\r\n", TELEM_TYPE_PERIODIC_PKT_ERROR, dongle_hp_timer);
 #ifdef MODE__STAT
   stats.num_periodic_data_error++;
   stat_add(rssi, stats.periodic_data_rssi);

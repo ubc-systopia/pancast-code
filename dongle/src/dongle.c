@@ -114,8 +114,6 @@ void dongle_init()
   dongle_init_scan();
 
   log_infof("%s", "Dongle initialized\r\n");
-
-  log_telemf("%02x\r\n", TELEM_TYPE_RESTART);
 }
 
 /* START
@@ -276,8 +274,6 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   // Check the broadcast UUID
   beacon_id_t service_id = (*(enc->b) & BEACON_SERVICE_ID_MASK) >> 16;
   if (service_id != BROADCAST_SERVICE_ID) {
-    log_telemf("%02x,%u,%u\r\n", TELEM_TYPE_BROADCAST_ID_MISMATCH,
-        dongle_time, epoch);
     return;
   }
 
@@ -329,15 +325,9 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 #ifdef MODE__STAT
     stat_add(rssi, stats.enctr_rssi);
 #endif
-    log_telemf("%02x,%u,%u,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_NEW,
-       dongle_time, epoch, *enc->b, *enc->t);
 
     return;
   }
-
-  // when a matching ephemeral id is observed
-  log_telemf("%02x,%u,%u,%u,%u\r\n", TELEM_TYPE_BROADCAST_TRACK_MATCH,
-     dongle_time, epoch, *enc->b, *enc->t);
 
   uint8_t dongle_dur = (uint8_t)(dongle_time - cur_encounters[i].dongle_time_start);
   uint8_t beacon_dur = (uint8_t)(*enc->t - cur_encounters[i].beacon_time_start);
@@ -345,9 +335,6 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   // set the end obs time to the current dongle time and beacon time
   memcpy(&cur_encounters[i].dongle_time_int, &dongle_dur, sizeof(uint8_t));
   memcpy(&cur_encounters[i].beacon_time_int, &beacon_dur, sizeof(uint8_t));
-
-  log_telemf("%02x,%u,%u,%u,%u,%u\r\n", TELEM_TYPE_ENCOUNTER,
-     dongle_time, epoch, enc->b, enc->t, dur);
 
   return;
 }

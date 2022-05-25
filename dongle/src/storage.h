@@ -140,11 +140,8 @@ void dongle_storage_load_encounters_from_time(dongle_storage *sto,
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en);
 
-#define DONGLE_STORAGE_MAX_PRINT_LEN 64
-
-int dongle_storage_print(dongle_storage *, storage_addr_t, size_t);
-
-void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg, void * stat, size_t len);
+void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
+    void * stat, size_t len);
 void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
 void dongle_storage_info(dongle_storage *);
 

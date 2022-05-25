@@ -9,7 +9,6 @@
 #include "common/src/util/util.h"
 #include "stats.h"
 
-#define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
 extern dongle_timer_t last_stat_time;
@@ -168,18 +167,6 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 void dongle_storage_save_cursor_clock(dongle_storage *sto, dongle_config_t *cfg)
 {
   dongle_storage_save_config(sto, cfg);
-
-#if 0
-  storage_addr_t off = sto->map.config;
-  pre_erase(sto, off, sizeof(dongle_config_t));
-
-#define write(data, size) \
-  (_flash_write_(sto, off, data, size), off += size)
-
- write(cfg, sizeof(dongle_config_t));
-
-#undef write
-#endif
 }
 
 void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
@@ -392,19 +379,8 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
 }
 
-int dongle_storage_print(dongle_storage *sto, storage_addr_t addr, size_t len)
-{
-  if (len > DONGLE_STORAGE_MAX_PRINT_LEN) {
-    log_errorf("%s", "Cannot print that many bytes of flash");
-    return 1;
-  }
-  uint8_t data[DONGLE_STORAGE_MAX_PRINT_LEN];
-  _flash_read_(sto, addr, data, len);
-  print_bytes(data, len, "Flash data");
-  return 0;
-}
-
-void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg, void * stat, size_t len)
+void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
+    void * stat, size_t len)
 {
   int total_size = sizeof(dongle_config_t) + (NUM_OTP*sizeof(dongle_otp_t))
     + sizeof(dongle_stats_t);
@@ -430,4 +406,3 @@ void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time)
 }
 
 #undef next_multiple
-#undef prev_multiple

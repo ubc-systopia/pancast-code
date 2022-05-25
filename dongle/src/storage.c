@@ -244,7 +244,7 @@ void _delete_old_encounters_(dongle_storage *sto, dongle_timer_t cur_time)
   dongle_encounter_entry_t en;
   enctr_entry_counter_t i = 0;
   enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-#define age (cur_time - (en.dongle_time_start + en.dongle_time_int))
+#define age ((int) (cur_time - (en.dongle_time_start + en.dongle_time_int)))
   do {
     if (i >= num) {
         break;

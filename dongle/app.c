@@ -53,17 +53,16 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     dongle_clock_increment();
     dongle_log_counters();
     download_complete = dongle_download_complete_status();
-#if 0
     log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d\r\n",
         dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle);
-#endif
+
     if (download_complete == 0 && synced == 1) {
       sc = sl_bt_sync_close(sync_handle);
       last_sync_close_time = dongle_time;
       synced = 0;
-      log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
+      log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
         dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle, sc);
@@ -105,6 +104,26 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 
     case sl_bt_evt_scanner_scan_report_id:
 #define report (evt->data.evt_scanner_scan_report)
+        log_debugf("open sync addr[%d, 0x%02x, 0x%02x]: "
+          "%02x:%02x:%02x:%02x:%02x:%02x sid: %u phy(%d, %d) "
+          "chan: %d intvl: %d dlen: %d h: %d sopen: %d sclose: %d\r\n",
+          evt->data.evt_scanner_scan_report.address_type,
+          evt->data.evt_scanner_scan_report.packet_type,
+          (evt->data.evt_scanner_scan_report.packet_type & SCAN_PDU_TYPE_MASK),
+          evt->data.evt_scanner_scan_report.address.addr[0],
+          evt->data.evt_scanner_scan_report.address.addr[1],
+          evt->data.evt_scanner_scan_report.address.addr[2],
+          evt->data.evt_scanner_scan_report.address.addr[3],
+          evt->data.evt_scanner_scan_report.address.addr[4],
+          evt->data.evt_scanner_scan_report.address.addr[5],
+          evt->data.evt_scanner_scan_report.adv_sid,
+          evt->data.evt_scanner_scan_report.primary_phy,
+          evt->data.evt_scanner_scan_report.secondary_phy,
+          evt->data.evt_scanner_scan_report.channel,
+          evt->data.evt_scanner_scan_report.periodic_interval,
+          evt->data.evt_scanner_scan_report.data.len,
+          sync_handle, last_sync_open_time, last_sync_close_time
+          );
       // first, scan on legacy advertisement channel
       if ((report.packet_type & SCAN_PDU_TYPE_MASK) == 0) {
         dongle_on_scan_report(&report.address, report.rssi,
@@ -130,10 +149,10 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
                        &sync_handle);
         last_sync_open_time = dongle_time;
         if (prev_sync_handle != sync_handle) {
-          log_infof("open sync addr[%d]: %0x:%0x:%0x:%0x:%0x:%0x "
-            "sid: %u pkt type: 0x%0x phy(%d, %d) "
-            "tx power: %d rssi: %d chan: %d intvl: %d handle: %d sc: 0x%x\r\n",
+          log_infof("open sync addr[%d, 0x%02x]: %0x:%0x:%0x:%0x:%0x:%0x "
+            "sid: %u phy(%d, %d) chan: %d intvl: %d h: %d p: %d sc: 0x%x\r\n",
             evt->data.evt_scanner_scan_report.address_type,
+            evt->data.evt_scanner_scan_report.packet_type,
             evt->data.evt_scanner_scan_report.address.addr[0],
             evt->data.evt_scanner_scan_report.address.addr[1],
             evt->data.evt_scanner_scan_report.address.addr[2],
@@ -141,14 +160,11 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_scanner_scan_report.address.addr[4],
             evt->data.evt_scanner_scan_report.address.addr[5],
             evt->data.evt_scanner_scan_report.adv_sid,
-            evt->data.evt_scanner_scan_report.packet_type,
             evt->data.evt_scanner_scan_report.primary_phy,
             evt->data.evt_scanner_scan_report.secondary_phy,
-            evt->data.evt_scanner_scan_report.tx_power,
-            evt->data.evt_scanner_scan_report.rssi,
             evt->data.evt_scanner_scan_report.channel,
             evt->data.evt_scanner_scan_report.periodic_interval,
-            sync_handle, sc);
+            sync_handle, prev_sync_handle, sc);
           prev_sync_handle = sync_handle;
         }
 
@@ -205,18 +221,18 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       if (download_complete == 1 || (dongle_time - stats.last_download_time > 10)) {
         sc = sl_bt_sync_close(sync_handle);
         last_sync_close_time = dongle_time;
-        log_infof("dongle_time %u stats.last_download_time: %u min wait: %u "
+        log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
           "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
           dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
           download_complete, download.is_active, synced, sync_handle, sc);
       }
-#if 0
+
       if (dongle_download_complete_status() == 1) {
         sl_bt_sync_close(sync_handle);
         download_complete = 1;
         log_infof("%s", "download completed\r\n");
       }
-#endif
+
       break;
 
     default:

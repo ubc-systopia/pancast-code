@@ -232,7 +232,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 
 void dongle_download_complete()
 {
-  log_infof("[%u] Download complete! last dnwld time: %u "
+  log_debugf("[%u] Download complete! last dnwld time: %u "
       "data len: %d curr dwnld lat: %f\r\n",
       dongle_time, stats.last_download_time, download.packet_buffer.buffer.data_len,
       (double) (dongle_hp_timer - payload_start_ticks));

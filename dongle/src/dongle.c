@@ -91,10 +91,10 @@ void dongle_init()
   storage.encounters.head = config.en_head;
   storage.encounters.tail = config.en_tail;
 
-  log_infof("%s", "==== UPLOAD LOG START ===\r\n");
+  log_expf("%s", "==== UPLOAD LOG START ===\r\n");
   dongle_storage_load_encounter(&storage, storage.encounters.tail,
       dongle_print_encounter);
-  log_infof("%s", "==== UPLOAD LOG END ====\r\n");
+  log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 //  dongle_storage_load_all_encounter(&storage, dongle_print_encounter);
 
   //===========
@@ -125,7 +125,7 @@ void dongle_init()
  */
 void dongle_start()
 {
-  log_infof("%s", "=== Starting Dongle... ===\r\n");
+  log_expf("%s", "=== Starting Dongle... ===\r\n");
   sl_status_t sc = 0;
   sc = sl_bt_scanner_start(SCAN_PHY, SCAN_DISCOVER_MODE);
   if (sc != SL_STATUS_OK) {
@@ -410,48 +410,48 @@ int dongle_download_complete_status()
 
 void dongle_info()
 {
-  log_infof("%s", "=== Dongle Info: ===\r\n");
-  log_infof("    Dongle ID:                    0x%x\r\n", config.id);
-  log_infof("    Initial clock:                %lu\r\n", config.t_init);
-  log_infof("    Current clock:                %lu\r\n", config.t_cur);
-  log_infof("    Timer frequency:              %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
-  log_infof("    Backend public key size:      %lu bytes\r\n",
+  log_expf("%s", "=== Dongle Info: ===\r\n");
+  log_expf("    Dongle ID:                    0x%x\r\n", config.id);
+  log_expf("    Initial clock:                %lu\r\n", config.t_init);
+  log_expf("    Current clock:                %lu\r\n", config.t_cur);
+  log_expf("    Timer frequency:              %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
+  log_expf("    Backend public key size:      %lu bytes\r\n",
       config.backend_pk_size);
-  log_infof("    Secret key size:              %lu bytes\r\n",
+  log_expf("    Secret key size:              %lu bytes\r\n",
       config.dongle_sk_size);
-  log_infof("    Timer resolution:             %u ms\r\n",
+  log_expf("    Timer resolution:             %u ms\r\n",
       DONGLE_TIMER_RESOLUTION);
-  log_infof("    Epoch length:                 %u ms\r\n",
+  log_expf("    Epoch length:                 %u ms\r\n",
       BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
-  log_infof("    Report interval:              %u ms\r\n",
+  log_expf("    Report interval:              %u ms\r\n",
       DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
-  log_infof("    Legacy adv scan [PHY, mode]:  %d, %d\r\n", SCAN_PHY, SCAN_MODE);
-  log_infof("    Legacy adv scan interval:     %u ms\r\n", SCAN_INTERVAL);
-  log_infof("    Legacy adv scan window:       %u ms\r\n", SCAN_WINDOW);
-  log_infof("    Periodic adv sync skip:       %d\r\n", SYNC_SKIP);
-  log_infof("    Periodic adv sync flags:      %d\r\n", SYNC_FLAGS);
-  log_infof("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
+  log_expf("    Legacy adv scan [PHY, mode]:  %d, %d\r\n", SCAN_PHY, SCAN_MODE);
+  log_expf("    Legacy adv scan interval:     %u ms\r\n", SCAN_INTERVAL);
+  log_expf("    Legacy adv scan window:       %u ms\r\n", SCAN_WINDOW);
+  log_expf("    Periodic adv sync skip:       %d\r\n", SYNC_SKIP);
+  log_expf("    Periodic adv sync flags:      %d\r\n", SYNC_FLAGS);
+  log_expf("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
 
-  log_infof("    Flash page size, count:       %u B, %u\r\n",
+  log_expf("    Flash page size, count:       %u B, %u\r\n",
       storage.page_size, storage.num_pages);
-  log_infof("    Flash offset:                 0x%0x\r\n", FLASH_OFFSET);
-  log_infof("    Total size:                   %u\r\n", storage.total_size);
-  log_infof("    Log range, size:              0x%0x-0x%0x, %u\r\n",
+  log_expf("    Flash offset:                 0x%0x\r\n", FLASH_OFFSET);
+  log_expf("    Total size:                   %u\r\n", storage.total_size);
+  log_expf("    Log range, size:              0x%0x-0x%0x, %u\r\n",
     storage.map.log, storage.map.log_end, (storage.map.log_end - storage.map.log));
-  log_infof("    Encounter size:               %u\r\n",
+  log_expf("    Encounter size:               %u\r\n",
       sizeof(dongle_encounter_entry_t));
-  log_infof("    Max enctr entries:            %lu\r\n", MAX_LOG_COUNT);
-  log_infof("    Log head, tail:               %u, %u\r\n",
+  log_expf("    Max enctr entries:            %lu\r\n", MAX_LOG_COUNT);
+  log_expf("    Log head, tail:               %u, %u\r\n",
       config.en_head, config.en_tail);
-  log_infof("    Config offset:                0x%0x\r\n", storage.map.config);
-  log_infof("    OTP offset:                   0x%0x\r\n", storage.map.otp);
-  log_infof("    Stat offset:                  0x%0x\r\n", storage.map.stat);
+  log_expf("    Config offset:                0x%0x\r\n", storage.map.config);
+  log_expf("    OTP offset:                   0x%0x\r\n", storage.map.otp);
+  log_expf("    Stat offset:                  0x%0x\r\n", storage.map.stat);
 }
 
 void dongle_encounter_report()
 {
 #if MODE__STAT
-  log_infof("[%lu] last report time: %lu download time: %u head: %u tail: %u "
+  log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
     "#encounters [new, stored]: %lu, %lu\r\n",
     dongle_time, stats.last_report_time, stats.last_download_time,
     storage.encounters.head, storage.encounters.tail, storage.total_encounters,

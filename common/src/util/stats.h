@@ -35,6 +35,6 @@ typedef struct {
 #endif
 
 #define stat_show(stat, name, unit) \
-  log_infof("%s (%s): %.0f, %f, %f\r\n", name, unit, stat.n, stat.mu, stat.sigma)
+  log_expf("%s (%s): %.0f, %f, %f\r\n", name, unit, stat.n, stat.mu, stat.sigma)
 
 #endif

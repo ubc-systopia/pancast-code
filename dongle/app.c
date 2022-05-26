@@ -47,7 +47,7 @@ int synced = 0; // no concurrency control but acts as an eventual state signal
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     __attribute__ ((unused)) void *data)
 {
-  sl_status_t sc;
+  sl_status_t sc __attribute__ ((unused));
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
     dongle_clock_increment();
@@ -91,7 +91,7 @@ void app_process_action(void)
 
 void sl_bt_on_event (sl_bt_msg_t *evt)
 {
-  sl_status_t sc;
+  sl_status_t sc __attribute__ ((unused));
   switch (SL_BT_MSG_ID(evt->header)) {
     case sl_bt_evt_system_boot_id:
       dongle_init();

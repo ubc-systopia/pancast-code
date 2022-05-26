@@ -146,6 +146,13 @@ typedef struct {
 #define SCAN_INTERVAL 320
 #define SCAN_MODE 0 // passive scan
 
+/*
+ * evt_scanner_scan_report.packet_type: bit 7
+ * 0 - legacy PDU
+ * 1 - extended PDU
+ */
+#define SCAN_PDU_TYPE_MASK  0x80
+
 #define SYNC_SKIP 0
 #define SYNC_TIMEOUT 500 // Unit: 10 ms
 #define SYNC_FLAGS 0

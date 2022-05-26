@@ -302,7 +302,8 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
     // copy eph id bytes into tracking array
     memcpy(&cur_encounters[i].eph_id, enc->eph->bytes, BEACON_EPH_ID_HASH_LEN);
     cur_encounters[i].beacon_id = *(enc->b);
-    cur_encounters[i].location_id = *(enc->loc);
+    memcpy(&(cur_encounters[i].location_id), enc->loc, sizeof(beacon_location_id_t));
+//    cur_encounters[i].location_id = *(enc->loc);
     cur_encounters[i].beacon_time_start = *(enc->t);
     cur_encounters[i].dongle_time_start = dongle_time;
     cur_encounters[i].dongle_time_int = 0;

@@ -21,6 +21,7 @@ int compare_eph_id(beacon_eph_id_t *a, beacon_eph_id_t *b)
   return 0;
 }
 
+#if 0
 void display_eph_id(beacon_eph_id_t *id)
 {
   log_infof("EID: "
@@ -46,3 +47,4 @@ void display_eph_id_of(dongle_encounter_entry_t *entry)
 {
   display_eph_id(&entry->eph_id);
 }
+#endif

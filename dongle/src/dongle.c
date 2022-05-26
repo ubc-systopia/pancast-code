@@ -468,7 +468,7 @@ void dongle_report()
   stats.last_report_time = last_stat_time;
   dongle_encounter_report();
 
-#ifdef MODE__STAT
+#if MODE__STAT
   dongle_stats();
   dongle_download_stats();
   dongle_storage_save_stat(&storage, &config, &stats, sizeof(dongle_stats_t));

@@ -9,7 +9,6 @@
 #include <include/log.h>
 #include <include/util.h>
 
-#define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
 static bool _flash_page_info_(const struct flash_pages_info *info, void *data)
@@ -226,4 +225,3 @@ void beacon_storage_read_stat(beacon_storage *sto, void *stat, size_t len)
 }
 
 #undef next_multiple
-#undef prev_multiple

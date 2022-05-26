@@ -92,11 +92,9 @@ void beacon_info()
 {
   log_infof("%s", "=== Beacon Info: ===\r\n");
   log_infof("    Platform:                 %s\r\n", "Zephyr OS");
-#ifndef BEACON_PLATFORM__ZEPHYR
 #define UK "Unknown"
 #define CONFIG_BOARD UK
 #define CONFIG_BT_DEVICE_NAME UK
-#endif
   log_infof("    Board:                    %s\r\n", CONFIG_BOARD);
   log_infof("    Bluetooth device name:    %s\r\n", CONFIG_BT_DEVICE_NAME);
   log_infof("    Application version:      %s\r\n", APPL_VERSION);

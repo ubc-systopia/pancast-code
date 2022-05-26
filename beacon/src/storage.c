@@ -8,7 +8,6 @@
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
 
-#define prev_multiple(k, n) ((n) - ((n) % (k)))
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
 void beacon_storage_erase(beacon_storage *sto, storage_addr_t offset)
@@ -182,4 +181,3 @@ void beacon_storage_read_test_filter(beacon_storage *sto, uint8_t *buf)
 }
 
 #undef next_multiple
-#undef prev_multiple

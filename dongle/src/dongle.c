@@ -88,16 +88,17 @@ void dongle_init()
   dongle_test_enctr_storage();
 #endif
 
-  storage.encounters.head = config.en_head;
-  storage.encounters.tail = config.en_tail;
-
   log_expf("%s", "==== UPLOAD LOG START ===\r\n");
+  storage.encounters.tail = 0;
+  storage.encounters.head = MAX_LOG_COUNT-1;
   dongle_storage_load_encounter(&storage, storage.encounters.tail,
       dongle_print_encounter);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
-//  dongle_storage_load_all_encounter(&storage, dongle_print_encounter);
 
   //===========
+
+  storage.encounters.head = config.en_head;
+  storage.encounters.tail = config.en_tail;
 
   // reset stats
   dongle_stats_init(&storage);

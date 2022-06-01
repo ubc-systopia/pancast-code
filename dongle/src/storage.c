@@ -103,6 +103,8 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 
   read(sizeof(uint32_t), &cfg->en_tail);
   read(sizeof(uint32_t), &cfg->en_head);
+  sto->encounters.head = cfg->en_head;
+  sto->encounters.tail = cfg->en_tail;
 
   sto->map.otp = off;
 

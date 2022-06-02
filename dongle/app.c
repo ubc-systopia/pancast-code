@@ -21,9 +21,11 @@
 #include "app_log.h"
 #include "app_assert.h"
 
+#include "nvm3.h"
 #include "src/dongle.h"
 #include "src/stats.h"
 #include "src/download.h"
+#include "src/nvm3_lib.h"
 
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
@@ -79,6 +81,10 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
  ******************************************************************************/
 sl_status_t app_init(void)
 {
+  nvm3_app_init();
+
+  log_expf("=== NVM3 #objs: %u #erasures: %u ===\r\n", nvm3_count_objects(),
+      nvm3_get_erase_count());
   return SL_STATUS_OK;
 }
 

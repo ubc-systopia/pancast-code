@@ -20,6 +20,7 @@
 #include "telemetry.h"
 #include "download.h"
 #include "led.h"
+#include "nvm3_lib.h"
 
 #include "common/src/util/log.h"
 #include "common/src/constants.h"
@@ -163,6 +164,8 @@ void dongle_load()
   dongle_storage_init(&storage);
   // Config load is required to properly set up the memory maps
   dongle_storage_load_config(&storage, &config);
+  nvm3_load_config(&storage, &config);
+
 #if MODE__SL_DONGLE_TEST_CONFIG
   config.id = TEST_DONGLE_ID;
   config.t_init = TEST_DONGLE_INIT_TIME;
@@ -172,6 +175,7 @@ void dongle_load()
   config.dongle_sk = TEST_DONGLE_SK;
   config.t_cur = 0;
   dongle_storage_save_config(&storage, &config);
+  nvm3_save_config(&storage, &config);
   dongle_storage_save_otp(&storage, TEST_OTPS);
 #endif
 }
@@ -205,6 +209,7 @@ void dongle_on_clock_update()
   // update dongle time in config and save to flash
   config.t_cur = dongle_time;
   dongle_storage_save_config(&storage, &config);
+  nvm3_save_clock_cursor(&storage, &config);
   dongle_save_encounters();
   dongle_report();
 }

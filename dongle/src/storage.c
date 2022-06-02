@@ -153,6 +153,7 @@ static inline void dongle_storage_save_cursor_clock(dongle_storage *sto,
     dongle_config_t *cfg)
 {
   dongle_storage_save_config(sto, cfg);
+  nvm3_save_clock_cursor(sto, cfg);
 }
 
 #if 0

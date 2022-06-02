@@ -29,7 +29,7 @@
 #include "app_log.h"
 #include "app_assert.h"
 
-#include "./src/dongle.h"
+#include "src/dongle.h"
 
 #include "src/common/src/constants.h"
 #include "src/common/src/settings.h"

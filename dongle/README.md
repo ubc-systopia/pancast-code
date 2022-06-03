@@ -25,4 +25,8 @@ PanCast Dongle Implementation based on the Silicon Labs Gecko SDK platform. Curr
 3. In Simplicity Studio, open Flash Programmer (the blue, downward-facing arrow button in the toolbar).
 4. Select the correct board if needed.
 5. In the File section, browse to select the `app.hex` file you just generated.
-6. Erase, then Program. Close the window. The device is now flashed.
+6. Erase, the Program. Close the window. The device is now flashed.
+
+### Advanced flashing (using CLI)
+To customize the code image with different device IDs, follow the instructions
+from https://github.com/ubc-systopia/pancast-keys/blob/master/README.md.

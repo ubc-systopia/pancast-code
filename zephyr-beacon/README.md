@@ -1,7 +1,6 @@
 # Nordic beacon
 
-PanCast Beacon / Network Beacon Implementation based on the Silicon Labs Gecko SDK platform. Currently compatible with the `EFR32BG22` system - tested on `Wireless Starter Kit Mainboard (BRD4001A Rev A01)` with
-`EFR32xG22 2.4 GHz 6 dBm Radio Board (BRD4182A Rev B03)`.
+PanCast BLE Beacon implementation based on the Nordic NRF52832 board.
 
 ## Getting started
 
@@ -11,6 +10,8 @@ PanCast Beacon / Network Beacon Implementation based on the Silicon Labs Gecko S
 
 1. Navigate to the root Zephyr directory (the one containing the samples directory)
 2. Issue the following command: `west build -p auto -b nrf52dk_nrf52832 <app_path> -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` where `<app_path>` is the full path to the application to be built (For example: `$HOME/projects/pancast-code/ble-encounters/beacon`).
+
+Alternatively, invoke `zephyr-beacon/scripts/build.sh`.
 
 ### Troubleshooting
 1. On Apple M1, `west flash` JLink dll may not be recognized properly:
@@ -27,7 +28,11 @@ NOTE: Any generated log error messages will be displayed.
 ## Flashing the application
 
 1. Make sure the development board is plugged in.
-2. In the root Zephyr directory, run:   `west flash`, to flash the currently built application. Alternatively, can directly run
+2. In the root Zephyr directory, run:   `west flash`, to flash the currently built application. Alternatively, can directly run `zephyr-beacon/scripts/flash.sh`
+
+To customize the built code image with different device IDs, follow the
+instructions from
+https://github.com/ubc-systopia/pancast-keys/blob/master/README.md.
 
 #### VSCode Setup (Optional)
 1. Make sure you have followed the steps under General Setup and Building the App.

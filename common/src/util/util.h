@@ -77,7 +77,7 @@ static inline void bitdump(uint8_t *buf, int buflen, char *name)
 	if (!buf || !buflen)
 		return;
 
-  log_infof("%s\r\n", name);
+  printf("%s\r\n", name);
 
 	int i;
 	for (i = 0; i < buflen; i++) {

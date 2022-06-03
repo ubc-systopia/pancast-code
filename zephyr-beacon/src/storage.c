@@ -139,11 +139,15 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 
   read(sizeof(test_filter_size_t), &sto->test_filter_size);
+
+#if MODE__NRF_BEACON_TEST_CONFIG
   if (sto->test_filter_size != TEST_FILTER_LEN) {
       log_errorf("Test filter length mismatch (%u != %u)\r\n",
           sto->test_filter_size, TEST_FILTER_LEN);
       sto->test_filter_size = TEST_FILTER_LEN;
   }
+#endif
+
   sto->map.test_filter = off;
 
   /*

@@ -29,7 +29,7 @@ static inline void configure_blinky(void)
   sl_simple_led_context_t *ctx = sl_led_led0.context;
   sl_sleeptimer_start_periodic_timer_ms(&led_timer, LED_TIMER_MS,
       beacon_led_timer_handler, (void *) NULL, 0, 0);
-  log_infof("Config LED port %d pin %d polarity %d\r\n", ctx->port,
+  log_expf("Config LED port %d pin %d polarity %d\r\n", ctx->port,
       ctx->pin, ctx->polarity);
 }
 

@@ -90,51 +90,58 @@ static void beacon_load()
 
 void beacon_info()
 {
-  log_infof("%s", "=== Beacon Info: ===\r\n");
-  log_infof("    Platform:                 %s\r\n", "Zephyr OS");
+  bd_addr address;
+  uint8_t address_type;
+
+  sl_bt_system_get_identity_address(&address, &address_type);
+
+  log_expf("%s", "=== Beacon Info: ===\r\n");
+  log_expf("    Platform:                 %s\r\n", "Zephyr OS");
 #define UK "Unknown"
 #define CONFIG_BOARD UK
 #define CONFIG_BT_DEVICE_NAME UK
-  log_infof("    Board:                    %s\r\n", CONFIG_BOARD);
-  log_infof("    Bluetooth device name:    %s\r\n", CONFIG_BT_DEVICE_NAME);
-  log_infof("    Application version:      %s\r\n", APPL_VERSION);
-  log_infof("    Beacon ID:                0x%x\r\n", config.beacon_id);
-  log_infof("    Location ID:              0x%lx\r\n", config.beacon_location_id);
-  log_infof("    Initial clock:            %u\r\n", config.t_init);
-  log_infof("    Current clock:            %u\r\n", config.t_cur);
-  log_infof("    Timer frequency:          %u Hz\r\n",
+  log_expf("    Board:                    %s\r\n", CONFIG_BOARD);
+  log_expf("    Bluetooth device name:    %s\r\n", CONFIG_BT_DEVICE_NAME);
+  log_expf("    Application version:      %s\r\n", APPL_VERSION);
+  log_expf("    Beacon ID:                0x%x\r\n", config.beacon_id);
+  log_expf("    Location ID:              0x%lx\r\n", config.beacon_location_id);
+  log_expf("    MAC addr:                 %02X:%02X:%02X:%02X:%02X:%02X (%s)\r\n",
+      address.addr[5], address.addr[4], address.addr[3], address.addr[2],
+      address.addr[1], address.addr[0],
+      (address_type == 1 ? "random" : "public"));
+  log_expf("    Initial clock:            %u\r\n", config.t_init);
+  log_expf("    Current clock:            %u\r\n", config.t_cur);
+  log_expf("    Timer frequency:          %u Hz\r\n",
       sl_sleeptimer_get_timer_frequency());
-  log_infof("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);
-  log_infof("    Secret key size:          %u bytes\r\n", config.beacon_sk_size);
-  log_infof("    Timer resolution:         %u ms\r\n", BEACON_TIMER_RESOLUTION);
-  log_infof("    Epoch length:             %u ms\r\n",
+  log_expf("    Backend public key size:  %u bytes\r\n", config.backend_pk_size);
+  log_expf("    Secret key size:          %u bytes\r\n", config.beacon_sk_size);
+  log_expf("    Timer resolution:         %u ms\r\n", BEACON_TIMER_RESOLUTION);
+  log_expf("    Epoch length:             %u ms\r\n",
       BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
-  log_infof("    Report interval:          %u ms\r\n",
+  log_expf("    Report interval:          %u ms\r\n",
       BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-  log_infof("    Legacy adv interval:      %x-%x ms\r\n",
+  log_expf("    Legacy adv interval:      %x-%x ms\r\n",
       BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
-  log_infof("    Periodic adv pkt size:    %u bytes\r\n", PER_ADV_SIZE);
+  log_expf("    Periodic adv pkt size:    %u bytes\r\n", PER_ADV_SIZE);
 
-  log_infof("    Flash page size, count:   %u B, %u\r\n",
+  log_expf("    Flash page size, count:   %u B, %u\r\n",
       storage.page_size, storage.num_pages);
-  log_infof("    Flash offset:             0x%0x\r\n", storage.map.config);
-  log_infof("    Total size:               %u\r\n", storage.total_size);
-  log_infof("    Test filter offset:       0x%0x\r\n", storage.map.test_filter);
+  log_expf("    Flash offset:             0x%0x\r\n", storage.map.config);
+  log_expf("    Total size:               %u\r\n", storage.total_size);
+  log_expf("    Test filter offset:       0x%0x\r\n", storage.map.test_filter);
 
-  log_infof("    Test filter length:       %lu\r\n", storage.test_filter_size);
-  log_infof("    Config offset:            0x%0x\r\n", storage.map.config);
-  log_infof("    Stat offset:              0x%0x\r\n", storage.map.stat);
+  log_expf("    Test filter length:       %lu\r\n", storage.test_filter_size);
+  log_expf("    Config offset:            0x%0x\r\n", storage.map.config);
+  log_expf("    Stat offset:              0x%0x\r\n", storage.map.stat);
+
+  log_expf("    Periodic interval:        %u\r\n", PER_ADV_INTERVAL);
+  log_expf("    Min sync adv. interval:   %u\r\n", MIN_ADV_INTERVAL);
+  log_expf("    Max sync adv. interval:   %u\r\n", MAX_ADV_INTERVAL);
+  log_expf("    Tx power:                 %u\r\n", PER_TX_POWER);
+
 #ifdef MODE__STAT
   log_infof("%s", "    Statistics mode enabled\r\n");
 #endif
-}
-
-void _beacon_periodic_info()
-{
-  log_infof("    Periodic Interval:                %u\r\n", PER_ADV_INTERVAL);
-  log_infof("    Min Sync Advertising Interval:    %u\r\n", MIN_ADV_INTERVAL);
-  log_infof("    Max Sync Advertising Interval:    %u\r\n", MAX_ADV_INTERVAL);
-  log_infof("    Tx power:                         %u\r\n", PER_TX_POWER);
 }
 
 #ifdef MODE__STAT
@@ -165,9 +172,9 @@ void beacon_stats_update()
 
 static void beacon_stats_print()
 {
-  log_infof("[%lu] last report time: %lu #epochs: %u chksum: %u\r\n",
+  log_expf("[%lu] last report time: %lu #epochs: %u chksum: %u\r\n",
       beacon_time, stats.start, stats.epochs, stats.storage_checksum);
-  log_infof("sent broadcast packets: %u, total sent packets: %u, "
+  log_expf("sent broadcast packets: %u, total sent packets: %u, "
 		  "crc errors: %u, failures: %u\r\n",
 		  stats.sent_broadcast_packets, stats.total_packets_sent,
 		  stats.crc_errors, stats.failures);
@@ -237,7 +244,7 @@ static void _encode_encounter_()
 #undef copy
   hexdumpen(beacon_eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "eph ID",
       config.beacon_id, (uint32_t) config.beacon_location_id, 0,
-      (uint32_t) beacon_time, 0, (uint32_t) 0, 0, 0, 0);
+      (uint32_t) beacon_time, 0, (uint32_t) 0, 0, 0, (uint32_t) 0);
 }
 
 static void _beacon_encode_()
@@ -310,7 +317,7 @@ static void _beacon_epoch_()
 int _set_adv_data_()
 {
   log_debugf("%s", "Setting legacy adv data...\r\n");
-  print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
+//  print_bytes(payload.en_data.bytes, MAX_BROADCAST_SIZE, "adv_data");
   sl_status_t sc = sl_bt_advertiser_set_data(legacy_set_handle,
       0, 31, payload.en_data.bytes);
   if (sc != 0) {
@@ -339,9 +346,7 @@ sl_status_t beacon_legacy_advertise()
   sc = sl_bt_advertiser_set_tx_power(legacy_set_handle,
       LEGACY_TX_POWER, &set_power);
 
-  log_infof("Tx power: %d\r\n", set_power);
-
-  log_infof("%s", "=== Starting legacy advertising... ===\r\n");
+  log_expf("=== Starting legacy advertising... Tx power: %d ===\r\n", set_power);
   // Set advertising interval to 100ms.
   sc = sl_bt_advertiser_set_timing(legacy_set_handle,
       BEACON_ADV_MIN_INTERVAL, // min. adv. interval (milliseconds * 1.6)
@@ -459,7 +464,8 @@ void beacon_periodic_advertise()
     log_errorf("Error setting channel map, sc: 0x%X", sc);
   }
 
-  log_debugf("%s", "Starting periodic advertising...\r\n");
+  log_expf("=== Starting periodic advertising... Tx power: %d ===\r\n",
+      set_power);
 
   sc = sl_bt_advertiser_start_periodic_advertising(
       advertising_set_handle, PER_ADV_INTERVAL, PER_ADV_INTERVAL,

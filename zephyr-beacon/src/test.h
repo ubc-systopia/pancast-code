@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "settings.h"
 
-#define TEST_BEACON_ID ((BROADCAST_SERVICE_ID << 16) + 2)
+#define TEST_BEACON_ID ((BROADCAST_SERVICE_ID << 16) + 0)
 //12345678987654321
 #define TEST_BEACON_LOC_ID TEST_BEACON_ID
 #define TEST_BEACON_INIT_TIME 10

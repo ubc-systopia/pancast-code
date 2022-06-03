@@ -166,7 +166,7 @@ void nvm3_load_config(__attribute__((unused)) dongle_storage *sto,
   nvm3_read(NVM3_CNT_LOG_HEAD, &val[j++]);
   nvm3_read(NVM3_CNT_LOG_TAIL, &val[j++]);
 
-  log_infof("[NVM3] ID: 0x%0x T0: %u Tc: %u PK: %u SK: %u H: %u T: %u, "
+  log_expf("[NVM3] ID: 0x%0x T0: %u Tc: %u PK: %u SK: %u H: %u T: %u, "
       "errs: 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
       val[0], val[1], val[2], val[3], val[4], val[5], val[6],
       err[0], err[1], err[2], err[3], err[4], err[5], err[6]);

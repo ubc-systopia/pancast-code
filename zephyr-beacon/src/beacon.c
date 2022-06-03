@@ -138,34 +138,39 @@ void beacon_info()
   bt_id_get(&addr, &count);
   bt_addr_le_to_str(&addr, addr_s, sizeof(addr_s));
 
-  log_infof("%s", "=== Beacon Info: ===\r\n");
-  log_infof("  Platform:                 %s\r\n", "Zephyr OS");
-  log_infof("  Board:                    %s\r\n", CONFIG_BOARD);
-  log_infof("  Bluetooth device name:    %s\r\n", CONFIG_BT_DEVICE_NAME);
-  log_infof("  Application version:      %s\r\n", APPL_VERSION);
-  log_infof("  Beacon ID:                0x%x\r\n", config.beacon_id);
-  log_infof("  Location ID:              0x%lx\r\n",
+  log_expf("%s", "=== Beacon Info: ===\r\n");
+  log_expf("  Platform:                 %s\r\n", "Zephyr OS");
+  log_expf("  Board:                    %s\r\n", CONFIG_BOARD);
+  log_expf("  Bluetooth device name:    %s\r\n", CONFIG_BT_DEVICE_NAME);
+  log_expf("  Application version:      %s\r\n", APPL_VERSION);
+  log_expf("  Beacon ID:                0x%x\r\n", config.beacon_id);
+  log_expf("  Location ID:              0x%lx\r\n",
       (unsigned long) config.beacon_location_id);
-  log_infof("  MAC addr:                 %s\r\n", addr_s);
-  log_infof("  Initial clock:            %u\r\n", config.t_init);
-  log_infof("  Current clock:            %u\r\n", config.t_cur);
-  log_infof("  Timer frequency:          %u Hz\r\n", timer_freq);
-  log_infof("  Backend public key size:  %u bytes\r\n",
+  log_expf("  MAC addr:                 %s\r\n", addr_s);
+  log_expf("  Initial clock:            %u\r\n", config.t_init);
+  log_expf("  Current clock:            %u\r\n", config.t_cur);
+  log_expf("  Timer frequency:          %u Hz\r\n", timer_freq);
+  log_expf("  Backend public key size:  %u bytes\r\n",
       config.backend_pk_size);
-  log_infof("  Secret key size:          %u bytes\r\n",
+  log_expf("  Secret key size:          %u bytes\r\n",
       config.beacon_sk_size);
-  log_infof("  Timer resolution:         %u ms\r\n",
+  log_expf("  Timer resolution:         %u ms\r\n",
       BEACON_TIMER_RESOLUTION);
-  log_infof("  Epoch length:             %u ms\r\n",
+  log_expf("  Epoch length:             %u ms\r\n",
       BEACON_EPOCH_LENGTH * BEACON_TIMER_RESOLUTION);
-  log_infof("  Report interval:          %u ms\r\n",
+  log_expf("  Report interval:          %u ms\r\n",
       BEACON_REPORT_INTERVAL * BEACON_TIMER_RESOLUTION);
-  log_infof("  Legacy adv interval:      %x-%x ms\r\n",
+  log_expf("  Legacy adv interval:      %x-%x ms\r\n",
       BEACON_ADV_MIN_INTERVAL, BEACON_ADV_MAX_INTERVAL);
-  log_infof("  Test Filter Length:       %u\r\n",
+  log_expf("  Test filter offset:       0x%0x\r\n", storage.map.test_filter);
+  log_expf("  Test Filter length:       %u\r\n",
       storage.test_filter_size);
+  log_expf("  Config offset:            0x%0x\r\n", storage.map.config);
+  log_expf("  Stat offset:              0x%0x\r\n", storage.map.stat);
+  log_expf("  Tx power:                 %d:%d dbm\r\n",
+      MIN_TX_POWER, MAX_TX_POWER);
 #ifdef MODE__STAT
-  log_infof("%s", "  Statistics mode enabled\r\n");
+  log_expf("%s", "  Statistics mode enabled\r\n");
 #endif
 }
 

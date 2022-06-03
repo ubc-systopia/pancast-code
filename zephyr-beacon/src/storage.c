@@ -113,7 +113,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   read(sizeof(beacon_timer_t), &cfg->t_init);
   read(sizeof(beacon_timer_t), &cfg->t_cur);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
-  log_debugf("bknd key off: %u, size: %u\r\n",
+  log_expf("bknd key off: 0x%0x, size: %u\r\n",
       off, cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {
     log_errorf("Key size read for backend pubkey (%u > %u)\r\n",
@@ -121,13 +121,12 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
   read(cfg->backend_pk_size, cfg->backend_pk.bytes);
-  hexdumpn(cfg->backend_pk.bytes, 16, "    Server PK",
-      0, (uint64_t) 0, 0);
+  hexdumpn(cfg->backend_pk.bytes, 16, "    Server PK");
   // slide through the extra space for a pubkey
   off += PK_MAX_SIZE - cfg->backend_pk_size;
 
   read(sizeof(key_size_t), &cfg->beacon_sk_size);
-  log_debugf("beacon key off: %u, size: %u\r\n",
+  log_expf("beacon key off: 0x%0x, size: %u\r\n",
       off, cfg->beacon_sk_size);
   if (cfg->beacon_sk_size > SK_MAX_SIZE) {
     log_errorf("Key size read for beacon privkey (%u > %u)\r\n",
@@ -135,8 +134,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
     cfg->beacon_sk_size = SK_MAX_SIZE;
   }
   read(cfg->beacon_sk_size, &cfg->beacon_sk);
-  hexdumpn(cfg->beacon_sk.bytes, 16, "nRF Beacon SK", 0,
-      (uint64_t) 0, 0);
+  hexdumpn(cfg->beacon_sk.bytes, 16, "nRF Beacon SK");
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 
@@ -156,9 +154,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
       sto->map.test_filter + sto->test_filter_size);
 #undef read
   log_debugf("%s", "Config loaded.\r\n");
-  log_infof("  Flash offset:        %u\r\n", sto->map.config);
-  log_infof("  Test filter offset:  %u\r\n", sto->map.test_filter);
-  log_infof("  Stat offset:         %u\r\n", sto->map.stat);
 }
 
 void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
@@ -175,7 +170,7 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
   off += (sizeof(beacon_config_t) + sizeof(test_filter_size_t));
   log_infof("test filter len: %u\r\n", sto->test_filter_size);
   _flash_read_(sto, off, test_filter, 16);
-  hexdumpn(test_filter, 16, "TEST filter pfx", 0, (uint64_t) 0, 0);
+  hexdumpn(test_filter, 16, "TEST filter pfx");
 
   off = sto->map.config;
 #endif

@@ -314,7 +314,11 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
     cur_encounters[i].beacon_time_start = *(enc->t);
     cur_encounters[i].dongle_time_start = dongle_time;
     cur_encounters[i].dongle_time_int = 0;
-    cur_encounters[i].beacon_time_int = 0;
+    /*
+     * conservatively assume that the first instance of an encounter
+     * is observed at the beginning of the timer interval.
+     */
+    cur_encounters[i].beacon_time_int = 1;
     cur_encounters[i].rssi = rssi;
 
 #if 0
@@ -336,8 +340,8 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
     return;
   }
 
-  uint8_t dongle_dur = (uint8_t)(dongle_time - cur_encounters[i].dongle_time_start);
-  uint8_t beacon_dur = (uint8_t)(*enc->t - cur_encounters[i].beacon_time_start);
+  uint8_t dongle_dur = (uint8_t) (dongle_time - cur_encounters[i].dongle_time_start);
+  uint8_t beacon_dur = (uint8_t) (*enc->t - cur_encounters[i].beacon_time_start + 1);
 
   cur_encounters[i].dongle_time_int = dongle_dur;
   cur_encounters[i].beacon_time_int = beacon_dur;

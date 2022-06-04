@@ -163,6 +163,10 @@ void dongle_load()
   dongle_storage_init(&storage);
   // Config load is required to properly set up the memory maps
   dongle_storage_load_config(&storage, &config);
+  enctr_entry_counter_t sto_en_head = config.en_head;
+  enctr_entry_counter_t sto_en_tail = config.en_tail;
+  beacon_timer_t sto_t_cur = config.t_cur;
+
   nvm3_load_config(&storage, &config);
 
 #if MODE__SL_DONGLE_TEST_CONFIG
@@ -177,6 +181,21 @@ void dongle_load()
   nvm3_save_config(&storage, &config);
   dongle_storage_save_otp(&storage, TEST_OTPS);
 #endif
+
+  if (sto_en_head == 0)
+    config.en_head = 0;
+
+  if (sto_en_tail == 0)
+    config.en_tail = 0;
+
+  if (sto_t_cur == 0)
+    config.t_cur = 0;
+
+  log_expf("=== INIT [C, H, T] sto: %u %u %u nvm: %u %u %u ===\r\n", sto_t_cur,
+      sto_en_head, sto_en_tail, config.t_cur, config.en_head, config.en_tail);
+  // if device re-flashed, all these fields would be zero, reset in the NVM too
+  if (sto_en_head == 0 || sto_en_tail == 0 || sto_t_cur == 0)
+    nvm3_save_clock_cursor(&storage, &config);
 }
 
 void dongle_clock_increment()

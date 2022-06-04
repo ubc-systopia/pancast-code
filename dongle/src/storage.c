@@ -1,4 +1,5 @@
 #include "storage.h"
+#include "nvm3_lib.h"
 
 #include <string.h>
 

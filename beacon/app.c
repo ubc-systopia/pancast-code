@@ -24,6 +24,9 @@
 #include "sl_iostream.h"
 #include "em_gpio.h"
 
+#include "nvm3.h"
+#include "src/nvm3_lib.h"
+
 #include "src/common/src/constants.h"
 #include "src/common/src/util/log.h"
 #include "src/common/src/test.h"
@@ -46,6 +49,10 @@ void app_init(void)
 
   // Set pin PB01 for output
   GPIO_PinModeSet(gpioPortB, 1, gpioModePushPull, 0);
+
+  nvm3_app_init();
+  log_expf("=== NVM3 #objs: %u #erasures: %u ===\r\n", nvm3_count_objects(),
+      nvm3_get_erase_count());
 }
 
 #if PERIODIC_TEST

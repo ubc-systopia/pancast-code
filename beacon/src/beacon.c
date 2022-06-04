@@ -6,8 +6,9 @@
 // details.
 //
 
-#include "./beacon.h"
+#include "beacon.h"
 #include "app.h"
+#include "nvm3_lib.h"
 #include "common/src/util/stats.h"
 
 #define APPL_VERSION "0.1.1"
@@ -85,8 +86,12 @@ static void beacon_load()
 {
   beacon_config_init(&config);
   beacon_storage_init(&storage);
-  // Load data
+
+  // load data
   beacon_storage_load_config(&storage, &config);
+  beacon_timer_t sto_t_cur = config.t_cur;
+  nvm3_load_config(&storage, &config);
+
 #if MODE__SL_BEACON_TEST_CONFIG
   config.beacon_id = TEST_BEACON_ID;
   config.beacon_location_id = TEST_BEACON_LOC_ID;
@@ -98,7 +103,15 @@ static void beacon_load()
   memcpy(config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
   storage.test_filter_size = TEST_FILTER_LEN;
   beacon_storage_save_config(&storage, &config);
+  nvm3_save_config(&storage, &config);
 #endif
+
+  log_expf("=== INIT sto.t_cur: %u nvm.t_cur: %u ===\r\n", sto_t_cur, config.t_cur);
+  // if device re-flashed, t_cur would be zero, reset it in the NVM too
+  if (sto_t_cur == 0) {
+    config.t_cur = 0;
+    nvm3_save_clock_cursor(&storage, &config);
+  }
 }
 
 void beacon_info()
@@ -400,6 +413,7 @@ int beacon_clock_increment(beacon_timer_t time)
 
   // update beacon time in config and save to flash
   config.t_cur = beacon_time;
+  nvm3_save_clock_cursor(&storage, &config);
 //  beacon_storage_save_config(&storage, &config);
 
   // update stats and save to flash

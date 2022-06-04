@@ -69,8 +69,21 @@ static beacon_sk_t TEST_BEACON_SK = {
 // ROUTINES
 //
 
+static void beacon_config_init(beacon_config_t *cfg)
+{
+  if (!cfg)
+    return;
+
+  cfg->backend_pk = malloc(PK_MAX_SIZE);
+  memset(cfg->backend_pk, 0, PK_MAX_SIZE);
+
+  cfg->beacon_sk = malloc(SK_MAX_SIZE);
+  memset(cfg->beacon_sk, 0, SK_MAX_SIZE);
+}
+
 static void beacon_load()
 {
+  beacon_config_init(&config);
   beacon_storage_init(&storage);
   // Load data
   beacon_storage_load_config(&storage, &config);
@@ -80,9 +93,9 @@ static void beacon_load()
   config.t_init = TEST_BEACON_INIT_TIME;
   config.t_cur = 0;
   config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-  memcpy(&config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
+  memcpy(config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
-  memcpy(&config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
+  memcpy(config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
   storage.test_filter_size = TEST_FILTER_LEN;
   beacon_storage_save_config(&storage, &config);
 #endif
@@ -265,7 +278,7 @@ static void _gen_ephid_()
   // Initialize hash
   init();
   // Add relevant data
-  add(&config.beacon_sk, config.beacon_sk_size);
+  add(config.beacon_sk, config.beacon_sk_size);
   add(&config.beacon_location_id, sizeof(beacon_location_id_t));
   add(&epoch, sizeof(beacon_epoch_counter_t));
   // finalize and copy to id

@@ -205,7 +205,7 @@ static void _beacon_report_()
 
   beacon_stats_update();
   beacon_stats_print();
-  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+  beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
 //  beacon_stats_reset();
 //  stat_epochs = 1;
   stats.start = beacon_time;
@@ -305,7 +305,7 @@ static void beacon_stats_init()
 #endif
 #if MODE__SL_BEACON_TEST_CONFIG
   beacon_stats_reset();
-  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+  beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
 #endif
 }
 
@@ -400,7 +400,7 @@ int beacon_clock_increment(beacon_timer_t time)
 
   // update beacon time in config and save to flash
   config.t_cur = beacon_time;
-  beacon_storage_save_config(&storage, &config);
+//  beacon_storage_save_config(&storage, &config);
 
   // update stats and save to flash
   cycles++;

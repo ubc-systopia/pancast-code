@@ -86,7 +86,6 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   read(sizeof(beacon_id_t), &cfg->beacon_id);
   read(sizeof(beacon_location_id_t), &cfg->beacon_location_id);
   read(sizeof(beacon_timer_t), &cfg->t_init);
-  read(sizeof(beacon_timer_t), &cfg->t_cur);
   read(sizeof(key_size_t), &cfg->backend_pk_size);
   log_debugf("bknd key off: 0x%0x, size: %u\r\n", off, cfg->backend_pk_size);
   if (cfg->backend_pk_size > PK_MAX_SIZE) {
@@ -130,6 +129,8 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
    */
   sto->map.stat = next_multiple(sto->page_size,
       sto->map.test_filter + sto->test_filter_size);
+  off = sto->map.stat;
+  read(sizeof(beacon_timer_t), &cfg->t_cur);
 #undef read
 }
 
@@ -154,7 +155,6 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
   write(&cfg->beacon_id, sizeof(beacon_id_t));
   write(&cfg->beacon_location_id, sizeof(beacon_location_id_t));
   write(&cfg->t_init, sizeof(beacon_timer_t));
-  write(&cfg->t_cur, sizeof(beacon_timer_t));
   write(&cfg->backend_pk_size, sizeof(key_size_t));
   write(&cfg->backend_pk, cfg->backend_pk_size);
   off += PK_MAX_SIZE - cfg->backend_pk_size;
@@ -168,10 +168,13 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
 }
 
 
-void beacon_storage_save_stat(beacon_storage *sto, void *stat, size_t len)
+void beacon_storage_save_stat(beacon_storage *sto, beacon_config_t *cfg,
+    void *stat, size_t len)
 {
   beacon_storage_erase(sto, sto->map.stat);
   storage_addr_t off = sto->map.stat;
+  _flash_write_(sto, off, &cfg->t_cur, sizeof(beacon_timer_t));
+  off += sizeof(beacon_timer_t);
   _flash_write_(sto, off, stat, len);
 }
 

@@ -30,19 +30,21 @@ void pre_erase(beacon_storage *sto, storage_addr_t off, size_t write_size)
 #undef page_num
 }
 
-int _flash_read_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
+int _flash_read_(__attribute__((unused)) beacon_storage *sto, storage_addr_t off,
+    void *data, size_t size)
 {
   log_debugf("size: %d bytes, addr: 0x%x, flash off: 0x%0x\r\n",
       size, off, sto->map.config);
-  memcpy(data, (uint32_t *)off, size);
+  memcpy(data, (uint32_t *) off, size);
   return 0;
 }
 
-int _flash_write_(beacon_storage *sto, storage_addr_t off, void *data, size_t size)
+int _flash_write_(__attribute__((unused)) beacon_storage *sto, storage_addr_t off,
+    void *data, size_t size)
 {
   log_debugf("size: %d bytes, addr: 0x%x, flash off: 0x%0x\r\n",
       size, off, sto->map.config);
-  return MSC_WriteWord((uint32_t *)off, data, (uint32_t)size);
+  return MSC_WriteWord((uint32_t *) off, data, (uint32_t) size);
 }
 
 void beacon_storage_get_info(beacon_storage *sto)

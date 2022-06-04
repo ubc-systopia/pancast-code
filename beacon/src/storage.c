@@ -156,10 +156,10 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
   write(&cfg->beacon_location_id, sizeof(beacon_location_id_t));
   write(&cfg->t_init, sizeof(beacon_timer_t));
   write(&cfg->backend_pk_size, sizeof(key_size_t));
-  write(&cfg->backend_pk, cfg->backend_pk_size);
+  write(cfg->backend_pk, cfg->backend_pk_size);
   off += PK_MAX_SIZE - cfg->backend_pk_size;
   write(&cfg->beacon_sk_size, sizeof(key_size_t));
-  write(&cfg->beacon_sk, cfg->beacon_sk_size);
+  write(cfg->beacon_sk, cfg->beacon_sk_size);
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 
   // write test filter len

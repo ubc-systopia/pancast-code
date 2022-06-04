@@ -36,7 +36,6 @@ sl_sleeptimer_timer_handle_t led_timer;
 
 dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
-dongle_timer_t last_stat_time;
 dongle_encounter_entry_t cur_encounters[DONGLE_MAX_BC_TRACKED];
 size_t cur_id_idx;
 extern download_t download;
@@ -80,7 +79,7 @@ void dongle_init()
   // set dongle time to current saved time
   // TODO: determine when this needs to be reset to the init time
   dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
-  last_stat_time = dongle_time;
+  stats.last_report_time = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
   download_complete = 0;
@@ -472,17 +471,16 @@ void dongle_encounter_report()
 
 void dongle_report()
 {
+#if MODE__STAT
   // do report
-  if (dongle_time - last_stat_time < DONGLE_REPORT_INTERVAL)
+  if ((int) (dongle_time - stats.last_report_time) < (int) DONGLE_REPORT_INTERVAL)
     return;
 
-  stats.last_report_time = last_stat_time;
-  dongle_encounter_report();
-
-#if MODE__STAT
   dongle_stats();
   dongle_download_stats();
   dongle_storage_save_stat(&storage, &config, &stats, sizeof(dongle_stats_t));
-  last_stat_time = dongle_time;
+  dongle_encounter_report();
+
+  stats.last_report_time = dongle_time;
 #endif
 }

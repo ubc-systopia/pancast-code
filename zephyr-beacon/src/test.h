@@ -4,7 +4,7 @@
 // TEST DATA
 
 #include <stdint.h>
-#include "settings.h"
+#include <settings.h>
 
 #define TEST_BEACON_ID ((BROADCAST_SERVICE_ID << 16) + 0)
 //12345678987654321
@@ -16,8 +16,6 @@
 #define TEST_BEACON_SK_SIZE 16
 
 // Cuckoo filter testing
-
-typedef uint32_t test_filter_size_t;
 
 #define CF_SIZE_BYTES       \
   ((NUM_CF_BUCKETS * FINGERPRINT_BITS * ENTRIES_PER_BUCKET) /  \

@@ -1,7 +1,7 @@
 #ifndef COMMON_SETTINGS__H
 #define COMMON_SETTINGS__H
 
-#include "include/constants.h"
+#include <constants.h>
 
 /*
  * Broadcasting constants
@@ -12,38 +12,25 @@
 static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
 /*
- * ==============
- * CONFIGURATIONS
- * ==============
+ * =========================
+ * CONFIGURATIONS PARAMETERS
+ * =========================
  */
 
 /*
  * 0 - load config from storage
  * 1 - use test config
  */
-#define MODE__NRF_BEACON_TEST_CONFIG  1
+#define MODE__NRF_BEACON_TEST_CONFIG  0
 
 /*
  * #time units between statistic reports
  */
-#define BEACON_REPORT_INTERVAL 10
+#define BEACON_REPORT_INTERVAL 20
 
 /*
- * uncomment to set global params for testing
+ * clock resolution in ms - this corresponds to a single time 'unit'
  */
-//#define PANCAST__TEST
-
-#ifndef PANCAST__TEST
-
-#include "include/settings.h"
-
-#else
-
-/*
- * Override global default settings
- */
-
-// clock resolution in ms - this corresponds to a single time 'unit'
 #define BEACON_TIMER_RESOLUTION 60000
 #define PAYLOAD_ALTERNATE_TIMER  1000
 #define LED_TIMER 1000
@@ -58,8 +45,6 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
  */
 #define MIN_TX_POWER -40
 #define MAX_TX_POWER -20
-
-#endif /* PANCAST__TEST */
 
 #define FINGERPRINT_BITS    27
 

@@ -1,19 +1,18 @@
 #ifndef BEACON__H
 #define BEACON__H
 
+#include <bluetooth/bluetooth.h>
+#include <sha-2/sha-256.h>
+
 #include <assert.h>
 
-#include "settings.h"
-
-#include <include/stats.h>
+#include <settings.h>
+#include <stats.h>
 
 
 #define BEACON_PLATFORM__ZEPHYR
 
 // #define BEACON_GAEN_ENABLED
-
-#include <bluetooth/bluetooth.h>
-#include <sha-2/sha-256.h>
 
 typedef struct
 {

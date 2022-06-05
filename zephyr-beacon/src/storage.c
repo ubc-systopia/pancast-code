@@ -1,13 +1,9 @@
-#include "settings.h"
-#include "test.h"
-#include "storage.h"
-
 #include <string.h>
 
-#define LOG_LEVEL__INFO
-
-#include <include/log.h>
-#include <include/util.h>
+#include <settings.h>
+#include <storage.h>
+#include <log.h>
+#include <util.h>
 
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
@@ -138,7 +134,7 @@ void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg)
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 
-  read(sizeof(test_filter_size_t), &sto->test_filter_size);
+  read(sizeof(sto->test_filter_size), &sto->test_filter_size);
 
 #if MODE__NRF_BEACON_TEST_CONFIG
   if (sto->test_filter_size != TEST_FILTER_LEN) {
@@ -164,14 +160,14 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
 {
   storage_addr_t off = sto->map.config;
   int total_size = sizeof(beacon_config_t) +
-    sizeof(test_filter_size_t);
+    sizeof(sto->test_filter_size);
 
 #if 0
   // read out current value from storage
   int test_filter_len = sto->test_filter_size;
 
   char test_filter[16];
-  off += (sizeof(beacon_config_t) + sizeof(test_filter_size_t));
+  off += (sizeof(beacon_config_t) + sizeof(sto->test_filter_size));
   log_infof("test filter len: %u\r\n", sto->test_filter_size);
   _flash_read_(sto, off, test_filter, 16);
   hexdumpn(test_filter, 16, "TEST filter pfx");
@@ -203,7 +199,7 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
   off += SK_MAX_SIZE - cfg->beacon_sk_size;
 
   // write test filter len
-  write(&sto->test_filter_size, sizeof(test_filter_size_t));
+  write(&sto->test_filter_size, sizeof(sto->test_filter_size));
 
 #if 0
   // write test filter

@@ -7,16 +7,16 @@
  * with minimal coupling the underlying drivers.
  */
 
-#include "beacon.h"
-
+#include <drivers/flash.h>
 #include <stddef.h>
+
+#include <beacon.h>
 
 // Offset determines a safe point of read/write beyond the pages used by application
 // binaries. For now, determined empirically by doing a compilation pass then adjusting
 // the value
 #define FLASH_OFFSET 0x60000
 
-#include <drivers/flash.h>
 typedef off_t storage_addr_t;
 typedef const struct device flash_device_t;
 
@@ -36,7 +36,7 @@ typedef struct
   storage_addr_t total_size;
   _beacon_storage_map_ map;
   uint64_t numErasures;
-  test_filter_size_t test_filter_size;
+  uint32_t test_filter_size;
 } beacon_storage;
 
 // STORAGE INIT

@@ -2,11 +2,8 @@
 #include <devicetree.h>
 #include <drivers/gpio.h>
 
-#include "led.h"
-
-#define LOG_LEVEL__INFO
-
-#include <include/log.h>
+#include <led.h>
+#include <log.h>
 
 #define LED0_NODE DT_ALIAS(led0)
 

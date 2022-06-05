@@ -1,13 +1,8 @@
-//
-// Beacon Application for PanCast Encounter logging
-// Early version based on the bluetooth-beacon example from Zephyr
-// Acts as a bluetooth beacon, using a full legacy-advertising
-// payload to broadcast relevant information. See white-paper for
-// details.
-//
-#include <include/stats.h>
-#include <include/constants.h>
-
+/*
+ * beacon application for PanCast encounter logging
+ * acts as a bluetooth beacon, using a full legacy-advertising
+ * payload to broadcast relevant information.
+ */
 #include <stdio.h>
 
 #define APPL_VERSION "0.1.1"
@@ -31,15 +26,18 @@
 
 #include <drivers/flash.h>
 
-#include "beacon.h"
-#include "test.h"
-#include "storage.h"
+#include <stats.h>
+#include <constants.h>
 
-#include "settings.h"
-#include "led.h"
+#include <beacon.h>
+#include <test.h>
+#include <storage.h>
 
-#include <include/util.h>
-#include <include/log.h>
+#include <settings.h>
+#include <led.h>
+
+#include <util.h>
+#include <log.h>
 
 //
 // GLOBAL MEMORY

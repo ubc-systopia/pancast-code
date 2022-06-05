@@ -29,8 +29,6 @@
 
 // #define BEACON_GAEN_ENABLED
 
-#define BEACON_NO_OP assert(1);
-
 #include "common/src/constants.h"
 #include "common/src/settings.h"
 #include "common/src/test.h"

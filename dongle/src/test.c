@@ -121,10 +121,10 @@ void dongle_test()
   dongle_storage_save_config(&storage, &config);
 
   log_infof("#encounters logged: %d, expected: %d\r\n", test_encounters,
-      (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME));
+      (DONGLE_REPORT_INTERVAL / BEACON_EPOCH_LENGTH));
 #if 0
   log_infof("%s", "    ? correct #encounters logged?\r\n");
-  int numExpected = (DONGLE_REPORT_INTERVAL / DONGLE_ENCOUNTER_MIN_TIME);
+  int numExpected = (DONGLE_REPORT_INTERVAL / BEACON_EPOCH_LENGTH);
   // Tolerant expectation provided to account for timing differences
   int tolExpected = numExpected + 1;
   if (test_encounters != numExpected && test_encounters != tolExpected) {
@@ -147,7 +147,7 @@ void dongle_test()
   log_infof("%s", "    old encounters deleted?\r\n");
   dongle_storage_clean_log(&storage, dongle_time);
   num = dongle_storage_num_encounters_current(&storage);
-  if (dongle_time <= DONGLE_MAX_LOG_AGE + DONGLE_ENCOUNTER_MIN_TIME) {
+  if (dongle_time <= DONGLE_MAX_LOG_AGE + BEACON_EPOCH_LENGTH) {
     log_errorf("%s", "not enough time has elapsed.\r\n");
   } else if (num < 1) {
     log_errorf("%s", "no encounters stored.\r\n");

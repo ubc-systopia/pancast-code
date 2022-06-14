@@ -44,10 +44,10 @@
 //
 
 // Config
-beacon_config_t config;
+static beacon_config_t config;
 
 // Default Operation
-beacon_storage storage;
+static beacon_storage storage;
 static beacon_timer_t beacon_time;    // Beacon Clock
 static beacon_eph_id_t beacon_eph_id; // Ephemeral ID
 static beacon_epoch_counter_t epoch;  // track the current time epoch
@@ -56,6 +56,7 @@ static struct k_timer kernel_time_lp;         // periodic timer for new ephid ge
 static struct k_timer kernel_time_alternater; // alternate Pancast and GAEN packets
 static struct k_timer led_timer;      // periodic LED blinking
 uint32_t timer_freq = 0;
+
 /*
  * ENTRY POINT
  */
@@ -64,7 +65,7 @@ void main(void)
   int err = 0;
   log_infof("=== Starting %s ===\r\n", CONFIG_BT_DEVICE_NAME);
   timer_freq = sys_clock_hw_cycles_per_sec();
-  err = bt_enable(_beacon_broadcast_);
+  err = bt_enable(pancast_zephyr_beacon);
   log_debugf("beacon enable, ret: %d\r\n", err);
 }
 
@@ -127,7 +128,7 @@ static void beacon_load()
 #endif
 }
 
-void beacon_info()
+static void beacon_info()
 {
   char addr_s[BT_ADDR_LE_STR_LEN];
   bt_addr_le_t addr = {0};
@@ -148,6 +149,7 @@ void beacon_info()
   log_expf("  Initial clock:            %u\r\n", config.t_init);
   log_expf("  Current clock:            %u\r\n", config.t_cur);
   log_expf("  Timer frequency:          %u Hz\r\n", timer_freq);
+  log_expf("  Beacon config size:       %u bytes\r\n", sizeof(beacon_config_t));
   log_expf("  Backend public key size:  %u bytes\r\n",
       config.backend_pk_size);
   log_expf("  Secret key size:          %u bytes\r\n",
@@ -531,12 +533,16 @@ void beacon_gaen_pancast_loop()
 /*
  * Primary broadcasting routine
  */
-void _beacon_broadcast_(int err)
+void _beacon_broadcast_(int err, int reset)
 {
-  int8_t tx_power = MAX_TX_POWER;
-  set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
 
   beacon_load();
+
+  if (reset) {
+    config.t_cur = config.t_init;
+    beacon_storage_save_config(&storage, &config);
+  }
+
   beacon_info();
 
   epoch = 0;
@@ -544,20 +550,30 @@ void _beacon_broadcast_(int err)
 
   beacon_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
 
-  // Timer Start
-  k_timer_init(&kernel_time_lp, NULL, NULL);
-  k_timer_init(&kernel_time_alternater, NULL, NULL);
-  k_timer_init(&led_timer, beacon_led_timeout_handler, NULL);
-
-  k_timer_start(&kernel_time_lp, K_MSEC(BEACON_TIMER_RESOLUTION),
-      K_MSEC(BEACON_TIMER_RESOLUTION));
-  k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
-      K_MSEC(PAYLOAD_ALTERNATE_TIMER));
-  k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
-
   beacon_stats_init();
 
-  configure_blinky();
+  if (!reset) {
+    // Timer Start
+    k_timer_init(&kernel_time_lp, NULL, NULL);
+    k_timer_init(&kernel_time_alternater, NULL, NULL);
+    k_timer_init(&led_timer, beacon_led_timeout_handler, NULL);
+
+    k_timer_start(&kernel_time_lp, K_MSEC(BEACON_TIMER_RESOLUTION),
+        K_MSEC(BEACON_TIMER_RESOLUTION));
+    k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
+        K_MSEC(PAYLOAD_ALTERNATE_TIMER));
+    k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
+
+    configure_blinky();
+  }
+}
+
+void pancast_zephyr_beacon(int err)
+{
+  int8_t tx_power = MAX_TX_POWER;
+  set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, tx_power);
+
+  _beacon_broadcast_(err, 0);
 
   err = beacon_legacy_advertise();
 #ifdef BEACON_GAEN_ENABLED

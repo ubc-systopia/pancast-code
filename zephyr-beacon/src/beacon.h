@@ -74,8 +74,8 @@ typedef struct
 
 extern beacon_stats_t stats;
 
-void _beacon_broadcast_(int);
-void _beacon_info_();
+void _beacon_broadcast_(int err, int reset);
+void pancast_zephyr_beacon(int err);
 int _set_adv_data_();
 int beacon_clock_increment(beacon_timer_t time);
 

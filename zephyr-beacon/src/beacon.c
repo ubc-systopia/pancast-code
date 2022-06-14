@@ -39,6 +39,8 @@
 #include <util.h>
 #include <log.h>
 
+#include <button.h>
+
 //
 // GLOBAL MEMORY
 //
@@ -535,6 +537,7 @@ void beacon_gaen_pancast_loop()
  */
 void _beacon_broadcast_(int err, int reset)
 {
+  log_expf("init beacon err: %d reset: %d\r\n", err, reset);
 
   beacon_load();
 
@@ -565,6 +568,7 @@ void _beacon_broadcast_(int err, int reset)
     k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
 
     configure_blinky();
+    button_init();
   }
 }
 

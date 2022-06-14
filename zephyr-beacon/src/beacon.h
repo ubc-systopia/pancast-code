@@ -21,9 +21,9 @@ typedef struct
   beacon_timer_t t_init;                   // Beacon initial clock
   beacon_timer_t t_cur;                    // Beacon current clock
   key_size_t backend_pk_size;              // Size of backend public key
-  pubkey_t backend_pk;                     // Backend public key
+  pubkey_t *backend_pk;                    // Backend public key
   key_size_t beacon_sk_size;               // Size of secret key
-  beacon_sk_t beacon_sk;                   // Secret Key
+  beacon_sk_t *beacon_sk;                  // Secret Key
 } beacon_config_t;
 
 /*

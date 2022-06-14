@@ -52,7 +52,8 @@ void beacon_storage_init(beacon_storage *sto);
 void beacon_storage_load_config(beacon_storage *sto, beacon_config_t *cfg);
 void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg);
 
-void beacon_storage_save_stat(beacon_storage *sto, void * stat, size_t len);
+void beacon_storage_save_stat(beacon_storage *sto, beacon_config_t *cfg,
+    void * stat, size_t len);
 void beacon_storage_read_stat(beacon_storage *sto, void * stat, size_t len);
 
 #endif /* STORAGE__H */

@@ -4,6 +4,7 @@
  * payload to broadcast relevant information.
  */
 #include <stdio.h>
+#include <kernel.h>
 
 #define APPL_VERSION "0.1.1"
 
@@ -44,6 +45,7 @@
 //
 // GLOBAL MEMORY
 //
+K_HEAP_DEFINE(zephyr_beacon_config, 4096);
 
 // Config
 static beacon_config_t config;
@@ -109,9 +111,23 @@ static bt_wrapper_t payload; // container for actual blutooth payload
 // ROUTINES
 //
 
-static void beacon_load()
+static void beacon_config_init(beacon_config_t *cfg, int reset)
 {
-  memset(&config, 0, sizeof(beacon_config_t));
+  if (!cfg)
+    return;
+
+  if (!reset) {
+    cfg->backend_pk = k_heap_alloc(&zephyr_beacon_config, PK_MAX_SIZE, K_FOREVER);
+    cfg->beacon_sk = k_heap_alloc(&zephyr_beacon_config, SK_MAX_SIZE, K_FOREVER);
+  }
+
+  memset(cfg->backend_pk, 0, PK_MAX_SIZE);
+  memset(cfg->beacon_sk, 0, SK_MAX_SIZE);
+}
+
+static void beacon_load(int reset)
+{
+  beacon_config_init(&config, reset);
   beacon_storage_init(&storage);
   // Load data
   beacon_storage_load_config(&storage, &config);
@@ -120,13 +136,12 @@ static void beacon_load()
   config.beacon_location_id = TEST_BEACON_LOC_ID;
   config.t_init = TEST_BEACON_INIT_TIME;
   config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-  memset(&config.backend_pk, 0, config.backend_pk_size);
-  config.backend_pk = TEST_BACKEND_PK;
+  memcpy(config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
   config.beacon_sk_size = TEST_BEACON_SK_SIZE;
-  memset(&config.beacon_sk, 0, config.beacon_sk_size);
-  config.beacon_sk = TEST_BEACON_SK;
+  memcpy(config.beacon_sk, &TEST_BEACON_SK, config.beacon_sk_size);
   storage.test_filter_size = TEST_FILTER_LEN;
-  beacon_storage_save_config(&storage, &config);
+  beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
+//  beacon_storage_save_config(&storage, &config);
 #endif
 }
 
@@ -206,7 +221,8 @@ static void _beacon_report_()
 #ifdef MODE__STAT
   beacon_stats_update();
   beacon_stats_print();
-  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+  beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
+//  beacon_storage_save_config(&storage, &config);
 //  beacon_stats_reset();
 //  stat_epochs = 1;
   stats.start = beacon_time;
@@ -311,7 +327,7 @@ static void _gen_ephid_()
   // Initialize hash
   init();
   // Add relevant data
-  add(&config.beacon_sk, config.beacon_sk_size);
+  add(config.beacon_sk, config.beacon_sk_size);
   add(&config.beacon_location_id, sizeof(beacon_location_id_t));
   add(&epoch, sizeof(beacon_epoch_counter_t));
   // finalize and copy to id
@@ -451,7 +467,7 @@ static void beacon_stats_init()
 #endif
 #if MODE__NRF_BEACON_TEST_CONFIG
   beacon_stats_reset();
-  beacon_storage_save_stat(&storage, &stats, sizeof(beacon_stats_t));
+  beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
 #endif
 }
 
@@ -492,7 +508,8 @@ int beacon_clock_increment(beacon_timer_t time)
 
   // update beacon time in config and save to flash
   config.t_cur = beacon_time;
-  beacon_storage_save_config(&storage, &config);
+  beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
+//  beacon_storage_save_config(&storage, &config);
 
   // update stats and save to flash
   cycles++;
@@ -539,11 +556,12 @@ void _beacon_broadcast_(int err, int reset)
 {
   log_expf("init beacon err: %d reset: %d\r\n", err, reset);
 
-  beacon_load();
+  beacon_load(reset);
 
   if (reset) {
     config.t_cur = config.t_init;
-    beacon_storage_save_config(&storage, &config);
+    beacon_storage_save_stat(&storage, &config, &stats, sizeof(beacon_stats_t));
+//  beacon_storage_save_config(&storage, &config);
   }
 
   beacon_info();

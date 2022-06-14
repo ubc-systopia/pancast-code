@@ -22,7 +22,7 @@ z_beaconimg="$z_beaconimgdir/$sys-$zdev_str.hex"
 
 #mkdir -p $outdir
 cd $rootdir/ncs/zephyr
-west build -c -p auto -b nrf52dk_nrf52832 $z_beacondir  \
+west build -c -p always -b nrf52dk_nrf52832 $z_beacondir  \
   -d $outdir -- -Wno-dev -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
   > $z_beacondir/make.out
 

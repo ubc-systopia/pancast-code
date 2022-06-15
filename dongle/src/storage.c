@@ -84,8 +84,8 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
         cfg->backend_pk_size, PK_MAX_SIZE);
     cfg->backend_pk_size = PK_MAX_SIZE;
   }
-  read(cfg->backend_pk_size, &cfg->backend_pk);
-  hexdumpn(cfg->backend_pk.bytes, 16, "   Server PK");
+  read(cfg->backend_pk_size, cfg->backend_pk);
+  hexdumpn(cfg->backend_pk->bytes, 16, "   Server PK");
   // slide through the extra space for a pubkey
   off += PK_MAX_SIZE - cfg->backend_pk_size;
 
@@ -96,8 +96,8 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
         cfg->dongle_sk_size, SK_MAX_SIZE);
     cfg->dongle_sk_size = SK_MAX_SIZE;
   }
-  read(cfg->dongle_sk_size, &cfg->dongle_sk);
-  hexdumpn(cfg->dongle_sk.bytes, 16, "Si Dongle SK");
+  read(cfg->dongle_sk_size, cfg->dongle_sk);
+  hexdumpn(cfg->dongle_sk->bytes, 16, "Si Dongle SK");
   // slide through the extra space for a pubkey
   off += SK_MAX_SIZE - cfg->dongle_sk_size;
 

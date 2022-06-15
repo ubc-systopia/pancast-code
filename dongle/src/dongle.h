@@ -95,9 +95,9 @@ typedef struct {
   dongle_timer_t t_init;
   dongle_timer_t t_cur;
   key_size_t backend_pk_size;     // size of backend public key
-  pubkey_t backend_pk;            // Backend public key
+  pubkey_t *backend_pk;           // Backend public key
   key_size_t dongle_sk_size;      // size of secret key
-  seckey_t dongle_sk;             // Secret Key
+  seckey_t *dongle_sk;            // Secret Key
   enctr_entry_counter_t en_tail;  // Encounter cursor tail
   enctr_entry_counter_t en_head;  // Encounter cursor head
 } dongle_config_t;

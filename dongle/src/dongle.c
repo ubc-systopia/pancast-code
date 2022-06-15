@@ -155,11 +155,24 @@ void dongle_init_scan()
   }
 }
 
+static void dongle_config_init(dongle_config_t *cfg)
+{
+  if (!cfg)
+    return;
+
+  cfg->backend_pk = malloc(PK_MAX_SIZE);
+  memset(cfg->backend_pk, 0, PK_MAX_SIZE);
+
+  cfg->dongle_sk = malloc(SK_MAX_SIZE);
+  memset(cfg->dongle_sk, 0, SK_MAX_SIZE);
+}
+
 /*
  * Load state and configuration from flash
  */
 void dongle_load()
 {
+  dongle_config_init(&config);
   dongle_storage_init(&storage);
   // Config load is required to properly set up the memory maps
   dongle_storage_load_config(&storage, &config);
@@ -173,9 +186,11 @@ void dongle_load()
   config.id = TEST_DONGLE_ID;
   config.t_init = TEST_DONGLE_INIT_TIME;
   config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-  config.backend_pk = TEST_BACKEND_PK;
+//  config.backend_pk = TEST_BACKEND_PK;
+  memcpy(config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
   config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
-  config.dongle_sk = TEST_DONGLE_SK;
+//  config.dongle_sk = TEST_DONGLE_SK;
+  memcpy(config.dongle_sk, &TEST_DONGLE_SK, config.dongle_sk_size);
   config.t_cur = 0;
   dongle_storage_save_config(&storage, &config);
   nvm3_save_config(&storage, &config);

@@ -31,7 +31,7 @@
  * physical addr of an encounter entry in flash:
  * flash page number + offset in page
  */
-#define ENCOUNTER_LOG_OFFSET(sto, j) \
+#define ENCOUNTER_LOG_OFFSET(j) \
     (ENCOUNTER_LOG_START +  \
      (((j) / ENCOUNTERS_PER_PAGE) * FLASH_DEVICE_PAGE_SIZE) + \
      (((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE))
@@ -89,24 +89,20 @@ typedef struct {
   enctr_entry_counter_t head; // index to write next stored encounter
 } _encounter_storage_cursor_;
 
-typedef struct {
-  _encounter_storage_cursor_ encounters;
-} dongle_storage;
-
 // STORAGE INIT
 // Should initialize the internal storage representation,
 // including system-level information. Application configs like
 // the storage map are left partially uninitialized.
 // This allows *load_config* to be used.
-void dongle_storage_init(dongle_storage *sto);
+void dongle_storage_init(void);
 
 // LOAD CONFIG
 // Should load application configuration data into the provided
 // container, and set the map to allow load_otp to be used.
-void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg);
+void dongle_storage_load_config(dongle_config_t *cfg);
 
 // Write an existing config to storage
-void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg);
+void dongle_storage_save_config(dongle_config_t *cfg);
 
 #if 0
 // LOAD OTP
@@ -129,7 +125,6 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);
 #endif
 
 // Determine the number of encounters currently logged
-enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto);
 enctr_entry_counter_t num_encounters_current(enctr_entry_counter_t head,
     enctr_entry_counter_t tail);
 
@@ -140,19 +135,17 @@ typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
 
 // load function iterates through the records, and calls cb for each
 // variable i is provided as the index into the log
-void dongle_storage_load_encounter(dongle_storage *sto,
-    enctr_entry_counter_t i, enctr_entry_counter_t num, dongle_encounter_cb cb);
+void dongle_storage_load_encounter(enctr_entry_counter_t i,
+    enctr_entry_counter_t num, dongle_encounter_cb cb);
 
-void dongle_storage_load_single_encounter(dongle_storage *sto,
-    enctr_entry_counter_t i, dongle_encounter_entry_t *);
+void dongle_storage_load_single_encounter(enctr_entry_counter_t i,
+    dongle_encounter_entry_t *);
 
 // WRITE ENCOUNTER
-void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
+void dongle_storage_log_encounter(dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en);
 
-void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
-    void * stat, size_t len);
-void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
-void dongle_storage_info(dongle_storage *);
+void dongle_storage_save_stat(dongle_config_t *cfg, void * stat, size_t len);
+void dongle_storage_read_stat(void * stat, size_t len);
 
 #endif

@@ -10,11 +10,13 @@
 
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
+#define OTP(i) (DONGLE_OTPSTORE_OFFSET + (i * sizeof(dongle_otp_t)))
+
 extern dongle_timer_t dongle_time;
 extern dongle_config_t config;
 extern dongle_stats_t stats;
 
-static inline void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
+static inline void dongle_storage_erase(storage_addr_t offset)
 {
   int status = MSC_ErasePage((uint32_t *)offset);
   if (status != 0) {
@@ -24,13 +26,13 @@ static inline void dongle_storage_erase(dongle_storage *sto, storage_addr_t offs
 }
 
 // Erase before write
-void pre_erase(dongle_storage *sto, storage_addr_t off, size_t write_size)
+void pre_erase(storage_addr_t off, size_t write_size)
 {
 #define page_num(o) ((o) / FLASH_DEVICE_PAGE_SIZE)
   if ((off % FLASH_DEVICE_PAGE_SIZE) == 0) {
-    dongle_storage_erase(sto, off);
+    dongle_storage_erase(off);
   } else if (page_num(off + write_size) > page_num(off)) {
-    dongle_storage_erase(sto, next_multiple(FLASH_DEVICE_PAGE_SIZE, off));
+    dongle_storage_erase(next_multiple(FLASH_DEVICE_PAGE_SIZE, off));
   }
 #undef page_num
 }
@@ -46,18 +48,16 @@ static inline int _flash_write_(storage_addr_t off, void *data, size_t size)
   return MSC_WriteWord((uint32_t *) off, data, (uint32_t)size);
 }
 
-void dongle_storage_init_device(dongle_storage *sto)
+static inline void dongle_storage_init_device(void)
 {
   MSC_ExecConfig_TypeDef execConfig = MSC_EXECCONFIG_DEFAULT;
   MSC_ExecConfigSet(&execConfig);
   MSC_Init();
 }
 
-void dongle_storage_init(dongle_storage *sto)
+void dongle_storage_init(void)
 {
-  dongle_storage_init_device(sto);
-  sto->encounters.tail = 0;
-  sto->encounters.head = 0;
+  dongle_storage_init_device();
   stats.total_encounters = 0;
   stats.numErasures = 0;
   if (FLASH_OFFSET % FLASH_DEVICE_PAGE_SIZE != 0) {
@@ -66,7 +66,7 @@ void dongle_storage_init(dongle_storage *sto)
   }
 }
 
-void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
+void dongle_storage_load_config(dongle_config_t *cfg)
 {
   storage_addr_t off = DONGLE_CONFIG_OFFSET;
 #define read(size, dst) (_flash_read_(off, dst, size), off += size)
@@ -103,9 +103,7 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 #undef read
 }
 
-#define OTP(i) (DONGLE_OTPSTORE_OFFSET + (i * sizeof(dongle_otp_t)))
-
-void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
+void dongle_storage_save_config(dongle_config_t *cfg)
 {
   storage_addr_t off = DONGLE_CONFIG_OFFSET;
   int total_size = DONGLE_CONFIG_SIZE +
@@ -117,7 +115,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   char statbuf[sizeof(dongle_stats_t)];
   _flash_read_(DONGLE_STATSTORE_OFFSET, statbuf, sizeof(dongle_stats_t));
 
-  pre_erase(sto, off, total_size);
+  pre_erase(off, total_size);
 
 #define write(data, size) \
   (_flash_write_(off, data, size), off += size)
@@ -142,11 +140,10 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 #undef write
 }
 
-static inline void dongle_storage_save_cursor_clock(dongle_storage *sto,
-    dongle_config_t *cfg)
+static inline void dongle_storage_save_cursor_clock(dongle_config_t *cfg)
 {
 //  dongle_storage_save_config(sto, cfg);
-  nvm3_save_clock_cursor(sto, cfg);
+  nvm3_save_clock_cursor(cfg);
 }
 
 #if 0
@@ -213,7 +210,7 @@ enctr_entry_counter_t num_encounters_current(enctr_entry_counter_t head,
 /*
  * delete oldest [num] encounter entries older than the specified time
  */
-void _delete_old_encounters_(dongle_storage *sto __attribute__((unused)), dongle_config_t *cfg,
+void _delete_old_encounters_(dongle_config_t *cfg,
     dongle_timer_t age_threshold, enctr_entry_counter_t num)
 {
   dongle_encounter_entry_t en;
@@ -221,7 +218,7 @@ void _delete_old_encounters_(dongle_storage *sto __attribute__((unused)), dongle
 #define age ((int) (age_threshold - (en.dongle_time_start + en.dongle_time_int)))
   while ((cfg->en_tail != cfg->en_head) && i < num) {
     // tail is updated during loop, so reference first index every time
-    dongle_storage_load_single_encounter(sto, cfg->en_tail, &en);
+    dongle_storage_load_single_encounter(cfg->en_tail, &en);
 
     // oldest entry is newer than the specified time, no need to iterate further
     if (age <= DONGLE_MAX_LOG_AGE)
@@ -235,8 +232,8 @@ void _delete_old_encounters_(dongle_storage *sto __attribute__((unused)), dongle
 #undef age
 }
 
-void dongle_storage_load_encounter(dongle_storage *sto __attribute__((unused)),
-    enctr_entry_counter_t i, enctr_entry_counter_t num, dongle_encounter_cb cb)
+void dongle_storage_load_encounter(enctr_entry_counter_t i,
+    enctr_entry_counter_t num, dongle_encounter_cb cb)
 {
   enctr_entry_counter_t prev_idx;
   dongle_encounter_entry_t en;
@@ -244,7 +241,7 @@ void dongle_storage_load_encounter(dongle_storage *sto __attribute__((unused)),
     if (i >= num)
       break;
 
-    dongle_storage_load_single_encounter(sto, i, &en);
+    dongle_storage_load_single_encounter(i, &en);
 
     prev_idx = i;
     i = inc_idx(i);
@@ -254,20 +251,20 @@ void dongle_storage_load_encounter(dongle_storage *sto __attribute__((unused)),
 /*
  * caller must check that i < num encounters currently stored
  */
-void dongle_storage_load_single_encounter(dongle_storage *sto,
-    enctr_entry_counter_t i, dongle_encounter_entry_t *en)
+void dongle_storage_load_single_encounter(enctr_entry_counter_t i,
+    dongle_encounter_entry_t *en)
 {
-  storage_addr_t off = ENCOUNTER_LOG_OFFSET(sto, i);
+  storage_addr_t off = ENCOUNTER_LOG_OFFSET(i);
   _flash_read_(off, en, sizeof(dongle_encounter_entry_t));
 }
 
-void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
+void dongle_storage_log_encounter(dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en)
 {
   enctr_entry_counter_t num = num_encounters_current(cfg->en_head, cfg->en_tail);
-  _delete_old_encounters_(sto, cfg, *dongle_time, num);
+  _delete_old_encounters_(cfg, *dongle_time, num);
 
-  storage_addr_t off = ENCOUNTER_LOG_OFFSET(sto, cfg->en_head);
+  storage_addr_t off = ENCOUNTER_LOG_OFFSET(cfg->en_head);
 
   /*
    * XXX: once head has wrapped, erasing the next page before writing will
@@ -275,7 +272,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
    * storing the old page in an in-memory buffer does not work because
    * allocating an 8K static or dynamic memory buffer is not possible.
    */
-  pre_erase(sto, off, ENCOUNTER_ENTRY_SIZE);
+  pre_erase(off, ENCOUNTER_ENTRY_SIZE);
 
 
 #define write(data, size) _flash_write_(off, data, size), off += size
@@ -305,11 +302,10 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 #endif
   stats.total_encounters++;
 
-  dongle_storage_save_cursor_clock(sto, cfg);
+  dongle_storage_save_cursor_clock(cfg);
 }
 
-void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
-    void * stat, size_t len)
+void dongle_storage_save_stat(dongle_config_t *cfg, void * stat, size_t len)
 {
   int total_size = sizeof(dongle_config_t) + (NUM_OTP*sizeof(dongle_otp_t))
     + sizeof(dongle_stats_t);
@@ -317,14 +313,14 @@ void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
   dongle_otp_t otps[NUM_OTP];
   _flash_read_(OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
 
-  pre_erase(sto, DONGLE_CONFIG_OFFSET, total_size);
+  pre_erase(DONGLE_CONFIG_OFFSET, total_size);
 
   _flash_write_(DONGLE_CONFIG_OFFSET, cfg, sizeof(dongle_config_t));
   _flash_write_(DONGLE_OTPSTORE_OFFSET, otps, NUM_OTP*sizeof(dongle_otp_t));
   _flash_write_(DONGLE_STATSTORE_OFFSET, stat, len);
 }
 
-void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len)
+void dongle_storage_read_stat(void * stat, size_t len)
 {
   _flash_read_(DONGLE_STATSTORE_OFFSET, stat, len);
 }

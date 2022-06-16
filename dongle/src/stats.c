@@ -14,13 +14,13 @@ void dongle_stats_reset()
 
 extern void dongle_encounter_report();
 
-void dongle_stats_init(dongle_storage *sto)
+void dongle_stats_init(void)
 {
   // must call dongle_config_load before this
   char statbuf[1024];
   memset(statbuf, 0, 1024);
 
-  dongle_storage_read_stat(sto, statbuf, sizeof(dongle_stats_t));
+  dongle_storage_read_stat(statbuf, sizeof(dongle_stats_t));
   memcpy(&stats, statbuf, sizeof(dongle_stats_t));
 
   if (!stats.storage_checksum) {
@@ -33,7 +33,7 @@ void dongle_stats_init(dongle_storage *sto)
   }
 #if MODE__SL_DONGLE_TEST_CONFIG
   dongle_stats_reset();
-  dongle_storage_save_stat(sto, &config, &stats, sizeof(dongle_stats_t));
+  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
 #endif
 }
 

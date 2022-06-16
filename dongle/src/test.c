@@ -8,7 +8,6 @@
 #include "common/src/util/util.h"
 #include "common/src/test.h"
 
-extern dongle_storage storage;
 extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
 extern dongle_timer_t report_time;
@@ -147,15 +146,14 @@ void dongle_test()
   }
 
   log_infof("%s", "    old encounters deleted?\r\n");
-  _delete_old_encounters(&storage, &config, dongle_time,
-      num_encounters_current(config.en_head, config.en_tail));
-  num = dongle_storage_num_encounters_current(&storage);
+  num = num_encounters_current(config.en_head, config.en_tail);
+  _delete_old_encounters(&config, dongle_time, num);
   if (dongle_time <= DONGLE_MAX_LOG_AGE + BEACON_EPOCH_LENGTH) {
     log_errorf("%s", "not enough time has elapsed.\r\n");
   } else if (num < 1) {
     log_errorf("%s", "no encounters stored.\r\n");
   } else {
-    dongle_storage_load_encounter(&storage, config.en_tail,
+    dongle_storage_load_encounter(config.en_tail,
         num_encounters_current(config.en_head, config.en_tail),
         test_check_entry_age);
 //    dongle_storage_load_all_encounter(&storage, test_check_entry_age);
@@ -206,10 +204,9 @@ void dongle_test_enctr_storage(void)
         (uint16_t) (start_offset+i),
         (uint32_t) test_en.beacon_time_start, test_en.beacon_time_int,
         (uint32_t) test_en.dongle_time_start, test_en.dongle_time_int,
-        (int8_t) test_en.rssi,
-        ENCOUNTER_LOG_OFFSET(&storage, (start_offset+i)));
+        (int8_t) test_en.rssi, (uint32_t) ENCOUNTER_LOG_OFFSET((start_offset+i)));
 #endif
-    dongle_storage_log_encounter(&storage, &config, &dongle_time, &test_en);
+    dongle_storage_log_encounter(&config, &dongle_time, &test_en);
   }
 }
 

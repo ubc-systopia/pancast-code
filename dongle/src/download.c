@@ -12,7 +12,6 @@
 
 extern dongle_stats_t stats;
 extern float dongle_hp_timer;
-extern dongle_storage storage;
 extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
 float payload_start_ticks = 0, payload_end_ticks = 0;
@@ -97,7 +96,7 @@ void dongle_download_fail(download_fail_reason *reason __attribute__((unused)))
   }
 }
 
-int dongle_download_check_match(enctr_entry_counter_t i,
+int dongle_download_check_match(enctr_entry_counter_t i __attribute__((unused)),
     dongle_encounter_entry_t *entry)
 {
   // pad the stored id in case backend entry contains null byte at end
@@ -113,7 +112,7 @@ int dongle_download_check_match(enctr_entry_counter_t i,
         (uint32_t) entry->location_id, (uint16_t) i,
         (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
         (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
-        (int8_t) entry->rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
+        (int8_t) entry->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
     download.n_matches++;
   } else {
@@ -122,7 +121,7 @@ int dongle_download_check_match(enctr_entry_counter_t i,
         (uint32_t) entry->location_id, (uint16_t) i,
         (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
         (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
-        (int8_t) entry->rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
+        (int8_t) entry->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
   }
 
@@ -308,7 +307,7 @@ void dongle_download_complete()
 #else
 
   // check existing log entries against the new filter
-  dongle_storage_load_encounter(&storage, config.en_tail,
+  dongle_storage_load_encounter(config.en_tail,
       num_encounters_current(config.en_head, config.en_tail),
       dongle_download_check_match);
 

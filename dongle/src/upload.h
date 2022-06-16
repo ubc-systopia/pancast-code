@@ -73,6 +73,5 @@ typedef union {
 int access_advertise();
 void peer_update();
 void interact_update();
-dongle_storage *get_dongle_storage();
 
 #endif

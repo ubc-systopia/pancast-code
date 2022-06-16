@@ -102,7 +102,7 @@ size_t nvm3_get_erase_count(void)
   return erasecnt;
 }
 
-void nvm3_save_config(dongle_storage *sto __attribute__((unused)), dongle_config_t *cfg)
+void nvm3_save_config(dongle_config_t *cfg)
 {
   Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
   int i = 0;
@@ -119,7 +119,7 @@ void nvm3_save_config(dongle_storage *sto __attribute__((unused)), dongle_config
 #undef nvm3_write
 }
 
-void nvm3_save_clock_cursor(dongle_storage *sto __attribute__((unused)), dongle_config_t *cfg)
+void nvm3_save_clock_cursor(dongle_config_t *cfg)
 {
   Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
   int i = 0;
@@ -136,8 +136,7 @@ void nvm3_save_clock_cursor(dongle_storage *sto __attribute__((unused)), dongle_
 #undef nvm3_write
 }
 
-void nvm3_load_config(__attribute__((unused)) dongle_storage *sto __attribute__((unused)),
-    __attribute__((unused)) dongle_config_t *cfg)
+void nvm3_load_config(dongle_config_t *cfg)
 {
   Ecode_t err[NVM3_MAX_COUNTERS];
   int i = 0;

@@ -32,7 +32,6 @@
 // in-memory config
 dongle_config_t config;
 // in-memory config of on-disk layout
-dongle_storage storage;
 sl_sleeptimer_timer_handle_t led_timer;
 
 dongle_epoch_counter_t epoch; // current epoch
@@ -97,7 +96,7 @@ void dongle_init()
 
   log_expf("==== UPLOAD LOG START [%u:%u] ===\r\n",
       config.en_tail, config.en_head);
-  dongle_storage_load_encounter(&storage, config.en_tail,
+  dongle_storage_load_encounter(config.en_tail,
       num_encounters_current(config.en_head, config.en_tail),
       dongle_print_encounter);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
@@ -105,7 +104,7 @@ void dongle_init()
   //===========
 
   // reset stats
-  dongle_stats_init(&storage);
+  dongle_stats_init();
 
   // reset downloaded space
   dongle_download_init();
@@ -177,14 +176,14 @@ static void dongle_config_init(dongle_config_t *cfg)
 void dongle_load()
 {
   dongle_config_init(&config);
-  dongle_storage_init(&storage);
+  dongle_storage_init();
   // Config load is required to properly set up the memory maps
-  dongle_storage_load_config(&storage, &config);
+  dongle_storage_load_config(&config);
   enctr_entry_counter_t sto_en_head = config.en_head;
   enctr_entry_counter_t sto_en_tail = config.en_tail;
   beacon_timer_t sto_t_cur = config.t_cur;
 
-  nvm3_load_config(&storage, &config);
+  nvm3_load_config(&config);
 
 #if MODE__SL_DONGLE_TEST_CONFIG
   config.id = TEST_DONGLE_ID;
@@ -214,7 +213,7 @@ void dongle_load()
       sto_en_head, sto_en_tail, config.t_cur, config.en_head, config.en_tail);
   // if device re-flashed, all these fields would be zero, reset in the NVM too
   if (sto_en_head == 0 || sto_en_tail == 0 || sto_t_cur == 0)
-    nvm3_save_clock_cursor(&storage, &config);
+    nvm3_save_clock_cursor(&config);
 }
 
 void dongle_clock_increment()
@@ -245,8 +244,8 @@ void dongle_on_clock_update()
   }
   // update dongle time in config and save to flash
   config.t_cur = dongle_time;
-//  dongle_storage_save_config(&storage, &config);
-  nvm3_save_clock_cursor(&storage, &config);
+//  dongle_storage_save_config(&config);
+  nvm3_save_clock_cursor(&config);
   dongle_save_encounters();
   dongle_report();
 }
@@ -308,10 +307,10 @@ static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
     enc->beacon_id, (uint32_t) enc->location_id, (uint16_t) i,
     (uint32_t) enc->beacon_time_start, enc->beacon_time_int,
     (uint32_t) enc->dongle_time_start, enc->dongle_time_int,
-    (int8_t) enc->rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
+    (int8_t) enc->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
 
-  dongle_storage_log_encounter(&storage, &config, &dongle_time, enc);
+  dongle_storage_log_encounter(&config, &dongle_time, enc);
   memset(&cur_encounters[i], 0, sizeof(dongle_encounter_entry_t));
 }
 
@@ -367,7 +366,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
       cur_encounters[i].beacon_time_int,
       (uint32_t) cur_encounters[i].dongle_time_start,
       cur_encounters[i].dongle_time_int,
-      (int8_t) cur_encounters[i].rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
+      (int8_t) cur_encounters[i].rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
 
 #if MODE__STAT
@@ -400,7 +399,7 @@ void dongle_save_encounters()
      cur_encounters[i].beacon_time_int,
      (uint32_t) cur_encounters[i].dongle_time_start,
      cur_encounters[i].dongle_time_int,
-     (int8_t) cur_encounters[i].rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
+     (int8_t) cur_encounters[i].rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
 
     /*
@@ -437,7 +436,7 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
     (uint32_t) entry->location_id, (uint16_t) i,
     (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
     (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
-    (int8_t) entry->rssi, ENCOUNTER_LOG_OFFSET(&storage, i));
+    (int8_t) entry->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 
   return 1;
 }
@@ -518,7 +517,7 @@ void dongle_report()
 
   dongle_stats();
   dongle_download_stats();
-  dongle_storage_save_stat(&storage, &config, &stats, sizeof(dongle_stats_t));
+  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
   dongle_encounter_report();
 
   stats.last_report_time = dongle_time;

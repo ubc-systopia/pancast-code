@@ -35,9 +35,9 @@ void nvm3_app_init(void);
 
 size_t nvm3_count_objects(void);
 size_t nvm3_get_erase_count(void);
-void nvm3_save_config(dongle_storage *sto, dongle_config_t *cfg);
-void nvm3_save_clock_cursor(dongle_storage *sto, dongle_config_t *cfg);
-void nvm3_load_config(dongle_storage *sto, dongle_config_t *cfg);
+void nvm3_save_config(dongle_config_t *cfg);
+void nvm3_save_clock_cursor(dongle_config_t *cfg);
+void nvm3_load_config(dongle_config_t *cfg);
 
 /***************************************************************************//**
  * NVM3 ticking function

@@ -1,4 +1,4 @@
-#include "./upload.h"
+#include "upload.h"
 
 #include <string.h>
 
@@ -9,7 +9,6 @@
 #include "common/src/util/util.h"
 
 #if 0
-extern dongle_storage storage;
 // Memory
 interact_state state;
 uint8_t dongle_state;
@@ -38,7 +37,6 @@ void interact_update()
         if (state.flags != DONGLE_UPLOAD_DATA_TYPE_OTP)
             break;
 
-//        dongle_storage *storage = get_dongle_storage();
         int otp_idx = dongle_storage_match_otp(&storage,
             *((dongle_otp_val *)state.otp.val));
         if (otp_idx <= 0)
@@ -78,8 +76,7 @@ void interact_update()
         dongle_state = DONGLE_UPLOAD_STATE_SEND_DATA_0;
 
         // load next encounter
-        dongle_storage_load_single_encounter(&storage,
-            next_rec, &send_en);
+        dongle_storage_load_single_encounter(next_rec, &send_en);
 
         //_display_encounter_(&send_en);
 

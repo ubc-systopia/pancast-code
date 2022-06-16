@@ -42,13 +42,16 @@
 #define DONGLE_CONFIG_OFFSET  \
   ((FLASH_DEVICE_NUM_PAGES - 1) * FLASH_DEVICE_PAGE_SIZE)
 
+#define DONGLE_CONFIG_SIZE  \
+  (sizeof(dongle_id_t) + (2*sizeof(dongle_timer_t)) + \
+   (2*sizeof(key_size_t)) + PK_MAX_SIZE + SK_MAX_SIZE + \
+   (2*sizeof(enctr_entry_counter_t)))
+
 /*
  * storage address for OTPs
  */
 #define DONGLE_OTPSTORE_OFFSET  \
-  (DONGLE_CONFIG_OFFSET + sizeof(dongle_id_t) + (2*sizeof(dongle_timer_t)) +  \
-  (2*sizeof(key_size_t)) + PK_MAX_SIZE + SK_MAX_SIZE + \
-  (2*sizeof(enctr_entry_counter_t)))
+  (DONGLE_CONFIG_OFFSET + DONGLE_CONFIG_SIZE)
 
 /*
  * storage address for stats object
@@ -138,7 +141,7 @@ typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
 // load function iterates through the records, and calls cb for each
 // variable i is provided as the index into the log
 void dongle_storage_load_encounter(dongle_storage *sto,
-    enctr_entry_counter_t i, dongle_encounter_cb cb);
+    enctr_entry_counter_t i, enctr_entry_counter_t num, dongle_encounter_cb cb);
 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_entry_t *);
@@ -156,7 +159,5 @@ void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
     void * stat, size_t len);
 void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len);
 void dongle_storage_info(dongle_storage *);
-
-void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time);
 
 #endif

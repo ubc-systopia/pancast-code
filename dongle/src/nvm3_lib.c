@@ -27,11 +27,7 @@
  ******************************************************************************/
 
 enum {
-  NVM3_CNT_DONGLE_ID = 0,
-  NVM3_CNT_T_INIT,
-  NVM3_CNT_T_CUR,
-  NVM3_CNT_BKND_PK_SIZE,
-  NVM3_CNT_DONGLE_SK_SIZE,
+  NVM3_CNT_T_CUR = 0,
   NVM3_CNT_LOG_HEAD,
   NVM3_CNT_LOG_TAIL,
   NVM3_MAX_COUNTERS
@@ -106,70 +102,55 @@ size_t nvm3_get_erase_count(void)
   return erasecnt;
 }
 
-void nvm3_save_config(dongle_storage *sto, dongle_config_t *cfg)
+void nvm3_save_config(dongle_storage *sto __attribute__((unused)), dongle_config_t *cfg)
 {
-  Ecode_t err[NVM3_MAX_COUNTERS];
-  int i = 0;
-#define nvm3_write(cntr_id, val)  \
-  err[i++] = nvm3_writeCounter(NVM3_DEFAULT_HANDLE, cntr_id, val)
-
-  nvm3_write(NVM3_CNT_DONGLE_ID, cfg->id);
-  nvm3_write(NVM3_CNT_T_INIT, cfg->t_init);
-  nvm3_write(NVM3_CNT_T_CUR, cfg->t_cur);
-  nvm3_write(NVM3_CNT_BKND_PK_SIZE, cfg->backend_pk_size);
-  nvm3_write(NVM3_CNT_DONGLE_SK_SIZE, cfg->dongle_sk_size);
-  nvm3_write(NVM3_CNT_LOG_HEAD, sto->encounters.head);
-  nvm3_write(NVM3_CNT_LOG_TAIL, sto->encounters.tail);
-
-  log_infof("[NVM3] ID: 0x%0x T0: %u Tc: %u PK: %u SK: %u H: %u T: %u, "
-      "errs: 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      cfg->id, cfg->t_init, cfg->t_cur, cfg->backend_pk_size,
-      cfg->dongle_sk_size, sto->encounters.head, sto->encounters.tail,
-      err[0], err[1], err[2], err[3], err[4], err[5], err[6]);
-
-#undef nvm3_write
-}
-
-void nvm3_save_clock_cursor(dongle_storage *sto, dongle_config_t *cfg)
-{
-  Ecode_t err[NVM3_MAX_COUNTERS];
+  Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
   int i = 0;
 #define nvm3_write(cntr_id, val)  \
   err[i++] = nvm3_writeCounter(NVM3_DEFAULT_HANDLE, cntr_id, val)
 
   nvm3_write(NVM3_CNT_T_CUR, cfg->t_cur);
-  nvm3_write(NVM3_CNT_LOG_HEAD, sto->encounters.head);
-  nvm3_write(NVM3_CNT_LOG_TAIL, sto->encounters.tail);
+  nvm3_write(NVM3_CNT_LOG_HEAD, cfg->en_head);
+  nvm3_write(NVM3_CNT_LOG_TAIL, cfg->en_tail);
 
-  log_infof("[NVM3] C: %u H: %u T: %u, e1: 0x%0x e2: 0x%0x e3: 0x%0x\r\n",
-      cfg->t_cur, sto->encounters.head, sto->encounters.tail,
-      err[0], err[1], err[2]);
+  log_infof("[NVM3] Tc: %u H: %u T: %u, errs: 0x%0x 0x%0x 0x%0x\r\n",
+      cfg->t_cur, cfg->en_head, cfg->en_tail, err[0], err[1], err[2]);
 
 #undef nvm3_write
 }
 
-void nvm3_load_config(__attribute__((unused)) dongle_storage *sto,
+void nvm3_save_clock_cursor(dongle_storage *sto __attribute__((unused)), dongle_config_t *cfg)
+{
+  Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
+  int i = 0;
+#define nvm3_write(cntr_id, val)  \
+  err[i++] = nvm3_writeCounter(NVM3_DEFAULT_HANDLE, cntr_id, val)
+
+  nvm3_write(NVM3_CNT_T_CUR, cfg->t_cur);
+  nvm3_write(NVM3_CNT_LOG_HEAD, cfg->en_head);
+  nvm3_write(NVM3_CNT_LOG_TAIL, cfg->en_tail);
+
+  log_infof("[NVM3] Tc: %u H: %u T: %u, errs: 0x%0x 0x%0x 0x%0x\r\n",
+      cfg->t_cur, cfg->en_head, cfg->en_tail, err[0], err[1], err[2]);
+
+#undef nvm3_write
+}
+
+void nvm3_load_config(__attribute__((unused)) dongle_storage *sto __attribute__((unused)),
     __attribute__((unused)) dongle_config_t *cfg)
 {
   Ecode_t err[NVM3_MAX_COUNTERS];
-  uint32_t val[NVM3_MAX_COUNTERS];
-  int i = 0, j = 0;
+  int i = 0;
 
 #define nvm3_read(cntr_id, valp)  \
   err[i++] = nvm3_readCounter(NVM3_DEFAULT_HANDLE, cntr_id, valp)
 
-  nvm3_read(NVM3_CNT_DONGLE_ID, &val[j++]);
-  nvm3_read(NVM3_CNT_T_INIT, &val[j++]);
-  nvm3_read(NVM3_CNT_T_CUR, &val[j++]);
-  nvm3_read(NVM3_CNT_BKND_PK_SIZE, &val[j++]);
-  nvm3_read(NVM3_CNT_DONGLE_SK_SIZE, &val[j++]);
-  nvm3_read(NVM3_CNT_LOG_HEAD, &val[j++]);
-  nvm3_read(NVM3_CNT_LOG_TAIL, &val[j++]);
+  nvm3_read(NVM3_CNT_T_CUR, &cfg->t_cur);
+  nvm3_read(NVM3_CNT_LOG_HEAD, &cfg->en_head);
+  nvm3_read(NVM3_CNT_LOG_TAIL, &cfg->en_tail);
 
-  log_expf("[NVM3] ID: 0x%0x T0: %u Tc: %u PK: %u SK: %u H: %u T: %u, "
-      "errs: 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      val[0], val[1], val[2], val[3], val[4], val[5], val[6],
-      err[0], err[1], err[2], err[3], err[4], err[5], err[6]);
+  log_expf("[NVM3] Tc: %u H: %u T: %u, errs: 0x%0x 0x%0x 0x%0x\r\n",
+      cfg->t_cur, cfg->en_head, cfg->en_tail, err[0], err[1], err[2]);
 
 #undef nvm3_read
 }

@@ -147,14 +147,16 @@ void dongle_test()
   }
 
   log_infof("%s", "    old encounters deleted?\r\n");
-  dongle_storage_clean_log(&storage, dongle_time);
+  _delete_old_encounters(&storage, &config, dongle_time,
+      num_encounters_current(config.en_head, config.en_tail));
   num = dongle_storage_num_encounters_current(&storage);
   if (dongle_time <= DONGLE_MAX_LOG_AGE + BEACON_EPOCH_LENGTH) {
     log_errorf("%s", "not enough time has elapsed.\r\n");
   } else if (num < 1) {
     log_errorf("%s", "no encounters stored.\r\n");
   } else {
-    dongle_storage_load_encounter(&storage, storage.encounters.tail,
+    dongle_storage_load_encounter(&storage, config.en_tail,
+        num_encounters_current(config.en_head, config.en_tail),
         test_check_entry_age);
 //    dongle_storage_load_all_encounter(&storage, test_check_entry_age);
   }
@@ -193,7 +195,7 @@ void dongle_test_enctr_storage(void)
   int i;
   int start_offset = ENCOUNTERS_PER_PAGE * 3;
   int max_enctrs = ENCOUNTERS_PER_PAGE * TARGET_FLASH_LOG_NUM_PAGES - start_offset;
-  storage.encounters.head = start_offset;
+  config.en_head = start_offset;
   log_infof("update off: %u cnt: %u\r\n", start_offset, max_enctrs);
   for (i = 0; i < max_enctrs; i++) {
     *last_two = i;
@@ -209,9 +211,5 @@ void dongle_test_enctr_storage(void)
 #endif
     dongle_storage_log_encounter(&storage, &config, &dongle_time, &test_en);
   }
-
-//  // read back all log storage
-//  dongle_storage_load_encounter(&storage, 580,
-//      dongle_print_encounter);
 }
 

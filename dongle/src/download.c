@@ -13,6 +13,7 @@
 extern dongle_stats_t stats;
 extern float dongle_hp_timer;
 extern dongle_storage storage;
+extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
 float payload_start_ticks = 0, payload_end_ticks = 0;
 
@@ -307,7 +308,8 @@ void dongle_download_complete()
 #else
 
   // check existing log entries against the new filter
-  dongle_storage_load_encounter(&storage, storage.encounters.tail,
+  dongle_storage_load_encounter(&storage, config.en_tail,
+      num_encounters_current(config.en_head, config.en_tail),
       dongle_download_check_match);
 
 #endif /* CUCKOOFILTER_FIXED_TEST */

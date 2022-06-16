@@ -91,12 +91,14 @@ void dongle_init()
 #endif
 
 #if TEST_DONGLE
-  storage.encounters.tail = 0;
-  storage.encounters.head = MAX_LOG_COUNT-1;
+  config.en_tail = 0;
+  config.en_head = MAX_LOG_COUNT-1;
 #endif
 
-  log_expf("==== UPLOAD LOG START [%u:%u] ===\r\n", storage.encounters.tail, storage.encounters.head);
-  dongle_storage_load_encounter(&storage, storage.encounters.tail,
+  log_expf("==== UPLOAD LOG START [%u:%u] ===\r\n",
+      config.en_tail, config.en_head);
+  dongle_storage_load_encounter(&storage, config.en_tail,
+      num_encounters_current(config.en_head, config.en_tail),
       dongle_print_encounter);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 
@@ -243,7 +245,7 @@ void dongle_on_clock_update()
   }
   // update dongle time in config and save to flash
   config.t_cur = dongle_time;
-  dongle_storage_save_config(&storage, &config);
+//  dongle_storage_save_config(&storage, &config);
   nvm3_save_clock_cursor(&storage, &config);
   dongle_save_encounters();
   dongle_report();
@@ -502,8 +504,8 @@ void dongle_encounter_report()
   log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
     "#encounters [new, stored]: %lu, %lu\r\n",
     dongle_time, stats.last_report_time, stats.last_download_time,
-    storage.encounters.head, storage.encounters.tail, stats.total_encounters,
-    dongle_storage_num_encounters_current(&storage));
+    config.en_head, config.en_tail, stats.total_encounters,
+    num_encounters_current(config.en_head, config.en_tail));
 #endif
 }
 

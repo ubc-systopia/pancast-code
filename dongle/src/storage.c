@@ -142,20 +142,20 @@ void dongle_storage_save_config(dongle_config_t *cfg)
 
 static inline void dongle_storage_save_cursor_clock(dongle_config_t *cfg)
 {
-//  dongle_storage_save_config(sto, cfg);
+//  dongle_storage_save_config(cfg);
   nvm3_save_clock_cursor(cfg);
 }
 
 #if 0
-void dongle_storage_load_otp(dongle_storage *sto, int i, dongle_otp_t *otp)
+void dongle_storage_load_otp(int i, dongle_otp_t *otp)
 {
   _flash_read_(OTP(i), otp, sizeof(dongle_otp_t));
 }
 
-void dongle_storage_save_otp(dongle_storage *sto, otp_set otps)
+void dongle_storage_save_otp(otp_set otps)
 {
   storage_addr_t off = OTP(0);
-  pre_erase(sto, off, (NUM_OTP * sizeof(dongle_otp_t)));
+  pre_erase(off, (NUM_OTP * sizeof(dongle_otp_t)));
 
 #define write(data, size) \
   (_flash_write_(off, data, size), off += size)
@@ -174,11 +174,11 @@ int otp_is_used(dongle_otp_t *otp)
   return !((otp->flags & 0x0000000000000001) >> 0);
 }
 
-int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
+int dongle_storage_match_otp(uint64_t val)
 {
   dongle_otp_t otp;
   for (int i = 0; i < NUM_OTP; i++) {
-    dongle_storage_load_otp(sto, i, &otp);
+    dongle_storage_load_otp(i, &otp);
     if (otp.val == val && !otp_is_used(&otp)) {
       otp.flags &= 0xfffffffffffffffe;
       _flash_write_(OTP(i), &otp, sizeof(dongle_otp_t));

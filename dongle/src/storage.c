@@ -305,15 +305,28 @@ void dongle_storage_log_encounter(dongle_config_t *cfg,
 
 void dongle_storage_save_stat(dongle_config_t *cfg, void * stat, size_t len)
 {
-  int total_size = sizeof(dongle_config_t) + (NUM_OTP*sizeof(dongle_otp_t))
-    + sizeof(dongle_stats_t);
+  storage_addr_t off = DONGLE_CONFIG_OFFSET;
+  int total_size = DONGLE_CONFIG_SIZE +
+    (NUM_OTP*sizeof(dongle_otp_t)) + sizeof(dongle_stats_t);
 
   dongle_otp_t otps[NUM_OTP];
   _flash_read_(OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
 
   pre_erase(DONGLE_CONFIG_OFFSET, total_size);
 
-  _flash_write_(DONGLE_CONFIG_OFFSET, cfg, sizeof(dongle_config_t));
+#define write(data, size) \
+  (_flash_write_(off, data, size), off += size)
+
+  write(&cfg->id, sizeof(dongle_id_t));
+  write(&cfg->t_init, sizeof(dongle_timer_t));
+  write(&cfg->t_cur, sizeof(dongle_timer_t));
+  write(&cfg->backend_pk_size, sizeof(key_size_t));
+  write(cfg->backend_pk, PK_MAX_SIZE);
+  write(&cfg->dongle_sk_size, sizeof(key_size_t));
+  write(cfg->dongle_sk, SK_MAX_SIZE);
+  write(&cfg->en_tail, sizeof(uint32_t));
+  write(&cfg->en_head, sizeof(uint32_t));
+
   _flash_write_(DONGLE_OTPSTORE_OFFSET, otps, NUM_OTP*sizeof(dongle_otp_t));
   _flash_write_(DONGLE_STATSTORE_OFFSET, stat, len);
 }

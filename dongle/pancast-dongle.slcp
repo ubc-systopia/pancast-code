@@ -21,6 +21,8 @@ sdk: {id: gecko_sdk, version: 3.2.0}
 toolchain_settings: []
 component:
 - {id: bluetooth_feature_sync}
+- instance: [btn0]
+  id: simple_button
 - {id: bluetooth_feature_gatt_server}
 - {id: bluetooth_feature_sm}
 - {id: mpu}
@@ -44,6 +46,7 @@ component:
 - {id: bluetooth_feature_system}
 - {id: bluetooth_feature_scanner}
 - {id: mbedtls_cipher_cfb}
+- {id: button}
 - {id: component_catalog}
 - {id: ota_dfu}
 - {id: brd4184a}

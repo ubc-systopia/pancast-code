@@ -426,6 +426,26 @@
 			<locationURI>STUDIO_SDK_LOC/platform/common/toolchain/src/sl_memory.c</locationURI>
 		</link>
 		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/button/inc/sl_button.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/button/inc/sl_button.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/button/inc/sl_simple_button.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/button/inc/sl_simple_button.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/button/src/sl_button.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/button/src/sl_button.c</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/driver/button/src/sl_simple_button.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/driver/button/src/sl_simple_button.c</locationURI>
+		</link>
+		<link>
 			<name>gecko_sdk_3.2.0/platform/driver/debug/inc/sl_debug_swo.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/driver/debug/inc/sl_debug_swo.h</locationURI>
@@ -459,6 +479,16 @@
 			<name>gecko_sdk_3.2.0/platform/emdrv/common/inc/ecode.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/platform/emdrv/common/inc/ecode.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/emdrv/gpiointerrupt/inc/gpiointerrupt.h</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/emdrv/gpiointerrupt/inc/gpiointerrupt.h</locationURI>
+		</link>
+		<link>
+			<name>gecko_sdk_3.2.0/platform/emdrv/gpiointerrupt/src/gpiointerrupt.c</name>
+			<type>1</type>
+			<locationURI>STUDIO_SDK_LOC/platform/emdrv/gpiointerrupt/src/gpiointerrupt.c</locationURI>
 		</link>
 		<link>
 			<name>gecko_sdk_3.2.0/platform/emdrv/nvm3/inc/nvm3.h</name>

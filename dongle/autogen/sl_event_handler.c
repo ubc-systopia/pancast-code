@@ -16,6 +16,7 @@
 #include "app_log.h"
 #include "sl_bluetooth.h"
 #include "sl_debug_swo.h"
+#include "gpiointerrupt.h"
 #include "sl_iostream_init_instances.h"
 #include "sl_iostream_debug.h"
 #include "sl_iostream_stdlib_config.h"
@@ -23,6 +24,7 @@
 #include "sl_mbedtls.h"
 #include "sl_mpu.h"
 #include "nvm3_default.h"
+#include "sl_simple_button_instances.h"
 #include "sl_simple_led_instances.h"
 #include "sl_power_manager.h"
 
@@ -52,6 +54,8 @@ void sl_platform_init(void)
 void sl_driver_init(void)
 {
   sl_debug_swo_init();
+  GPIOINT_Init();
+  sl_simple_button_init_instances();
   sl_simple_led_init_instances();
 }
 

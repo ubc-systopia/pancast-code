@@ -123,6 +123,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/hardware/board/inc&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/driver/button/inc&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader/api&quot;"/>
@@ -138,6 +140,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/common/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emlib/inc&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/gpiointerrupt/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/service/hfxo_manager/inc&quot;"/>
                                     									
@@ -303,6 +307,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/hardware/board/inc&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/driver/button/inc&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader/api&quot;"/>
@@ -316,6 +322,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/service/device_init/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/common/inc&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/gpiointerrupt/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emlib/inc&quot;"/>
                                     									
@@ -627,6 +635,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/hardware/board/inc&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/driver/button/inc&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader/api&quot;"/>
@@ -640,6 +650,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/service/device_init/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/common/inc&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/gpiointerrupt/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emlib/inc&quot;"/>
                                     									
@@ -1301,6 +1313,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/hardware/board/inc&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/driver/button/inc&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/bootloader/api&quot;"/>
@@ -1314,6 +1328,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/service/device_init/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/common/inc&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emdrv/gpiointerrupt/inc&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/emlib/inc&quot;"/>
                                     									

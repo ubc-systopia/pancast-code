@@ -20,6 +20,7 @@
 #include "telemetry.h"
 #include "download.h"
 #include "led.h"
+#include "button.h"
 #include "nvm3_lib.h"
 
 #include "common/src/util/log.h"
@@ -109,6 +110,7 @@ void dongle_init()
 
   // set up LED
   configure_blinky();
+  configure_button();
 
 #if DONGLE_CRYPTO
   // run crypto benchmark

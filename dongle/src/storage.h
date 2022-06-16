@@ -146,11 +146,6 @@ void dongle_storage_load_encounter(dongle_storage *sto,
 void dongle_storage_load_single_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_entry_t *);
 
-#if 0
-void dongle_storage_load_encounters_from_time(dongle_storage *sto,
-    dongle_timer_t min_time, dongle_encounter_cb cb);
-#endif
-
 // WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en);

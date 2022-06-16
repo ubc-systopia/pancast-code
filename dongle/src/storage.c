@@ -192,27 +192,6 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val)
 }
 #endif
 
-static inline void inc_head(dongle_storage *sto)
-{
-  sto->encounters.head = (sto->encounters.head + 1) % MAX_LOG_COUNT;
-}
-
-static inline void inc_tail(dongle_storage *sto)
-{
-  sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT;
-}
-
-enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
-{
-  enctr_entry_counter_t result;
-  if (sto->encounters.head >= sto->encounters.tail) {
-    result = sto->encounters.head - sto->encounters.tail;
-  } else {
-    result = MAX_LOG_COUNT - (sto->encounters.tail - sto->encounters.head);
-  }
-  return result;
-}
-
 static inline int inc_idx(int idx)
 {
   idx = ((idx + 1) % MAX_LOG_COUNT);
@@ -260,8 +239,6 @@ void dongle_storage_load_encounter(dongle_storage *sto __attribute__((unused)),
     enctr_entry_counter_t i, enctr_entry_counter_t num, dongle_encounter_cb cb)
 {
   enctr_entry_counter_t prev_idx;
-//  enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-  log_infof("loading log entries starting at idx %lu cnt: %lu\r\n", i, num);
   dongle_encounter_entry_t en;
   do {
     if (i >= num)
@@ -283,28 +260,6 @@ void dongle_storage_load_single_encounter(dongle_storage *sto,
   storage_addr_t off = ENCOUNTER_LOG_OFFSET(sto, i);
   _flash_read_(off, en, sizeof(dongle_encounter_entry_t));
 }
-
-#if 0
-void dongle_storage_load_encounters_from_time(dongle_storage *sto,
-    dongle_timer_t min_time, dongle_encounter_cb cb)
-{
-  log_debugf("loading log entries starting at time %lu\r\n", min_time);
-  enctr_entry_counter_t num = dongle_storage_num_encounters_current(sto);
-  dongle_encounter_entry_t en;
-  enctr_entry_counter_t j = 0;
-  for (enctr_entry_counter_t i = 0; i < num; i++) {
-    log_debugf("i = %lu\r\n", (uint32_t) i);
-    // Can be optimized to track timestamps and avoid extra loads
-  //  dongle_storage_load_single_encounter(sto, i, &en);
-    if (en.dongle_time_start >= min_time) {
-      if (!cb(j, &en)) {
-        break;
-      }
-      j++;
-    }
-  }
-}
-#endif
 
 void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en)

@@ -21,6 +21,8 @@
 #define NVM_OFFSET 0x78000
 #define NVM_SIZE NVM3_DEFAULT_NVM_SIZE
 
+#define ENCOUNTER_LOG_START FLASH_OFFSET
+#define ENCOUNTER_LOG_END   NVM_OFFSET
 /*
  * space available for encounter log (in bytes)
  */
@@ -48,8 +50,9 @@
  * flash page number + offset in page
  */
 #define ENCOUNTER_LOG_OFFSET(sto, j) \
-    ((sto)->map.log + (((j) / ENCOUNTERS_PER_PAGE) * (sto)->page_size) + \
-     ((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE)
+    (ENCOUNTER_LOG_START +  \
+     (((j) / ENCOUNTERS_PER_PAGE) * FLASH_DEVICE_PAGE_SIZE) + \
+     (((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE))
 
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;
@@ -60,8 +63,6 @@ typedef struct {
 } _encounter_storage_cursor_;
 
 typedef struct {
-  storage_addr_t log;     // address of first log entry
-  storage_addr_t log_end; // address of next available space after log
   storage_addr_t config;  // address of device configuration
   storage_addr_t otp;     // address of OTP storage
   storage_addr_t stat;    // address of saved statistics
@@ -69,10 +70,6 @@ typedef struct {
 
 typedef struct {
   MSC_ExecConfig_TypeDef mscExecConfig;
-  size_t min_block_size;
-  int num_pages;
-  size_t page_size;
-  storage_addr_t total_size;
   _dongle_storage_map_ map;
   _encounter_storage_cursor_ encounters;
   /*

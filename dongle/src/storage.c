@@ -24,11 +24,11 @@ static inline void dongle_storage_erase(dongle_storage *sto, storage_addr_t offs
 // Erase before write
 void pre_erase(dongle_storage *sto, storage_addr_t off, size_t write_size)
 {
-#define page_num(o) ((o) / sto->page_size)
-  if ((off % sto->page_size) == 0) {
+#define page_num(o) ((o) / FLASH_DEVICE_PAGE_SIZE)
+  if ((off % FLASH_DEVICE_PAGE_SIZE) == 0) {
     dongle_storage_erase(sto, off);
   } else if (page_num(off + write_size) > page_num(off)) {
-    dongle_storage_erase(sto, next_multiple(sto->page_size, off));
+    dongle_storage_erase(sto, next_multiple(FLASH_DEVICE_PAGE_SIZE, off));
   }
 #undef page_num
 }
@@ -59,14 +59,10 @@ void dongle_storage_init(dongle_storage *sto)
   sto->encounters.head = 0;
   sto->total_encounters = 0;
   sto->numErasures = 0;
-  sto->num_pages = FLASH_DEVICE_NUM_PAGES;
-  sto->min_block_size = FLASH_DEVICE_BLOCK_SIZE;
-  sto->page_size = FLASH_DEVICE_PAGE_SIZE;
-  sto->total_size = sto->num_pages * sto->page_size;
-  sto->map.config = sto->total_size - sto->page_size;
-  if (FLASH_OFFSET % sto->page_size != 0) {
+  sto->map.config = (FLASH_DEVICE_NUM_PAGES - 1) * FLASH_DEVICE_PAGE_SIZE;
+  if (FLASH_OFFSET % FLASH_DEVICE_PAGE_SIZE != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
-        FLASH_OFFSET, sto->page_size);
+        FLASH_OFFSET, FLASH_DEVICE_PAGE_SIZE);
   }
 }
 
@@ -112,8 +108,6 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 
   sto->map.stat = off;
 
-  sto->map.log = FLASH_OFFSET;
-  sto->map.log_end = NVM_OFFSET;
 #undef read
 }
 

@@ -479,11 +479,13 @@ void dongle_info()
   log_expf("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
 
   log_expf("    Flash page size, count:       %u B, %u\r\n",
-      storage.page_size, storage.num_pages);
+      FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES);
   log_expf("    Flash offset:                 0x%0x\r\n", FLASH_OFFSET);
-  log_expf("    Total size:                   %u\r\n", storage.total_size);
+  log_expf("    Total size:                   %u\r\n",
+      (FLASH_DEVICE_NUM_PAGES * FLASH_DEVICE_PAGE_SIZE));
   log_expf("    Log range, size:              0x%0x-0x%0x, %u\r\n",
-    storage.map.log, storage.map.log_end, (storage.map.log_end - storage.map.log));
+    ENCOUNTER_LOG_START, ENCOUNTER_LOG_END,
+    (ENCOUNTER_LOG_END - ENCOUNTER_LOG_START));
   log_expf("    Encounter size:               %u\r\n",
       sizeof(dongle_encounter_entry_t));
   log_expf("    Max enctr entries:            %lu\r\n", MAX_LOG_COUNT);

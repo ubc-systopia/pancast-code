@@ -127,6 +127,8 @@ int dongle_storage_match_otp(dongle_storage *sto, uint64_t val);
 
 // Determine the number of encounters currently logged
 enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto);
+enctr_entry_counter_t num_encounters_current(enctr_entry_counter_t head,
+    enctr_entry_counter_t tail);
 
 // LOAD ENCOUNTER
 // API is defined using a callback structure
@@ -137,8 +139,6 @@ typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
 // variable i is provided as the index into the log
 void dongle_storage_load_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_cb cb);
-
-void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb);
 
 void dongle_storage_load_single_encounter(dongle_storage *sto,
     enctr_entry_counter_t i, dongle_encounter_entry_t *);

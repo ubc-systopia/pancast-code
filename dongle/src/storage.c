@@ -199,6 +199,17 @@ static inline void inc_tail(dongle_storage *sto)
   sto->encounters.tail = (sto->encounters.tail + 1) % MAX_LOG_COUNT;
 }
 
+enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
+{
+  enctr_entry_counter_t result;
+  if (sto->encounters.head >= sto->encounters.tail) {
+    result = sto->encounters.head - sto->encounters.tail;
+  } else {
+    result = MAX_LOG_COUNT - (sto->encounters.tail - sto->encounters.head);
+  }
+  return result;
+}
+
 static inline int inc_idx(int idx)
 {
   idx = ((idx + 1) % MAX_LOG_COUNT);
@@ -217,13 +228,14 @@ static inline void _log_increment_(dongle_storage *sto)
   }
 }
 
-enctr_entry_counter_t dongle_storage_num_encounters_current(dongle_storage *sto)
+enctr_entry_counter_t num_encounters_current(enctr_entry_counter_t head,
+    enctr_entry_counter_t tail)
 {
   enctr_entry_counter_t result;
-  if (sto->encounters.head >= sto->encounters.tail) {
-    result = sto->encounters.head - sto->encounters.tail;
+  if (head >= tail) {
+    result = head - tail;
   } else {
-    result = MAX_LOG_COUNT - (sto->encounters.tail - sto->encounters.head);
+    result = MAX_LOG_COUNT - (tail - head);
   }
   return result;
 }
@@ -274,11 +286,6 @@ void dongle_storage_load_encounter(dongle_storage *sto,
     prev_idx = i;
     i = inc_idx(i);
   } while (cb(prev_idx, &en));
-}
-
-void dongle_storage_load_all_encounter(dongle_storage *sto, dongle_encounter_cb cb)
-{
-  dongle_storage_load_encounter(sto, 0, cb);
 }
 
 /*

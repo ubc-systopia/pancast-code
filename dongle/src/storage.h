@@ -21,8 +21,41 @@
 #define NVM_OFFSET 0x78000
 #define NVM_SIZE NVM3_DEFAULT_NVM_SIZE
 
+/*
+ * storage address of encounter log
+ */
 #define ENCOUNTER_LOG_START FLASH_OFFSET
 #define ENCOUNTER_LOG_END   NVM_OFFSET
+
+/*
+ * physical addr of an encounter entry in flash:
+ * flash page number + offset in page
+ */
+#define ENCOUNTER_LOG_OFFSET(sto, j) \
+    (ENCOUNTER_LOG_START +  \
+     (((j) / ENCOUNTERS_PER_PAGE) * FLASH_DEVICE_PAGE_SIZE) + \
+     (((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE))
+
+/*
+ * storage address for device configuration
+ */
+#define DONGLE_CONFIG_OFFSET  \
+  ((FLASH_DEVICE_NUM_PAGES - 1) * FLASH_DEVICE_PAGE_SIZE)
+
+/*
+ * storage address for OTPs
+ */
+#define DONGLE_OTPSTORE_OFFSET  \
+  (DONGLE_CONFIG_OFFSET + sizeof(dongle_id_t) + (2*sizeof(dongle_timer_t)) +  \
+  (2*sizeof(key_size_t)) + PK_MAX_SIZE + SK_MAX_SIZE + \
+  (2*sizeof(enctr_entry_counter_t)))
+
+/*
+ * storage address for stats object
+ */
+#define DONGLE_STATSTORE_OFFSET \
+  (DONGLE_OTPSTORE_OFFSET + (NUM_OTP*sizeof(dongle_otp_t)))
+
 /*
  * space available for encounter log (in bytes)
  */
@@ -45,15 +78,6 @@
  */
 #define MAX_LOG_COUNT (TARGET_FLASH_LOG_NUM_PAGES * ENCOUNTERS_PER_PAGE)
 
-/*
- * physical addr of an encounter entry in flash:
- * flash page number + offset in page
- */
-#define ENCOUNTER_LOG_OFFSET(sto, j) \
-    (ENCOUNTER_LOG_START +  \
-     (((j) / ENCOUNTERS_PER_PAGE) * FLASH_DEVICE_PAGE_SIZE) + \
-     (((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE))
-
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;
 
@@ -63,20 +87,7 @@ typedef struct {
 } _encounter_storage_cursor_;
 
 typedef struct {
-  storage_addr_t config;  // address of device configuration
-  storage_addr_t otp;     // address of OTP storage
-  storage_addr_t stat;    // address of saved statistics
-} _dongle_storage_map_;
-
-typedef struct {
-  MSC_ExecConfig_TypeDef mscExecConfig;
-  _dongle_storage_map_ map;
   _encounter_storage_cursor_ encounters;
-  /*
-   * in-memory count of new encounters logged since last reboot
-   */
-  enctr_entry_counter_t total_encounters;
-  uint64_t numErasures;
 } dongle_storage;
 
 // STORAGE INIT

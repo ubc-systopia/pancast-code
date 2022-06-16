@@ -11,6 +11,8 @@
 #define next_multiple(k, n) ((n) + ((k) - ((n) % (k)))) // buggy
 
 extern dongle_timer_t dongle_time;
+extern dongle_config_t config;
+extern dongle_stats_t stats;
 
 static inline void dongle_storage_erase(dongle_storage *sto, storage_addr_t offset)
 {
@@ -18,7 +20,7 @@ static inline void dongle_storage_erase(dongle_storage *sto, storage_addr_t offs
   if (status != 0) {
     log_errorf("error erasing page: 0x%x", status);
   }
-  sto->numErasures++;
+  stats.numErasures++;
 }
 
 // Erase before write
@@ -47,8 +49,7 @@ static inline int _flash_write_(storage_addr_t off, void *data, size_t size)
 void dongle_storage_init_device(dongle_storage *sto)
 {
   MSC_ExecConfig_TypeDef execConfig = MSC_EXECCONFIG_DEFAULT;
-  sto->mscExecConfig = execConfig;
-  MSC_ExecConfigSet(&sto->mscExecConfig);
+  MSC_ExecConfigSet(&execConfig);
   MSC_Init();
 }
 
@@ -57,9 +58,8 @@ void dongle_storage_init(dongle_storage *sto)
   dongle_storage_init_device(sto);
   sto->encounters.tail = 0;
   sto->encounters.head = 0;
-  sto->total_encounters = 0;
-  sto->numErasures = 0;
-  sto->map.config = (FLASH_DEVICE_NUM_PAGES - 1) * FLASH_DEVICE_PAGE_SIZE;
+  stats.total_encounters = 0;
+  stats.numErasures = 0;
   if (FLASH_OFFSET % FLASH_DEVICE_PAGE_SIZE != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
         FLASH_OFFSET, FLASH_DEVICE_PAGE_SIZE);
@@ -68,7 +68,7 @@ void dongle_storage_init(dongle_storage *sto)
 
 void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-  storage_addr_t off = sto->map.config;
+  storage_addr_t off = DONGLE_CONFIG_OFFSET;
 #define read(size, dst) (_flash_read_(off, dst, size), off += size)
   read(sizeof(dongle_id_t), &cfg->id);
   read(sizeof(dongle_timer_t), &cfg->t_init);
@@ -102,20 +102,16 @@ void dongle_storage_load_config(dongle_storage *sto, dongle_config_t *cfg)
   sto->encounters.head = cfg->en_head;
   sto->encounters.tail = cfg->en_tail;
 
-  sto->map.otp = off;
-
   off += NUM_OTP * sizeof(dongle_otp_t); // add size of OTP
-
-  sto->map.stat = off;
 
 #undef read
 }
 
-#define OTP(i) (sto->map.otp + (i * sizeof(dongle_otp_t)))
+#define OTP(i) (DONGLE_OTPSTORE_OFFSET + (i * sizeof(dongle_otp_t)))
 
 void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
 {
-  storage_addr_t off = sto->map.config;
+  storage_addr_t off = DONGLE_CONFIG_OFFSET;
   int total_size = sizeof(dongle_config_t) +
     (NUM_OTP*sizeof(dongle_otp_t)) + sizeof(dongle_stats_t);
 
@@ -123,7 +119,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   _flash_read_(OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
 
   char statbuf[sizeof(dongle_stats_t)];
-  _flash_read_(sto->map.stat, statbuf, sizeof(dongle_stats_t));
+  _flash_read_(DONGLE_STATSTORE_OFFSET, statbuf, sizeof(dongle_stats_t));
 
   pre_erase(sto, off, total_size);
 
@@ -138,7 +134,7 @@ void dongle_storage_save_config(dongle_storage *sto, dongle_config_t *cfg)
   write(otps, sizeof(dongle_otp_t)*NUM_OTP);
 
   // write stats
-  off = sto->map.stat;
+  off = DONGLE_STATSTORE_OFFSET;
   write(statbuf, sizeof(dongle_stats_t));
 #undef write
 }
@@ -338,7 +334,7 @@ void dongle_storage_log_encounter(dongle_storage *sto, dongle_config_t *cfg,
 
 #undef write
 
-  sto->total_encounters++;
+  stats.total_encounters++;
   _log_increment_(sto);
 //  num2 = dongle_storage_num_encounters_current(sto);
   _delete_old_encounters_(sto, *dongle_time);
@@ -366,16 +362,16 @@ void dongle_storage_save_stat(dongle_storage *sto, dongle_config_t *cfg,
   dongle_otp_t otps[NUM_OTP];
   _flash_read_(OTP(0), otps, NUM_OTP*sizeof(dongle_otp_t));
 
-  pre_erase(sto, sto->map.config, total_size);
+  pre_erase(sto, DONGLE_CONFIG_OFFSET, total_size);
 
-  _flash_write_(sto->map.config, cfg, sizeof(dongle_config_t));
-  _flash_write_(sto->map.otp, otps, NUM_OTP*sizeof(dongle_otp_t));
-  _flash_write_(sto->map.stat, stat, len);
+  _flash_write_(DONGLE_CONFIG_OFFSET, cfg, sizeof(dongle_config_t));
+  _flash_write_(DONGLE_OTPSTORE_OFFSET, otps, NUM_OTP*sizeof(dongle_otp_t));
+  _flash_write_(DONGLE_STATSTORE_OFFSET, stat, len);
 }
 
 void dongle_storage_read_stat(dongle_storage *sto, void * stat, size_t len)
 {
-  _flash_read_(sto->map.stat, stat, len);
+  _flash_read_(DONGLE_STATSTORE_OFFSET, stat, len);
 }
 
 void dongle_storage_clean_log(dongle_storage *sto, dongle_timer_t cur_time)

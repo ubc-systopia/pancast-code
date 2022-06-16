@@ -2,6 +2,7 @@
 
 #include "storage.h"
 #include "encounter.h"
+#include "stats.h"
 
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
@@ -11,6 +12,7 @@ extern dongle_storage storage;
 extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
 extern dongle_timer_t report_time;
+extern dongle_stats_t stats;
 
 #if 0
 #if TEST_DONGLE
@@ -135,11 +137,11 @@ void dongle_test()
 #endif
 
   log_infof("%s", "    logged encounters correct?\r\n");
-  if (storage.total_encounters > non_report_entry_count) {
+  if (stats.total_encounters > non_report_entry_count) {
     // There are new entries logged
     dongle_storage_load_encounters_from_time(&storage, report_time,
                                              test_compare_entry_idx);
-    non_report_entry_count = storage.total_encounters;
+    non_report_entry_count = stats.total_encounters;
   } else {
     log_errorf("%s", "no new encounters logged.\r\n");
   }

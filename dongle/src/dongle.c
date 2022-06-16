@@ -491,9 +491,9 @@ void dongle_info()
   log_expf("    Max enctr entries:            %lu\r\n", MAX_LOG_COUNT);
   log_expf("    Log head, tail:               %u, %u\r\n",
       config.en_head, config.en_tail);
-  log_expf("    Config offset:                0x%0x\r\n", storage.map.config);
-  log_expf("    OTP offset:                   0x%0x\r\n", storage.map.otp);
-  log_expf("    Stat offset:                  0x%0x\r\n", storage.map.stat);
+  log_expf("    Config offset:                0x%0x\r\n", DONGLE_CONFIG_OFFSET);
+  log_expf("    OTP offset:                   0x%0x\r\n", DONGLE_OTPSTORE_OFFSET);
+  log_expf("    Stat offset:                  0x%0x\r\n", DONGLE_STATSTORE_OFFSET);
 }
 
 void dongle_encounter_report()
@@ -502,7 +502,7 @@ void dongle_encounter_report()
   log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
     "#encounters [new, stored]: %lu, %lu\r\n",
     dongle_time, stats.last_report_time, stats.last_download_time,
-    storage.encounters.head, storage.encounters.tail, storage.total_encounters,
+    storage.encounters.head, storage.encounters.tail, stats.total_encounters,
     dongle_storage_num_encounters_current(&storage));
 #endif
 }

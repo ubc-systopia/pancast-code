@@ -52,6 +52,11 @@ typedef struct {
    */
   int total_matches;
   /*
+   * in-memory count of new encounters logged since last reboot
+   */
+  enctr_entry_counter_t total_encounters;
+  uint64_t numErasures;
+  /*
    * # of periodic payload download failures with incorrect CF payload
    */
   download_fail_reason cuckoo_fail;

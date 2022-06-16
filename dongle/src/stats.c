@@ -4,7 +4,6 @@
 #include "common/src/util/log.h"
 
 dongle_stats_t stats;
-extern dongle_timer_t dongle_time;
 extern dongle_config_t config;
 
 void dongle_stats_reset()

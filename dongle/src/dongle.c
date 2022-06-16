@@ -458,43 +458,40 @@ int dongle_download_complete_status()
 void dongle_info()
 {
   log_expf("%s", "=== Dongle Info: ===\r\n");
-  log_expf("    Dongle ID:                    0x%x\r\n", config.id);
-  log_expf("    Initial clock:                %lu\r\n", config.t_init);
-  log_expf("    Current clock:                %lu\r\n", config.t_cur);
-  log_expf("    Timer frequency:              %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
-  log_expf("    Backend public key size:      %lu bytes\r\n",
+  log_expf("   Dongle ID:                        0x%x\r\n", config.id);
+  log_expf("   Clock init, cur:                  %lu, %lu\r\n", config.t_init, config.t_cur);
+  log_expf("   Timer frequency:                  %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
+  log_expf("   Backend public key size:          %lu bytes\r\n",
       config.backend_pk_size);
-  log_expf("    Secret key size:              %lu bytes\r\n",
+  log_expf("   Secret key size:                  %lu bytes\r\n",
       config.dongle_sk_size);
-  log_expf("    Timer resolution:             %u ms\r\n",
+  log_expf("   Timer resolution:                 %u ms\r\n",
       DONGLE_TIMER_RESOLUTION);
-  log_expf("    Epoch length:                 %u ms\r\n",
+  log_expf("   Epoch length:                     %u ms\r\n",
       BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
-  log_expf("    Report interval:              %u ms\r\n",
+  log_expf("   Report interval:                  %u ms\r\n",
       DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
-  log_expf("    Legacy adv scan [PHY, mode]:  %d, %d\r\n", SCAN_PHY, SCAN_MODE);
-  log_expf("    Legacy adv scan interval:     %u ms\r\n", SCAN_INTERVAL);
-  log_expf("    Legacy adv scan window:       %u ms\r\n", SCAN_WINDOW);
-  log_expf("    Periodic adv sync skip:       %d\r\n", SYNC_SKIP);
-  log_expf("    Periodic adv sync flags:      %d\r\n", SYNC_FLAGS);
-  log_expf("    Periodic adv sync timeout:    %u ms\r\n", SYNC_TIMEOUT);
+  log_expf("   Legacy adv scan [PHY, mode]:      %d, %d\r\n", SCAN_PHY, SCAN_MODE);
+  log_expf("   Legacy adv scan interval, window: %u ms, %u ms\r\n", SCAN_INTERVAL, SCAN_WINDOW);
+  log_expf("   Periodic adv sync skip, flags:    %d, %d\r\n", SYNC_SKIP, SYNC_FLAGS);
+  log_expf("   Periodic adv sync timeout:        %u ms\r\n", SYNC_TIMEOUT);
 
-  log_expf("    Flash page size, count:       %u B, %u\r\n",
-      FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES);
-  log_expf("    Flash offset:                 0x%0x\r\n", FLASH_OFFSET);
-  log_expf("    Total size:                   %u\r\n",
+  log_expf("   Flash page size, count, total:    %u B, %u, %u B\r\n",
+      FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES,
       (FLASH_DEVICE_NUM_PAGES * FLASH_DEVICE_PAGE_SIZE));
-  log_expf("    Log range, size:              0x%0x-0x%0x, %u\r\n",
+  log_expf("   Flash offset:                     0x%0x\r\n", FLASH_OFFSET);
+  log_expf("   Log range, size:                  0x%0x-0x%0x, %u\r\n",
     ENCOUNTER_LOG_START, ENCOUNTER_LOG_END,
     (ENCOUNTER_LOG_END - ENCOUNTER_LOG_START));
-  log_expf("    Encounter size:               %u\r\n",
+  log_expf("   Encounter size:                   %u\r\n",
       sizeof(dongle_encounter_entry_t));
-  log_expf("    Max enctr entries:            %lu\r\n", MAX_LOG_COUNT);
-  log_expf("    Log head, tail:               %u, %u\r\n",
+  log_expf("   Max enctr entries:                %lu\r\n", MAX_LOG_COUNT);
+  log_expf("   Log head, tail:                   %u, %u\r\n",
       config.en_head, config.en_tail);
-  log_expf("    Config offset:                0x%0x\r\n", DONGLE_CONFIG_OFFSET);
-  log_expf("    OTP offset:                   0x%0x\r\n", DONGLE_OTPSTORE_OFFSET);
-  log_expf("    Stat offset:                  0x%0x\r\n", DONGLE_STATSTORE_OFFSET);
+  log_expf("   Config offset:                    0x%0x\r\n", DONGLE_CONFIG_OFFSET);
+  log_expf("   OTP offset:                       0x%0x\r\n", DONGLE_OTPSTORE_OFFSET);
+  log_expf("   Stat offset, obj size:            0x%0x, %u\r\n", DONGLE_STATSTORE_OFFSET, sizeof(dongle_stats_t));
+  log_expf("   MODE__SL_DONGLE_TEST_CONFIG:      %d\r\n", MODE__SL_DONGLE_TEST_CONFIG);
 }
 
 void dongle_encounter_report()

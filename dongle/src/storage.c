@@ -12,8 +12,6 @@
 
 #define OTP(i) (DONGLE_OTPSTORE_OFFSET + (i * sizeof(dongle_otp_t)))
 
-extern dongle_timer_t dongle_time;
-extern dongle_config_t config;
 extern dongle_stats_t stats;
 
 static inline void dongle_storage_erase(storage_addr_t offset)

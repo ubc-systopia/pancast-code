@@ -37,6 +37,7 @@ sl_sleeptimer_timer_handle_t led_timer;
 dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
 dongle_encounter_entry_t cur_encounters[DONGLE_MAX_BC_TRACKED];
+dongle_stats_t stats;
 size_t cur_id_idx;
 extern download_t download;
 
@@ -500,8 +501,7 @@ void dongle_report()
     return;
 
   dongle_encounter_report(&config, &stats);
-  dongle_stats();
-  dongle_download_stats();
+  dongle_stats(&stats);
 //  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
   nvm3_save_stat(&stats);
 

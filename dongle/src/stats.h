@@ -108,8 +108,6 @@ typedef struct {
 void dongle_stats_reset();
 void dongle_stats_init();
 void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats);
-void dongle_stats();
-void dongle_download_stats();
-void dongle_download_stats_init();
+void dongle_stats(dongle_stats_t *stats);
 
 #endif

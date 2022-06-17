@@ -51,6 +51,15 @@ typedef struct {
   stat_add(dongle_download_esimtate_loss(&d), s.est_pkt_loss)
 
 void dongle_download_init();
+void dongle_download_info();
 void dongle_download_complete();
+void dongle_download_fail();
+
+void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi);
+void dongle_on_periodic_data_error(int8_t rssi);
+void dongle_on_sync_lost();
+
+void dongle_update_download_time();
+int dongle_download_complete_status();
 
 #endif

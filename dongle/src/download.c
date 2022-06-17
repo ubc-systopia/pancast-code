@@ -335,6 +335,20 @@ void dongle_download_complete()
   dongle_download_reset();
 }
 
+void dongle_update_download_time(void)
+{
+  stats.stat_ints.last_download_time = dongle_time;
+}
+
+int dongle_download_complete_status()
+{
+  if (dongle_time - stats.stat_ints.last_download_time >= MIN_DOWNLOAD_WAIT ||
+		  stats.stat_ints.last_download_time == 0) {
+    return 0;
+  }
+  return 1;
+}
+
 void dongle_download_info()
 {
   log_infof("Total time: %.0f ms\r\n", download.time);

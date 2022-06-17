@@ -176,24 +176,11 @@ void dongle_init_scan();
 void dongle_load();
 void dongle_report();
 void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
-void dongle_lock();
-void dongle_unlock();
 void dongle_info();
-void dongle_test();
-void dongle_download_info();
-void dongle_download_test_info();
-void dongle_download_fail();
 void dongle_on_clock_update();
 void dongle_clock_increment();
 void dongle_save_encounters();
 void dongle_hp_timer_add(uint32_t ticks);
-void dongle_on_periodic_data
-(uint8_t *data, uint8_t data_len, int8_t rssi);
-void dongle_on_periodic_data_error
-(int8_t rssi);
-void dongle_on_sync_lost();
-int dongle_download_complete_status();
-void dongle_update_download_time();
 int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry);
 void dongle_log_counters();
 #endif

@@ -31,7 +31,7 @@
 
 // in-memory config
 dongle_config_t config;
-// in-memory config of on-disk layout
+
 sl_sleeptimer_timer_handle_t led_timer;
 
 dongle_epoch_counter_t epoch; // current epoch
@@ -56,10 +56,9 @@ static beacon_sk_t TEST_DONGLE_SK = {
 };
 #endif
 
-/* INIT
- Assumes that kernel has initialized and bluetooth device is booted.
- Call load routine, and set variables to their
- initial value. Also initialize timing structs
+/*
+ * invoke after kernel has initialized and bluetooth device is booted.
+ * load config from flash and nvm3, init or reset variables and init scan
  */
 void dongle_init()
 {
@@ -188,10 +187,8 @@ void dongle_load()
   config.id = TEST_DONGLE_ID;
   config.t_init = TEST_DONGLE_INIT_TIME;
   config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-//  config.backend_pk = TEST_BACKEND_PK;
   memcpy(config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
   config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
-//  config.dongle_sk = TEST_DONGLE_SK;
   memcpy(config.dongle_sk, &TEST_DONGLE_SK, config.dongle_sk_size);
   config.t_cur = 0;
 //  dongle_storage_save_config(&config);

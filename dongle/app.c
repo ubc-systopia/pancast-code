@@ -177,12 +177,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         }
 
         payload_start_ticks = dongle_hp_timer;
-#if 0
-        if (sc != 0) {
-          log_errorf("sync not opened, interval: %u sc: 0x%x\r\n",
-              evt->data.evt_scanner_scan_report.periodic_interval, sc);
-        }
-#endif
       } else if (num_sync_open_attempts >= NUM_SYNC_ATTEMPTS &&
           ((dongle_time - last_sync_open_time) >= MIN_DOWNLOAD_WAIT)) {
         num_sync_open_attempts = 0;
@@ -194,7 +188,6 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_opened_id:
-//      log_debugf("new sync opened!\r\n");
       synced = 1;
       break;
 

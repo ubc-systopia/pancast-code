@@ -86,24 +86,17 @@
 #include "em_msc.h"
 typedef uint32_t storage_addr_t;
 
-typedef struct {
-  enctr_entry_counter_t tail; // index of oldest stored recent encounter
-  enctr_entry_counter_t head; // index to write next stored encounter
-} _encounter_storage_cursor_;
-
-// STORAGE INIT
-// Should initialize the internal storage representation,
-// including system-level information. Application configs like
-// the storage map are left partially uninitialized.
-// This allows *load_config* to be used.
 void dongle_storage_init(void);
 
-// LOAD CONFIG
-// Should load application configuration data into the provided
-// container, and set the map to allow load_otp to be used.
+/*
+ * load application configuration data into the provided
+ * container, and set the map to allow load_otp to be used.
+ */
 void dongle_storage_load_config(dongle_config_t *cfg);
 
-// Write an existing config to storage
+/*
+ * write an existing config to storage
+ */
 void dongle_storage_save_config(dongle_config_t *cfg);
 
 #if 0
@@ -130,20 +123,23 @@ int dongle_storage_match_otp(uint64_t val);
 enctr_entry_counter_t num_encounters_current(enctr_entry_counter_t head,
     enctr_entry_counter_t tail);
 
-// LOAD ENCOUNTER
-// API is defined using a callback structure
+/*
+ * function to work with an individual encounter entry
+ * API is defined using a callback structure
+ */
 typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
 		dongle_encounter_entry_t *entry);
 
-// load function iterates through the records, and calls cb for each
-// variable i is provided as the index into the log
+/*
+ * load function to iterate through encounter entries and call a
+ * function for each entry
+ */
 void dongle_storage_load_encounter(enctr_entry_counter_t i,
     enctr_entry_counter_t num, dongle_encounter_cb cb);
 
 void dongle_storage_load_single_encounter(enctr_entry_counter_t i,
     dongle_encounter_entry_t *);
 
-// WRITE ENCOUNTER
 void dongle_storage_log_encounter(dongle_config_t *cfg,
 		dongle_timer_t *dongle_time, dongle_encounter_entry_t *en);
 

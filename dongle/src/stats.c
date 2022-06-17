@@ -33,12 +33,6 @@ void dongle_stats_init(void)
     dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
     nvm3_save_stat(&stats);
   }
-
-#if MODE__SL_DONGLE_TEST_CONFIG
-  dongle_stats_reset(&stats);
-  stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
-  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
-#endif
 }
 #endif
 

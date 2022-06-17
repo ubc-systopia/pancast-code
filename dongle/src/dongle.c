@@ -46,17 +46,6 @@ extern download_t download;
 float dongle_hp_timer = 0.0;
 extern dongle_stats_t stats;
 
-#if MODE__SL_DONGLE_TEST_CONFIG
-static pubkey_t TEST_BACKEND_PK = {
-  {0xad, 0xf4, 0xca, 0x6c, 0xa6, 0xd9, 0x11, 0x22}
-};
-
-static beacon_sk_t TEST_DONGLE_SK = {
-  {0xdc, 0x34, 0x6a, 0xdd, 0xa3, 0x41, 0xf4, 0x23,
-   0x33, 0xc0, 0xf0, 0xcf, 0x61, 0xc6, 0xd6, 0xd5}
-};
-#endif
-
 static void dongle_config_init(dongle_config_t *cfg)
 {
   if (!cfg)
@@ -233,18 +222,6 @@ void dongle_load()
   dongle_timer_t sto_t_cur = config.t_cur;
 
   nvm3_load_config(&config);
-
-#if MODE__SL_DONGLE_TEST_CONFIG
-  config.id = TEST_DONGLE_ID;
-  config.t_init = TEST_DONGLE_INIT_TIME;
-  config.backend_pk_size = TEST_BACKEND_KEY_SIZE;
-  memcpy(config.backend_pk, &TEST_BACKEND_PK, config.backend_pk_size);
-  config.dongle_sk_size = TEST_DONGLE_SK_SIZE;
-  memcpy(config.dongle_sk, &TEST_DONGLE_SK, config.dongle_sk_size);
-  config.t_cur = 0;
-//  dongle_storage_save_config(&config);
-  nvm3_save_config(&config);
-#endif
 
 #if 0
   if (sto_en_head == 0)
@@ -524,7 +501,6 @@ void dongle_info()
   log_expf("   Config offset:                    0x%0x\r\n", DONGLE_CONFIG_OFFSET);
   log_expf("   OTP offset:                       0x%0x\r\n", DONGLE_OTPSTORE_OFFSET);
   log_expf("   Stat offset, obj size:            0x%0x, %u\r\n", DONGLE_STATSTORE_OFFSET, sizeof(dongle_stats_t));
-  log_expf("   MODE__SL_DONGLE_TEST_CONFIG:      %d\r\n", MODE__SL_DONGLE_TEST_CONFIG);
 }
 
 void dongle_report()

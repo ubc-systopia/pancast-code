@@ -5,12 +5,6 @@
 #include "common/src/settings.h"
 
 /*
- * 1 - init test config
- * 0 - load config from storage
- */
-#define MODE__SL_DONGLE_TEST_CONFIG      0
-
-/*
  * 1 - test encounters and OTPs inline
  * 0 - disable the test
  */

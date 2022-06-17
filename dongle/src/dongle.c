@@ -194,9 +194,8 @@ void dongle_load()
 //  config.dongle_sk = TEST_DONGLE_SK;
   memcpy(config.dongle_sk, &TEST_DONGLE_SK, config.dongle_sk_size);
   config.t_cur = 0;
-  dongle_storage_save_config(&storage, &config);
-  nvm3_save_config(&storage, &config);
-  dongle_storage_save_otp(&storage, TEST_OTPS);
+//  dongle_storage_save_config(&config);
+  nvm3_save_config(&config);
 #endif
 
   if (sto_en_head == 0)

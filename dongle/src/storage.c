@@ -303,8 +303,10 @@ void dongle_storage_log_encounter(dongle_config_t *cfg,
   dongle_storage_save_cursor_clock(cfg);
 }
 
-void dongle_storage_save_stat(dongle_config_t *cfg, void * stat, size_t len)
+void dongle_storage_save_stat(dongle_config_t *cfg __attribute__((unused)),
+    void * stat, size_t len __attribute__((unused)))
 {
+#if 0
   storage_addr_t off = DONGLE_CONFIG_OFFSET;
   int total_size = DONGLE_CONFIG_SIZE +
     (NUM_OTP*sizeof(dongle_otp_t)) + sizeof(dongle_stats_t);
@@ -329,11 +331,15 @@ void dongle_storage_save_stat(dongle_config_t *cfg, void * stat, size_t len)
 
   _flash_write_(DONGLE_OTPSTORE_OFFSET, otps, NUM_OTP*sizeof(dongle_otp_t));
   _flash_write_(DONGLE_STATSTORE_OFFSET, stat, len);
+#endif
+
+  nvm3_save_stat(stat);
 }
 
-void dongle_storage_read_stat(void * stat, size_t len)
+void dongle_storage_read_stat(void * stat, size_t len __attribute__((unused)))
 {
-  _flash_read_(DONGLE_STATSTORE_OFFSET, stat, len);
+//  _flash_read_(DONGLE_STATSTORE_OFFSET, stat, len);
+  nvm3_load_stat(stat);
 }
 
 #undef next_multiple

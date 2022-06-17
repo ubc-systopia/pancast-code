@@ -32,11 +32,14 @@
  * Initialize NVM3 example
  ******************************************************************************/
 void nvm3_app_init(void);
+void nvm3_app_reset(void *args);
 
 size_t nvm3_count_objects(void);
 size_t nvm3_get_erase_count(void);
 void nvm3_save_config(dongle_config_t *cfg);
 void nvm3_save_clock_cursor(dongle_config_t *cfg);
+void nvm3_save_stat(void *stat);
+void nvm3_load_stat(void *stat);
 void nvm3_load_config(dongle_config_t *cfg);
 
 /***************************************************************************//**

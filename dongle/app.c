@@ -85,6 +85,8 @@ sl_status_t app_init(void)
 
   log_expf("=== NVM3 #objs: %u #erasures: %u ===\r\n", nvm3_count_objects(),
       nvm3_get_erase_count());
+//  nvm3_app_reset(NULL);
+
   return SL_STATUS_OK;
 }
 

@@ -22,6 +22,8 @@
 #include "nvm3_default_config.h"
 #include "common/src/util/log.h"
 
+#include "stats.h"
+
 /*******************************************************************************
  **************************   LOCAL VARIABLES   ********************************
  ******************************************************************************/
@@ -30,6 +32,10 @@ enum {
   NVM3_CNT_T_CUR = 0,
   NVM3_CNT_LOG_HEAD,
   NVM3_CNT_LOG_TAIL,
+  NVM3_STAT_INTS,
+  NVM3_STAT_GROUP,
+  NVM3_STAT_ALL_DWNLD,
+  NVM3_STAT_COMPLETED_DWNLD,
   NVM3_MAX_COUNTERS
 };
 
@@ -107,7 +113,7 @@ void nvm3_save_config(dongle_config_t *cfg)
   Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
   int i = 0;
 #define nvm3_write(cntr_id, val)  \
-  err[i++] = nvm3_writeCounter(NVM3_DEFAULT_HANDLE, cntr_id, val)
+  err[i++] = nvm3_writeData(NVM3_DEFAULT_HANDLE, cntr_id, &(val), sizeof((val)))
 
   nvm3_write(NVM3_CNT_T_CUR, cfg->t_cur);
   nvm3_write(NVM3_CNT_LOG_HEAD, cfg->en_head);
@@ -124,7 +130,7 @@ void nvm3_save_clock_cursor(dongle_config_t *cfg)
   Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
   int i = 0;
 #define nvm3_write(cntr_id, val)  \
-  err[i++] = nvm3_writeCounter(NVM3_DEFAULT_HANDLE, cntr_id, val)
+  err[i++] = nvm3_writeData(NVM3_DEFAULT_HANDLE, cntr_id, &(val), sizeof((val)))
 
   nvm3_write(NVM3_CNT_T_CUR, cfg->t_cur);
   nvm3_write(NVM3_CNT_LOG_HEAD, cfg->en_head);
@@ -136,20 +142,99 @@ void nvm3_save_clock_cursor(dongle_config_t *cfg)
 #undef nvm3_write
 }
 
+void nvm3_save_stat(void *stat)
+{
+  Ecode_t err[NVM3_MAX_COUNTERS];
+  dongle_stats_t *statp = NULL;
+
+  statp = (dongle_stats_t *) stat;
+
+#define nvm3_write(cntr_id, objp)  \
+  err[cntr_id] = nvm3_writeData(NVM3_DEFAULT_HANDLE, cntr_id, \
+                    (objp), sizeof(*(objp)))
+
+  nvm3_write(NVM3_STAT_INTS, &(statp->stat_ints));
+  nvm3_write(NVM3_STAT_GROUP, &(statp->stat_grp));
+  nvm3_write(NVM3_STAT_ALL_DWNLD, &(statp->all_download_stats));
+  nvm3_write(NVM3_STAT_COMPLETED_DWNLD, &(statp->completed_download_stats));
+  log_expf("[NVM3] write last report: %u dwnld: %u #ephids: %.0f "
+      "#scan results: %.0f all bytes: %.0f errs: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
+      statp->stat_ints.last_report_time, statp->stat_ints.last_download_time,
+      statp->stat_grp.enctr_rssi.n, statp->stat_grp.scan_rssi.n,
+      statp->all_download_stats.n_bytes.n,
+      err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
+      err[NVM3_STAT_COMPLETED_DWNLD]);
+
+#if 0
+#define nvm3_get(cntr_id) \
+  err[cntr_id] = nvm3_getObjectInfo(NVM3_DEFAULT_HANDLE, cntr_id, \
+                    &objtype[cntr_id], &objlen[cntr_id])
+
+  uint32_t objtype[NVM3_MAX_COUNTERS];
+  size_t objlen[NVM3_MAX_COUNTERS];
+  char statbuf[sizeof(dongle_stats_t)];
+  memset(statbuf, 0, sizeof(dongle_stats_t));
+  statp2 = (dongle_stats_t *) statbuf;
+
+  nvm3_get(NVM3_STAT_INTS);
+  nvm3_get(NVM3_STAT_GROUP);
+  nvm3_get(NVM3_STAT_ALL_DWNLD);
+  nvm3_get(NVM3_STAT_COMPLETED_DWNLD);
+  log_expf("[NVM3] get types: %d %d %d %d len: %d %d %d %d "
+      "ret: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
+      objtype[NVM3_STAT_INTS], objtype[NVM3_STAT_GROUP],
+      objtype[NVM3_STAT_ALL_DWNLD], objtype[NVM3_STAT_COMPLETED_DWNLD],
+      objlen[NVM3_STAT_INTS], objlen[NVM3_STAT_GROUP],
+      objlen[NVM3_STAT_ALL_DWNLD], objlen[NVM3_STAT_COMPLETED_DWNLD],
+      err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
+      err[NVM3_STAT_COMPLETED_DWNLD]);
+#undef nvm3_get
+#endif
+
+#undef nvm3_write
+}
+
+void nvm3_load_stat(void *stat)
+{
+  Ecode_t err[NVM3_MAX_COUNTERS];
+  dongle_stats_t *statp = NULL;
+
+  statp = (dongle_stats_t *) stat;
+
+#define nvm3_read(cntr_id, valp)  \
+  err[cntr_id] = nvm3_readData(NVM3_DEFAULT_HANDLE, cntr_id,  \
+                    (valp), sizeof(*(valp)))
+
+  nvm3_read(NVM3_STAT_INTS, &(statp->stat_ints));
+  nvm3_read(NVM3_STAT_GROUP, &(statp->stat_grp));
+  nvm3_read(NVM3_STAT_ALL_DWNLD, &(statp->all_download_stats));
+  nvm3_read(NVM3_STAT_COMPLETED_DWNLD, &(statp->completed_download_stats));
+  log_expf("[NVM3] read last report: %lu dwnld: %lu #ephids: %.0f "
+      "#scan results: %.0f all bytes: %.0f ret: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
+      statp->stat_ints.last_report_time, statp->stat_ints.last_download_time,
+      statp->stat_grp.enctr_rssi.n, statp->stat_grp.scan_rssi.n,
+      statp->all_download_stats.n_bytes.n,
+      err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
+      err[NVM3_STAT_COMPLETED_DWNLD]);
+
+#undef nvm3_read
+}
+
 void nvm3_load_config(dongle_config_t *cfg)
 {
   Ecode_t err[NVM3_MAX_COUNTERS];
-  int i = 0;
 
 #define nvm3_read(cntr_id, valp)  \
-  err[i++] = nvm3_readCounter(NVM3_DEFAULT_HANDLE, cntr_id, valp)
+  err[cntr_id] = nvm3_readData(NVM3_DEFAULT_HANDLE, cntr_id,  \
+                    (valp), sizeof(*(valp)))
 
   nvm3_read(NVM3_CNT_T_CUR, &cfg->t_cur);
   nvm3_read(NVM3_CNT_LOG_HEAD, &cfg->en_head);
   nvm3_read(NVM3_CNT_LOG_TAIL, &cfg->en_tail);
 
   log_expf("[NVM3] Tc: %u H: %u T: %u, errs: 0x%0x 0x%0x 0x%0x\r\n",
-      cfg->t_cur, cfg->en_head, cfg->en_tail, err[0], err[1], err[2]);
+      cfg->t_cur, cfg->en_head, cfg->en_tail,
+      err[NVM3_CNT_T_CUR], err[NVM3_CNT_LOG_HEAD], err[NVM3_CNT_LOG_TAIL]);
 
 #undef nvm3_read
 }

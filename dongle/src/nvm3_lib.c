@@ -165,32 +165,6 @@ void nvm3_save_stat(void *stat)
       err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
       err[NVM3_STAT_COMPLETED_DWNLD]);
 
-#if 0
-#define nvm3_get(cntr_id) \
-  err[cntr_id] = nvm3_getObjectInfo(NVM3_DEFAULT_HANDLE, cntr_id, \
-                    &objtype[cntr_id], &objlen[cntr_id])
-
-  uint32_t objtype[NVM3_MAX_COUNTERS];
-  size_t objlen[NVM3_MAX_COUNTERS];
-  char statbuf[sizeof(dongle_stats_t)];
-  memset(statbuf, 0, sizeof(dongle_stats_t));
-  statp2 = (dongle_stats_t *) statbuf;
-
-  nvm3_get(NVM3_STAT_INTS);
-  nvm3_get(NVM3_STAT_GROUP);
-  nvm3_get(NVM3_STAT_ALL_DWNLD);
-  nvm3_get(NVM3_STAT_COMPLETED_DWNLD);
-  log_expf("[NVM3] get types: %d %d %d %d len: %d %d %d %d "
-      "ret: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      objtype[NVM3_STAT_INTS], objtype[NVM3_STAT_GROUP],
-      objtype[NVM3_STAT_ALL_DWNLD], objtype[NVM3_STAT_COMPLETED_DWNLD],
-      objlen[NVM3_STAT_INTS], objlen[NVM3_STAT_GROUP],
-      objlen[NVM3_STAT_ALL_DWNLD], objlen[NVM3_STAT_COMPLETED_DWNLD],
-      err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
-      err[NVM3_STAT_COMPLETED_DWNLD]);
-#undef nvm3_get
-#endif
-
 #undef nvm3_write
 }
 

@@ -58,10 +58,6 @@ void dongle_storage_init(void)
   dongle_storage_init_device();
   stats.stat_ints.total_encounters = 0;
   stats.stat_ints.numErasures = 0;
-  if (FLASH_OFFSET % FLASH_DEVICE_PAGE_SIZE != 0) {
-    log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
-        FLASH_OFFSET, FLASH_DEVICE_PAGE_SIZE);
-  }
 }
 
 void dongle_storage_load_config(dongle_config_t *cfg)

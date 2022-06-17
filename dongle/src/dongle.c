@@ -180,7 +180,7 @@ void dongle_load()
   dongle_storage_load_config(&config);
   enctr_entry_counter_t sto_en_head = config.en_head;
   enctr_entry_counter_t sto_en_tail = config.en_tail;
-  beacon_timer_t sto_t_cur = config.t_cur;
+  dongle_timer_t sto_t_cur = config.t_cur;
 
   nvm3_load_config(&config);
 

@@ -155,13 +155,6 @@ typedef struct {
 
 #define TEST_DURATION 1800000
 
-typedef struct {
-  uint64_t start_ticks;
-  uint64_t end_ticks;
-  uint64_t diff;
-  uint64_t diff_ms;
-} timertest_t;
-
 extern int download_complete;
 
 // High-level routine structure

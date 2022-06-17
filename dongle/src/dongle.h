@@ -179,7 +179,6 @@ void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t da
 void dongle_lock();
 void dongle_unlock();
 void dongle_info();
-void dongle_encounter_report();
 void dongle_stats();
 void dongle_test();
 void dongle_download_info();

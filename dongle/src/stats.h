@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
+#include "dongle.h"
 #include "storage.h"
+
 #include "common/src/util/stats.h"
 
 typedef int download_fail_reason;
@@ -105,6 +107,7 @@ typedef struct {
 
 void dongle_stats_reset();
 void dongle_stats_init();
+void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats);
 void dongle_stats();
 void dongle_download_stats();
 void dongle_download_stats_init();

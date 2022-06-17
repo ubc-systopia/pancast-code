@@ -195,6 +195,7 @@ void dongle_load()
   nvm3_save_config(&config);
 #endif
 
+#if 0
   if (sto_en_head == 0)
     config.en_head = 0;
 
@@ -203,6 +204,7 @@ void dongle_load()
 
   if (sto_t_cur == 0)
     config.t_cur = 0;
+#endif
 
   log_expf("=== INIT [C, H, T] sto: %u %u %u nvm: %u %u %u ===\r\n", sto_t_cur,
       sto_en_head, sto_en_tail, config.t_cur, config.en_head, config.en_tail);
@@ -489,18 +491,6 @@ void dongle_info()
   log_expf("   MODE__SL_DONGLE_TEST_CONFIG:      %d\r\n", MODE__SL_DONGLE_TEST_CONFIG);
 }
 
-void dongle_encounter_report()
-{
-#if MODE__STAT
-  log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
-    "#encounters [new, stored]: %lu, %lu\r\n",
-    dongle_time, stats.stat_ints.last_report_time,
-    stats.stat_ints.last_download_time, config.en_head, config.en_tail,
-    stats.stat_ints.total_encounters,
-    num_encounters_current(config.en_head, config.en_tail));
-#endif
-}
-
 void dongle_report()
 {
 #if MODE__STAT
@@ -509,7 +499,7 @@ void dongle_report()
       (int) DONGLE_REPORT_INTERVAL)
     return;
 
-  dongle_encounter_report();
+  dongle_encounter_report(&config, &stats);
   dongle_stats();
   dongle_download_stats();
 //  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));

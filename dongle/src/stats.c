@@ -7,13 +7,12 @@
 
 dongle_stats_t stats;
 extern dongle_config_t config;
+extern dongle_timer_t dongle_time; // main dongle timer
 
 void dongle_stats_reset()
 {
   memset(&stats, 0, sizeof(dongle_stats_t));
 }
-
-extern void dongle_encounter_report();
 
 /*
  * Note: must call dongle_config_load before this
@@ -27,7 +26,7 @@ void dongle_stats_init(void)
 
   if (stats.storage_checksum == DONGLE_STORAGE_STAT_CHKSUM) {
     nvm3_load_stat(&stats);
-    dongle_encounter_report();
+    dongle_encounter_report(&config, &stats);
     dongle_stats();
     dongle_download_stats();
   } else {
@@ -41,6 +40,21 @@ void dongle_stats_init(void)
   dongle_stats_reset();
   stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
   dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
+#endif
+}
+
+void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats)
+{
+  if (!stats || !cfg)
+    return;
+
+#if MODE__STAT
+  log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
+    "#encounters [new, stored]: %lu, %lu\r\n",
+    dongle_time, stats->stat_ints.last_report_time,
+    stats->stat_ints.last_download_time, cfg->en_head, cfg->en_tail,
+    stats->stat_ints.total_encounters,
+    num_encounters_current(cfg->en_head, cfg->en_tail));
 #endif
 }
 

@@ -512,10 +512,11 @@ void dongle_report()
       (int) DONGLE_REPORT_INTERVAL)
     return;
 
+  dongle_encounter_report();
   dongle_stats();
   dongle_download_stats();
-  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
-  dongle_encounter_report();
+//  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
+  nvm3_save_stat(&stats);
 
   stats.stat_ints.last_report_time = dongle_time;
 #endif

@@ -12,6 +12,8 @@
 
 #include <stddef.h>
 
+#define DONGLE_STORAGE_STAT_CHKSUM  (((uint8_t *) &config.id)[0])
+
 // Reflects the total size of the entry in storage while taking
 // minimum alignment into account.
 #define ENCOUNTER_ENTRY_SIZE sizeof(dongle_encounter_entry_t)

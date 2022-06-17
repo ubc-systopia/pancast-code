@@ -3,6 +3,8 @@
 #include "download.h"
 #include "common/src/util/log.h"
 
+#include "nvm3_lib.h"
+
 dongle_stats_t stats;
 extern dongle_config_t config;
 
@@ -13,25 +15,31 @@ void dongle_stats_reset()
 
 extern void dongle_encounter_report();
 
+/*
+ * Note: must call dongle_config_load before this
+ */
 void dongle_stats_init(void)
 {
-  // must call dongle_config_load before this
-  char statbuf[1024];
-  memset(statbuf, 0, 1024);
+  dongle_storage_read_stat(&stats, sizeof(dongle_stats_t));
+  log_expf("flash stat checksum: 0x%0x id 0x%0x id[0]: 0x%0x id[3]: 0x%0x\r\n",
+      stats.storage_checksum, DONGLE_STORAGE_STAT_CHKSUM,
+      ((uint8_t *) &config.id)[0], ((uint8_t *) &config.id)[3]);
 
-  dongle_storage_read_stat(statbuf, sizeof(dongle_stats_t));
-  memcpy(&stats, statbuf, sizeof(dongle_stats_t));
-
-  if (!stats.storage_checksum) {
-    log_infof("%s", "Existing Statistics Found\r\n");
+  if (stats.storage_checksum == DONGLE_STORAGE_STAT_CHKSUM) {
+    nvm3_load_stat(&stats);
     dongle_encounter_report();
     dongle_stats();
     dongle_download_stats();
   } else {
     dongle_stats_reset();
+    stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
+    dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
+    nvm3_save_stat(&stats);
   }
+
 #if MODE__SL_DONGLE_TEST_CONFIG
   dongle_stats_reset();
+  stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
   dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
 #endif
 }

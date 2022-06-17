@@ -106,7 +106,7 @@ typedef struct {
 } dongle_stats_t;
 
 void dongle_stats_reset();
-void dongle_stats_init();
+//void dongle_stats_init();
 void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats);
 void dongle_stats(dongle_stats_t *stats);
 

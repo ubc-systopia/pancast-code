@@ -7,11 +7,12 @@
 
 extern dongle_timer_t dongle_time; // main dongle timer
 
-void dongle_stats_reset()
+void dongle_stats_reset(dongle_stats_t *stats)
 {
-  memset(&stats, 0, sizeof(dongle_stats_t));
+  memset(stats, 0, sizeof(dongle_stats_t));
 }
 
+#if 0
 /*
  * Note: must call dongle_config_load before this
  */
@@ -27,18 +28,19 @@ void dongle_stats_init(void)
     dongle_encounter_report(&config, &stats);
     dongle_stats(&stats);
   } else {
-    dongle_stats_reset();
+    dongle_stats_reset(&stats);
     stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
     dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
     nvm3_save_stat(&stats);
   }
 
 #if MODE__SL_DONGLE_TEST_CONFIG
-  dongle_stats_reset();
+  dongle_stats_reset(&stats);
   stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
   dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
 #endif
 }
+#endif
 
 void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats)
 {

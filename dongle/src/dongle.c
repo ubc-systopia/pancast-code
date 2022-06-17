@@ -57,38 +57,102 @@ static beacon_sk_t TEST_DONGLE_SK = {
 };
 #endif
 
+static void dongle_config_init(dongle_config_t *cfg)
+{
+  if (!cfg)
+    return;
+
+  cfg->backend_pk = malloc(PK_MAX_SIZE);
+  memset(cfg->backend_pk, 0, PK_MAX_SIZE);
+
+  cfg->dongle_sk = malloc(SK_MAX_SIZE);
+  memset(cfg->dongle_sk, 0, SK_MAX_SIZE);
+}
+
+void dongle_cleanup_config(dongle_config_t *cfg)
+{
+  if (!cfg)
+    return;
+
+  if (cfg->backend_pk)
+    free(cfg->backend_pk);
+
+  if (cfg->dongle_sk)
+    free(cfg->dongle_sk);
+}
+
 /*
  * invoke after kernel has initialized and bluetooth device is booted.
  * load config from flash and nvm3, init or reset variables and init scan
  */
 void dongle_init()
 {
-  dongle_load();
+  dongle_config_t sto_cfg;
+  dongle_stats_t sto_stats;
 
-  // print basic device info and state
-  dongle_info();
+  // init flash storage
+  dongle_storage_init();
 
-  // Set encounters cursor to loaded config values,
-  // then load all stored encounters
-  if (config.en_head > MAX_LOG_COUNT || config.en_tail > MAX_LOG_COUNT) {
-    log_errorf("head: %u or tail: %u larger than max encounters\r\n",
-        config.en_head, config.en_tail);
+  // reset downloaded space
+  dongle_download_init();
+
+  // init configs
+  dongle_config_init(&sto_cfg);
+  dongle_config_init(&config);
+
+  // load config
+  dongle_storage_load_config(&sto_cfg);
+  nvm3_load_config(&config);
+
+  config.id = sto_cfg.id;
+  config.t_init = sto_cfg.t_init;
+  config.backend_pk_size = sto_cfg.backend_pk_size;
+  config.dongle_sk_size = sto_cfg.dongle_sk_size;
+  memcpy(config.backend_pk, sto_cfg.backend_pk, sto_cfg.backend_pk_size);
+  memcpy(config.dongle_sk, sto_cfg.dongle_sk, sto_cfg.dongle_sk_size);
+
+  // load stats
+  dongle_storage_read_stat(&sto_stats, sizeof(dongle_stats_t));
+  nvm3_load_stat(&stats);
+
+  log_expf("=== [C, H, T] nvm: %u %u %u sto: %u %u %u csum: 0x%0x ===\r\n",
+      config.t_cur, config.en_head, config.en_tail, sto_cfg.t_cur,
+      sto_cfg.en_head, sto_cfg.en_tail, sto_stats.storage_checksum);
+
+  // reset nvm3 state and stats if checksum on dongle flash does not match
+  // we reset checksum when flashing image through config scripts
+  if (sto_stats.storage_checksum != DONGLE_STORAGE_STAT_CHKSUM) {
+    sto_stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
+    dongle_storage_save_stat(&sto_cfg, &sto_stats, sizeof(dongle_stats_t));
+
+    config.t_cur = config.en_head = config.en_tail = 0;
+    nvm3_save_config(&config);
+
+    dongle_stats_reset(&stats);
+    nvm3_save_stat(&stats);
   }
 
+//  dongle_load();
+
   // set dongle time to current saved time
-  // TODO: determine when this needs to be reset to the init time
   dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
-  stats.stat_ints.last_report_time = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
   download_complete = 0;
 
+  // print basic device info and state
+  dongle_info();
+  dongle_encounter_report(&config, &stats);
+  dongle_stats(&stats);
+
+  // update last report time and save to nvm3
+  stats.stat_ints.last_report_time = dongle_time;
+  nvm3_save_stat(&stats);
+
 #if TEST_DONGLE
   // test
   dongle_test_enctr_storage();
-#endif
 
-#if TEST_DONGLE
   config.en_tail = 0;
   config.en_head = MAX_LOG_COUNT-1;
 #endif
@@ -102,11 +166,8 @@ void dongle_init()
 
   //===========
 
-  // reset stats
-  dongle_stats_init();
-
-  // reset downloaded space
-  dongle_download_init();
+//  // reset stats
+//  dongle_stats_init();
 
   // set up LED
   configure_blinky();
@@ -118,10 +179,10 @@ void dongle_init()
   run_psa_benchmark();
 #endif
 
+  dongle_cleanup_config(&sto_cfg);
+
   // initialize periodic advertisement scanning
   dongle_init_scan();
-
-  log_infof("%s", "Dongle initialized\r\n");
 }
 
 /* START
@@ -157,18 +218,7 @@ void dongle_init_scan()
   }
 }
 
-static void dongle_config_init(dongle_config_t *cfg)
-{
-  if (!cfg)
-    return;
-
-  cfg->backend_pk = malloc(PK_MAX_SIZE);
-  memset(cfg->backend_pk, 0, PK_MAX_SIZE);
-
-  cfg->dongle_sk = malloc(SK_MAX_SIZE);
-  memset(cfg->dongle_sk, 0, SK_MAX_SIZE);
-}
-
+#if 0
 /*
  * Load state and configuration from flash
  */
@@ -207,12 +257,11 @@ void dongle_load()
     config.t_cur = 0;
 #endif
 
-  log_expf("=== INIT [C, H, T] sto: %u %u %u nvm: %u %u %u ===\r\n", sto_t_cur,
-      sto_en_head, sto_en_tail, config.t_cur, config.en_head, config.en_tail);
   // if device re-flashed, all these fields would be zero, reset in the NVM too
   if (sto_en_head == 0 || sto_en_tail == 0 || sto_t_cur == 0)
     nvm3_save_clock_cursor(&config);
 }
+#endif
 
 void dongle_clock_increment()
 {
@@ -439,20 +488,6 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
   return 1;
 }
 
-void dongle_update_download_time(void)
-{
-  stats.stat_ints.last_download_time = dongle_time;
-}
-
-int dongle_download_complete_status()
-{
-  if (dongle_time - stats.stat_ints.last_download_time >= MIN_DOWNLOAD_WAIT ||
-		  stats.stat_ints.last_download_time == 0) {
-    return 0;
-  }
-  return 1;
-}
-
 void dongle_info()
 {
   log_expf("%s", "=== Dongle Info: ===\r\n");
@@ -502,9 +537,9 @@ void dongle_report()
 
   dongle_encounter_report(&config, &stats);
   dongle_stats(&stats);
+  stats.stat_ints.last_report_time = dongle_time;
 //  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
   nvm3_save_stat(&stats);
 
-  stats.stat_ints.last_report_time = dongle_time;
 #endif
 }

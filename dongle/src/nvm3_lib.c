@@ -115,19 +115,7 @@ size_t nvm3_get_erase_count(void)
 
 void nvm3_save_config(dongle_config_t *cfg)
 {
-  Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
-  int i = 0;
-#define nvm3_write(cntr_id, val)  \
-  err[i++] = nvm3_writeData(NVM3_DEFAULT_HANDLE, cntr_id, &(val), sizeof((val)))
-
-  nvm3_write(NVM3_CNT_T_CUR, cfg->t_cur);
-  nvm3_write(NVM3_CNT_LOG_HEAD, cfg->en_head);
-  nvm3_write(NVM3_CNT_LOG_TAIL, cfg->en_tail);
-
-  log_infof("[NVM3] Tc: %u H: %u T: %u, errs: 0x%0x 0x%0x 0x%0x\r\n",
-      cfg->t_cur, cfg->en_head, cfg->en_tail, err[0], err[1], err[2]);
-
-#undef nvm3_write
+  nvm3_save_clock_cursor(cfg);
 }
 
 void nvm3_save_clock_cursor(dongle_config_t *cfg)

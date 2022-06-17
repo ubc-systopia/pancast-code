@@ -38,19 +38,20 @@ void dongle_stats_init(void)
 
 void dongle_stats()
 {
-  double xput = ((double) stats.periodic_data_size.mu * stats.periodic_data_size.n
-      * BITS_PER_BYTE) / stats.total_periodic_data_time / Kbps;
+  double xput = ((double) stats.stat_grp.periodic_data_size.mu *
+      stats.stat_grp.periodic_data_size.n * BITS_PER_BYTE) /
+    stats.stat_ints.total_periodic_data_time / Kbps;
   log_expf("[Legacy adv] #ephids: %d, #scan results: %lu\r\n",
-      stats.enctr_rssi.n, stats.scan_rssi.n);
-  stat_show(stats.scan_rssi, "[Legacy adv] Scan RSSI", "");
-  stat_show(stats.enctr_rssi, "[Legacy adv] Enctr RSSI", "");
-  stat_show(stats.periodic_data_rssi, "[Period adv] Data RSSI", "");
-  stat_show(stats.periodic_data_size, "[Period adv] Pkt size", "bytes");
+      stats.stat_grp.enctr_rssi.n, stats.stat_grp.scan_rssi.n);
+  stat_show(stats.stat_grp.scan_rssi, "[Legacy adv] Scan RSSI", "");
+  stat_show(stats.stat_grp.enctr_rssi, "[Legacy adv] Enctr RSSI", "");
+  stat_show(stats.stat_grp.periodic_data_rssi, "[Period adv] Data RSSI", "");
+  stat_show(stats.stat_grp.periodic_data_size, "[Period adv] Pkt size", "bytes");
   log_expf("[Period adv] #rcvd: %f, #error: %lu, #bytes: %f"
       ", time: %f s, xput: %f Kbps\r\n",
-      stats.periodic_data_size.n, stats.num_periodic_data_error,
-      (stats.periodic_data_size.mu * stats.periodic_data_size.n),
-      stats.total_periodic_data_time, xput);
+      stats.stat_grp.periodic_data_size.n, stats.stat_ints.num_periodic_data_error,
+      (stats.stat_grp.periodic_data_size.mu * stats.stat_grp.periodic_data_size.n),
+      stats.stat_ints.total_periodic_data_time, xput);
 }
 
 void dongle_download_show_stats(download_stats_t * stats, char *name)
@@ -66,16 +67,17 @@ void dongle_download_stats()
 {
   // ignore printing stats if no downloads even started
   // may be because beacon not configured to broadcast risk data yet
-  if (stats.payloads_started == 0)
+  if (stats.stat_ints.payloads_started == 0)
     return;
 
   log_expf("[Risk] started: %d completed: %d failed: %d "
       "decode fail: %d chunk switch: %d hwrx: %d crc fail: %d id matches: %d\r\n",
-      stats.payloads_started, stats.payloads_complete, stats.payloads_failed,
-      stats.cuckoo_fail, stats.switch_chunk, stats.total_hw_rx,
-      stats.total_hw_crc_fail, stats.total_matches);
+      stats.stat_ints.payloads_started, stats.stat_ints.payloads_complete,
+      stats.stat_ints.payloads_failed, stats.stat_ints.cuckoo_fail,
+      stats.stat_ints.switch_chunk, stats.stat_ints.total_hw_rx,
+      stats.stat_ints.total_hw_crc_fail, stats.stat_ints.total_matches);
 
-  stat_show(stats.completed_periodic_data_avg_payload_lat,
+  stat_show(stats.stat_grp.completed_periodic_data_avg_payload_lat,
               "[Risk] payload download time", "ms");
   dongle_download_show_stats(&stats.completed_download_stats,
                              "=== [Risk] completed ===");

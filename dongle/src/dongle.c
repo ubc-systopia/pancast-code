@@ -44,7 +44,6 @@ extern download_t download;
 // Global high-precision timer, in milliseconds
 float dongle_hp_timer = 0.0;
 extern dongle_stats_t stats;
-extern download_stats_t download_stats;
 
 #if MODE__SL_DONGLE_TEST_CONFIG
 static pubkey_t TEST_BACKEND_PK = {
@@ -79,7 +78,7 @@ void dongle_init()
   // set dongle time to current saved time
   // TODO: determine when this needs to be reset to the init time
   dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
-  stats.last_report_time = dongle_time;
+  stats.stat_ints.last_report_time = dongle_time;
   cur_id_idx = 0;
   epoch = 0;
   download_complete = 0;
@@ -225,7 +224,7 @@ void dongle_clock_increment()
 void dongle_hp_timer_add(uint32_t ticks)
 {
   double ms = ((double) ticks * PREC_TIMER_TICK_MS);
-  stats.total_periodic_data_time += (ms / 1000.0);
+  stats.stat_ints.total_periodic_data_time += (ms / 1000.0);
   if (download.is_active) {
     download.time += ms;
   }
@@ -260,8 +259,8 @@ void dongle_log_counters()
 
   sl_bt_system_get_counters(1, &tx_packets, &rx_packets, &crc_errors, &failures);
 
-  stats.total_hw_rx += (uint32_t) rx_packets;
-  stats.total_hw_crc_fail += (uint32_t)crc_errors;
+  stats.stat_ints.total_hw_rx += (uint32_t) rx_packets;
+  stats.stat_ints.total_hw_crc_fail += (uint32_t)crc_errors;
 
 //  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n",
 //      tx_packets, rx_packets, crc_errors, failures);
@@ -323,7 +322,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   }
 
 #if MODE__STAT
-  stat_add(rssi, stats.scan_rssi);
+  stat_add(rssi, stats.stat_grp.scan_rssi);
 #endif
 
   // determine which tracked id, if any, is a match
@@ -370,7 +369,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 #endif
 
 #if MODE__STAT
-    stat_add(rssi, stats.enctr_rssi);
+    stat_add(rssi, stats.stat_grp.enctr_rssi);
 #endif
 
     return;
@@ -443,13 +442,13 @@ int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *en
 
 void dongle_update_download_time(void)
 {
-  stats.last_download_time = dongle_time;
+  stats.stat_ints.last_download_time = dongle_time;
 }
 
 int dongle_download_complete_status()
 {
-  if (dongle_time - stats.last_download_time >= MIN_DOWNLOAD_WAIT ||
-		  stats.last_download_time == 0) {
+  if (dongle_time - stats.stat_ints.last_download_time >= MIN_DOWNLOAD_WAIT ||
+		  stats.stat_ints.last_download_time == 0) {
     return 0;
   }
   return 1;
@@ -499,8 +498,9 @@ void dongle_encounter_report()
 #if MODE__STAT
   log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
     "#encounters [new, stored]: %lu, %lu\r\n",
-    dongle_time, stats.last_report_time, stats.last_download_time,
-    config.en_head, config.en_tail, stats.total_encounters,
+    dongle_time, stats.stat_ints.last_report_time,
+    stats.stat_ints.last_download_time, config.en_head, config.en_tail,
+    stats.stat_ints.total_encounters,
     num_encounters_current(config.en_head, config.en_tail));
 #endif
 }
@@ -509,7 +509,8 @@ void dongle_report()
 {
 #if MODE__STAT
   // do report
-  if ((int) (dongle_time - stats.last_report_time) < (int) DONGLE_REPORT_INTERVAL)
+  if (((int) (dongle_time - stats.stat_ints.last_report_time)) <
+      (int) DONGLE_REPORT_INTERVAL)
     return;
 
   dongle_stats();
@@ -517,6 +518,6 @@ void dongle_report()
   dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
   dongle_encounter_report();
 
-  stats.last_report_time = dongle_time;
+  stats.stat_ints.last_report_time = dongle_time;
 #endif
 }

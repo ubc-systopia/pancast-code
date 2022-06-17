@@ -20,7 +20,7 @@ static inline void dongle_storage_erase(storage_addr_t offset)
   if (status != 0) {
     log_errorf("error erasing page: 0x%x", status);
   }
-  stats.numErasures++;
+  stats.stat_ints.numErasures++;
 }
 
 // Erase before write
@@ -56,8 +56,8 @@ static inline void dongle_storage_init_device(void)
 void dongle_storage_init(void)
 {
   dongle_storage_init_device();
-  stats.total_encounters = 0;
-  stats.numErasures = 0;
+  stats.stat_ints.total_encounters = 0;
+  stats.stat_ints.numErasures = 0;
   if (FLASH_OFFSET % FLASH_DEVICE_PAGE_SIZE != 0) {
     log_errorf("Storage area start addr %u is not page (%u) aligned!\r\n",
         FLASH_OFFSET, FLASH_DEVICE_PAGE_SIZE);
@@ -295,10 +295,10 @@ void dongle_storage_log_encounter(dongle_config_t *cfg,
   log_debugf("curr time: %u, en end time: %u, %u #entries: %lu, "
       "H: %lu, T: %lu, off: %u, size: %u %u\r\n",
       *dongle_time, en->dongle_time_start+en->dongle_time_int,
-      stats.last_report_time, num, cfg->en_head, cfg->en_tail,
+      stats.stat_ints.last_report_time, num, cfg->en_head, cfg->en_tail,
       start, off - start, ENCOUNTER_ENTRY_SIZE);
 #endif
-  stats.total_encounters++;
+  stats.stat_ints.total_encounters++;
 
   dongle_storage_save_cursor_clock(cfg);
 }

@@ -57,7 +57,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     download_complete = dongle_download_complete_status();
     log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d\r\n",
-        dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
+        dongle_time, stats.stat_ints.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle);
 
     if (download_complete == 0 && synced == 1) {
@@ -66,7 +66,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
       synced = 0;
       log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
-        dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
+        dongle_time, stats.stat_ints.last_download_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle, sc);
     }
   }
@@ -224,12 +224,13 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
        * download periodic data (e.g., len of download is 0). may happen because
        * the periodic intervals were not properly aligned?
        */
-      if (download_complete == 1 || (dongle_time - stats.last_download_time > 10)) {
+      if (download_complete == 1 ||
+          (dongle_time - stats.stat_ints.last_download_time > 10)) {
         sc = sl_bt_sync_close(sync_handle);
         last_sync_close_time = dongle_time;
         log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
           "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
-          dongle_time, stats.last_download_time, MIN_DOWNLOAD_WAIT,
+          dongle_time, stats.stat_ints.last_download_time, MIN_DOWNLOAD_WAIT,
           download_complete, download.is_active, synced, sync_handle, sc);
       }
 

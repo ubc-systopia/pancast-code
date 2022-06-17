@@ -16,8 +16,6 @@ typedef struct {
 } download_stats_t;
 
 typedef struct {
-  uint8_t storage_checksum; // zero for valid stat data
-
   /*
    * last report time
    */
@@ -65,29 +63,38 @@ typedef struct {
    */
   download_fail_reason switch_chunk;
   double total_periodic_data_time;   // seconds
+} stat_ints_t;
 
+typedef struct {
+  uint8_t storage_checksum; // zero for valid stat data
   /*
-   * rssi stats for all legacy adv. scans invoked by dongle for pancast
-   * (regardless of whether the ephemeral id is unique or not)
+   * integer fields of the statistics
    */
-  stat_t scan_rssi;
-  /*
-   * rssi stats for unique encounters on legacy adv. scans
-   * invoked by dongle for pancast
-   */
-  stat_t enctr_rssi;
-  /*
-   * periodic data payload size stats
-   */
-  stat_t periodic_data_size;
-  /*
-   * periodic data rssi stats
-   */
-  stat_t periodic_data_rssi;
-  /*
-   * stats for download latency for periodic data (completed downloads only)
-   */
-  stat_t completed_periodic_data_avg_payload_lat;
+  stat_ints_t stat_ints;
+  struct {
+    /*
+     * rssi stats for all legacy adv. scans invoked by dongle for pancast
+     * (regardless of whether the ephemeral id is unique or not)
+     */
+    stat_t scan_rssi;
+    /*
+     * rssi stats for unique encounters on legacy adv. scans
+     * invoked by dongle for pancast
+     */
+    stat_t enctr_rssi;
+    /*
+     * periodic data payload size stats
+     */
+    stat_t periodic_data_size;
+    /*
+     * periodic data rssi stats
+     */
+    stat_t periodic_data_rssi;
+    /*
+     * stats for download latency for periodic data (completed downloads only)
+     */
+    stat_t completed_periodic_data_avg_payload_lat;
+  } stat_grp;
   /*
    * detailed stats for periodic data downloads
    */

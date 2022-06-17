@@ -61,7 +61,7 @@ float dongle_download_esimtate_loss(download_t *d)
 #endif
 }
 
-void dongle_download_reset()
+static inline void dongle_download_reset()
 {
   memset(&download, 0, sizeof(download_t));
 }

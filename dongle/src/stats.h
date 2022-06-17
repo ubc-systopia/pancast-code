@@ -103,6 +103,7 @@ typedef struct {
   download_stats_t completed_download_stats;
 } dongle_stats_t;
 
+void dongle_stats_reset();
 void dongle_stats_init();
 void dongle_stats();
 void dongle_download_stats();

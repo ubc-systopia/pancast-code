@@ -140,6 +140,7 @@ void beacon_storage_save_config(beacon_storage *sto, beacon_config_t *cfg)
 {
   storage_addr_t off = sto->map.config;
   int total_size = sizeof(beacon_config_t) +
+    sizeof(pubkey_t) + sizeof(beacon_sk_t) +
     sizeof(test_filter_size_t);
 
   // erase from the beginning of config page

@@ -10,18 +10,23 @@
 # Unplug the dongle to kill the screen session.
 # Logs will be saved at the path specified in screen_log()
 
-rootdir=/Users/nboufford/workspace/pancast
-workdir=/dongle-logs
+rootdir=$(pwd)
+workdir="dongle-logs"
 
-log_path=$rootdir/$workdir
-today=`date +%y%m%dT-%H%M`
+log_path="$rootdir/$workdir"
+today=`date +%y%m%d-%H%M`
 outdir="$log_path/$today"
 
 mkdir -p $outdir
 
 screen_log() {
-#  screen -d -m  -L -Logfile $log_path/$1/$today.log $2 &
-  screen -d -m  -L -Logfile $outdir/$1.log $2 &
+  devstr=$( echo "$2" | cut -d'.' -f2 )
+  devstr=${devstr:11:9}
+
+  cmd="screen -d -m -L -Logfile $outdir/$1-$devstr.log $2"
+  echo "$cmd"
+  eval "$cmd"
+  sleep 2
 }
 
 declare -a dongles
@@ -40,12 +45,36 @@ dongles=(
 
 for i in "${!dongles[@]}"
 do
-  ls ${dongles[$i]} 2> /dev/null
+  ls ${dongles[$i]} 2> /dev/null 1>&2
   if [[ $? -eq 1 ]]; then
-    echo "[d$i] ${dongles[$i]} not found"
+#    echo "[d$i] ${dongles[$i]} not found"
     continue
   fi
 
   screen_log "d$i" ${dongles[$i]}
 done
 
+screen -ls
+
+echo "Press reset button on all dongles and enter y when done..."
+confirm="n"
+
+while [[ "$confirm" != "y" ]]; do
+  ls -l "$outdir/"
+  read -p "Pressed all buttons? Enter y or n: " confirm
+done
+
+sleep 1
+confirm="n"
+
+while [[ "$confirm" != "y" ]]; do
+  read -p "Ready to kill screens? Enter y or n: " confirm
+done
+
+echo "Killing all screens ..."
+killall screen
+sleep 1
+screen -ls
+sleep 1
+echo "Final logs: $outdir/"
+ls -l "$outdir/"

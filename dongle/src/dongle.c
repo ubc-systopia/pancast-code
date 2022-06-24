@@ -114,7 +114,10 @@ void dongle_init()
     sto_stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
     dongle_storage_save_stat(&sto_cfg, &sto_stats, sizeof(dongle_stats_t));
 
-    config.t_cur = config.en_head = config.en_tail = 0;
+//    config.t_cur = config.en_head = config.en_tail = 0;
+    config.t_cur = sto_cfg.t_cur;
+    config.en_head = sto_cfg.en_head;
+    config.en_tail = sto_cfg.en_tail;
     nvm3_save_config(&config);
 
     dongle_stats_reset(&stats);

@@ -431,7 +431,7 @@ void dongle_save_encounters()
      * then count this as the end of the duration and log the encounter
      */
     if (cur_encounters[i].dongle_time_start != 0 &&
-    		dongle_time - end_time > LOG_MIN_WAIT) {
+        dongle_time - cur_encounters[i].dongle_time_start > LOG_MIN_WAIT) {
       dongle_save_encounter(&cur_encounters[i], i);
     }
   }

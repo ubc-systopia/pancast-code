@@ -137,9 +137,9 @@ typedef struct {
 #define SCAN_PHY 1 // 1M PHY
 #define SCAN_DISCOVER_MODE sl_bt_scanner_discover_observation
 #define SCAN_WINDOW 320
-#define SCAN_INTERVAL 320
+#define SCAN_INTERVAL 320*5
 #define SCAN_MODE 0 // passive scan
-
+#define SCAN_CYCLE_TIME 1 /* In minutes. The dongle waits SCAN_CYCLE_TIME minutes and then
 /*
  * evt_scanner_scan_report.packet_type: bit 7
  * 0 - legacy PDU

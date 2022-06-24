@@ -52,6 +52,21 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
   sl_status_t sc __attribute__ ((unused));
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
+    if (scan_counter == 0){
+        scan_flag = true;
+        scan_counter = SCAN_CYCLE_TIME;
+        dongle_start();
+    }
+    else{
+        if (scan_counter == SCAN_CYCLE_TIME){
+            dongle_stop_scan();
+            scan_counter --;
+            scan_flag = false;
+        }
+        else{
+            scan_counter --;
+        }
+    }
     dongle_clock_increment();
     dongle_log_counters();
     download_complete = dongle_download_complete_status();

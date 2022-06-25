@@ -190,6 +190,14 @@ void dongle_start()
   }
 }
 
+void dongle_stop_scan()
+{
+  sl_status_t sc = sl_bt_scanner_stop();
+  if (sc != SL_STATUS_OK) {
+    log_errorf("error stopping scan, sc: 0x%x\r\n", sc);
+  }
+}
+
 void dongle_init_scan()
 {
   sl_status_t sc = 0;

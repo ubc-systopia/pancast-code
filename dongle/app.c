@@ -33,10 +33,12 @@
 extern download_t download;
 extern dongle_timer_t dongle_time;
 extern dongle_stats_t stats;
-extern void dongle_start();
 int download_complete = 0;
 extern float payload_start_ticks, payload_end_ticks;
 extern float dongle_hp_timer;
+
+// legacy advertising related parameters
+static uint16_t scan_counter = SCAN_CYCLE_TIME;
 
 // Sync handle
 static uint16_t sync_handle = 0;
@@ -52,20 +54,14 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
   sl_status_t sc __attribute__ ((unused));
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
-    if (scan_counter == 0){
-        scan_flag = true;
-        scan_counter = SCAN_CYCLE_TIME;
-        dongle_start();
-    }
-    else{
-        if (scan_counter == SCAN_CYCLE_TIME){
-            dongle_stop_scan();
-            scan_counter --;
-            scan_flag = false;
-        }
-        else{
-            scan_counter --;
-        }
+    if (scan_counter == 0) {
+      scan_counter = SCAN_CYCLE_TIME;
+      dongle_start();
+    } else if (scan_counter == SCAN_CYCLE_TIME) {
+      dongle_stop_scan();
+      scan_counter--;
+    } else {
+      scan_counter--;
     }
     dongle_clock_increment();
     dongle_log_counters();

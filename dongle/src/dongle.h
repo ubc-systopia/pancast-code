@@ -68,11 +68,6 @@
  */
 #define NUM_SYNC_ATTEMPTS  5
 
-// Bluetooth Scanning Parameters
-// These are hard-coded, in ms
-#define DONGLE_SCAN_INTERVAL 0x30
-#define DONGLE_SCAN_WINDOW 0x60
-
 // Data Structures
 
 // Count for number of encounters
@@ -137,9 +132,14 @@ typedef struct {
 #define SCAN_PHY 1 // 1M PHY
 #define SCAN_DISCOVER_MODE sl_bt_scanner_discover_observation
 #define SCAN_WINDOW 320
-#define SCAN_INTERVAL 320*5
+#define SCAN_INTERVAL (320*5)
 #define SCAN_MODE 0 // passive scan
-#define SCAN_CYCLE_TIME 1 /* In minutes. The dongle waits SCAN_CYCLE_TIME minutes and then
+/*
+ * dongle waits SCAN_CYCLE_TIME minutes and then
+ * scans for 1 minute
+ */
+#define SCAN_CYCLE_TIME 1 // in minutes
+
 /*
  * evt_scanner_scan_report.packet_type: bit 7
  * 0 - legacy PDU
@@ -160,6 +160,8 @@ extern int download_complete;
 // High-level routine structure
 void dongle_init();
 void dongle_init_scan();
+void dongle_start();
+void dongle_stop_scan();
 //void dongle_load();
 void dongle_report();
 void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);

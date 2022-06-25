@@ -210,6 +210,14 @@ void dongle_init_scan()
   }
 }
 
+void dongle_stop_scan(){
+  sl_status_t sc = 0;
+  sc = sl_bt_scanner_stop();
+  if (sc != SL_STATUS_OK){
+      log_errorf("error stopping scanner mode, sc: 0x%x\r\n", sc);
+  }
+}
+
 #if 0
 /*
  * Load state and configuration from flash

@@ -431,8 +431,9 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 void dongle_save_encounters()
 {
   for (int i = 0; i < DONGLE_MAX_BC_TRACKED; i++) {
-    dongle_timer_t end_time = cur_encounters[i].dongle_time_start
-      + cur_encounters[i].dongle_time_int;
+//    dongle_timer_t end_time = cur_encounters[i].dongle_time_start
+//      + cur_encounters[i].dongle_time_int;
+
 #if 0
    beacon_eph_id_t *id = &cur_encounters[i].eph_id;
    hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "chk enc",

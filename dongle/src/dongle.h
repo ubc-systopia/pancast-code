@@ -126,7 +126,7 @@ typedef struct {
 #define MAIN_TIMER_HANDLE 0x00
 #define PREC_TIMER_HANDLE 0x01 // high-precision timer
 #define PREC_TIMER_TICK_MS 1   // essentially res. of timer
-#define LED_TIMER_MS 1000 // 1 s
+#define LED_TIMER_MS 2000 // 1 s
 
 // Periodic Scanning & Synchronization
 #define SCAN_PHY 1 // 1M PHY

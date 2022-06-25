@@ -41,7 +41,7 @@ static inline void dongle_led_notify(void) {
     log_errorf("failed period led timer stop, sc: %d\r\n", sc);
   }
 #endif
-  sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS/4,
+  sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS/8,
       dongle_led_timer_handler, (void *) NULL, 0, 0);
   if (sc != SL_STATUS_OK) {
     log_errorf("failed period led timer start, sc: %d\r\n", sc);

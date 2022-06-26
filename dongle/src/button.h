@@ -70,7 +70,6 @@ void sl_button_on_change(const sl_button_t *handle)
   // on a short button press, only reset log
   config.en_head = 0;
   config.en_tail = 0;
-  nvm3_save_config(&config);
 
   // on a long button press, additionally reset clock, stats, and ongoing scans
   if (button_delay > (float) BUTTON_DELAY_SHORT_MS) {
@@ -83,6 +82,7 @@ void sl_button_on_change(const sl_button_t *handle)
     dongle_download_init();
   }
 
+  nvm3_save_config(&config);
   dongle_info();
 
   log_expf("==== UPLOAD LOG START [%u:%u] ===\r\n",

@@ -107,7 +107,7 @@ int dongle_download_check_match(enctr_entry_counter_t i __attribute__((unused)),
   memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
 
   if (lookup(id, download.packet_buffer.buffer.data, num_buckets)) {
-#if 0
+#if 1
     hexdumpen(id, MAX_EPH_ID_SIZE, " hit", entry->beacon_id,
         (uint32_t) entry->location_id, (uint16_t) i,
         (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
@@ -116,7 +116,7 @@ int dongle_download_check_match(enctr_entry_counter_t i __attribute__((unused)),
 #endif
     download.n_matches++;
   } else {
-#if 0
+#if 1
     hexdumpen(id, MAX_EPH_ID_SIZE, "miss", entry->beacon_id,
         (uint32_t) entry->location_id, (uint16_t) i,
         (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
@@ -236,7 +236,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 
 void dongle_download_complete()
 {
-  log_debugf("[%u] Download complete! last dnwld time: %u "
+  log_expf("[%u] Download complete! last dnwld time: %u "
       "data len: %d curr dwnld lat: %f\r\n",
       dongle_time, stats.stat_ints.last_download_time,
       download.packet_buffer.buffer.data_len,

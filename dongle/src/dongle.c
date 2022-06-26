@@ -218,14 +218,6 @@ void dongle_init_scan()
   }
 }
 
-void dongle_stop_scan(){
-  sl_status_t sc = 0;
-  sc = sl_bt_scanner_stop();
-  if (sc != SL_STATUS_OK){
-      log_errorf("error stopping scanner mode, sc: 0x%x\r\n", sc);
-  }
-}
-
 #if 0
 /*
  * Load state and configuration from flash
@@ -489,7 +481,8 @@ void dongle_info()
 {
   log_expf("%s", "=== Dongle Info: ===\r\n");
   log_expf("   Dongle ID:                        0x%x\r\n", config.id);
-  log_expf("   Clock init, cur:                  %lu, %lu\r\n", config.t_init, config.t_cur);
+  log_expf("   Clock init, cur, dongle_time:     %lu, %lu, %lu\r\n", config.t_init,
+      config.t_cur, dongle_time);
   log_expf("   Timer frequency:                  %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
   log_expf("   Backend public key size:          %lu bytes\r\n",
       config.backend_pk_size);

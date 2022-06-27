@@ -182,9 +182,8 @@ void dongle_init()
  */
 void dongle_start()
 {
-  log_expf("%s", "=== Starting Dongle... ===\r\n");
-  sl_status_t sc = 0;
-  sc = sl_bt_scanner_start(SCAN_PHY, SCAN_DISCOVER_MODE);
+  sl_status_t sc = sl_bt_scanner_start(SCAN_PHY, SCAN_DISCOVER_MODE);
+  log_expf("=== Starting Dongle: 0x%0x... ===\r\n", sc);
   if (sc != SL_STATUS_OK) {
     log_errorf("error starting scan, sc: 0x%x\r\n", sc);
   }
@@ -193,6 +192,7 @@ void dongle_start()
 void dongle_stop_scan()
 {
   sl_status_t sc = sl_bt_scanner_stop();
+  log_expf("=== Stopping Dongle: 0x%0x... ===\r\n", sc);
   if (sc != SL_STATUS_OK) {
     log_errorf("error stopping scan, sc: 0x%x\r\n", sc);
   }

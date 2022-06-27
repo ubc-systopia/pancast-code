@@ -36,7 +36,7 @@ sl_sleeptimer_timer_handle_t led_timer;
 
 dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
-dongle_encounter_entry_t cur_encounters[DONGLE_MAX_BC_TRACKED];
+dongle_encounter_entry_t *cur_encounters;
 dongle_stats_t stats;
 size_t cur_id_idx;
 extern download_t download;
@@ -46,7 +46,8 @@ extern download_t download;
 float dongle_hp_timer = 0.0;
 extern dongle_stats_t stats;
 
-static void dongle_config_init(dongle_config_t *cfg)
+static void dongle_config_init(dongle_config_t *cfg,
+    dongle_encounter_entry_t **cur_encounters_p)
 {
   if (!cfg)
     return;
@@ -56,6 +57,14 @@ static void dongle_config_init(dongle_config_t *cfg)
 
   cfg->dongle_sk = malloc(SK_MAX_SIZE);
   memset(cfg->dongle_sk, 0, SK_MAX_SIZE);
+
+  if (!cur_encounters_p)
+    return;
+
+  dongle_encounter_entry_t *enctr_arr = malloc(DONGLE_MAX_BC_TRACKED *
+      sizeof(dongle_encounter_entry_t));
+  memset(enctr_arr, 0, DONGLE_MAX_BC_TRACKED * sizeof(dongle_encounter_entry_t));
+  *cur_encounters_p = enctr_arr;
 }
 
 void dongle_cleanup_config(dongle_config_t *cfg)
@@ -86,8 +95,8 @@ void dongle_init()
   dongle_download_init();
 
   // init configs
-  dongle_config_init(&sto_cfg);
-  dongle_config_init(&config);
+  dongle_config_init(&sto_cfg, NULL);
+  dongle_config_init(&config, &cur_encounters);
 
   // load config
   dongle_storage_load_config(&sto_cfg);

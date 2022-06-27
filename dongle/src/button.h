@@ -15,7 +15,7 @@ extern dongle_config_t config;
 extern dongle_stats_t stats;
 extern dongle_epoch_counter_t epoch; // current epoch
 extern dongle_timer_t dongle_time; // main dongle timer
-extern dongle_encounter_entry_t cur_encounters[DONGLE_MAX_BC_TRACKED];
+extern dongle_encounter_entry_t *cur_encounters;
 extern size_t cur_id_idx;
 extern download_t download;
 
@@ -95,7 +95,6 @@ void sl_button_on_change(const sl_button_t *handle)
   nvm3_load_stat(&stats);
   dongle_encounter_report(&config, &stats);
   dongle_stats(&stats);
-
 }
 
 static inline void configure_button(void)

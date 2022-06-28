@@ -18,20 +18,20 @@ void dongle_stats_reset(dongle_stats_t *stats)
  */
 void dongle_stats_init(void)
 {
-  dongle_storage_read_stat(&stats, sizeof(dongle_stats_t));
+  dongle_storage_read_stat(stats, sizeof(dongle_stats_t));
   log_expf("flash stat checksum: 0x%0x id 0x%0x id[0]: 0x%0x id[3]: 0x%0x\r\n",
-      stats.storage_checksum, DONGLE_STORAGE_STAT_CHKSUM,
+      stats->storage_checksum, DONGLE_STORAGE_STAT_CHKSUM,
       ((uint8_t *) &config.id)[0], ((uint8_t *) &config.id)[3]);
 
-  if (stats.storage_checksum == DONGLE_STORAGE_STAT_CHKSUM) {
-    nvm3_load_stat(&stats);
-    dongle_encounter_report(&config, &stats);
-    dongle_stats(&stats);
+  if (stats->storage_checksum == DONGLE_STORAGE_STAT_CHKSUM) {
+    nvm3_load_stat(stats);
+    dongle_encounter_report(&config, stats);
+    dongle_stats(stats);
   } else {
-    dongle_stats_reset(&stats);
-    stats.storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
-    dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
-    nvm3_save_stat(&stats);
+    dongle_stats_reset(stats);
+    stats->storage_checksum = DONGLE_STORAGE_STAT_CHKSUM;
+    dongle_storage_save_stat(&config, stats, sizeof(dongle_stats_t));
+    nvm3_save_stat(stats);
   }
 }
 #endif
@@ -51,7 +51,7 @@ void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats)
 #endif
 }
 
-void dongle_download_show_stats(download_stats_t * stats, char *name)
+void dongle_download_show_stats(download_stats_t *stats, char *name)
 {
   log_expf("%s:\r\n", name);
   stat_show(stats->pkt_duplication, "Packet Duplication", "packet copies");

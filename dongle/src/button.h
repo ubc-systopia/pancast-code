@@ -12,7 +12,7 @@
 #define BUTTON_DELAY_SHORT_MS  1000
 extern const sl_button_t sl_button_btn0;
 extern dongle_config_t config;
-extern dongle_stats_t stats;
+extern dongle_stats_t *stats;
 extern dongle_epoch_counter_t epoch; // current epoch
 extern dongle_timer_t dongle_time; // main dongle timer
 extern dongle_encounter_entry_t *cur_encounters;
@@ -78,7 +78,7 @@ void sl_button_on_change(const sl_button_t *handle)
     memset(cur_encounters, 0,
         sizeof(dongle_encounter_entry_t) * DONGLE_MAX_BC_TRACKED);
     dongle_stats_reset();
-    nvm3_save_stat(&stats);
+    nvm3_save_stat(stats);
     dongle_download_init();
   }
 
@@ -92,9 +92,9 @@ void sl_button_on_change(const sl_button_t *handle)
       dongle_print_encounter);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 
-  nvm3_load_stat(&stats);
-  dongle_encounter_report(&config, &stats);
-  dongle_stats(&stats);
+  nvm3_load_stat(stats);
+  dongle_encounter_report(&config, stats);
+  dongle_stats(stats);
 }
 
 static inline void configure_button(void)

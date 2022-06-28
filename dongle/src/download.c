@@ -10,7 +10,7 @@
 #include "common/src/test.h"
 #include "common/src/pancast/riskinfo.h"
 
-extern dongle_stats_t stats;
+extern dongle_stats_t *stats;
 extern float dongle_hp_timer;
 extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
@@ -77,7 +77,7 @@ void dongle_download_start()
 {
   download.is_active = 1;
 #if MODE__STAT
-  stats.stat_ints.payloads_started++;
+  stats->stat_ints.payloads_started++;
 #endif
 }
 
@@ -85,9 +85,9 @@ void dongle_download_fail(download_fail_reason *reason __attribute__((unused)))
 {
   if (download.is_active) {
 #if MODE__STAT
-    stats.stat_ints.payloads_failed++;
-    dongle_update_download_stats(stats.all_download_stats, download);
-    dongle_update_download_stats(stats.failed_download_stats, download);
+    stats->stat_ints.payloads_failed++;
+    dongle_update_download_stats(stats->all_download_stats, download);
+    dongle_update_download_stats(stats->failed_download_stats, download);
     *reason = *reason + 1;
 #endif
 
@@ -140,8 +140,8 @@ void dongle_on_sync_lost()
 void dongle_on_periodic_data_error(int8_t rssi __attribute__((unused)))
 {
 #if MODE__STAT
-  stats.stat_ints.num_periodic_data_error++;
-  stat_add(rssi, stats.stat_grp.periodic_data_rssi);
+  stats->stat_ints.num_periodic_data_error++;
+  stat_add(rssi, stats->stat_grp.periodic_data_rssi);
   download.n_corrupt_packets++;
 #endif
 }
@@ -176,8 +176,8 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
   rpi_ble_hdr *rbh = (rpi_ble_hdr *) buf;
 
 #if MODE__STAT
-  stat_add(data_len, stats.stat_grp.periodic_data_size);
-  stat_add(rssi, stats.stat_grp.periodic_data_rssi);
+  stat_add(data_len, stats->stat_grp.periodic_data_size);
+  stat_add(rssi, stats->stat_grp.periodic_data_rssi);
 #endif
 
 #if 0
@@ -194,7 +194,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     if (rbh->chunkid != download.packet_buffer.chunk_num) {
       log_errorf("forced chunk switch, prev: %u new: %u\r\n",
           download.packet_buffer.chunk_num, rbh->chunkid);
-      dongle_download_fail(&stats.stat_ints.switch_chunk);
+      dongle_download_fail(&stats->stat_ints.switch_chunk);
       download.packet_buffer.chunk_num = rbh->chunkid;
     }
 
@@ -238,7 +238,7 @@ void dongle_download_complete()
 {
   log_expf("[%u] Download complete! last dnwld time: %u "
       "data len: %d curr dwnld lat: %f\r\n",
-      dongle_time, stats.stat_ints.last_download_time,
+      dongle_time, stats->stat_ints.last_download_end_time,
       download.packet_buffer.buffer.data_len,
       (double) (dongle_hp_timer - payload_start_ticks));
   int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
@@ -258,7 +258,7 @@ void dongle_download_complete()
   num_buckets = cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 
   if (num_buckets == 0) {
-    dongle_download_fail(&stats.stat_ints.cuckoo_fail);
+    dongle_download_fail(&stats->stat_ints.cuckoo_fail);
     return;
   }
 
@@ -322,14 +322,14 @@ void dongle_download_complete()
   /*
    * XXX: increment global stats, not assignment
    */
-  stats.stat_ints.total_matches = download.n_matches;
-  stats.stat_ints.payloads_complete++;
+  stats->stat_ints.total_matches = download.n_matches;
+  stats->stat_ints.payloads_complete++;
 
   // compute latency
   double lat = (double) (payload_end_ticks - payload_start_ticks);
-  dongle_update_download_stats(stats.all_download_stats, download);
-  dongle_update_download_stats(stats.completed_download_stats, download);
-  stat_add(lat, stats.stat_grp.completed_periodic_data_avg_payload_lat);
+  dongle_update_download_stats(stats->all_download_stats, download);
+  dongle_update_download_stats(stats->completed_download_stats, download);
+  stat_add(lat, stats->stat_grp.completed_periodic_data_avg_payload_lat);
 #endif
 
   dongle_download_reset();
@@ -337,13 +337,13 @@ void dongle_download_complete()
 
 void dongle_update_download_time(void)
 {
-  stats.stat_ints.last_download_time = dongle_time;
+  stats->stat_ints.last_download_time = dongle_time;
 }
 
 int dongle_download_complete_status()
 {
-  if (dongle_time - stats.stat_ints.last_download_time >= MIN_DOWNLOAD_WAIT ||
-		  stats.stat_ints.last_download_time == 0) {
+  if (dongle_time - stats->stat_ints.last_download_time >= MIN_DOWNLOAD_WAIT ||
+		  stats->stat_ints.last_download_time == 0) {
     return 0;
   }
   return 1;

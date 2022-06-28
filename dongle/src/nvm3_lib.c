@@ -199,11 +199,12 @@ void nvm3_load_config(dongle_config_t *cfg)
   nvm3_read(NVM3_CNT_LOG_HEAD, &cfg->en_head);
   nvm3_read(NVM3_CNT_LOG_TAIL, &cfg->en_tail);
 
-  dongle_stats_t tmp_stats;
-  nvm3_read(NVM3_STAT_INTS, &(tmp_stats.stat_ints));
-  nvm3_read(NVM3_STAT_GROUP, &(tmp_stats.stat_grp));
-  nvm3_read(NVM3_STAT_ALL_DWNLD, &(tmp_stats.all_download_stats));
-  nvm3_read(NVM3_STAT_COMPLETED_DWNLD, &(tmp_stats.completed_download_stats));
+  dongle_stats_t *tmp_stats = malloc(sizeof(dongle_stats_t));
+  memset(tmp_stats, 0, sizeof(dongle_stats_t));
+  nvm3_read(NVM3_STAT_INTS, &(tmp_stats->stat_ints));
+  nvm3_read(NVM3_STAT_GROUP, &(tmp_stats->stat_grp));
+  nvm3_read(NVM3_STAT_ALL_DWNLD, &(tmp_stats->all_download_stats));
+  nvm3_read(NVM3_STAT_COMPLETED_DWNLD, &(tmp_stats->completed_download_stats));
 
   int i = 0, found_err = 0;
   for (i = 0; i < NVM3_MAX_COUNTERS; i++) {
@@ -221,11 +222,14 @@ void nvm3_load_config(dongle_config_t *cfg)
 
     log_expf("last report: %lu dwnld: %lu #ephids: %.0f #scan results: %.0f, "
       "errs: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      tmp_stats.stat_ints.last_report_time, tmp_stats.stat_ints.last_download_time,
-      tmp_stats.stat_grp.enctr_rssi.n, tmp_stats.stat_grp.scan_rssi.n,
+      tmp_stats->stat_ints.last_report_time, tmp_stats->stat_ints.last_download_end_time,
+      tmp_stats->stat_grp.enctr_rssi.n, tmp_stats->stat_grp.scan_rssi.n,
       err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
       err[NVM3_STAT_COMPLETED_DWNLD]);
   }
+
+  free(tmp_stats);
+
 #undef nvm3_read
 }
 

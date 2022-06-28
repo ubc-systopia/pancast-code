@@ -32,7 +32,7 @@
 
 extern download_t download;
 extern dongle_timer_t dongle_time;
-extern dongle_stats_t stats;
+extern dongle_stats_t *stats;
 int download_complete = 0;
 extern float payload_start_ticks, payload_end_ticks;
 extern float dongle_hp_timer;
@@ -68,7 +68,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     download_complete = dongle_download_complete_status();
     log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
         "download complete: %d active: %d synced: %d handle: %d\r\n",
-        dongle_time, stats.stat_ints.last_download_time, MIN_DOWNLOAD_WAIT,
+        dongle_time, stats->stat_ints.last_download_end_time, MIN_DOWNLOAD_WAIT,
         download_complete, download.is_active, synced, sync_handle);
 
     if (download_complete == 0 && synced == 1) {
@@ -81,6 +81,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
         download_complete, download.is_active, synced, sync_handle, sc);
     }
   }
+
   if (user_handle == PREC_TIMER_HANDLE) {
     dongle_hp_timer_add(1);
   }
@@ -231,12 +232,12 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
        * the periodic intervals were not properly aligned?
        */
       if (download_complete == 1 ||
-          (dongle_time - stats.stat_ints.last_download_time > 10)) {
+          (dongle_time - stats->stat_ints.last_download_time > 10)) {
         sc = sl_bt_sync_close(sync_handle);
         last_sync_close_time = dongle_time;
         log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
           "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
-          dongle_time, stats.stat_ints.last_download_time, MIN_DOWNLOAD_WAIT,
+          dongle_time, stats->stat_ints.last_download_end_time, MIN_DOWNLOAD_WAIT,
           download_complete, download.is_active, synced, sync_handle, sc);
       }
 

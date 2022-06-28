@@ -37,17 +37,16 @@ sl_sleeptimer_timer_handle_t led_timer;
 dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
 dongle_encounter_entry_t *cur_encounters;
-dongle_stats_t stats;
+dongle_stats_t *stats;
 size_t cur_id_idx;
 extern download_t download;
 
 // 5. Statistics and Telemetry
 // Global high-precision timer, in milliseconds
 float dongle_hp_timer = 0.0;
-extern dongle_stats_t stats;
 
 static void dongle_config_init(dongle_config_t *cfg,
-    dongle_encounter_entry_t **cur_encounters_p)
+    dongle_encounter_entry_t **cur_encounters_p, dongle_stats_t **stats_p)
 {
   if (!cfg)
     return;
@@ -58,13 +57,18 @@ static void dongle_config_init(dongle_config_t *cfg,
   cfg->dongle_sk = malloc(SK_MAX_SIZE);
   memset(cfg->dongle_sk, 0, SK_MAX_SIZE);
 
-  if (!cur_encounters_p)
-    return;
+  if (cur_encounters_p) {
+    dongle_encounter_entry_t *enctr_arr = malloc(DONGLE_MAX_BC_TRACKED *
+        sizeof(dongle_encounter_entry_t));
+    memset(enctr_arr, 0, DONGLE_MAX_BC_TRACKED * sizeof(dongle_encounter_entry_t));
+    *cur_encounters_p = enctr_arr;
+  }
 
-  dongle_encounter_entry_t *enctr_arr = malloc(DONGLE_MAX_BC_TRACKED *
-      sizeof(dongle_encounter_entry_t));
-  memset(enctr_arr, 0, DONGLE_MAX_BC_TRACKED * sizeof(dongle_encounter_entry_t));
-  *cur_encounters_p = enctr_arr;
+  if (stats_p) {
+    dongle_stats_t *tmp_stats = malloc(sizeof(dongle_stats_t));
+    memset(tmp_stats, 0, sizeof(dongle_stats_t));
+    *stats_p = tmp_stats;
+  }
 }
 
 void dongle_cleanup_config(dongle_config_t *cfg)
@@ -95,8 +99,8 @@ void dongle_init()
   dongle_download_init();
 
   // init configs
-  dongle_config_init(&sto_cfg, NULL);
-  dongle_config_init(&config, &cur_encounters);
+  dongle_config_init(&sto_cfg, NULL, NULL);
+  dongle_config_init(&config, &cur_encounters, &stats);
 
   // load config
   dongle_storage_load_config(&sto_cfg);
@@ -111,7 +115,7 @@ void dongle_init()
 
   // load stats
   dongle_storage_read_stat(&sto_stats, sizeof(dongle_stats_t));
-  nvm3_load_stat(&stats);
+  nvm3_load_stat(stats);
 
   log_expf("=== [C, H, T] nvm: %u %u %u sto: %u %u %u csum: 0x%0x ===\r\n",
       config.t_cur, config.en_head, config.en_tail, sto_cfg.t_cur,
@@ -129,8 +133,8 @@ void dongle_init()
     config.en_tail = sto_cfg.en_tail;
     nvm3_save_config(&config);
 
-    dongle_stats_reset(&stats);
-    nvm3_save_stat(&stats);
+    dongle_stats_reset(stats);
+    nvm3_save_stat(stats);
   }
 
 //  dongle_load();
@@ -143,12 +147,12 @@ void dongle_init()
 
   // print basic device info and state
   dongle_info();
-  dongle_encounter_report(&config, &stats);
-  dongle_stats(&stats);
+  dongle_encounter_report(&config, stats);
+  dongle_stats(stats);
 
   // update last report time and save to nvm3
-  stats.stat_ints.last_report_time = dongle_time;
-  nvm3_save_stat(&stats);
+  stats->stat_ints.last_report_time = dongle_time;
+  nvm3_save_stat(stats);
 
 #if TEST_DONGLE
   // test
@@ -269,7 +273,7 @@ void dongle_clock_increment()
 void dongle_hp_timer_add(uint32_t ticks)
 {
   double ms = ((double) ticks * PREC_TIMER_TICK_MS);
-  stats.stat_ints.total_periodic_data_time += (ms / 1000.0);
+  stats->stat_ints.total_periodic_data_time += (ms / 1000.0);
   if (download.is_active) {
     download.time += ms;
   }
@@ -304,8 +308,8 @@ void dongle_log_counters()
 
   sl_bt_system_get_counters(1, &tx_packets, &rx_packets, &crc_errors, &failures);
 
-  stats.stat_ints.total_hw_rx += (uint32_t) rx_packets;
-  stats.stat_ints.total_hw_crc_fail += (uint32_t)crc_errors;
+  stats->stat_ints.total_hw_rx += (uint32_t) rx_packets;
+  stats->stat_ints.total_hw_crc_fail += (uint32_t)crc_errors;
 
 //  log_debugf("tx_packets: %lu, rx_packets: %lu, crc_errors: %lu, failures: %lu\r\n",
 //      tx_packets, rx_packets, crc_errors, failures);
@@ -367,7 +371,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
   }
 
 #if MODE__STAT
-  stat_add(rssi, stats.stat_grp.scan_rssi);
+  stat_add(rssi, stats->stat_grp.scan_rssi);
 #endif
 
   // determine which tracked id, if any, is a match
@@ -414,7 +418,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 #endif
 
 #if MODE__STAT
-    stat_add(rssi, stats.stat_grp.enctr_rssi);
+    stat_add(rssi, stats->stat_grp.enctr_rssi);
 #endif
 
     return;
@@ -529,15 +533,15 @@ void dongle_report()
 {
 #if MODE__STAT
   // do report
-  if (((int) (dongle_time - stats.stat_ints.last_report_time)) <
+  if (((int) (dongle_time - stats->stat_ints.last_report_time)) <
       (int) DONGLE_REPORT_INTERVAL)
     return;
 
-  dongle_encounter_report(&config, &stats);
-  dongle_stats(&stats);
-  stats.stat_ints.last_report_time = dongle_time;
-//  dongle_storage_save_stat(&config, &stats, sizeof(dongle_stats_t));
-  nvm3_save_stat(&stats);
+  dongle_encounter_report(&config, stats);
+  dongle_stats(stats);
+  stats->stat_ints.last_report_time = dongle_time;
+//  dongle_storage_save_stat(&config, stats, sizeof(dongle_stats_t));
+  nvm3_save_stat(stats);
 
 #endif
 }

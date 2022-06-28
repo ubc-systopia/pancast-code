@@ -33,7 +33,6 @@
 extern download_t download;
 extern dongle_timer_t dongle_time;
 extern dongle_stats_t *stats;
-int download_complete = 0;
 extern float payload_start_ticks, payload_end_ticks;
 extern float dongle_hp_timer;
 
@@ -45,6 +44,7 @@ static uint16_t sync_handle = 0;
 static uint16_t prev_sync_handle = -1;
 static uint16_t num_sync_open_attempts = 0;
 dongle_timer_t last_sync_open_time = 0, last_sync_close_time = 0;
+dongle_timer_t last_download_start_time = 0;
 
 int synced = 0; // no concurrency control but acts as an eventual state signal
 
@@ -65,20 +65,19 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     }
     dongle_clock_increment();
     dongle_log_counters();
-    download_complete = dongle_download_complete_status();
-    log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
-        "download complete: %d active: %d synced: %d handle: %d\r\n",
-        dongle_time, stats->stat_ints.last_download_end_time, MIN_DOWNLOAD_WAIT,
-        download_complete, download.is_active, synced, sync_handle);
 
-    if (download_complete == 0 && synced == 1) {
+    log_debugf("dongle_time %u stats.last_download_time: %u -> %u min wait: %u "
+        "download complete: %d active: %d synced: %d handle: %d\r\n",
+        dongle_time, last_download_start_time,
+        stats->stat_ints.last_download_end_time, RETRY_DOWNLOAD_INTERVAL,
+        dongle_download_complete_status(), download.is_active, synced, sync_handle);
+
+    if (dongle_download_complete_status() == 0 && synced == 1 &&
+        dongle_time - last_download_start_time >
+        DOWNLOAD_LATENCY_THRESHOLD) {
       sc = sl_bt_sync_close(sync_handle);
       last_sync_close_time = dongle_time;
       synced = 0;
-      log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
-        "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
-        dongle_time, stats.stat_ints.last_download_time, MIN_DOWNLOAD_WAIT,
-        download_complete, download.is_active, synced, sync_handle, sc);
     }
   }
 
@@ -159,18 +158,29 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       }
 
       // then check for periodic info in packet
-      if (!synced && !download_complete &&
+      if (!synced &&
           evt->data.evt_scanner_scan_report.periodic_interval != 0 &&
-          num_sync_open_attempts < NUM_SYNC_ATTEMPTS) {
+          num_sync_open_attempts < NUM_SYNC_ATTEMPTS &&
+          ((stats->stat_ints.last_download_end_time >=
+            last_download_start_time &&
+            dongle_time - stats->stat_ints.last_download_end_time >=
+            NEW_DOWNLOAD_INTERVAL) ||
+           (stats->stat_ints.last_download_end_time <
+            last_download_start_time &&
+            dongle_time - last_download_start_time >=
+            RETRY_DOWNLOAD_INTERVAL))
+         ) {
         // Open sync
         sc = sl_bt_sync_open(evt->data.evt_scanner_scan_report.address,
                        evt->data.evt_scanner_scan_report.address_type,
                        evt->data.evt_scanner_scan_report.adv_sid,
                        &sync_handle);
         last_sync_open_time = dongle_time;
+        last_download_start_time = dongle_time;
         if (prev_sync_handle != sync_handle) {
           log_infof("open sync addr[%d, 0x%02x]: %0x:%0x:%0x:%0x:%0x:%0x "
-            "sid: %u phy(%d, %d) chan: %d intvl: %d h: %d p: %d sc: 0x%x\r\n",
+            "sid: %u phy(%d, %d) chan: %d intvl: %d h: %d p: %d #attempts: %d "
+            "sc: 0x%x\r\n",
             evt->data.evt_scanner_scan_report.address_type,
             evt->data.evt_scanner_scan_report.packet_type,
             evt->data.evt_scanner_scan_report.address.addr[0],
@@ -184,15 +194,14 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_scanner_scan_report.secondary_phy,
             evt->data.evt_scanner_scan_report.channel,
             evt->data.evt_scanner_scan_report.periodic_interval,
-            sync_handle, prev_sync_handle, sc);
+            sync_handle, prev_sync_handle, num_sync_open_attempts, sc);
           prev_sync_handle = sync_handle;
         }
 
         payload_start_ticks = dongle_hp_timer;
       } else if (num_sync_open_attempts >= NUM_SYNC_ATTEMPTS &&
-          ((dongle_time - last_sync_open_time) >= MIN_DOWNLOAD_WAIT)) {
+          ((dongle_time - last_sync_open_time) >= RETRY_DOWNLOAD_INTERVAL)) {
         num_sync_open_attempts = 0;
-        last_sync_open_time = dongle_time;
       }
 #endif
       }
@@ -215,36 +224,36 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
 //          evt->data.evt_sync_data.data_status,
 //          evt->data.evt_sync_data.rssi);
 
-#define ERROR_STATUS 0x02
-      if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
-        dongle_on_periodic_data_error(evt->data.evt_sync_data.rssi);
-      } else {
-        dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
-            evt->data.evt_sync_data.data.len,
-            evt->data.evt_sync_data.rssi);
-      }
-#undef ERROR_STATUS
-
-      download_complete = dongle_download_complete_status();
       /*
        * second clause for the case when on re-sync, dongle still not able to
        * download periodic data (e.g., len of download is 0). may happen because
        * the periodic intervals were not properly aligned?
        */
-      if (download_complete == 1 ||
-          (dongle_time - stats->stat_ints.last_download_time > 10)) {
+      if ((int16_t) sync_handle >= 0 &&
+          (dongle_download_complete_status() == 1 ||
+          (dongle_time - last_download_start_time >
+           DOWNLOAD_LATENCY_THRESHOLD))) {
         sc = sl_bt_sync_close(sync_handle);
         last_sync_close_time = dongle_time;
-        log_debugf("dongle_time %u stats.last_download_time: %u min wait: %u "
-          "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
-          dongle_time, stats->stat_ints.last_download_end_time, MIN_DOWNLOAD_WAIT,
-          download_complete, download.is_active, synced, sync_handle, sc);
-      }
+        sync_handle = -1;
 
-      if (dongle_download_complete_status() == 1) {
-        sl_bt_sync_close(sync_handle);
-        download_complete = 1;
-        log_infof("%s", "download completed\r\n");
+        log_expf("dongle_time %u stats.last_download_time: %u -> %u "
+          "retry: %u new: %u "
+          "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
+          dongle_time, last_download_start_time,
+          stats->stat_ints.last_download_end_time, RETRY_DOWNLOAD_INTERVAL,
+          NEW_DOWNLOAD_INTERVAL,
+          dongle_download_complete_status(), download.is_active, synced, sync_handle, sc);
+      } else {
+#define ERROR_STATUS 0x02
+        if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {
+          dongle_on_periodic_data_error(evt->data.evt_sync_data.rssi);
+        } else {
+          dongle_on_periodic_data(evt->data.evt_sync_data.data.data,
+              evt->data.evt_sync_data.data.len,
+              evt->data.evt_sync_data.rssi);
+        }
+#undef ERROR_STATUS
       }
 
       break;

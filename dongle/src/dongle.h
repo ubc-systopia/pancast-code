@@ -53,10 +53,6 @@
 #define LOG_MIN_WAIT BEACON_EPOCH_LENGTH
 
 /*
- * time to wait after before trying to download again on periodic adv. channel
- */
-#define MIN_DOWNLOAD_WAIT 5
-/*
  * threshold between consecutive sync open and sync close events,
  * below which there is a strong chance that the dongle is not able to
  * sync because there is no network beacon nearby
@@ -67,6 +63,29 @@
  * pausing because there is probably no network beacon nearby
  */
 #define NUM_SYNC_ATTEMPTS  5
+
+/*
+ * time to wait for dongle to successfully download risk payload
+ * on periodic adv. channel, before closing down periodic sync.
+ * to save battery
+ *
+ * should be smaller than RETRY_DOWNLOAD_INTERVAL
+ *
+ * unit: depends on the unit of the dongle's timer clock
+ */
+#define DOWNLOAD_LATENCY_THRESHOLD  10
+/*
+ * time to wait after before trying to download again on periodic adv. channel
+ * should be smaller than NEW_DOWNLOAD_INTERVAL
+ */
+#define RETRY_DOWNLOAD_INTERVAL 20
+/*
+ * time to wait before attempting to download fresh risk payload
+ * typically in the order of 24 hours
+ *
+ * unit: depends on the unit of the dongle's timer clock
+ */
+#define NEW_DOWNLOAD_INTERVAL (24*60)
 
 // Data Structures
 
@@ -155,14 +174,11 @@ typedef struct {
 
 #define TEST_DURATION 1800000
 
-extern int download_complete;
-
 // High-level routine structure
 void dongle_init();
 void dongle_init_scan();
 void dongle_start();
 void dongle_stop_scan();
-//void dongle_load();
 void dongle_report();
 void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);
 void dongle_info();

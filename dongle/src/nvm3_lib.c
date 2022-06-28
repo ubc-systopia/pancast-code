@@ -39,6 +39,8 @@ enum {
   NVM3_MAX_COUNTERS
 };
 
+extern dongle_timer_t last_download_start_time;
+
 // Max and min keys for data objects
 #define MIN_DATA_KEY  NVM3_KEY_MIN
 #define MAX_DATA_KEY  (MIN_DATA_KEY + NVM3_MAX_COUNTERS - 1)
@@ -150,9 +152,11 @@ void nvm3_save_stat(void *stat)
   nvm3_write(NVM3_STAT_GROUP, &(statp->stat_grp));
   nvm3_write(NVM3_STAT_ALL_DWNLD, &(statp->all_download_stats));
   nvm3_write(NVM3_STAT_COMPLETED_DWNLD, &(statp->completed_download_stats));
-  log_infof("[NVM3] write last report: %u dwnld: %u #ephids: %.0f "
+  log_infof("[NVM3] write last report: %u dwnld: %u -> %u #ephids: %.0f "
       "#scan results: %.0f all bytes: %.0f errs: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      statp->stat_ints.last_report_time, statp->stat_ints.last_download_end_time,
+      statp->stat_ints.last_report_time,
+      last_download_start_time,
+      statp->stat_ints.last_download_end_time,
       statp->stat_grp.enctr_rssi.n, statp->stat_grp.scan_rssi.n,
       statp->all_download_stats.n_bytes.n,
       err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
@@ -176,9 +180,11 @@ void nvm3_load_stat(void *stat)
   nvm3_read(NVM3_STAT_GROUP, &(statp->stat_grp));
   nvm3_read(NVM3_STAT_ALL_DWNLD, &(statp->all_download_stats));
   nvm3_read(NVM3_STAT_COMPLETED_DWNLD, &(statp->completed_download_stats));
-  log_infof("[NVM3] read last report: %lu dwnld: %lu #ephids: %.0f "
+  log_infof("[NVM3] read last report: %lu dwnld: %lu -> %lu #ephids: %.0f "
       "#scan results: %.0f all bytes: %.0f ret: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      statp->stat_ints.last_report_time, statp->stat_ints.last_download_end_time,
+      statp->stat_ints.last_report_time,
+      last_download_start_time,
+      statp->stat_ints.last_download_end_time,
       statp->stat_grp.enctr_rssi.n, statp->stat_grp.scan_rssi.n,
       statp->all_download_stats.n_bytes.n,
       err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
@@ -220,9 +226,11 @@ void nvm3_load_config(dongle_config_t *cfg)
         cfg->t_cur, cfg->en_head, cfg->en_tail,
         err[NVM3_CNT_T_CUR], err[NVM3_CNT_LOG_HEAD], err[NVM3_CNT_LOG_TAIL]);
 
-    log_expf("last report: %lu dwnld: %lu #ephids: %.0f #scan results: %.0f, "
+    log_expf("last report: %lu dwnld: %lu -> %lu #ephids: %.0f #scan results: %.0f, "
       "errs: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
-      tmp_stats->stat_ints.last_report_time, tmp_stats->stat_ints.last_download_end_time,
+      tmp_stats->stat_ints.last_report_time,
+      last_download_start_time,
+      tmp_stats->stat_ints.last_download_end_time,
       tmp_stats->stat_grp.enctr_rssi.n, tmp_stats->stat_grp.scan_rssi.n,
       err[NVM3_STAT_INTS], err[NVM3_STAT_GROUP], err[NVM3_STAT_ALL_DWNLD],
       err[NVM3_STAT_COMPLETED_DWNLD]);

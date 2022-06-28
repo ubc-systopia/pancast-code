@@ -15,6 +15,8 @@ extern float dongle_hp_timer;
 extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
 float payload_start_ticks = 0, payload_end_ticks = 0;
+extern dongle_timer_t last_download_start_time;
+
 
 download_t download;
 cf_t cf;
@@ -337,11 +339,21 @@ void dongle_download_complete()
 
 int dongle_download_complete_status()
 {
-  if (dongle_time - stats->stat_ints.last_download_time >= MIN_DOWNLOAD_WAIT ||
+#if 0
+  if (dongle_time - stats->stat_ints.last_download_time >= RETRY_DOWNLOAD_INTERVAL ||
 		  stats->stat_ints.last_download_time == 0) {
     return 0;
   }
   return 1;
+#endif
+
+  // successfully downloaded risk payload for the one download interval
+  if (stats->stat_ints.last_download_end_time >=
+      last_download_start_time) {
+    return 1;
+  }
+
+  return 0;
 }
 
 void dongle_download_info()

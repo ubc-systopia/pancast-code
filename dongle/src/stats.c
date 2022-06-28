@@ -6,6 +6,8 @@
 #include "nvm3_lib.h"
 
 extern dongle_timer_t dongle_time; // main dongle timer
+extern dongle_timer_t last_download_start_time;
+
 
 void dongle_stats_reset(dongle_stats_t *stats)
 {
@@ -42,9 +44,10 @@ void dongle_encounter_report(dongle_config_t *cfg, dongle_stats_t *stats)
     return;
 
 #if MODE__STAT
-  log_expf("[%lu] last report time: %lu download time: %u head: %u tail: %u "
+  log_expf("[%lu] last report time: %lu download time: %u -> %u head: %u tail: %u "
     "#encounters [new, stored]: %lu, %lu\r\n",
     dongle_time, stats->stat_ints.last_report_time,
+    last_download_start_time,
     stats->stat_ints.last_download_end_time, cfg->en_head, cfg->en_tail,
     stats->stat_ints.total_encounters,
     num_encounters_current(cfg->en_head, cfg->en_tail));

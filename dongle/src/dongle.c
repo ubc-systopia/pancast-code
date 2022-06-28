@@ -143,7 +143,6 @@ void dongle_init()
   dongle_time = config.t_cur > config.t_init ? config.t_cur : config.t_init;
   cur_id_idx = 0;
   epoch = 0;
-  download_complete = 0;
 
   // print basic device info and state
   dongle_info();

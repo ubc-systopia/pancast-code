@@ -510,7 +510,13 @@ void dongle_info()
   log_expf("   Legacy adv scan [PHY, mode]:      %d, %d\r\n", SCAN_PHY, SCAN_MODE);
   log_expf("   Legacy adv scan interval, window: %u ms, %u ms\r\n", SCAN_INTERVAL, SCAN_WINDOW);
   log_expf("   Periodic adv sync skip, flags:    %d, %d\r\n", SYNC_SKIP, SYNC_FLAGS);
-  log_expf("   Periodic adv sync timeout:        %u ms\r\n", SYNC_TIMEOUT);
+  log_expf("   Periodic adv sync timeout:        %u ms\r\n", SYNC_TIMEOUT*10);
+  log_expf("   Periodic adv sync fail:           %u min\r\n",
+      PERIODIC_SYNC_FAIL_LATENCY);
+  log_expf("   Periodic adv download lat:        %u min\r\n",
+      DOWNLOAD_LATENCY_THRESHOLD);
+  log_expf("   Periodic adv retry, new interval: %u min, %u min\r\n",
+      RETRY_DOWNLOAD_INTERVAL, NEW_DOWNLOAD_INTERVAL);
 
   log_expf("   Flash page size, count, total:    %u B, %u, %u B\r\n",
       FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES,
@@ -525,8 +531,10 @@ void dongle_info()
   log_expf("   Log head, tail:                   %u, %u\r\n",
       config.en_head, config.en_tail);
   log_expf("   Config offset:                    0x%0x\r\n", DONGLE_CONFIG_OFFSET);
-  log_expf("   OTP offset:                       0x%0x\r\n", DONGLE_OTPSTORE_OFFSET);
-  log_expf("   Stat offset, obj size:            0x%0x, %u\r\n", DONGLE_STATSTORE_OFFSET, sizeof(dongle_stats_t));
+  log_expf("   OTP offset, stat offset:          0x%0x, 0x%0x\r\n",
+      DONGLE_OTPSTORE_OFFSET, DONGLE_STATSTORE_OFFSET);
+  log_expf("   Stat obj size, nvm3 obj size:     %u, %u\r\n",
+      sizeof(dongle_stats_t), NVM3_DEFAULT_MAX_OBJECT_SIZE);
 }
 
 void dongle_report()

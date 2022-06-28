@@ -41,7 +41,7 @@ static uint16_t scan_counter = SCAN_CYCLE_TIME;
 
 // Sync handle
 static uint16_t sync_handle = 0;
-static uint16_t prev_sync_handle = -1;
+uint16_t prev_sync_handle = -1;
 static uint16_t num_sync_open_attempts = 0;
 dongle_timer_t last_sync_open_time = 0, last_sync_close_time = 0;
 dongle_timer_t last_download_start_time = 0;
@@ -161,7 +161,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       if (!synced &&
           evt->data.evt_scanner_scan_report.periodic_interval != 0 &&
           num_sync_open_attempts < NUM_SYNC_ATTEMPTS &&
-          ((stats->stat_ints.last_download_end_time >=
+          ((int16_t) prev_sync_handle == -1 ||
+           (stats->stat_ints.last_download_end_time >=
             last_download_start_time &&
             dongle_time - stats->stat_ints.last_download_end_time >=
             NEW_DOWNLOAD_INTERVAL) ||

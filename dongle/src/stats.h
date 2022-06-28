@@ -23,9 +23,9 @@ typedef struct {
    */
   dongle_timer_t last_report_time;
   /*
-   * last periodic adv. download time
+   * last periodic adv. download successful complete time
    */
-  dongle_timer_t last_download_time;
+  dongle_timer_t last_download_end_time;
   /*
    * number of periodic adv. channel scans where scan returned an error
    */

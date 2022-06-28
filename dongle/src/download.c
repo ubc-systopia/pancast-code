@@ -253,7 +253,7 @@ void dongle_download_complete()
 
   // now we know the payload is the correct size
 
-  dongle_update_download_time();
+  stats->stat_ints.last_download_end_time = dongle_time;
 
   num_buckets = cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 
@@ -333,11 +333,6 @@ void dongle_download_complete()
 #endif
 
   dongle_download_reset();
-}
-
-void dongle_update_download_time(void)
-{
-  stats->stat_ints.last_download_time = dongle_time;
 }
 
 int dongle_download_complete_status()

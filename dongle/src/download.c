@@ -8,7 +8,7 @@
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
 #include "common/src/test.h"
-#include "common/src/pancast/riskinfo.h"
+#include "common/src/riskinfo.h"
 
 extern dongle_stats_t *stats;
 extern float dongle_hp_timer;

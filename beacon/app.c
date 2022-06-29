@@ -31,7 +31,7 @@
 #include "src/common/src/util/log.h"
 #include "src/common/src/test.h"
 #include "src/beacon.h"
-#include "src/common/src/pancast/riskinfo.h"
+#include "src/common/src/riskinfo.h"
 
 /*
  * Channel map is 5 bytes and contains 37 1-bit fields.

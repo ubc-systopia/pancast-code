@@ -6,7 +6,7 @@
 // otherwise not directly related to PanCast
 
 #include <stdint.h>
-#include "pancast/riskinfo.h"
+#include "riskinfo.h"
 #include "settings.h"
 
 #define BITS_PER_BYTE       8

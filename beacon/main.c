@@ -29,7 +29,7 @@
 #include "src/common/src/constants.h"
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
-#include "src/common/src/pancast/riskinfo.h"
+#include "src/common/src/riskinfo.h"
 
 #include <stdio.h>
 #include <unistd.h>

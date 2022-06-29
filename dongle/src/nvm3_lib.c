@@ -92,7 +92,7 @@ size_t nvm3_count_objects(void)
 #if LOG_LVL == LVL_DBG
   size_t i, len;
   uint32_t type;
-  for (i = 0; i < nvm3_cnt; i++) {
+  for (i = 0; i < nvm3_objcnt; i++) {
     nvm3_getObjectInfo(NVM3_DEFAULT_HANDLE, keys[i], &type, &len);
     log_expf("[NVM:%d] type: 0x%0x len: %u\r\n", i, type, len);
   }

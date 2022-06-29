@@ -8,7 +8,7 @@
 #include "dongle.h"
 #include "common/src/settings.h"
 #include "common/src/platform/gecko.h"
-#include "config/nvm3_default_config.h"
+#include "../config/nvm3_default_config.h"
 
 #include <stddef.h>
 

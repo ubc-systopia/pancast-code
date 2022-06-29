@@ -5,7 +5,7 @@
 #include "sl_bluetooth.h"
 
 #include "dongle.h"
-#include "src/common/src/util/log.h"
+#include "common/src/util/log.h"
 
 extern const sl_led_t sl_led_led0;
 extern sl_sleeptimer_timer_handle_t led_timer;

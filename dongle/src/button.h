@@ -7,7 +7,7 @@
 #include "dongle.h"
 #include "nvm3_lib.h"
 #include "stats.h"
-#include "src/common/src/util/log.h"
+#include "common/src/util/log.h"
 
 #define BUTTON_DELAY_SHORT_MS  1000
 extern const sl_button_t sl_button_btn0;

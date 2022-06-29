@@ -583,7 +583,7 @@ void _beacon_broadcast_(int err, int reset)
         K_MSEC(BEACON_TIMER_RESOLUTION));
     k_timer_start(&kernel_time_alternater, K_MSEC(PAYLOAD_ALTERNATE_TIMER),
         K_MSEC(PAYLOAD_ALTERNATE_TIMER));
-    k_timer_start(&led_timer, K_MSEC(LED_TIMER), K_MSEC(LED_TIMER));
+    k_timer_start(&led_timer, K_MSEC(LED_TIMER_MS), K_MSEC(LED_TIMER_MS));
 
     configure_blinky();
     button_init();

@@ -33,7 +33,7 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
  */
 #define BEACON_TIMER_RESOLUTION 60000
 #define PAYLOAD_ALTERNATE_TIMER  1000
-#define LED_TIMER 1000
+#define LED_TIMER_MS 1000
 
 /*
  * number of time units (in minutes) in one epoch

@@ -4,14 +4,6 @@
 #include <constants.h>
 
 /*
- * Broadcasting constants
- * This defines a pseudo-unique identifier for
- * filtering out BLE packets received during operation.
- */
-#define BROADCAST_SERVICE_ID 0x2222
-static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
-
-/*
  * =========================
  * CONFIGURATIONS PARAMETERS
  * =========================

@@ -66,6 +66,14 @@ typedef struct
 typedef seckey_t beacon_sk_t;
 
 /*
+ * Broadcasting constants
+ * This defines a pseudo-unique identifier for
+ * filtering out BLE packets received during operation.
+ */
+#define BROADCAST_SERVICE_ID 0x2222
+static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
+
+/*
  * ==================
  * epoch counter type
  * ==================

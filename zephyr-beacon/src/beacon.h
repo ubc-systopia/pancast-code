@@ -9,9 +9,6 @@
 #include <settings.h>
 #include <stats.h>
 
-
-#define BEACON_PLATFORM__ZEPHYR
-
 // #define BEACON_GAEN_ENABLED
 
 typedef struct

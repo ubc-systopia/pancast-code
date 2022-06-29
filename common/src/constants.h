@@ -80,20 +80,4 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 #define MAX_PAYLOAD_SIZE (PER_ADV_SIZE - PACKET_HEADER_LEN)              // S
 #define MAX_NUM_PACKETS_PER_FILTER (((MAX_FILTER_SIZE-1) / MAX_PAYLOAD_SIZE) + 1)
 
-/*
- * =======================
- * cuckoo filter constants
- * =======================
- */
-
-#define FINGERPRINT_BITS    27
-
-#define NUM_CF_BUCKETS      128
-#define ENTRIES_PER_BUCKET  4
-
-#define CF_SIZE_BYTES       \
-  (NUM_CF_BUCKETS * FINGERPRINT_BITS * ENTRIES_PER_BUCKET)/(BITS_PER_BYTE)
-
-#define HDR_SIZE_BYTES      8
-
 #endif /* COMMON_CONSTANTS__H */

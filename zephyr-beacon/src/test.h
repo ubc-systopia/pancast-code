@@ -17,6 +17,11 @@
 
 // Cuckoo filter testing
 
+#define FINGERPRINT_BITS    27
+
+#define NUM_CF_BUCKETS      128
+#define ENTRIES_PER_BUCKET  4
+
 #define CF_SIZE_BYTES       \
   ((NUM_CF_BUCKETS * FINGERPRINT_BITS * ENTRIES_PER_BUCKET) /  \
   (BITS_PER_BYTE))

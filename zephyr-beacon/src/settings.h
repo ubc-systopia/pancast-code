@@ -46,9 +46,4 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 #define MIN_TX_POWER -40
 #define MAX_TX_POWER -20
 
-#define FINGERPRINT_BITS    27
-
-#define NUM_CF_BUCKETS      128
-#define ENTRIES_PER_BUCKET  4
-
 #endif /* COMMON_SETTINGS__H */

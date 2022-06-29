@@ -332,6 +332,7 @@ void dongle_download_complete()
   dongle_update_download_stats(stats->all_download_stats, download);
   dongle_update_download_stats(stats->completed_download_stats, download);
   stat_add(lat, stats->stat_grp.completed_periodic_data_avg_payload_lat);
+  nvm3_save_stat(stats);
 #endif
 
   dongle_download_reset();

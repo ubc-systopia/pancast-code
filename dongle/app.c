@@ -46,6 +46,30 @@ static uint16_t num_sync_open_attempts = 0;
 dongle_timer_t last_sync_open_time = 0, last_sync_close_time = 0;
 dongle_timer_t last_download_start_time = 0;
 
+/*
+ * state machine for download
+ *                    | dwnld_start | dwnld_end | sync_open | sync_close | #attempts | synced | active | sync_handle | prev_handle
+ * on dongle reboot   | 0           | nvm3>0    | 0         | 0          | 0         | 0      | 0      | 0           | -1
+ * scan_report_id(1a) | 0           | nvm3>0    | 0         | 0          | 0         | 0      | 0      | 0           | -1
+ * sync_opened_id(1a) | t           | nvm3>0    | t         | 0          | *         | 1      | 0      | h           | h
+ * sync_data_id(1a)   | t           | nvm3>0    | t         | 0          | *         | 1      | 0      | h           | h
+ * sync_data_id(1a+1) | t           | t1>=t     | t         | 0          | *         | 1      | 1      | h           | h
+ * sync_closed_id(1a) | t           | t1>=t     | t         | t1         | *         | 1      | 0      | -1          | h
+ *
+ * button long press  | 0           | nvm3=0    | 0         | 0          | 0         | 0      | 0      | 0           | *
+ * scan_report_id(1b) | 0           | nvm3=0    | 0         | 0          | 0         | 0      | 0      | 0           | -1
+ * sync_opened_id(1b) | t           | nvm3=0    | t         | 0          | *         | 1      | 0      | h           | h
+ * sync_data_id(1b)   | t           | nvm3=0    | t         | 0          | *         | 1      | 0      | h           | h
+ * sync_data_id(1b+1) | t           | t1>=t     | t         | 0          | *         | 1      | 1      | h           | h
+ * sync_closed_id(1b) | t           | t1>=t     | t         | t1         | *         | 1      | 0      | -1          | h
+ *
+ * continuing from 1  | t           | t1>=t     | t         | t1         | *         | 0      | 0      | -1          | h
+ * scan_report_id(2a) | t           | t1>=t     | t         | t1         | *         | 0      | 0      | -1          | h
+ * sync_opened_id(2a) | t2          | t1>=t     | t2>t1     | t1         | *         | 1      | 0      | h+1         | h+1
+ * sync_data_id(2a)   | t2          | t1>=t     | t2        | t1         | *         | 1      | 0      | h+1         | h+1
+ * sync_data_id(2a+1) | t2          | t1>t      | t2        | t1         | *         | 1      | 1      | h+1         | h+1
+ * sync_closed_id(2a) | t2          | t3>t2     | t2        | t3         | *         | 1      | 0      | -1          | h+1
+ */
 int synced = 0; // no concurrency control but acts as an eventual state signal
 
 void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
@@ -54,6 +78,9 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
   sl_status_t sc __attribute__ ((unused));
 #define user_handle (*((uint8_t*)(handle->callback_data)))
   if (user_handle == MAIN_TIMER_HANDLE) {
+    /*
+     * turn on scanning at some intervals
+     */
     if (scan_counter == 0) {
       scan_counter = SCAN_CYCLE_TIME;
       dongle_start();
@@ -63,6 +90,10 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
     } else {
       scan_counter--;
     }
+
+    /*
+     * increment local timer clock
+     */
     dongle_clock_increment();
     dongle_log_counters();
 
@@ -72,6 +103,10 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
         stats->stat_ints.last_download_end_time, RETRY_DOWNLOAD_INTERVAL,
         dongle_download_complete_status(), download.is_active, synced, sync_handle);
 
+    /*
+     * if device moved away from a beacon and download was incomplete,
+     * close periodic sync after some time.
+     */
     if (dongle_download_complete_status() == 0 && synced == 1 &&
         dongle_time - last_download_start_time >
         DOWNLOAD_LATENCY_THRESHOLD) {
@@ -149,11 +184,17 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
           report.data.data, report.data.len);
       } else {
 #if MODE__PERIODIC
+
+      /*
+       * sync attempts to see if there is a network beacon nearby
+       */
       if (last_sync_close_time > 0 &&
           (last_sync_close_time - last_sync_open_time) <
           (int) PERIODIC_SYNC_FAIL_LATENCY) {
         num_sync_open_attempts++;
       } else {
+        // first periodic sync after dongle reboot or dongle is trying
+        // to scan periodic adv. from an actual network beacon nearby
         num_sync_open_attempts = 0;
       }
 

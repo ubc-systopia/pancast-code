@@ -51,12 +51,7 @@
 #define RISK_TIMER_PRIORT 0
 
 /* Risk Data */
-#define RISK_DATA_SIZE 250 // PER_ADV_SIZE * BATCH_SIZE
-// #define BATCH_SIZE 2
-
-#define DATA_SIZE 250
 #define READ_SIZE 8
-#define NUM_READS DATA_SIZE / READ_SIZE
 #define TICK_DELAY 0
 #define DATA_DELAY 68 // determined empirically to sync up with advertising interval
 

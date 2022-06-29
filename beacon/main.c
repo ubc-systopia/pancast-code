@@ -97,7 +97,7 @@ int main(void)
         BEACON_TIMER_RESOLUTION, timer);
   }
 
-  uint8_t *buf = malloc(DATA_SIZE);
+  uint8_t *buf = malloc(PER_ADV_SIZE);
 
 #if BEACON_MODE__NETWORK
   int risk_timer_started = 0;
@@ -110,7 +110,7 @@ int main(void)
 
   while (1) {
 
-    memset(buf, 0, DATA_SIZE);
+    memset(buf, 0, PER_ADV_SIZE);
 
 #define half_I ((((float)PER_ADV_INTERVAL)*1.25) / 2)
 #if BEACON_MODE__NETWORK
@@ -151,9 +151,9 @@ int main(void)
 
       GPIO_PinOutSet(gpioPortB, 1);
 
-      while (tot_len < DATA_SIZE) {
-        len = (DATA_SIZE - tot_len > READ_SIZE) ?
-          READ_SIZE : (DATA_SIZE - tot_len);
+      while (tot_len < PER_ADV_SIZE) {
+        len = (PER_ADV_SIZE - tot_len > READ_SIZE) ?
+          READ_SIZE : (PER_ADV_SIZE - tot_len);
 
         int r = 0;
         while (r < len) {

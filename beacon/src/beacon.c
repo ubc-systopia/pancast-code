@@ -161,8 +161,8 @@ void beacon_info()
   log_expf("    Stat offset:              0x%0x\r\n", storage.map.stat);
 
   log_expf("    Periodic interval:        %u\r\n", PER_ADV_INTERVAL);
-  log_expf("    Min sync adv. interval:   %u\r\n", MIN_ADV_INTERVAL);
-  log_expf("    Max sync adv. interval:   %u\r\n", MAX_ADV_INTERVAL);
+  log_expf("    Min sync adv. interval:   %u\r\n", PER_ADV_MIN_INTERVAL);
+  log_expf("    Max sync adv. interval:   %u\r\n", PER_ADV_MAX_INTERVAL);
   log_expf("    Tx power:                 %u\r\n", PER_TX_POWER);
 
 #ifdef MODE__STAT
@@ -483,8 +483,8 @@ void beacon_periodic_advertise()
    * set advertising interval to 100ms.
    */
   sc = sl_bt_advertiser_set_timing(advertising_set_handle,
-      MIN_ADV_INTERVAL, // min. adv. interval (milliseconds * 1.6)
-      MAX_ADV_INTERVAL, // max. adv. interval (milliseconds * 1.6)
+      PER_ADV_MIN_INTERVAL, // min. adv. interval (milliseconds * 1.6)
+      PER_ADV_MAX_INTERVAL, // max. adv. interval (milliseconds * 1.6)
       NO_MAX_DUR,       // adv. duration
       NO_MAX_EVT);      // max. num. adv. events
   if (sc != 0) {

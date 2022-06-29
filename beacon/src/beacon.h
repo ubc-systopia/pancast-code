@@ -61,8 +61,8 @@ typedef struct
 
 /* Periodic Advertising */
 #define PER_ADV_HANDLE 0xff
-#define MIN_ADV_INTERVAL 0x20  // min. adv. interval (milliseconds * 1.6)
-#define MAX_ADV_INTERVAL 0x20  // max. adv. interval (milliseconds * 1.6)
+#define PER_ADV_MIN_INTERVAL 0x20  // min. adv. interval (milliseconds * 1.6)
+#define PER_ADV_MAX_INTERVAL 0x20  // max. adv. interval (milliseconds * 1.6)
 #define PER_ADV_INTERVAL 10    // per. adv. interval (units of 1.25ms)
 #define PER_FLAGS 0            // no periodic advertising flags
 #define PER_TX_POWER GLOBAL_TX_POWER

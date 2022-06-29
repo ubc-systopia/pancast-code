@@ -6,8 +6,8 @@
 // otherwise not directly related to PanCast
 
 #include <stdint.h>
-#include "pancast/constants.h"
 #include "pancast/riskinfo.h"
+#include "settings.h"
 
 #define BITS_PER_BYTE       8
 #define Kbps    1000
@@ -24,6 +24,24 @@
  * in dongles, which encodes rssi in the last byte of eph_id
  */
 #define BEACON_EPH_ID_SIZE 16
+
+// Simple Data Types
+typedef uint32_t beacon_id_t;
+typedef uint32_t dongle_id_t;
+typedef uint32_t beacon_timer_t;
+typedef uint32_t dongle_timer_t;
+typedef uint64_t beacon_location_id_t;
+typedef int8_t   dongle_rssi_t;
+// for counting epochs
+typedef uint32_t beacon_epoch_counter_t;
+typedef uint32_t dongle_epoch_counter_t;
+
+// Epoch calculation
+// This matches the formula provided in the original PanCast paper
+// where
+// t is the initial clock setting stored in the beacon
+// C is the current clock value of the beacon
+#define epoch_i(t, C) (beacon_epoch_counter_t)((t - C) / BEACON_EPOCH_LENGTH)
 
 // size of a secret or public key
 typedef uint32_t key_size_t;
@@ -74,7 +92,6 @@ static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
 // Risk Broadcast
 
-#define MAX_FILTER_SIZE 2048 // 2kb
 #define PER_ADV_SIZE 250
 #define PACKET_HEADER_LEN (sizeof(rpi_ble_hdr))
 #define MAX_PAYLOAD_SIZE (PER_ADV_SIZE - PACKET_HEADER_LEN)              // S

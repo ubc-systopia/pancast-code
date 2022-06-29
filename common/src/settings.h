@@ -24,6 +24,8 @@
 #define BEACON_EPOCH_LENGTH 15
 
 /*
+ * size of cuckoofilter in bytes
  */
+#define MAX_FILTER_SIZE 2048 // 2kb
 
 #endif /* COMMON_SETTINGS__H */

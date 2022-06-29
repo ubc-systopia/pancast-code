@@ -220,7 +220,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         last_sync_open_time = dongle_time;
         last_download_start_time = dongle_time;
         if (prev_sync_handle != sync_handle) {
-          log_infof("open sync addr[%d, 0x%02x]: %0x:%0x:%0x:%0x:%0x:%0x "
+          log_expf("open sync addr[%d, 0x%02x]: %0x:%0x:%0x:%0x:%0x:%0x "
             "sid: %u phy(%d, %d) chan: %d intvl: %d h: %d p: %d #attempts: %d "
             "sc: 0x%x\r\n",
             evt->data.evt_scanner_scan_report.address_type,
@@ -255,7 +255,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
       break;
 
     case sl_bt_evt_sync_closed_id:
-      log_infof("Sync lost...\r\n");
+      log_expf("Sync lost...\r\n");
       dongle_on_sync_lost();
       synced = 0;
       break;

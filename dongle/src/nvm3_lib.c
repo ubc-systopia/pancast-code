@@ -152,7 +152,7 @@ void nvm3_save_stat(void *stat)
   nvm3_write(NVM3_STAT_GROUP, &(statp->stat_grp));
   nvm3_write(NVM3_STAT_ALL_DWNLD, &(statp->all_download_stats));
   nvm3_write(NVM3_STAT_COMPLETED_DWNLD, &(statp->completed_download_stats));
-  log_infof("[NVM3] write last report: %u dwnld: %u -> %u #ephids: %.0f "
+  log_expf("[NVM3] write last report: %u dwnld: %u -> %u #ephids: %.0f "
       "#scan results: %.0f all bytes: %.0f errs: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
       statp->stat_ints.last_report_time,
       last_download_start_time,
@@ -180,7 +180,7 @@ void nvm3_load_stat(void *stat)
   nvm3_read(NVM3_STAT_GROUP, &(statp->stat_grp));
   nvm3_read(NVM3_STAT_ALL_DWNLD, &(statp->all_download_stats));
   nvm3_read(NVM3_STAT_COMPLETED_DWNLD, &(statp->completed_download_stats));
-  log_infof("[NVM3] read last report: %lu dwnld: %lu -> %lu #ephids: %.0f "
+  log_expf("[NVM3] read last report: %lu dwnld: %lu -> %lu #ephids: %.0f "
       "#scan results: %.0f all bytes: %.0f ret: 0x%0x 0x%0x 0x%0x 0x%0x\r\n",
       statp->stat_ints.last_report_time,
       last_download_start_time,

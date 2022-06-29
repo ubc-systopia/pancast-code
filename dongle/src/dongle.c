@@ -404,7 +404,7 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
     cur_encounters[i].beacon_time_int = 1;
     cur_encounters[i].rssi = rssi;
 
-#if 0
+#if 1
     beacon_eph_id_t *id = &cur_encounters[i].eph_id;
     hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "new enc",
       cur_encounters[i].beacon_id,

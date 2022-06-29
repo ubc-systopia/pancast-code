@@ -47,11 +47,30 @@ typedef struct
   beacon_sk_t *beacon_sk;                   // Secret Key
 } beacon_config_t;
 
+/*
+ * beacon Tx power
+ */
+#define GLOBAL_TX_POWER 5
+#define MIN_TX_POWER -3
+#define MAX_TX_POWER 10 // device maximum is 8.5 dbm
+
 // Advertising interval settings
-// Zephyr-recommended values are used
 #define BEACON_ADV_MIN_INTERVAL 0x300 // 480ms
 #define BEACON_ADV_MAX_INTERVAL 0x320 // 500ms
 #define LEGACY_TX_POWER GLOBAL_TX_POWER
+
+/* Periodic Advertising */
+#define PER_ADV_HANDLE 0xff
+#define MIN_ADV_INTERVAL 0x20  // min. adv. interval (milliseconds * 1.6)
+#define MAX_ADV_INTERVAL 0x20  // max. adv. interval (milliseconds * 1.6)
+#define PER_ADV_INTERVAL 10    // per. adv. interval (units of 1.25ms)
+#define PER_FLAGS 0            // no periodic advertising flags
+#define PER_TX_POWER GLOBAL_TX_POWER
+
+/* Timers */
+#define LED_TIMER_MS 1000 // one second in ms, used for timer
+#define MAIN_TIMER_HANDLE 0
+#define MAIN_TIMER_PRIORT 1
 
 typedef struct
 {

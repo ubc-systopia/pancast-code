@@ -30,25 +30,10 @@
  * Macros
  ******************************************************************************/
 
-/* Periodic Advertising */
-#define PER_ADV_HANDLE 0xff
-#define MIN_ADV_INTERVAL 0x20  // min. adv. interval (milliseconds * 1.6)
-#define MAX_ADV_INTERVAL 0x20  // max. adv. interval (milliseconds * 1.6)
-#define PER_ADV_INTERVAL 10    // per. adv. interval (units of 1.25ms)
-#define PER_FLAGS 0            // no periodic advertising flags
-#define PER_TX_POWER GLOBAL_TX_POWER
-
 #define CHAN_MAP_SIZE 5 // size of array used to map channels
 
 #define NO_MAX_DUR 0 // 0 for no duration limit
 #define NO_MAX_EVT 0 // 0 for no max events
-
-/* Timers */
-#define LED_TIMER_MS 1000 // one second in ms, used for timer
-#define MAIN_TIMER_HANDLE 0
-#define RISK_TIMER_HANDLE 1
-#define MAIN_TIMER_PRIORT 1
-#define RISK_TIMER_PRIORT 0
 
 /* Risk Data */
 #define READ_SIZE 8

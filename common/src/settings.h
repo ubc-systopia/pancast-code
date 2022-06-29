@@ -7,13 +7,6 @@
 
 
 /*
- * beacon Tx power
- */
-#define GLOBAL_TX_POWER 5
-#define MIN_TX_POWER -3
-#define MAX_TX_POWER 10 // device maximum is 8.5 dbm
-
-/*
  * number of time units between each report written to output
  */
 #define DONGLE_REPORT_INTERVAL 60

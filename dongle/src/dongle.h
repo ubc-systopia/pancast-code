@@ -46,11 +46,21 @@
 #define DONGLE_MAX_BC_TRACKED 16
 
 /*
+ * number of OTPs given to user and present in the dongle
+ */
+#define NUM_OTP 16
+
+/*
  * time to wait after not seeing an ID before persisting encounter to storage
  * this value should be equal to the epoch length, as after turn of one complete
  * epoch, this encounter id should definitely have "expired".
  */
 #define LOG_MIN_WAIT BEACON_EPOCH_LENGTH
+
+/*
+ * maximum age of an encounter in the dongle log, in time units.
+ */
+#define DONGLE_MAX_LOG_AGE (14 * 24 * 60)
 
 /*
  * threshold between consecutive sync open and sync close events,
@@ -169,10 +179,6 @@ typedef struct {
 #define SYNC_SKIP 0
 #define SYNC_TIMEOUT 500 // Unit: 10 ms
 #define SYNC_FLAGS 0
-
-#define TIMER_1S 32768
-
-#define TEST_DURATION 1800000
 
 // High-level routine structure
 void dongle_init();

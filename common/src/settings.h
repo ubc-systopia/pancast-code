@@ -13,11 +13,6 @@
 #define BEACON_REPORT_INTERVAL 60
 
 /*
- * number of OTPs given to user and present in the dongle
- */
-#define NUM_OTP 16
-
-/*
  * clock resolution in ms - this corresponds to a single time 'unit'
  */
 #define BEACON_TIMER_RESOLUTION 60000
@@ -29,8 +24,6 @@
 #define BEACON_EPOCH_LENGTH 15
 
 /*
- * maximum age of an encounter in the dongle log, in time units.
  */
-#define DONGLE_MAX_LOG_AGE (14 * 24 * 60)
 
 #endif /* COMMON_SETTINGS__H */

@@ -192,7 +192,7 @@ void dongle_init()
 /* START
    Start scan
  */
-void dongle_start()
+void dongle_start_scan()
 {
   sl_status_t sc = sl_bt_scanner_start(SCAN_PHY, SCAN_DISCOVER_MODE);
   log_expf("=== Starting Dongle: 0x%0x... ===\r\n", sc);
@@ -507,7 +507,8 @@ void dongle_info()
   log_expf("   Report interval:                  %u ms\r\n",
       DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
   log_expf("   Legacy adv scan [PHY, mode]:      %d, %d\r\n", SCAN_PHY, SCAN_MODE);
-  log_expf("   Legacy adv scan interval, window: %u ms, %u ms\r\n", SCAN_INTERVAL, SCAN_WINDOW);
+  log_expf("   Legacy adv scan intvl, wnd, cycle:%u ms, %u ms, %u min\r\n",
+      SCAN_INTERVAL, SCAN_WINDOW, SCAN_CYCLE_TIME);
   log_expf("   Periodic adv sync skip, flags:    %d, %d\r\n", SYNC_SKIP, SYNC_FLAGS);
   log_expf("   Periodic adv sync timeout:        %u ms\r\n", SYNC_TIMEOUT*10);
   log_expf("   Periodic adv sync fail:           %u min\r\n",

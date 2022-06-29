@@ -83,7 +83,7 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
      */
     if (scan_counter == 0) {
       scan_counter = SCAN_CYCLE_TIME;
-      dongle_start();
+      dongle_start_scan();
     } else if (scan_counter == SCAN_CYCLE_TIME) {
       dongle_stop_scan();
       scan_counter--;
@@ -149,7 +149,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
   switch (SL_BT_MSG_ID(evt->header)) {
     case sl_bt_evt_system_boot_id:
       dongle_init();
-      dongle_start();
+      dongle_start_scan();
 
 #if DONGLE_UPLOAD
       access_advertise();

@@ -183,7 +183,7 @@ typedef struct {
 // High-level routine structure
 void dongle_init();
 void dongle_init_scan();
-void dongle_start();
+void dongle_start_scan();
 void dongle_stop_scan();
 void dongle_report();
 void dongle_on_scan_report(bd_addr *addr, int8_t rssi, uint8_t *data, uint8_t data_len);

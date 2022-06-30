@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "request.h"
-#include "../../common/src/pancast/riskinfo.h"
+#include "../../common/src/riskinfo.h"
 
 #include <fcntl.h> 
 #include <time.h>

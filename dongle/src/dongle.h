@@ -151,6 +151,11 @@ typedef struct {
   beacon_eph_id_t eph_id;
 } dongle_encounter_entry_t;
 
+typedef struct {
+  dongle_encounter_entry_t e;
+  int n;
+} enctr_list_t;
+
 // Timing Constants
 #define MAIN_TIMER_HANDLE 0x00
 #define PREC_TIMER_HANDLE 0x01 // high-precision timer

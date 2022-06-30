@@ -15,7 +15,7 @@ extern dongle_config_t config;
 extern dongle_stats_t *stats;
 extern dongle_epoch_counter_t epoch; // current epoch
 extern dongle_timer_t dongle_time; // main dongle timer
-extern dongle_encounter_entry_t *cur_encounters;
+extern enctr_list_t *enctr_list;
 extern size_t cur_id_idx;
 extern download_t download;
 extern uint16_t prev_sync_handle;
@@ -77,8 +77,7 @@ void sl_button_on_change(const sl_button_t *handle)
     dongle_time = config.t_cur = config.t_init;
     cur_id_idx = epoch = 0;
     prev_sync_handle = -1;
-    memset(cur_encounters, 0,
-        sizeof(dongle_encounter_entry_t) * DONGLE_MAX_BC_TRACKED);
+    memset(enctr_list, 0, sizeof(enctr_list_t) * DONGLE_MAX_BC_TRACKED);
     dongle_stats_reset();
     nvm3_save_stat(stats);
     dongle_download_init();

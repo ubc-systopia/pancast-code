@@ -511,16 +511,20 @@ void dongle_info()
   log_expf("   Report interval:                  %u ms\r\n",
       DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
   log_expf("   Legacy adv scan [PHY, mode]:      %d, %d\r\n", SCAN_PHY, SCAN_MODE);
-  log_expf("   Legacy adv scan intvl, wnd, cycle:%u ms, %u ms, %u min\r\n",
-      SCAN_INTERVAL, SCAN_WINDOW, SCAN_CYCLE_TIME);
-  log_expf("   Periodic adv sync skip, flags:    %d, %d\r\n", SYNC_SKIP, SYNC_FLAGS);
-  log_expf("   Periodic adv sync timeout:        %u ms\r\n", SYNC_TIMEOUT*10);
-  log_expf("   Periodic adv sync fail:           %u min\r\n",
-      PERIODIC_SYNC_FAIL_LATENCY);
-  log_expf("   Periodic adv download lat:        %u min\r\n",
-      DOWNLOAD_LATENCY_THRESHOLD);
-  log_expf("   Periodic adv retry, new interval: %u min, %u min\r\n",
-      RETRY_DOWNLOAD_INTERVAL, NEW_DOWNLOAD_INTERVAL);
+  log_expf("   Legacy adv scan intvl, wnd, cycle:%u ms, %u ms, %u ms\r\n",
+      SCAN_INTERVAL*0.625, SCAN_WINDOW*0.625,
+      SCAN_CYCLE_TIME * DONGLE_TIMER_RESOLUTION);
+  log_expf("   Periodic adv sync skip, flags:    %d, %d\r\n",
+      SYNC_SKIP, SYNC_FLAGS);
+  log_expf("   Periodic adv sync timeout:        %u ms\r\n",
+      SYNC_TIMEOUT*10);
+  log_expf("   Periodic adv sync fail:           %u ms\r\n",
+      PERIODIC_SYNC_FAIL_LATENCY * DONGLE_TIMER_RESOLUTION);
+  log_expf("   Periodic adv download lat:        %u ms\r\n",
+      DOWNLOAD_LATENCY_THRESHOLD * DONGLE_TIMER_RESOLUTION);
+  log_expf("   Periodic adv retry, new interval: %u ms, %u ms\r\n",
+      RETRY_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION,
+      NEW_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION);
 
   log_expf("   Flash page size, count, total:    %u B, %u, %u B\r\n",
       FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES,

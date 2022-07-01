@@ -152,7 +152,7 @@ static int download_one_chunk_complete(download_t *download, uint32_t chunkid)
   if (!download)
     return -1;
 
-  for (int j = 0; j < MAX_NUM_PACKETS_PER_FILTER; j++) {
+  for (uint32_t j = 0; j < MAX_NUM_PACKETS_PER_FILTER; j++) {
     if (download->packet_buffer.chunk_arr[chunkid].counts[j] <= 0)
       return 0;
   }

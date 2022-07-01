@@ -203,29 +203,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
   stat_add(rssi, stats->stat_grp.periodic_data_rssi);
 #endif
 
-#if 0
-  if (download.is_active) {
-    if (rbh->chunkid != download.packet_buffer.cur_chunkid) {
-      log_errorf("forced chunk switch, prev: %u new: %u\r\n",
-          download.packet_buffer.cur_chunkid, rbh->chunkid);
-      dongle_download_fail(&stats->stat_ints.switch_chunk);
-      download.packet_buffer.cur_chunkid = rbh->chunkid;
-    }
-
-    if (rbh->chunklen != download.packet_buffer.buffer.data_len) {
-      log_errorf("chunk len mismatch, prev: %u new: %u\r\n",
-          download.packet_buffer.buffer.data_len, rbh->chunklen);
-      download.packet_buffer.buffer.data_len = rbh->chunklen;
-    }
-
-    if (rbh->numchunks != download.packet_buffer.numchunks) {
-      log_errorf("chunk count mismatch, prev: %u new: %u\r\n",
-          download.packet_buffer.numchunks, rbh->numchunks);
-      download.packet_buffer.numchunks = rbh->numchunks;
-    }
-  }
-#endif
-
   if (rbh->pkt_seq >= MAX_NUM_PACKETS_PER_FILTER ||
       (int32_t) rbh->chunklen < 0) {
     log_errorf("seq#: %d, max pkts: %d, chunklen: %d\r\n",

@@ -7,6 +7,7 @@
 #include "common/src/util/log.h"
 #include "common/src/util/util.h"
 #include "common/src/test.h"
+#include "cuckoofilter-gadget/cf-gadget.h"
 
 extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
@@ -212,3 +213,49 @@ void dongle_test_enctr_storage(void)
   }
 }
 
+#ifdef CUCKOOFILTER_FIXED_TEST
+// Ephemeral IDs known to be in the test filter
+static char *TEST_ID_EXIST_1 = "\x08\xb5\xec\x97\xaa\x06\xf8\x82\x27\xeb\x4e\x5a\x83\x72\x5b";
+static char *TEST_ID_EXIST_2 = "\x3d\xbd\xb9\xc4\xf4\xe0\x9f\x1d\xc4\x30\x66\xda\xb8\x25\x3a";
+// not in filter
+static char *TEST_ID_NEXIST_1 = "blablablablabla";
+static char *TEST_ID_NEXIST_2 = "tralalalalalala";
+
+void run_fixed_cf_test(download_t *download, uint32_t num_buckets)
+{
+  uint8_t *filter = download->packet_buffer.buffer.data;
+
+  int status = 0;
+
+  // these are the test cases for the fixed test filter
+  // these should exist
+  if (!lookup(TEST_ID_EXIST_1, filter, num_buckets)) {
+    log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+               TEST_ID_EXIST_1);
+    status += 1;
+  }
+
+  if (!lookup(TEST_ID_EXIST_2, filter, num_buckets)) {
+    log_errorf("Cuckoofilter test failed: %s should exist\r\n",
+               TEST_ID_EXIST_2);
+    status += 1;
+  }
+
+  // these shouldn't
+  if (lookup(TEST_ID_NEXIST_1, filter, num_buckets)) {
+    log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
+               TEST_ID_NEXIST_1);
+    status += 1;
+  }
+  if (lookup(TEST_ID_NEXIST_2, filter, num_buckets)) {
+    log_errorf("Cuckoofilter test failed: %s should NOT exist\r\n",
+               TEST_ID_NEXIST_2);
+    status += 1;
+  }
+
+  if (!status) {
+    log_infof("Cuckoofilter test passed\r\n");
+  }
+
+}
+#endif

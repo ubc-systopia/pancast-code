@@ -3,6 +3,7 @@
 
 #include "dongle.h"
 #include "storage.h"
+#include "download.h"
 
 #if TEST_DONGLE
 static otp_set TEST_OTPS = {
@@ -46,5 +47,6 @@ void dongle_test_encounter(encounter_broadcast_t *enc);
 #endif /* TEST_DONGLE */
 
 void dongle_test_enctr_storage(void);
+void run_fixed_cf_test(download_t *download, uint32_t num_buckets);
 
 #endif

@@ -13,10 +13,6 @@ typedef struct {
   uint32_t n_corrupt_packets;
   uint32_t n_matches;
   struct {
-    // map of sequence number to packet count for that number
-    // used to track completion of the download
-    uint32_t counts[MAX_NUM_PACKETS_PER_FILTER];
-
     // number of unique packets seen
     int num_distinct;
 
@@ -25,6 +21,14 @@ typedef struct {
 
     // the current chunk being downloaded
     uint32_t cur_chunkid;
+    uint32_t numchunks;
+
+    // track of seq# recvd in each chunk
+    struct {
+      // map of sequence number to packet count for that number
+      // used to track completion of the download
+      int8_t counts[MAX_NUM_PACKETS_PER_FILTER];
+    } chunk_arr[MAX_NUM_CHUNKS];
 
     // actual received payload
     struct {
@@ -37,10 +41,12 @@ typedef struct {
 
 // Count packet duplication
 #define dongle_download_duplication(s, d) \
-  for (int i = 0; i < (int) MAX_NUM_PACKETS_PER_FILTER; i++) { \
-    uint32_t count = d.packet_buffer.counts[i]; \
-    if (count > 0) { \
-      stat_add(count, s.pkt_duplication); \
+  for (uint32_t c = 0; c < d.packet_buffer.numchunks; c++) { \
+    for (int i = 0; i < (int) MAX_NUM_PACKETS_PER_FILTER; i++) { \
+      uint32_t count = d.packet_buffer.chunk_arr[c].counts[i]; \
+      if (count > 0) { \
+        stat_add(count, s.pkt_duplication); \
+      } \
     } \
   }
 

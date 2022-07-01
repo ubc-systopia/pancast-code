@@ -17,7 +17,8 @@ typedef struct chunk_hdr {
 typedef struct rpi_ble_hdr {
   uint32_t pkt_seq;
   uint32_t chunkid;
-  uint64_t chunklen;
+  uint32_t chunklen;
+  uint32_t numchunks;
 } rpi_ble_hdr;
 
 #endif /* __RISKINFO_H__ */

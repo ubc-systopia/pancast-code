@@ -27,5 +27,6 @@
  * size of cuckoofilter in bytes
  */
 #define MAX_FILTER_SIZE 2048 // 2kb
+#define MAX_NUM_CHUNKS  64
 
 #endif /* COMMON_SETTINGS__H */

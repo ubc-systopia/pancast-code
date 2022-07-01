@@ -73,6 +73,7 @@ void prep_next_pkt(rpi_sl_buf *rsb, char *inbuf, int inoff, int inlen,
   rbh->pkt_seq = pkt_seq;
   rbh->chunkid = chunkid;
   rbh->chunklen = chunklen;
+  rbh->numchunks = rsb->num_chunks;
   ptr += sizeof(rpi_ble_hdr);
   memcpy(ptr, inbuf+inoff, inlen);
 

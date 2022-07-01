@@ -132,7 +132,7 @@ void make_request(rpi_sl_buf *rsb)
     char *risk_payload = req_chunk.response + sizeof(chunk_hdr);
 
 //    hexdump(risk_payload, data_size);
-    bitdump(risk_payload, data_size);
+//    bitdump(risk_payload, data_size);
     int chunkidx = rsb->chnkidx_w;
     prep_pkts_from_chunk(rsb, i, risk_payload, data_size);
     dprintf(LVL_EXP, "chunk size: %llu, pkt arr idx: %u cnt: %u\r\n", data_size,

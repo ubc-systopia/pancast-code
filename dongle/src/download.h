@@ -24,7 +24,7 @@ typedef struct {
     uint32_t received;
 
     // the current chunk being downloaded
-    uint32_t chunk_num;
+    uint32_t cur_chunkid;
 
     // actual received payload
     struct {

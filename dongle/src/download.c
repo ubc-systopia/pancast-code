@@ -156,7 +156,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     log_debugf("%02x %.0f %d %d dwnld active: %d "
       "data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
-      download.is_active, download.packet_buffer.chunk_num,
+      download.is_active, download.packet_buffer.cur_chunkid,
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
 #endif
@@ -187,17 +187,17 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
       "chunkid: %u, chunknum: %u chunklen: %u data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
       download.is_active, rbh->pkt_seq, rbh->chunkid,
-      download.packet_buffer.chunk_num, (uint32_t) rbh->chunklen,
+      download.packet_buffer.cur_chunkid, (uint32_t) rbh->chunklen,
       (uint32_t) download.packet_buffer.buffer.data_len,
       download.packet_buffer.received);
 #endif
 
   if (download.is_active) {
-    if (rbh->chunkid != download.packet_buffer.chunk_num) {
+    if (rbh->chunkid != download.packet_buffer.cur_chunkid) {
       log_errorf("forced chunk switch, prev: %u new: %u\r\n",
-          download.packet_buffer.chunk_num, rbh->chunkid);
+          download.packet_buffer.cur_chunkid, rbh->chunkid);
       dongle_download_fail(&stats->stat_ints.switch_chunk);
-      download.packet_buffer.chunk_num = rbh->chunkid;
+      download.packet_buffer.cur_chunkid = rbh->chunkid;
     }
 
     if (rbh->chunklen != download.packet_buffer.buffer.data_len) {
@@ -215,6 +215,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
   if (!download.is_active) {
     dongle_download_start();
   }
+  download.packet_buffer.cur_chunkid = rbh->chunkid;
   download.packet_buffer.buffer.data_len = rbh->chunklen;
 
   download.n_total_packets++;
@@ -249,7 +250,7 @@ void dongle_download_complete()
       continue;
 
     log_errorf("[%d] chunkid: %d count: %d #distinct: %d total: %d\r\n",
-        i, download.packet_buffer.chunk_num, download.packet_buffer.counts[i],
+        i, download.packet_buffer.cur_chunkid, download.packet_buffer.counts[i],
         download.packet_buffer.num_distinct, download.n_total_packets);
   }
 

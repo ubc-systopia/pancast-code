@@ -4,6 +4,7 @@
 #include "cuckoofilter-gadget/cf-gadget.h"
 #include "led.h"
 #include "stats.h"
+#include "nvm3_lib.h"
 #include "telemetry.h"
 #include "test.h"
 #include "common/src/util/log.h"
@@ -203,15 +204,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 #endif
 
 #if 0
-  log_debugf("%02x %.0f %d %d dwnld active: %d pktseq: %u "
-      "chunkid: %u, chunknum: %u chunklen: %u data len: %u rcvd: %u\r\n",
-      TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
-      download.is_active, rbh->pkt_seq, rbh->chunkid,
-      download.packet_buffer.cur_chunkid, (uint32_t) rbh->chunklen,
-      (uint32_t) download.packet_buffer.buffer.data_len,
-      download.packet_buffer.received);
-#endif
-
   if (download.is_active) {
     if (rbh->chunkid != download.packet_buffer.cur_chunkid) {
       log_errorf("forced chunk switch, prev: %u new: %u\r\n",
@@ -232,6 +224,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
       download.packet_buffer.numchunks = rbh->numchunks;
     }
   }
+#endif
 
   if (rbh->pkt_seq >= MAX_NUM_PACKETS_PER_FILTER ||
       (int32_t) rbh->chunklen < 0) {
@@ -262,9 +255,25 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     data + sizeof(rpi_ble_hdr), len);
   download.packet_buffer.received += len;
 
+#if 0
+  log_expf("%.0f %d %d active: %d chunkid: [%u/%u]/%u, pkt: %u "
+      "chunklen: %u/%u rcvd: %u\r\n",
+      dongle_hp_timer, rssi, data_len, download.is_active,
+      rbh->chunkid, download.packet_buffer.cur_chunkid, rbh->numchunks,
+      rbh->pkt_seq, (uint32_t) rbh->chunklen,
+      (uint32_t) download.packet_buffer.buffer.data_len,
+      download.packet_buffer.received
+      );
+#endif
+
   uint32_t num_buckets = 0;
 
   if (download_one_chunk_complete(&download, rbh->chunkid)) {
+    // check the content using cuckoofilter decoder
+
+    //  bitdump(download.packet_buffer.buffer.data,
+    //      download.packet_buffer.buffer.data_len, "risk chunk");
+
     num_buckets =
       cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 
@@ -287,22 +296,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     if (download.n_matches > 0) {
       dongle_led_notify();
     }
-
-#if MODE__STAT
-    /*
-     * XXX: increment global stats, not assignment
-     */
-    stats->stat_ints.total_matches = download.n_matches;
-    stats->stat_ints.payloads_complete++;
-
-    // compute latency
-    double lat = (double) (payload_end_ticks - payload_start_ticks);
-    dongle_update_download_stats(stats->all_download_stats, download);
-    dongle_update_download_stats(stats->completed_download_stats, download);
-    stat_add(lat, stats->stat_grp.completed_periodic_data_avg_payload_lat);
-    nvm3_save_stat(stats);
-#endif
-
   }
 
   if (download_all_chunks_complete(&download)) {
@@ -313,6 +306,12 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 
 void dongle_download_complete()
 {
+  // now we know the payload is the correct size
+
+  stats->stat_ints.last_download_end_time = dongle_time;
+
+  payload_end_ticks = dongle_hp_timer;
+
   log_expf("[%u] Download complete! last dnwld time: %u "
       "data len: %d curr dwnld lat: %.02f\r\n",
       dongle_time, stats->stat_ints.last_download_end_time,
@@ -331,16 +330,20 @@ void dongle_download_complete()
     }
   }
 
-  // now we know the payload is the correct size
+#if MODE__STAT
+  /*
+   * XXX: increment global stats, not assignment
+   */
+  stats->stat_ints.total_matches = download.n_matches;
+  stats->stat_ints.payloads_complete++;
 
-  stats->stat_ints.last_download_end_time = dongle_time;
-
-  payload_end_ticks = dongle_hp_timer;
-
-  // check the content using cuckoofilter decoder
-
-//  bitdump(download.packet_buffer.buffer.data,
-//      download.packet_buffer.buffer.data_len, "risk chunk");
+  // compute latency
+  double lat = (double) (payload_end_ticks - payload_start_ticks);
+  dongle_update_download_stats(stats->all_download_stats, download);
+  dongle_update_download_stats(stats->completed_download_stats, download);
+  stat_add(lat, stats->stat_grp.completed_periodic_data_avg_payload_lat);
+  nvm3_save_stat(stats);
+#endif
 
   dongle_download_reset();
 }

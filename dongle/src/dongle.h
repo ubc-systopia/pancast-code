@@ -88,7 +88,7 @@
  * time to wait after before trying to download again on periodic adv. channel
  * should be smaller than NEW_DOWNLOAD_INTERVAL
  */
-#define RETRY_DOWNLOAD_INTERVAL 20
+#define RETRY_DOWNLOAD_INTERVAL 30
 /*
  * time to wait before attempting to download fresh risk payload
  * typically in the order of 24 hours

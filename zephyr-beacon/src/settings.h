@@ -18,7 +18,7 @@
 /*
  * #time units between statistic reports
  */
-#define BEACON_REPORT_INTERVAL 20
+#define BEACON_REPORT_INTERVAL 60
 
 /*
  * clock resolution in ms - this corresponds to a single time 'unit'

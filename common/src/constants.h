@@ -90,11 +90,29 @@ typedef struct
 #define BROADCAST_SERVICE_ID 0x2222
 static const beacon_id_t BEACON_SERVICE_ID_MASK = 0xffff0000;
 
-// Risk Broadcast
+/*
+ * =======================
+ * cuckoo filter constants
+ * =======================
+ */
+
+#define FINGERPRINT_BITS    27
+#define NUM_CF_BUCKETS      128
+#define ENTRIES_PER_BUCKET  4
+#define HDR_SIZE_BYTES      8
+
+#define CF_SIZE_BYTES       \
+  (NUM_CF_BUCKETS * FINGERPRINT_BITS * ENTRIES_PER_BUCKET)/(BITS_PER_BYTE)
+
+/*
+ * ========================
+ * risk broadcast constants
+ * ========================
+ */
 
 #define PER_ADV_SIZE 250
 #define PACKET_HEADER_LEN (sizeof(rpi_ble_hdr))
 #define MAX_PAYLOAD_SIZE (PER_ADV_SIZE - PACKET_HEADER_LEN)              // S
-#define MAX_NUM_PACKETS_PER_FILTER (((MAX_FILTER_SIZE-1) / MAX_PAYLOAD_SIZE) + 1)
+#define MAX_NUM_PACKETS_PER_FILTER (((CF_SIZE_BYTES-1) / MAX_PAYLOAD_SIZE) + 1)
 
 #endif /* COMMON_CONSTANTS__H */

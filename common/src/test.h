@@ -30,20 +30,6 @@
 
 typedef uint32_t test_filter_size_t;
 
-/*
- * =======================
- * cuckoo filter constants
- * =======================
- */
-
-#define FINGERPRINT_BITS    27
-#define NUM_CF_BUCKETS      128
-#define ENTRIES_PER_BUCKET  4
-#define HDR_SIZE_BYTES      8
-
-#define CF_SIZE_BYTES       \
-  (NUM_CF_BUCKETS * FINGERPRINT_BITS * ENTRIES_PER_BUCKET)/(BITS_PER_BYTE)
-
 #define TEST_FILTER_LEN     (CF_SIZE_BYTES + HDR_SIZE_BYTES)
 //#define TEST_FILTER_LEN   1736
 

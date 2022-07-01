@@ -29,7 +29,7 @@ typedef struct {
     // actual received payload
     struct {
       uint64_t data_len;
-      uint8_t data[MAX_FILTER_SIZE];
+      uint8_t data[CF_SIZE_BYTES];
     } buffer;
 
   } packet_buffer;

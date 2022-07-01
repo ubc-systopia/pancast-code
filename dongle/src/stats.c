@@ -70,12 +70,16 @@ void dongle_stats(dongle_stats_t *stats)
     stats->stat_ints.total_periodic_data_time / Kbps;
   stat_show(stats->stat_grp.scan_rssi, "[Legacy adv] Scan RSSI", "");
   stat_show(stats->stat_grp.enctr_rssi, "[Legacy adv] Enctr RSSI", "");
-  stat_show(stats->stat_grp.periodic_data_rssi, "[Period adv] Data RSSI", "");
-  stat_show(stats->stat_grp.periodic_data_size, "[Period adv] Pkt size", "bytes");
-  log_expf("[Period adv] #rcvd: %f, #error: %lu, #bytes: %f"
-      ", time: %f s, xput: %f Kbps\r\n",
-      stats->stat_grp.periodic_data_size.n, stats->stat_ints.num_periodic_data_error,
-      (stats->stat_grp.periodic_data_size.mu * stats->stat_grp.periodic_data_size.n),
+  stat_show(stats->stat_grp.periodic_data_rssi,
+      "[Period adv] Data RSSI", "");
+  stat_show(stats->stat_grp.periodic_data_size,
+      "[Period adv] Pkt size", "bytes");
+  log_expf("[Period adv] #rcvd: %.02f, #error: %lu, #bytes: %.02f"
+      ", time: %.02f s, xput: %.02f Kbps\r\n",
+      stats->stat_grp.periodic_data_size.n,
+      stats->stat_ints.num_periodic_data_error,
+      (stats->stat_grp.periodic_data_size.mu *
+       stats->stat_grp.periodic_data_size.n),
       stats->stat_ints.total_periodic_data_time, xput);
 
   // ignore printing stats if no downloads even started
@@ -83,9 +87,10 @@ void dongle_stats(dongle_stats_t *stats)
   if (stats->stat_ints.payloads_started == 0)
     return;
 
-  log_expf("[Risk] started: %d completed: %d failed: %d "
-      "decode fail: %d chunk switch: %d hwrx: %d crc fail: %d id matches: %d\r\n",
-      stats->stat_ints.payloads_started, stats->stat_ints.payloads_complete,
+  log_expf("[Risk] started: %d completed: %d failed: %d decode fail: %d "
+      "chunk switch: %d hwrx: %d crc fail: %d id matches: %d\r\n",
+      stats->stat_ints.payloads_started,
+      stats->stat_ints.payloads_complete,
       stats->stat_ints.payloads_failed, stats->stat_ints.cuckoo_fail,
       stats->stat_ints.switch_chunk, stats->stat_ints.total_hw_rx,
       stats->stat_ints.total_hw_crc_fail, stats->stat_ints.total_matches);

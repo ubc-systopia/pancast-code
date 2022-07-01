@@ -34,8 +34,12 @@ float dongle_download_esimtate_loss(download_t *d)
       }
     }
   }
-  return 100 * (1 - (((float) d->n_total_packets)
-                / (max_count * d->packet_buffer.num_distinct)));
+  float val = 100 * (1 - (((float) d->n_total_packets) /
+              (max_count * d->packet_buffer.num_distinct)));
+  log_expf("DWNLD EST LOSS #total pkts: %d max cnt: %d #distinct: %d "
+      "est: %.02f\r\n", d->n_total_packets, max_count,
+      d->packet_buffer.num_distinct, val);
+  return val;
 #else
   /*
    * The transmitter's payload update does not align perfectly with

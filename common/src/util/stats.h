@@ -28,13 +28,18 @@ typedef struct {
 
 #if 0
 #define stat_show(stat, name, unit) \
-    log_infof("    %s (%s):                               \r\n", name, unit); \
-    log_infof("         N:                              %.0f\r\n", stat.n);   \
-    log_infof("         μ:                              %f\r\n", stat.mu);    \
-    log_infof("         σ:                              %f\r\n", stat.sigma)
+    log_infof("    %s (%s):                     \r\n", name, unit); \
+    log_infof("         N:                      %.0f\r\n", stat.n);   \
+    log_infof("         μ:                      %f\r\n", stat.mu);    \
+    log_infof("         σ:                      %f\r\n", stat.sigma)
 #endif
 
 #define stat_show(stat, name, unit) \
-  log_expf("%s (%s): %.0f, %f, %f\r\n", name, unit, stat.n, stat.mu, stat.sigma)
+  do {  \
+    if (stat.mu != 0.00) {  \
+      log_expf("%s (%s): %.02f, %.02f, %.02f\r\n", \
+          name, unit, stat.n, stat.mu, stat.sigma);  \
+    } \
+  } while (0)
 
 #endif

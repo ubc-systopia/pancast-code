@@ -207,7 +207,7 @@ void sl_bt_on_event(sl_bt_msg_t *evt)
       // set up periodic advertising
       beacon_periodic_advertise();
       adv_start = now();
-      log_infof("[periodic adv] init time: %f ms, adv size: %u\r\n",
+      log_expf("[periodic adv] init time: %f ms, adv size: %u\r\n",
           adv_start, PER_ADV_SIZE);
 #else
 //#if BEACON_MODE__NETWORK == 0

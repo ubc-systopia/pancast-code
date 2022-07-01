@@ -236,7 +236,8 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
             evt->data.evt_scanner_scan_report.secondary_phy,
             evt->data.evt_scanner_scan_report.channel,
             evt->data.evt_scanner_scan_report.periodic_interval,
-            sync_handle, prev_sync_handle, num_sync_open_attempts, sc);
+            sync_handle, (int16_t) prev_sync_handle,
+            num_sync_open_attempts, sc);
           prev_sync_handle = sync_handle;
         }
 
@@ -279,13 +280,13 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
         last_sync_close_time = dongle_time;
         sync_handle = -1;
 
-        log_expf("dongle_time %u stats.last_download_time: %u -> %u "
-          "retry: %u new: %u "
-          "download complete: %d active: %d synced: %d handle: %d sc: 0x%0x\r\n",
+        log_expf("[%u] stats.last_download_time: %u -> %u "
+          "dwnld complete: %d active: %d synced: %d handle: %d "
+          "sc: 0x%0x\r\n",
           dongle_time, last_download_start_time,
-          stats->stat_ints.last_download_end_time, RETRY_DOWNLOAD_INTERVAL,
-          NEW_DOWNLOAD_INTERVAL,
-          dongle_download_complete_status(), download.is_active, synced, sync_handle, sc);
+          stats->stat_ints.last_download_end_time,
+          dongle_download_complete_status(), download.is_active, synced,
+          (int16_t) sync_handle, sc);
       } else {
 #define ERROR_STATUS 0x02
         if (evt->data.evt_sync_data.data_status == ERROR_STATUS) {

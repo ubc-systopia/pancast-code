@@ -184,7 +184,7 @@ int main(void)
 
       // extract sequence number
       rpi_ble_hdr *rbh __attribute__ ((unused)) = (rpi_ble_hdr *) buf;
-      log_debugf("[periodic adv] rlen: %d tot_len: %d seq: %u chunk: %u "
+      log_expf("[periodic adv] rlen: %d tot_len: %d seq: %u chunk: %u "
           "len: %u time: %lu\r\n", rlen, tot_len, rbh->pkt_seq,
           rbh->chunkid, (uint32_t) rbh->chunklen, ms);
 

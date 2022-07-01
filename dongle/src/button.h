@@ -90,7 +90,7 @@ void sl_button_on_change(const sl_button_t *handle)
       config.en_tail, config.en_head);
   dongle_storage_load_encounter(config.en_tail,
       num_encounters_current(config.en_head, config.en_tail),
-      dongle_print_encounter);
+      dongle_print_encounter, 0);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 
   nvm3_load_stat(stats);

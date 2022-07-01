@@ -1,4 +1,5 @@
 #include "storage.h"
+#include "dongle.h"
 #include "nvm3_lib.h"
 
 #include <string.h>
@@ -227,7 +228,7 @@ void _delete_old_encounters_(dongle_config_t *cfg,
 }
 
 void dongle_storage_load_encounter(enctr_entry_counter_t i,
-    enctr_entry_counter_t num, dongle_encounter_cb cb)
+  enctr_entry_counter_t num, dongle_encounter_cb cb, uint32_t num_buckets)
 {
   enctr_entry_counter_t prev_idx;
   dongle_encounter_entry_t en;
@@ -239,7 +240,7 @@ void dongle_storage_load_encounter(enctr_entry_counter_t i,
 
     prev_idx = i;
     i = inc_idx(i);
-  } while (cb(prev_idx, &en));
+  } while (cb(prev_idx, &en, num_buckets));
 }
 
 /*

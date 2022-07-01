@@ -165,7 +165,7 @@ void dongle_init()
       config.en_tail, config.en_head);
   dongle_storage_load_encounter(config.en_tail,
       num_encounters_current(config.en_head, config.en_tail),
-      dongle_print_encounter);
+      dongle_print_encounter, 0);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 
   //===========
@@ -479,7 +479,9 @@ void dongle_on_scan_report(bd_addr *addr __attribute__((unused)), int8_t rssi,
 }
 
 // used as callback for dongle_load_encounter
-int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry)
+int dongle_print_encounter(enctr_entry_counter_t i,
+    dongle_encounter_entry_t *entry,
+    uint32_t num_buckets __attribute__((unused)))
 {
   beacon_eph_id_t *id = &entry->eph_id;
   hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,

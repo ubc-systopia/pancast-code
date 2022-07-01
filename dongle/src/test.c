@@ -83,7 +83,9 @@ int test_compare_entry_idx(enctr_entry_counter_t i, dongle_encounter_entry_t *en
   return 1;
 }
 
-int test_check_entry_age(enctr_entry_counter_t i, dongle_encounter_entry_t *entry)
+int test_check_entry_age(enctr_entry_counter_t i,
+  dongle_encounter_entry_t *entry,
+  uint32_t num_buckets __attribute__((unused)))
 {
   if ((dongle_time - entry->dongle_time_start) > DONGLE_MAX_LOG_AGE) {
     log_infof("FAILED: Encounter at index %lu is too old (age=%lu)\r\n",
@@ -155,7 +157,7 @@ void dongle_test()
   } else {
     dongle_storage_load_encounter(config.en_tail,
         num_encounters_current(config.en_head, config.en_tail),
-        test_check_entry_age);
+        test_check_entry_age, 0);
 //    dongle_storage_load_all_encounter(&storage, test_check_entry_age);
   }
 

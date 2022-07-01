@@ -20,7 +20,6 @@ extern dongle_timer_t last_download_start_time;
 
 download_t download;
 cf_t cf;
-uint32_t num_buckets;
 
 #ifdef CUCKOOFILTER_FIXED_TEST
 // Ephemeral IDs known to be in the test filter
@@ -72,7 +71,6 @@ void dongle_download_init()
 {
   dongle_download_reset();
   memset(&cf, 0, sizeof(cf_t));
-  num_buckets = 0;
 }
 
 void dongle_download_start()
@@ -98,8 +96,9 @@ void dongle_download_fail(download_fail_reason *reason __attribute__((unused)))
   }
 }
 
-int dongle_download_check_match(enctr_entry_counter_t i __attribute__((unused)),
-    dongle_encounter_entry_t *entry)
+int dongle_download_check_match(
+    enctr_entry_counter_t i __attribute__((unused)),
+    dongle_encounter_entry_t *entry, uint32_t num_buckets)
 {
   // pad the stored id in case backend entry contains null byte at end
 #define MAX_EPH_ID_SIZE 15
@@ -240,7 +239,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 void dongle_download_complete()
 {
   log_expf("[%u] Download complete! last dnwld time: %u "
-      "data len: %d curr dwnld lat: %f\r\n",
+      "data len: %d curr dwnld lat: %.02f\r\n",
       dongle_time, stats->stat_ints.last_download_end_time,
       download.packet_buffer.buffer.data_len,
       (double) (dongle_hp_timer - payload_start_ticks));
@@ -257,6 +256,8 @@ void dongle_download_complete()
   // now we know the payload is the correct size
 
   stats->stat_ints.last_download_end_time = dongle_time;
+
+  uint32_t num_buckets = 0;
 
   num_buckets = cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
 
@@ -313,7 +314,7 @@ void dongle_download_complete()
   // check existing log entries against the new filter
   dongle_storage_load_encounter(config.en_tail,
       num_encounters_current(config.en_head, config.en_tail),
-      dongle_download_check_match);
+      dongle_download_check_match, num_buckets);
 
 #endif /* CUCKOOFILTER_FIXED_TEST */
 

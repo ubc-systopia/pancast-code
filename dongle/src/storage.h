@@ -128,14 +128,14 @@ enctr_entry_counter_t num_encounters_current(enctr_entry_counter_t head,
  * API is defined using a callback structure
  */
 typedef int (*dongle_encounter_cb)(enctr_entry_counter_t i,
-		dongle_encounter_entry_t *entry);
+		dongle_encounter_entry_t *entry, uint32_t num_buckets);
 
 /*
  * load function to iterate through encounter entries and call a
  * function for each entry
  */
 void dongle_storage_load_encounter(enctr_entry_counter_t i,
-    enctr_entry_counter_t num, dongle_encounter_cb cb);
+  enctr_entry_counter_t num, dongle_encounter_cb cb, uint32_t num_buckets);
 
 void dongle_storage_load_single_encounter(enctr_entry_counter_t i,
     dongle_encounter_entry_t *);

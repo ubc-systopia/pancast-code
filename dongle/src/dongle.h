@@ -197,6 +197,8 @@ void dongle_on_clock_update();
 void dongle_clock_increment();
 void dongle_save_encounters();
 void dongle_hp_timer_add(uint32_t ticks);
-int dongle_print_encounter(enctr_entry_counter_t i, dongle_encounter_entry_t *entry);
+int dongle_print_encounter(enctr_entry_counter_t i,
+  dongle_encounter_entry_t *entry,
+  uint32_t num_buckets __attribute__((unused)));
 void dongle_log_counters();
 #endif

@@ -113,7 +113,7 @@ int dongle_download_check_match(
 #endif
     download.n_matches++;
   } else {
-#if 1
+#if 0
     hexdumpen(id, MAX_EPH_ID_SIZE, "miss", entry->beacon_id,
         (uint32_t) entry->location_id, (uint16_t) i,
         (uint32_t) entry->beacon_time_start, entry->beacon_time_int,

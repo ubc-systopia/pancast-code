@@ -184,9 +184,9 @@ int main(void)
 
       // extract sequence number
       rpi_ble_hdr *rbh __attribute__ ((unused)) = (rpi_ble_hdr *) buf;
-      log_expf("[periodic adv] rlen: %d tot_len: %d seq: %u chunk: %u "
-          "len: %u time: %lu\r\n", rlen, tot_len, rbh->pkt_seq,
-          rbh->chunkid, (uint32_t) rbh->chunklen, ms);
+      log_expf("[periodic adv] rlen: %d pkt len: %d [%u:%u] "
+          "chunk len: %u time: %lu\r\n", rlen, tot_len,
+          rbh->chunkid, rbh->pkt_seq, (uint32_t) rbh->chunklen, ms);
 
       if (rlen > 0) {
         set_risk_data(tot_len, buf);

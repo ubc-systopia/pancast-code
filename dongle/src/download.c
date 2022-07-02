@@ -299,9 +299,9 @@ void dongle_download_complete()
 
   payload_end_ticks = dongle_hp_timer;
 
-  log_expf("[%u] Download complete: %d! last dnwld time: %lu "
+  log_expf("[%u] Download complete! last dnwld time: %lu "
       "data len: %lu curr dwnld lat: [%.02f, %.02f - %.02f]: %.02f\r\n",
-      dongle_time, success, stats->stat_ints.last_download_end_time,
+      dongle_time, stats->stat_ints.last_download_end_time,
       (uint32_t) download.packet_buffer.buffer.data_len,
       payload_start_ticks, dongle_hp_timer,
       payload_end_ticks,

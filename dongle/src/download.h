@@ -41,20 +41,25 @@ typedef struct {
 
 // Count packet duplication
 #define dongle_download_duplication(s, d) \
-  for (uint32_t c = 0; c < d.packet_buffer.numchunks; c++) { \
-    for (int i = 0; i < (int) MAX_NUM_PACKETS_PER_FILTER; i++) { \
-      uint32_t count = d.packet_buffer.chunk_arr[c].counts[i]; \
-      if (count > 0) { \
-        stat_add(count, s.pkt_duplication); \
+  do {  \
+    for (uint32_t c = 0; c < d.packet_buffer.numchunks; c++) { \
+      for (int i = 0; i < (int) MAX_NUM_PACKETS_PER_FILTER; i++) { \
+        uint32_t count = d.packet_buffer.chunk_arr[c].counts[i]; \
+        if (count > 0) { \
+          stat_add(count, s.pkt_duplication); \
+        } \
       } \
     } \
-  }
+  } while (0)
 
 #define dongle_update_download_stats(s, d) \
-  stat_add(d.packet_buffer.received, s.n_bytes); \
-  stat_add(d.n_syncs_lost, s.syncs_lost); \
-  dongle_download_duplication(s, d) \
-  stat_add(dongle_download_esimtate_loss(&d), s.est_pkt_loss)
+  do {  \
+    stat_add(d.packet_buffer.received, s.n_bytes); \
+    stat_add(d.n_syncs_lost, s.syncs_lost); \
+    dongle_download_duplication(s, d); \
+    float loss_est = dongle_download_estimate_loss(&d); \
+    stat_add(loss_est, s.est_pkt_loss);  \
+  } while (0)
 
 void dongle_download_init();
 void dongle_download_info();

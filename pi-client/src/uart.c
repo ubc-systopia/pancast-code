@@ -24,8 +24,8 @@ typedef struct ble_pkt {
 } ble_pkt;
 
 typedef struct chunk {
-  uint8_t pkt_arr_idx;
-  uint8_t pkt_cnt;
+  uint32_t pkt_arr_idx;
+  uint32_t pkt_cnt;
 } chunk;
 
 typedef struct rpi_sl_buf {
@@ -135,7 +135,8 @@ void make_request(rpi_sl_buf *rsb)
 //    bitdump(risk_payload, data_size);
     int chunkidx = rsb->chnkidx_w;
     prep_pkts_from_chunk(rsb, i, risk_payload, data_size);
-    dprintf(LVL_EXP, "chunk size: %llu, pkt arr idx: %u cnt: %u\r\n", data_size,
+    dprintf(LVL_EXP, "[%d:%d] chunk size: %llu, pkt arr idx: %u cnt: %u\r\n",
+        i, rsb->num_chunks, data_size,
         rsb->chunk_arr[chunkidx].pkt_arr_idx, rsb->chunk_arr[chunkidx].pkt_cnt);
   }
 
@@ -164,7 +165,7 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
     goto make_req;
   }
 
-  int chunkidx = rsb->chnkidx_r;
+  uint32_t chunkidx = rsb->chnkidx_r;
   chunk *chnk = &rsb->chunk_arr[chunkidx];
   int pktidx = rsb->pktidx_r;
   ble_pkt *pkt = &rsb->pkt_arr[pktidx];
@@ -178,11 +179,16 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
   if (wlen != outlen) {
     fprintf(stderr, "write error, len: %d wlen: %d\r\n", outlen, wlen);
   }
-  dprintf(LVL_DBG, "[%u:%d] len: %llu wlen: %d chnk w: %u r: %u "
-      "pkt w: %u r: %u chnk[idx,cnt]: [%u,%u] rep: %u\r\n",
-      ((uint32_t *) ptr)[1], ((uint32_t *) ptr)[0],
-      ((uint64_t *) ptr)[1], wlen, rsb->chnkidx_w, rsb->chnkidx_r,
-      rsb->pktidx_w, rsb->pktidx_r, chnk->pkt_arr_idx, chnk->pkt_cnt,
+  dprintf(LVL_DBG, "[%u:%d]/%u,%u len: %u wlen: %d chnk w: %u r: %u "
+      "pkt w: %u r: %u cidx: %u, +1: %u, mod: %u pktidx[mod]: %u "
+      "chnk[idx,cnt]: [%u,%u] rep: %u\r\n",
+      ((uint32_t *) ptr)[1], ((uint32_t *) ptr)[0], ((uint32_t *) ptr)[3],
+      rsb->num_chunks,
+      ((uint32_t *) ptr)[2], wlen, rsb->chnkidx_w, rsb->chnkidx_r,
+      rsb->pktidx_w, rsb->pktidx_r, chunkidx, (chunkidx+1),
+      (chunkidx+1) % rsb->num_chunks,
+      rsb->chunk_arr[((chunkidx+1)%rsb->num_chunks)].pkt_arr_idx,
+      chnk->pkt_arr_idx, chnk->pkt_cnt,
       rsb->curr_chnk_repcnt);
 
   // next packet

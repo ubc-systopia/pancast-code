@@ -497,52 +497,55 @@ void dongle_info()
 {
   log_expf("%s", "=== Dongle Info: ===\r\n");
   log_expf("   Dongle ID:                        0x%x\r\n", config.id);
-  log_expf("   Clock init, cur, dongle_time:     %lu, %lu, %lu\r\n", config.t_init,
-      config.t_cur, dongle_time);
-  log_expf("   Timer frequency:                  %u Hz\r\n", sl_sleeptimer_get_timer_frequency());
+  log_expf("   Clock init, cur, dongle_time:     %lu, %lu, %lu\r\n",
+    config.t_init, config.t_cur, dongle_time);
+  log_expf("   Timer frequency:                  %u Hz\r\n",
+    sl_sleeptimer_get_timer_frequency());
   log_expf("   Backend public key size:          %lu bytes\r\n",
-      config.backend_pk_size);
+    config.backend_pk_size);
   log_expf("   Secret key size:                  %lu bytes\r\n",
-      config.dongle_sk_size);
+    config.dongle_sk_size);
   log_expf("   Timer resolution:                 %u ms\r\n",
-      DONGLE_TIMER_RESOLUTION);
-  log_expf("   Epoch length:                     %u ms\r\n",
-      BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION);
-  log_expf("   Report interval:                  %u ms\r\n",
-      DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION);
-  log_expf("   Legacy adv scan [PHY, mode]:      %d, %d\r\n", SCAN_PHY, SCAN_MODE);
-  log_expf("   Legacy adv scan intvl, wnd, cycle:%u ms, %u ms, %u ms\r\n",
-      SCAN_INTERVAL*0.625, SCAN_WINDOW*0.625,
-      SCAN_CYCLE_TIME * DONGLE_TIMER_RESOLUTION);
+    DONGLE_TIMER_RESOLUTION);
+  log_expf("   Epoch length:                     %.1f min\r\n",
+    ((float) BEACON_EPOCH_LENGTH * DONGLE_TIMER_RESOLUTION)/60000);
+  log_expf("   Report interval:                  %u min\r\n",
+    (DONGLE_REPORT_INTERVAL * DONGLE_TIMER_RESOLUTION)/60000);
+  log_expf("   Legacy adv scan [PHY, mode]:      %d, %d\r\n",
+    SCAN_PHY, SCAN_MODE);
+  log_expf("   Legacy adv scan intvl, wnd, cycle:%.02f ms, %.02f ms, %u ms\r\n",
+    SCAN_INTERVAL*0.625, SCAN_WINDOW*0.625,
+    SCAN_CYCLE_TIME * DONGLE_TIMER_RESOLUTION);
   log_expf("   Periodic adv sync skip, flags:    %d, %d\r\n",
-      SYNC_SKIP, SYNC_FLAGS);
+    SYNC_SKIP, SYNC_FLAGS);
   log_expf("   Periodic adv sync timeout:        %u ms\r\n",
-      SYNC_TIMEOUT*10);
-  log_expf("   Periodic adv sync fail:           %u ms\r\n",
-      PERIODIC_SYNC_FAIL_LATENCY * DONGLE_TIMER_RESOLUTION);
-  log_expf("   Periodic adv download lat:        %u ms\r\n",
-      DOWNLOAD_LATENCY_THRESHOLD * DONGLE_TIMER_RESOLUTION);
+    SYNC_TIMEOUT*10);
+  log_expf("   Periodic adv sync fail:           %.1f min\r\n",
+    ((float) PERIODIC_SYNC_FAIL_LATENCY * DONGLE_TIMER_RESOLUTION)/60000);
+  log_expf("   Periodic adv download lat:        %u min\r\n",
+    (DOWNLOAD_LATENCY_THRESHOLD * DONGLE_TIMER_RESOLUTION)/60000);
   log_expf("   Periodic adv retry, new interval: %u ms, %u ms\r\n",
-      RETRY_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION,
-      NEW_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION);
+    RETRY_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION,
+    NEW_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION);
 
   log_expf("   Flash page size, count, total:    %u B, %u, %u B\r\n",
-      FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES,
-      (FLASH_DEVICE_NUM_PAGES * FLASH_DEVICE_PAGE_SIZE));
+    FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES,
+    (FLASH_DEVICE_NUM_PAGES * FLASH_DEVICE_PAGE_SIZE));
   log_expf("   Flash offset:                     0x%0x\r\n", FLASH_OFFSET);
   log_expf("   Log range, size:                  0x%0x-0x%0x, %u\r\n",
     ENCOUNTER_LOG_START, ENCOUNTER_LOG_END,
     (ENCOUNTER_LOG_END - ENCOUNTER_LOG_START));
   log_expf("   Encounter size:                   %u\r\n",
-      sizeof(dongle_encounter_entry_t));
+    sizeof(dongle_encounter_entry_t));
   log_expf("   Max enctr entries:                %lu\r\n", MAX_LOG_COUNT);
   log_expf("   Log head, tail:                   %u, %u\r\n",
-      config.en_head, config.en_tail);
-  log_expf("   Config offset:                    0x%0x\r\n", DONGLE_CONFIG_OFFSET);
+    config.en_head, config.en_tail);
+  log_expf("   Config offset:                    0x%0x\r\n",
+    DONGLE_CONFIG_OFFSET);
   log_expf("   OTP offset, stat offset:          0x%0x, 0x%0x\r\n",
-      DONGLE_OTPSTORE_OFFSET, DONGLE_STATSTORE_OFFSET);
+    DONGLE_OTPSTORE_OFFSET, DONGLE_STATSTORE_OFFSET);
   log_expf("   Stat obj size, nvm3 obj size:     %u, %u\r\n",
-      sizeof(dongle_stats_t), NVM3_DEFAULT_MAX_OBJECT_SIZE);
+    sizeof(dongle_stats_t), NVM3_DEFAULT_MAX_OBJECT_SIZE);
 }
 
 void dongle_report()

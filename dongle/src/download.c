@@ -23,9 +23,15 @@ extern dongle_timer_t last_download_start_time;
 download_t download;
 cf_t cf;
 
-float dongle_download_esimtate_loss(download_t *d)
+float dongle_download_estimate_loss(download_t *d)
 {
 #if 1
+  if (!d)
+    return 0;
+
+  if (d->n_total_packets == 0 && d->packet_buffer.num_distinct == 0)
+    return 0;
+
   int8_t max_count = d->packet_buffer.chunk_arr[0].counts[0];
   for (uint32_t c = 0; c < d->packet_buffer.numchunks; c++) {
     for (uint32_t i = 1; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
@@ -293,15 +299,18 @@ void dongle_download_complete()
 
   payload_end_ticks = dongle_hp_timer;
 
-  log_expf("[%u] Download complete! last dnwld time: %u "
-      "data len: %d curr dwnld lat: %.02f\r\n",
-      dongle_time, stats->stat_ints.last_download_end_time,
-      download.packet_buffer.buffer.data_len,
+  log_expf("[%u] Download complete: %d! last dnwld time: %lu "
+      "data len: %lu curr dwnld lat: [%.02f, %.02f - %.02f]: %.02f\r\n",
+      dongle_time, success, stats->stat_ints.last_download_end_time,
+      (uint32_t) download.packet_buffer.buffer.data_len,
+      payload_start_ticks, dongle_hp_timer,
+      payload_end_ticks,
       (double) (dongle_hp_timer - payload_start_ticks));
 
   int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
   for (uint32_t c = 0; c < download.packet_buffer.numchunks; c++) {
     for (int i = 0; i < actual_pkts_per_filter; i++) {
+
       if (download.packet_buffer.chunk_arr[c].counts[i] > 0)
         continue;
 

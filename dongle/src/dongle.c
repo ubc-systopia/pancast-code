@@ -347,7 +347,7 @@ static int decode_encounter(encounter_broadcast_t *dat,
 
 /* Same functionality as _dongle_encounter_ but takes duration into account
  */
-static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
+static void dongle_save_encounter(mem_encounter_entry_t *enc, size_t i)
 {
 #if 0
   hexdumpen(enc->eph_id.bytes, BEACON_EPH_ID_HASH_LEN, "log enc",
@@ -357,7 +357,17 @@ static void dongle_save_encounter(dongle_encounter_entry_t *enc, size_t i)
     (int8_t) enc->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
 
-  dongle_storage_log_encounter(&config, &dongle_time, enc);
+  dongle_encounter_entry_t de;
+//  memset(&de, 0, sizeof(dongle_encounter_entry_t));
+  de.location_id = enc->location_id;
+  de.beacon_id = enc->beacon_id;
+  de.beacon_time_start = enc->beacon_time_start;
+  de.dongle_time_start = enc->dongle_time_start;
+  de.beacon_time_int = enc->beacon_time_int;
+  de.dongle_time_int = enc->dongle_time_int;
+  de.rssi = (int8_t) enc->rssi;
+  memcpy(&de.eph_id, &enc->eph_id, sizeof(beacon_eph_id_t));
+  dongle_storage_log_encounter(&config, &dongle_time, &de);
   memset(&enctr_list[i], 0, sizeof(enctr_list_t));
 }
 
@@ -428,7 +438,8 @@ static void dongle_track(encounter_broadcast_t *enc, int8_t rssi)
 
   enctr_list[i].e.dongle_time_int = dongle_dur;
   enctr_list[i].e.beacon_time_int = beacon_dur;
-  enctr_list[i].e.rssi = (int8_t) ((enctr_list[i].e.rssi * enctr_list[i].n) + rssi) / (enctr_list[i].n+1);
+  enctr_list[i].e.rssi = ((enctr_list[i].e.rssi*enctr_list[i].n) + rssi) /
+    (enctr_list[i].n+1);
   enctr_list[i].n += 1;
 
   return;
@@ -535,8 +546,8 @@ void dongle_info()
   log_expf("   Log range, size:                  0x%0x-0x%0x, %u\r\n",
     ENCOUNTER_LOG_START, ENCOUNTER_LOG_END,
     (ENCOUNTER_LOG_END - ENCOUNTER_LOG_START));
-  log_expf("   Encounter size:                   %u\r\n",
-    sizeof(dongle_encounter_entry_t));
+  log_expf("   Encounter size (storage, mem):    %u, %u\r\n",
+    sizeof(dongle_encounter_entry_t), sizeof(mem_encounter_entry_t));
   log_expf("   Max enctr entries:                %lu\r\n", MAX_LOG_COUNT);
   log_expf("   Log head, tail:                   %u, %u\r\n",
     config.en_head, config.en_tail);

@@ -152,7 +152,18 @@ typedef struct {
 } dongle_encounter_entry_t;
 
 typedef struct {
-  dongle_encounter_entry_t e;
+  beacon_location_id_t location_id;
+  beacon_id_t beacon_id;
+  beacon_timer_t beacon_time_start;
+  dongle_timer_t dongle_time_start;
+  uint8_t beacon_time_int;
+  uint8_t dongle_time_int;
+  float rssi;
+  beacon_eph_id_t eph_id;
+} mem_encounter_entry_t;
+
+typedef struct {
+  mem_encounter_entry_t e;
   int n;
 } enctr_list_t;
 

@@ -524,9 +524,9 @@ void dongle_info()
     ((float) PERIODIC_SYNC_FAIL_LATENCY * DONGLE_TIMER_RESOLUTION)/60000);
   log_expf("   Periodic adv download lat:        %u min\r\n",
     (DOWNLOAD_LATENCY_THRESHOLD * DONGLE_TIMER_RESOLUTION)/60000);
-  log_expf("   Periodic adv retry, new interval: %u ms, %u ms\r\n",
-    RETRY_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION,
-    NEW_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION);
+  log_expf("   Periodic adv retry, new interval: %u min, %u min\r\n",
+    (RETRY_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION)/60000,
+    (NEW_DOWNLOAD_INTERVAL * DONGLE_TIMER_RESOLUTION)/60000);
 
   log_expf("   Flash page size, count, total:    %u B, %u, %u B\r\n",
     FLASH_DEVICE_PAGE_SIZE, FLASH_DEVICE_NUM_PAGES,

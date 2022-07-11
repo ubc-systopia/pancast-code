@@ -23,18 +23,6 @@ typedef struct
   beacon_sk_t *beacon_sk;                  // Secret Key
 } beacon_config_t;
 
-/*
- * Advertising interval settings
- * Zephyr-recommended values are used
- *
- * unit is 0.625 ms, i.e.,
- * if min_interval = 0x320, actual interval is 500ms
- */
-//#define BEACON_ADV_MIN_INTERVAL BT_GAP_ADV_FAST_INT_MIN_1
-//#define BEACON_ADV_MAX_INTERVAL BT_GAP_ADV_FAST_INT_MAX_1
-#define BEACON_ADV_MIN_INTERVAL 0x320
-#define BEACON_ADV_MAX_INTERVAL 0x640
-
 typedef struct bt_data bt_data_t;
 
 typedef struct

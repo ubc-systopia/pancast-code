@@ -38,4 +38,16 @@
 #define MIN_TX_POWER -10
 #define MAX_TX_POWER 0
 
+/*
+ * Advertising interval settings
+ * Zephyr-recommended values are used
+ *
+ * unit is 0.625 ms, i.e.,
+ * if min_interval = 0x320, actual interval is 500ms
+ */
+//#define BEACON_ADV_MIN_INTERVAL BT_GAP_ADV_FAST_INT_MIN_1
+//#define BEACON_ADV_MAX_INTERVAL BT_GAP_ADV_FAST_INT_MAX_1
+#define BEACON_ADV_MIN_INTERVAL 0x320
+#define BEACON_ADV_MAX_INTERVAL 0x640
+
 #endif /* COMMON_SETTINGS__H */

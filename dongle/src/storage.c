@@ -232,14 +232,16 @@ void dongle_storage_load_encounter(enctr_entry_counter_t i,
 {
   enctr_entry_counter_t prev_idx;
   dongle_encounter_entry_t en;
+  enctr_entry_counter_t cnt = 0;
   do {
-    if (i >= num)
+    if (cnt >= num)
       break;
 
     dongle_storage_load_single_encounter(i, &en);
 
     prev_idx = i;
     i = inc_idx(i);
+    cnt++;
   } while (cb(prev_idx, &en, num_buckets));
 }
 

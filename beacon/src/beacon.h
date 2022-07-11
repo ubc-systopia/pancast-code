@@ -52,9 +52,9 @@ typedef struct
  * units: 0.1 dbm, i.e.,
  * if min_tx_power = -3, power config is -0.3 dbm
  */
-#define GLOBAL_TX_POWER 5
-#define MIN_TX_POWER -3
-#define MAX_TX_POWER 10 // device maximum is 8.5 dbm
+#define GLOBAL_TX_POWER 0
+#define MIN_TX_POWER -10
+#define MAX_TX_POWER 0 // device maximum is 8.5 dbm
 
 /*
  * Advertising interval settings
@@ -62,8 +62,8 @@ typedef struct
  * unit is 0.625 ms, i.e,
  * if min_interval = 0x320, actual interval is 500ms
  */
-#define BEACON_ADV_MIN_INTERVAL 0x300 // 480ms
-#define BEACON_ADV_MAX_INTERVAL 0x320 // 500ms
+#define BEACON_ADV_MIN_INTERVAL 0x320 // 500ms
+#define BEACON_ADV_MAX_INTERVAL 0x640 // 1000ms
 #define LEGACY_TX_POWER GLOBAL_TX_POWER
 
 /* Periodic Advertising */
@@ -75,7 +75,7 @@ typedef struct
 #define PER_TX_POWER GLOBAL_TX_POWER
 
 /* Timers */
-#define LED_TIMER_MS 1000 // one second in ms, used for timer
+#define LED_TIMER_MS 2000 // one second in ms, used for timer
 #define MAIN_TIMER_HANDLE 0
 #define MAIN_TIMER_PRIORT 1
 

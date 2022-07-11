@@ -163,9 +163,11 @@ void dongle_init()
 
   log_expf("==== UPLOAD LOG START [%u:%u] ===\r\n",
       config.en_tail, config.en_head);
-  dongle_storage_load_encounter(config.en_tail,
-      num_encounters_current(config.en_head, config.en_tail),
+  dongle_storage_load_encounter(0, MAX_LOG_COUNT,
       dongle_print_encounter, 0);
+//  dongle_storage_load_encounter(config.en_tail,
+//      num_encounters_current(config.en_head, config.en_tail),
+//      dongle_print_encounter, 0);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 
   //===========

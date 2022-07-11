@@ -25,7 +25,7 @@
  */
 #define BEACON_TIMER_RESOLUTION 60000
 #define PAYLOAD_ALTERNATE_TIMER  1000
-#define LED_TIMER_MS 1000
+#define LED_TIMER_MS 2000
 
 /*
  * number of time units (in minutes) in one epoch
@@ -35,7 +35,7 @@
 /*
  * Tx power config limits for Nordic beacon
  */
-#define MIN_TX_POWER -40
-#define MAX_TX_POWER -20
+#define MIN_TX_POWER -10
+#define MAX_TX_POWER 0
 
 #endif /* COMMON_SETTINGS__H */

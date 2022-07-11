@@ -83,19 +83,19 @@
  *
  * unit: depends on the unit of the dongle's timer clock
  */
-#define DOWNLOAD_LATENCY_THRESHOLD  10
+#define DOWNLOAD_LATENCY_THRESHOLD  ((5*60000)/DONGLE_TIMER_RESOLUTION)
 /*
  * time to wait after before trying to download again on periodic adv. channel
  * should be smaller than NEW_DOWNLOAD_INTERVAL
  */
-#define RETRY_DOWNLOAD_INTERVAL 30
+#define RETRY_DOWNLOAD_INTERVAL ((30*60000)/DONGLE_TIMER_RESOLUTION)
 /*
  * time to wait before attempting to download fresh risk payload
  * typically in the order of 24 hours
  *
  * unit: depends on the unit of the dongle's timer clock
  */
-#define NEW_DOWNLOAD_INTERVAL (24*60)
+#define NEW_DOWNLOAD_INTERVAL ((24*60*60000)/DONGLE_TIMER_RESOLUTION)
 
 // Data Structures
 
@@ -180,7 +180,7 @@ typedef struct {
  * unit is 0.625 ms, i.e.,
  * if scan_window or scan_interval = 320, it is 200ms
  */
-#define SCAN_WINDOW 320
+#define SCAN_WINDOW 160
 #define SCAN_INTERVAL (320*5)
 #define SCAN_MODE 0 // passive scan
 /*

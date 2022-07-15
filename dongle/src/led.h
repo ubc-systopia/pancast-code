@@ -7,8 +7,15 @@
 #include "dongle.h"
 #include "common/src/util/log.h"
 
+enum {
+  LED_STATE_SLOW = 0,
+  LED_STATE_FAST,
+  MAX_LED_STATES
+};
+
 extern const sl_led_t sl_led_led0;
 extern sl_sleeptimer_timer_handle_t led_timer;
+extern int led_state;
 
 static inline void dongle_led_timer_handler(
     __attribute__ ((unused)) sl_sleeptimer_timer_handle_t *handle,
@@ -28,6 +35,7 @@ static inline void configure_blinky(void)
   sl_simple_led_context_t *ctx = sl_led_led0.context;
   sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS,
       dongle_led_timer_handler, (void *) NULL, 0, 0);
+  led_state = LED_STATE_SLOW;
   log_expf("Config LED port %d pin %d polarity %d\r\n", ctx->port,
       ctx->pin, ctx->polarity);
 }
@@ -43,16 +51,20 @@ static inline void dongle_led_notify(void) {
 #endif
   sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS/8,
       dongle_led_timer_handler, (void *) NULL, 0, 0);
+  led_state = LED_STATE_FAST;
   if (sc != SL_STATUS_OK) {
     log_errorf("failed period led timer start, sc: %d\r\n", sc);
   }
 }
 
 static inline void dongle_reset_led(void) {
-  sl_status_t sc;
+  if (led_state == LED_STATE_SLOW)
+    return;
+
   log_expf("%s", "reset alert\r\n");
-  sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS,
+  sl_status_t sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS,
       dongle_led_timer_handler, (void *) NULL, 0, 0);
+  led_state = LED_STATE_SLOW;
   if (sc != SL_STATUS_OK) {
     log_errorf("failed period led timer start, sc: %d\r\n", sc);
   }

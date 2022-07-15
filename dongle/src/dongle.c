@@ -33,7 +33,7 @@
 dongle_config_t config;
 
 sl_sleeptimer_timer_handle_t led_timer;
-
+int led_state = 0;
 dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
 enctr_list_t *enctr_list;

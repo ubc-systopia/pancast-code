@@ -37,6 +37,7 @@ sl_sleeptimer_timer_handle_t led_timer;
 dongle_epoch_counter_t epoch; // current epoch
 dongle_timer_t dongle_time; // main dongle timer
 enctr_list_t *enctr_list;
+enctr_bitmap_t enctr_bmap;
 dongle_stats_t *stats;
 size_t cur_id_idx;
 extern download_t download;
@@ -46,7 +47,7 @@ extern download_t download;
 float dongle_hp_timer = 0.0;
 
 static void dongle_config_init(dongle_config_t *cfg, enctr_list_t **enctr_list_p,
-    dongle_stats_t **stats_p)
+    enctr_bitmap_t *enctr_bmap, dongle_stats_t **stats_p)
 {
   if (!cfg)
     return;
@@ -62,6 +63,10 @@ static void dongle_config_init(dongle_config_t *cfg, enctr_list_t **enctr_list_p
         sizeof(enctr_list_t));
     memset(enctr_list, 0, DONGLE_MAX_BC_TRACKED * sizeof(enctr_list_t));
     *enctr_list_p = enctr_list;
+  }
+
+  if (enctr_bmap) {
+    dongle_init_bitmap(enctr_bmap);
   }
 
   if (stats_p) {
@@ -99,12 +104,16 @@ void dongle_init()
   dongle_download_init();
 
   // init configs
-  dongle_config_init(&sto_cfg, NULL, NULL);
-  dongle_config_init(&config, &enctr_list, &stats);
+  dongle_config_init(&sto_cfg, NULL, NULL, NULL);
+  dongle_config_init(&config, &enctr_list, &enctr_bmap, &stats);
 
   // load config
   dongle_storage_load_config(&sto_cfg);
   nvm3_load_config(&config);
+  nvm3_load_enctr_bmap(&enctr_bmap);
+  dongle_print_bitmap_all(&enctr_bmap);
+//  nvm3_save_enctr_bmap(&enctr_bmap);
+//  nvm3_load_enctr_bmap(&enctr_bmap);
 
   config.id = sto_cfg.id;
   config.t_init = sto_cfg.t_init;
@@ -132,6 +141,12 @@ void dongle_init()
     config.en_head = sto_cfg.en_head;
     config.en_tail = sto_cfg.en_tail;
     nvm3_save_config(&config);
+
+    // intent to reset everything
+    if (sto_cfg.en_head == 0 && sto_cfg.en_tail == 0) {
+      dongle_reset_bitmap_all(&enctr_bmap);
+      nvm3_save_enctr_bmap(&enctr_bmap);
+    }
 
     dongle_stats_reset(stats);
     nvm3_save_stat(stats);
@@ -559,6 +574,8 @@ void dongle_info()
     DONGLE_OTPSTORE_OFFSET, DONGLE_STATSTORE_OFFSET);
   log_expf("   Stat obj size, nvm3 obj size:     %u, %u\r\n",
     sizeof(dongle_stats_t), NVM3_DEFAULT_MAX_OBJECT_SIZE);
+  log_expf("   NVM3 #bitmap keys, #logs/bitmap:  %u, %u\r\n",
+      NUM_NVM3_BITMAP_KEYS, NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
 }
 
 void dongle_report()

@@ -18,7 +18,7 @@ extern dongle_config_t config;
 extern dongle_timer_t dongle_time;
 float payload_start_ticks = 0, payload_end_ticks = 0;
 extern dongle_timer_t last_download_start_time;
-
+extern enctr_bitmap_t enctr_bmap;
 
 download_t download;
 cf_t cf;
@@ -122,6 +122,11 @@ int dongle_download_check_match(
         (int8_t) entry->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
     download.n_matches++;
+
+    uint32_t bmap_idx = 0, bmap_off = 0;
+    ENCOUNTER_BITMAP_OFFSET(i, &bmap_idx, &bmap_off);
+    dongle_set_bitmap_bit(&enctr_bmap, bmap_idx, bmap_off);
+
   } else {
 #if 0
     hexdumpen(id, MAX_EPH_ID_SIZE, "miss", entry->beacon_id,
@@ -134,6 +139,74 @@ int dongle_download_check_match(
 
 #undef MAX_EPH_ID_SIZE
   return 1;
+}
+
+void dongle_init_bitmap(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap)
+    return;
+
+  enctr_bmap->match_status =
+    malloc(sizeof(uint8_t) * (MAX_LOG_COUNT/BITS_PER_BYTE));
+
+  memset(enctr_bmap->match_status, 0,
+      sizeof(uint8_t) * (MAX_LOG_COUNT/BITS_PER_BYTE));
+}
+
+void dongle_print_bitmap_all(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return;
+
+  int multiple = 16;
+  for (unsigned int i = 0; i < NUM_BYTES_LOG_BITMAP; i++) {
+    if (i / multiple > 0 && i % multiple == 0) {
+      printf("\r\n");
+    }
+
+    printf("%02x ", enctr_bmap->match_status[i]);
+  }
+  printf("\r\n");
+}
+
+void dongle_reset_bitmap_all(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return;
+
+  memset(enctr_bmap->match_status, 0,
+      sizeof(uint8_t) * (MAX_LOG_COUNT/BITS_PER_BYTE));
+}
+
+void dongle_reset_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
+    uint32_t bmap_off)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return;
+
+  uint8_t val = enctr_bmap->match_status[bmap_idx];
+  uint8_t mask = 0xff ^ (1 << bmap_off);
+  val = val & mask;
+  enctr_bmap->match_status[bmap_idx] = val;
+}
+
+void dongle_reset_bitmap_byte(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return;
+
+  enctr_bmap->match_status[bmap_idx] = 0;
+}
+
+void dongle_set_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
+    uint32_t bmap_off)
+{
+  if (!enctr_bmap)
+    return;
+
+  uint8_t val = enctr_bmap->match_status[bmap_idx];
+  val = val | (1 << bmap_off);
+  enctr_bmap->match_status[bmap_idx] = val;
 }
 
 void dongle_on_sync_lost()
@@ -286,6 +359,10 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
   }
 
   if (download_all_chunks_complete(&download)) {
+
+    dongle_print_bitmap_all(&enctr_bmap);
+    nvm3_save_enctr_bmap(&enctr_bmap);
+
     // there may be extra data in the packet
     dongle_download_complete();
   }

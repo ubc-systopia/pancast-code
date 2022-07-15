@@ -23,6 +23,7 @@
 #include "common/src/util/log.h"
 
 #include "stats.h"
+#include "storage.h"
 
 /*******************************************************************************
  **************************   LOCAL VARIABLES   ********************************
@@ -39,11 +40,15 @@ enum {
   NVM3_MAX_COUNTERS
 };
 
+int NVM3_ENCTR_RISK_MAP[NUM_NVM3_BITMAP_KEYS];
+
 extern dongle_timer_t last_download_start_time;
 
 // Max and min keys for data objects
 #define MIN_DATA_KEY  NVM3_KEY_MIN
-#define MAX_DATA_KEY  (MIN_DATA_KEY + NVM3_MAX_COUNTERS - 1)
+#define MAX_DATA_KEY  \
+  (MIN_DATA_KEY + NVM3_MAX_COUNTERS + NUM_NVM3_BITMAP_KEYS - 1)
+
 
 /*******************************************************************************
  **************************   GLOBAL FUNCTIONS   *******************************
@@ -75,6 +80,10 @@ void nvm3_app_init(void)
   err = nvm3_initDefault();
   EFM_ASSERT(err == ECODE_NVM3_OK);
 
+  for (unsigned int i = 0; i < NUM_NVM3_BITMAP_KEYS; i++) {
+    NVM3_ENCTR_RISK_MAP[i] = NVM3_MAX_COUNTERS + i;
+  }
+
   log_infof("[NVM3] MAX_OBJ_SIZE_DEFAULT %u MAX_OBJ_SIZE %u "
       "DEFAULT_MAX_OBJ_SIZE %u open err: 0x%0x\r\n",
       NVM3_MAX_OBJECT_SIZE_DEFAULT, NVM3_MAX_OBJECT_SIZE,
@@ -83,8 +92,9 @@ void nvm3_app_init(void)
 
 size_t nvm3_count_objects(void)
 {
-  nvm3_ObjectKey_t keys[NVM3_MAX_COUNTERS];
-  memset(keys, 0, sizeof(nvm3_ObjectKey_t) * NVM3_MAX_COUNTERS);
+  nvm3_ObjectKey_t keys[NVM3_MAX_COUNTERS + NUM_NVM3_BITMAP_KEYS];
+  memset(keys, 0, sizeof(nvm3_ObjectKey_t) *
+      (NVM3_MAX_COUNTERS + NUM_NVM3_BITMAP_KEYS));
 
   size_t nvm3_objcnt = nvm3_enumObjects(NVM3_DEFAULT_HANDLE, (uint32_t *) keys,
       sizeof(keys)/sizeof(keys[0]), MIN_DATA_KEY, MAX_DATA_KEY);
@@ -164,6 +174,27 @@ void nvm3_save_stat(void *stat)
 #undef nvm3_write
 }
 
+void nvm3_save_enctr_bmap(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return;
+
+  Ecode_t err[NUM_NVM3_BITMAP_KEYS] __attribute__((unused));
+
+  uint8_t buf[NVM3_DEFAULT_MAX_OBJECT_SIZE];
+  for (unsigned int i = 0; i < NUM_NVM3_BITMAP_KEYS; i++) {
+    memset(buf, 0, NVM3_DEFAULT_MAX_OBJECT_SIZE);
+    memcpy(buf,
+        &enctr_bmap->match_status[i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY],
+        sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
+    err[i] = nvm3_writeData(NVM3_DEFAULT_HANDLE, NVM3_ENCTR_RISK_MAP[i],
+        buf, sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
+    log_expf("[NVM3] bm[%u] key %u off %u len %u err 0x%0x\r\n", i,
+        NVM3_ENCTR_RISK_MAP[i], (i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY),
+        sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY, err[i]);
+  }
+}
+
 void nvm3_load_stat(void *stat)
 {
   Ecode_t err[NVM3_MAX_COUNTERS] __attribute__((unused));
@@ -237,6 +268,26 @@ void nvm3_load_config(dongle_config_t *cfg)
   free(tmp_stats);
 
 #undef nvm3_read
+}
+
+void nvm3_load_enctr_bmap(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return;
+
+  Ecode_t err[NUM_NVM3_BITMAP_KEYS] __attribute__((unused));
+
+  uint8_t buf[NVM3_DEFAULT_MAX_OBJECT_SIZE];
+  for (unsigned int i = 0; i < NUM_NVM3_BITMAP_KEYS; i++) {
+    memset(buf, 0, NVM3_DEFAULT_MAX_OBJECT_SIZE);
+    err[i] = nvm3_readData(NVM3_DEFAULT_HANDLE, NVM3_ENCTR_RISK_MAP[i],
+        buf, sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
+    memcpy(&enctr_bmap->match_status[i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY],
+        buf, sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
+    log_expf("[NVM3] bm[%u] key %u off %u len %u err 0x%0x\r\n", i,
+        NVM3_ENCTR_RISK_MAP[i], (i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY),
+        sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY, err[i]);
+  }
 }
 
 /***************************************************************************//**

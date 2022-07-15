@@ -20,6 +20,7 @@
 
 #include "dongle.h"
 #include "storage.h"
+#include "download.h"
 
 /*******************************************************************************
  *******************************   DEFINES   ***********************************
@@ -39,8 +40,11 @@ size_t nvm3_get_erase_count(void);
 void nvm3_save_config(dongle_config_t *cfg);
 void nvm3_save_clock_cursor(dongle_config_t *cfg);
 void nvm3_save_stat(void *stat);
+void nvm3_save_enctr_bmap(enctr_bitmap_t *bmap);
+
 void nvm3_load_stat(void *stat);
 void nvm3_load_config(dongle_config_t *cfg);
+void nvm3_load_enctr_bmap(enctr_bitmap_t *bmap);
 
 /***************************************************************************//**
  * NVM3 ticking function

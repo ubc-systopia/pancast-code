@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "common/src/constants.h"
+#include "storage.h"
 
 typedef struct {
   int is_active;
@@ -39,6 +40,10 @@ typedef struct {
   } packet_buffer;
 } download_t;
 
+typedef struct enctr_bitmap {
+  uint8_t *match_status;
+} enctr_bitmap_t;
+
 // Count packet duplication
 #define dongle_download_duplication(s, d) \
   do {  \
@@ -71,5 +76,14 @@ void dongle_on_periodic_data_error(int8_t rssi);
 void dongle_on_sync_lost();
 
 int dongle_download_complete_status();
+
+void dongle_init_bitmap(enctr_bitmap_t *enctr_bmap);
+void dongle_print_bitmap_all(enctr_bitmap_t *enctr_bmap);
+void dongle_reset_bitmap_all(enctr_bitmap_t *enctr_bmap);
+void dongle_reset_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
+    uint32_t bmap_off);
+void dongle_reset_bitmap_byte(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx);
+void dongle_set_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
+    uint32_t bmap_off);
 
 #endif

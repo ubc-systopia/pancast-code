@@ -39,6 +39,42 @@
      (((j) % ENCOUNTERS_PER_PAGE) * ENCOUNTER_ENTRY_SIZE))
 
 /*
+ * NVM3 bitmap operations
+ */
+
+#define NUM_BYTES_LOG_BITMAP  (((MAX_LOG_COUNT-1) / BITS_PER_BYTE) + 1)
+
+#define NUM_NVM3_BITMAP_KEYS  \
+  ((((NUM_BYTES_LOG_BITMAP) - 1) / NVM3_DEFAULT_MAX_OBJECT_SIZE) + 1)
+
+#define NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY \
+  (NUM_BYTES_LOG_BITMAP / NUM_NVM3_BITMAP_KEYS)
+
+#define ENCOUNTER_BYTE_IDX(j) (j / BITS_PER_BYTE)
+#define ENCOUNTER_BYTE_OFF(j) (j % BITS_PER_BYTE)
+
+#define NVM3_BITMAP_IDX(j)  \
+  (ENCOUNTER_BYTE_IDX(j) / NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY)
+
+#define NVM3_BITMAP_BYTE_IDX(j) \
+  (ENCOUNTER_BYTE_IDX(j) % NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY)
+
+
+#define ENCOUNTER_NVM3_BITMAP_OFFSET(j, bm_idx, bm_byte_idx, bm_byte_off)  \
+  do {  \
+    *bm_idx = NVM3_BITMAP_IDX(j);  \
+    *bm_byte_idx = NVM3_BITMAP_BYTE_IDX(j);  \
+    *bm_byte_off = ENCOUNTER_BYTE_OFF(j);  \
+  } while (0)
+
+#define ENCOUNTER_BITMAP_OFFSET(j, bm_idx, bm_off)  \
+  do {  \
+    *bm_idx = ENCOUNTER_BYTE_IDX(j);  \
+    *bm_off = ENCOUNTER_BYTE_OFF(j);  \
+  } while (0)
+
+
+/*
  * storage address for device configuration
  */
 #define DONGLE_CONFIG_OFFSET  \

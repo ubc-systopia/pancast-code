@@ -177,6 +177,8 @@ void dongle_print_bitmap_all(enctr_bitmap_t *enctr_bmap)
 
     printf("%02x ", enctr_bmap->match_status[i]);
   }
+  int count = dongle_count_bitmap_bit_set(enctr_bmap);
+  printf("#match: %d %ld", count, download.n_matches);
   printf("\r\n");
 }
 
@@ -231,6 +233,37 @@ int dongle_has_bitmap_bit_set(enctr_bitmap_t *enctr_bmap)
   }
 
   return 0;
+}
+
+/*
+ * adapted from:
+ * https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation
+ */
+int dongle_count_bitmap_bit_set(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return -1;
+
+  int count = 0;
+  for (unsigned int i = 0; i < NUM_BYTES_LOG_BITMAP; i++) {
+    if (enctr_bmap->match_status[i] == 0)
+      continue;
+
+    int a = enctr_bmap->match_status[i];
+    int b0 = (a >> 0) & 0x55;
+    int b1 = (a >> 1) & 0x55;
+    int c = b0 + b1;
+    int d0 = (c >> 0) & 0x33;
+    int d2 = (c >> 2) & 0x33;
+    int e = d0 + d2;
+    int f0 = (e >> 0) & 0x0f;
+    int f4 = (e >> 4) & 0x0f;
+    int g = f0 + f4;
+    count += g;
+    log_infof("[%d] in: %d 0x%02x #ones: %d\r\n", i, a, a, g);
+  }
+
+  return count;
 }
 
 void dongle_on_sync_lost()

@@ -26,6 +26,7 @@
 #include "src/stats.h"
 #include "src/download.h"
 #include "src/nvm3_lib.h"
+#include "src/led.h"
 
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
@@ -102,6 +103,11 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
         dongle_time, last_download_start_time,
         stats->stat_ints.last_download_end_time, RETRY_DOWNLOAD_INTERVAL,
         dongle_download_complete_status(), download.is_active, synced, sync_handle);
+
+    if (dongle_download_complete_status() == 1 &&
+        dongle_time - stats->stat_ints.last_download_end_time > LED_RESET_INTERVAL) {
+      dongle_reset_led();
+    }
 
     /*
      * if device moved away from a beacon and download was incomplete,

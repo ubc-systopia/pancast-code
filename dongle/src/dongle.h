@@ -96,6 +96,13 @@
  * unit: depends on the unit of the dongle's timer clock
  */
 #define NEW_DOWNLOAD_INTERVAL ((24*60*60000)/DONGLE_TIMER_RESOLUTION)
+/*
+ * time after download complete and risk notification after which
+ * okay to reduce frequency of led blinking
+ *
+ * unit: depends on the unit of the dongle's timer clock
+ */
+#define LED_RESET_INTERVAL ((2*60*60000)/DONGLE_TIMER_RESOLUTION)
 
 // Data Structures
 

@@ -48,4 +48,14 @@ static inline void dongle_led_notify(void) {
   }
 }
 
+static inline void dongle_reset_led(void) {
+  sl_status_t sc;
+  log_expf("%s", "reset alert\r\n");
+  sc = sl_sleeptimer_restart_periodic_timer_ms(&led_timer, LED_TIMER_MS,
+      dongle_led_timer_handler, (void *) NULL, 0, 0);
+  if (sc != SL_STATUS_OK) {
+    log_errorf("failed period led timer start, sc: %d\r\n", sc);
+  }
+}
+
 #endif /* __LED_H__ */

@@ -371,6 +371,10 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
       dongle_led_notify();
     }
 #endif
+
+    memset(download.packet_buffer.buffer.data, 0, CF_SIZE_BYTES);
+    download.packet_buffer.buffer.data_len = 0;
+    memset(&cf, 0, sizeof(cf_t));
   }
 
   if (download_all_chunks_complete(&download)) {

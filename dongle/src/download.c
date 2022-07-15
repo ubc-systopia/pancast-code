@@ -114,7 +114,7 @@ int dongle_download_check_match(
   memset(id, 0x00, MAX_EPH_ID_SIZE);
 
   memcpy(id, &entry->eph_id, BEACON_EPH_ID_HASH_LEN);
-  char dbuf[64];
+//  char dbuf[64];
 
   uint64_t idx1 = 0, idx2 = 0;
   int res1 = 0, res2 = 0;
@@ -122,7 +122,7 @@ int dongle_download_check_match(
 
   if (lookup(id, download.packet_buffer.buffer.data, num_buckets,
         &idx1, &idx2, &fpp, &res1, &res2)) {
-#if 1
+#if 0
     memset(dbuf, 0, 64);
     sprintf(dbuf, "hit %02lu %02x %02x %0x %0x 0x%08lx", debug_chunkid,
         (int) idx1, (int) idx2, res1, res2, fpp);
@@ -140,7 +140,10 @@ int dongle_download_check_match(
 
   } else {
 #if 0
-    hexdumpen(id, MAX_EPH_ID_SIZE, "miss", entry->beacon_id,
+    memset(dbuf, 0, 64);
+    sprintf(dbuf, "miss %02lu %02x %02x %0x %0x 0x%08lx", debug_chunkid,
+        (int) idx1, (int) idx2, res1, res2, fpp);
+    hexdumpen(id, MAX_EPH_ID_SIZE, dbuf, entry->beacon_id,
         (uint32_t) entry->location_id, (uint16_t) i,
         (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
         (uint32_t) entry->dongle_time_start, entry->dongle_time_int,

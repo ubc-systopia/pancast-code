@@ -185,6 +185,8 @@ void dongle_init()
 //      dongle_print_encounter, 0);
   log_expf("%s", "==== UPLOAD LOG END ====\r\n");
 
+//  dongle_reset_bitmap_all(&enctr_bmap);
+
   //===========
 
 //  // reset stats
@@ -512,7 +514,20 @@ int dongle_print_encounter(enctr_entry_counter_t i,
     uint32_t num_buckets __attribute__((unused)))
 {
   beacon_eph_id_t *id = &entry->eph_id;
-  hexdumpen(id, BEACON_EPH_ID_HASH_LEN, "read", entry->beacon_id,
+
+  char dbuf[8];
+  memset(dbuf, 0, 8);
+
+  int byte_idx = ENCOUNTER_BYTE_IDX(i);
+  int byte_off = ENCOUNTER_BYTE_OFF(i);
+
+  int match_status = enctr_bmap.match_status[byte_idx] & (1 << byte_off);
+  if (match_status == 0)
+    sprintf(dbuf, "read 0");
+  else
+    sprintf(dbuf, "read 1");
+
+  hexdumpen(id, BEACON_EPH_ID_HASH_LEN, dbuf, entry->beacon_id,
     (uint32_t) entry->location_id, (uint16_t) i,
     (uint32_t) entry->beacon_time_start, entry->beacon_time_int,
     (uint32_t) entry->dongle_time_start, entry->dongle_time_int,

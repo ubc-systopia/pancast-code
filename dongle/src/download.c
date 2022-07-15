@@ -201,12 +201,25 @@ void dongle_reset_bitmap_byte(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx)
 void dongle_set_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
     uint32_t bmap_off)
 {
-  if (!enctr_bmap)
+  if (!enctr_bmap || !enctr_bmap->match_status)
     return;
 
   uint8_t val = enctr_bmap->match_status[bmap_idx];
   val = val | (1 << bmap_off);
   enctr_bmap->match_status[bmap_idx] = val;
+}
+
+int dongle_has_bitmap_bit_set(enctr_bitmap_t *enctr_bmap)
+{
+  if (!enctr_bmap || !enctr_bmap->match_status)
+    return -1;
+
+  for (unsigned int i = 0; i < NUM_BYTES_LOG_BITMAP; i++) {
+    if (enctr_bmap->match_status[i] != 0)
+      return 1;
+  }
+
+  return 0;
 }
 
 void dongle_on_sync_lost()
@@ -353,9 +366,11 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 
 #endif /* CUCKOOFILTER_FIXED_TEST */
 
+#if 0
     if (download.n_matches > 0) {
       dongle_led_notify();
     }
+#endif
   }
 
   if (download_all_chunks_complete(&download)) {
@@ -363,6 +378,9 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     dongle_print_bitmap_all(&enctr_bmap);
     nvm3_save_enctr_bmap(&enctr_bmap);
 
+    if (dongle_has_bitmap_bit_set(&enctr_bmap)) {
+      dongle_led_notify();
+    }
     // there may be extra data in the packet
     dongle_download_complete();
   }

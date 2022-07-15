@@ -85,5 +85,6 @@ void dongle_reset_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
 void dongle_reset_bitmap_byte(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx);
 void dongle_set_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
     uint32_t bmap_off);
+int dongle_has_bitmap_bit_set(enctr_bitmap_t *enctr_bmap);
 
 #endif

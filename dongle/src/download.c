@@ -20,7 +20,7 @@ float payload_start_ticks = 0, payload_end_ticks = 0;
 extern dongle_timer_t last_download_start_time;
 extern enctr_bitmap_t enctr_bmap;
 
-download_t download;
+download_t *download;
 cf_t cf;
 
 float dongle_download_estimate_loss(download_t *d)
@@ -70,7 +70,7 @@ float dongle_download_estimate_loss(download_t *d)
 
 static inline void dongle_download_reset()
 {
-  memset(&download, 0, sizeof(download_t));
+  memset(download, 0, sizeof(download_t));
 }
 
 void dongle_download_init()
@@ -81,7 +81,7 @@ void dongle_download_init()
 
 void dongle_download_start()
 {
-  download.is_active = 1;
+  download->is_active = 1;
 #if MODE__STAT
   stats->stat_ints.payloads_started++;
 #endif
@@ -89,7 +89,7 @@ void dongle_download_start()
 
 void dongle_download_fail(download_fail_reason *reason __attribute__((unused)))
 {
-  if (download.is_active) {
+  if (download->is_active) {
 #if MODE__STAT
     stats->stat_ints.payloads_failed++;
     dongle_update_download_stats(stats->all_download_stats, download);
@@ -120,7 +120,7 @@ int dongle_download_check_match(
   int res1 = 0, res2 = 0;
   uint32_t fpp = 0;
 
-  if (lookup(id, download.packet_buffer.buffer.data, num_buckets,
+  if (lookup(id, download->packet_buffer.buffer.data, num_buckets,
         &idx1, &idx2, &fpp, &res1, &res2)) {
 #if 0
     memset(dbuf, 0, 64);
@@ -132,7 +132,7 @@ int dongle_download_check_match(
         (uint32_t) entry->dongle_time_start, entry->dongle_time_int,
         (int8_t) entry->rssi, (uint32_t) ENCOUNTER_LOG_OFFSET(i));
 #endif
-    download.n_matches++;
+    download->n_matches++;
 
     uint32_t bmap_idx = 0, bmap_off = 0;
     ENCOUNTER_BITMAP_OFFSET(i, &bmap_idx, &bmap_off);
@@ -181,7 +181,7 @@ void dongle_print_bitmap_all(enctr_bitmap_t *enctr_bmap)
     printf("%02x ", enctr_bmap->match_status[i]);
   }
   int count = dongle_count_bitmap_bit_set(enctr_bmap);
-  printf("#match: %d %ld", count, download.n_matches);
+  printf("#match: %d %ld", count, download->n_matches);
   printf("\r\n");
 }
 
@@ -271,9 +271,9 @@ int dongle_count_bitmap_bit_set(enctr_bitmap_t *enctr_bmap)
 
 void dongle_on_sync_lost()
 {
-  if (download.is_active) {
+  if (download->is_active) {
     log_infof("%s", "Download failed - lost sync.\r\n");
-    download.n_syncs_lost++;
+    download->n_syncs_lost++;
   }
 }
 
@@ -282,7 +282,7 @@ void dongle_on_periodic_data_error(int8_t rssi __attribute__((unused)))
 #if MODE__STAT
   stats->stat_ints.num_periodic_data_error++;
   stat_add(rssi, stats->stat_grp.periodic_data_rssi);
-  download.n_corrupt_packets++;
+  download->n_corrupt_packets++;
 #endif
 }
 
@@ -320,12 +320,12 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     log_debugf("%02x %.0f %d %d dwnld active: %d "
       "data len: %u rcvd: %u\r\n",
       TELEM_TYPE_PERIODIC_PKT_DATA, dongle_hp_timer, rssi, data_len,
-      download.is_active, download.packet_buffer.cur_chunkid,
-      (uint32_t) download.packet_buffer.buffer.data_len,
-      download.packet_buffer.received);
+      download->is_active, download->packet_buffer.cur_chunkid,
+      (uint32_t) download->packet_buffer.buffer.data_len,
+      download->packet_buffer.received);
 #endif
     if (data_len > 0)
-      download.n_corrupt_packets++;
+      download->n_corrupt_packets++;
 
     return;
   }
@@ -353,7 +353,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     return;
   }
 
-  if (!download.is_active) {
+  if (!download->is_active) {
     dongle_download_start();
   }
   download.packet_buffer.cur_chunkid = rbh->chunkid;
@@ -369,34 +369,34 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     return;
 
   // this is an unseen packet
-  download.packet_buffer.num_distinct++;
+  download->packet_buffer.num_distinct++;
   uint8_t len = data_len - sizeof(rpi_ble_hdr);
-  memcpy(download.packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PAYLOAD_SIZE),
+  memcpy(download->packet_buffer.buffer.data + (rbh->pkt_seq*MAX_PAYLOAD_SIZE),
     data + sizeof(rpi_ble_hdr), len);
-  download.packet_buffer.received += len;
+  download->packet_buffer.received += len;
 
 #if 0
   log_expf("%.0f %d %d active: %d chunkid: [%u/%u]/%u, pkt: %u "
       "chunklen: %u/%u rcvd: %u\r\n",
-      dongle_hp_timer, rssi, data_len, download.is_active,
-      rbh->chunkid, download.packet_buffer.cur_chunkid, rbh->numchunks,
+      dongle_hp_timer, rssi, data_len, download->is_active,
+      rbh->chunkid, download->packet_buffer.cur_chunkid, rbh->numchunks,
       rbh->pkt_seq, (uint32_t) rbh->chunklen,
-      (uint32_t) download.packet_buffer.buffer.data_len,
-      download.packet_buffer.received
+      (uint32_t) download->packet_buffer.buffer.data_len,
+      download->packet_buffer.received
       );
 #endif
 
   uint32_t num_buckets = 0;
 
-  if (download_one_chunk_complete(&download, rbh->chunkid)) {
+  if (download_one_chunk_complete(download, rbh->chunkid)) {
     // check the content using cuckoofilter decoder
 
-    //  bitdump(download.packet_buffer.buffer.data,
-    //      download.packet_buffer.buffer.data_len, "risk chunk");
+    //  bitdump(download->packet_buffer.buffer.data,
+    //      download->packet_buffer.buffer.data_len, "risk chunk");
 
     debug_chunkid = rbh->chunkid;
     num_buckets =
-      cf_gadget_num_buckets(download.packet_buffer.buffer.data_len);
+      cf_gadget_num_buckets(download->packet_buffer.buffer.data_len);
 
     if (num_buckets == 0) {
       dongle_download_fail(&stats->stat_ints.cuckoo_fail);
@@ -414,18 +414,12 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 
 #endif /* CUCKOOFILTER_FIXED_TEST */
 
-#if 0
-    if (download.n_matches > 0) {
-      dongle_led_notify();
-    }
-#endif
-
-    memset(download.packet_buffer.buffer.data, 0, CF_SIZE_BYTES);
-    download.packet_buffer.buffer.data_len = 0;
+    memset(download->packet_buffer.buffer.data, 0, CF_SIZE_BYTES);
+    download->packet_buffer.buffer.data_len = 0;
     memset(&cf, 0, sizeof(cf_t));
   }
 
-  if (download_all_chunks_complete(&download)) {
+  if (download_all_chunks_complete(download)) {
 
     dongle_print_bitmap_all(&enctr_bmap);
     nvm3_save_enctr_bmap(&enctr_bmap);
@@ -449,21 +443,21 @@ void dongle_download_complete()
   log_expf("[%u] Download complete! last dnwld time: %lu "
       "data len: %lu curr dwnld lat: [%.02f, %.02f - %.02f]: %.02f\r\n",
       dongle_time, stats->stat_ints.last_download_end_time,
-      (uint32_t) download.packet_buffer.buffer.data_len,
+      (uint32_t) download->packet_buffer.buffer.data_len,
       payload_start_ticks, dongle_hp_timer,
       payload_end_ticks,
       (double) (dongle_hp_timer - payload_start_ticks));
 
   int actual_pkts_per_filter = ((TEST_FILTER_LEN-1)/MAX_PAYLOAD_SIZE)+1;
-  for (uint32_t c = 0; c < download.packet_buffer.numchunks; c++) {
+  for (uint32_t c = 0; c < download->packet_buffer.numchunks; c++) {
     for (int i = 0; i < actual_pkts_per_filter; i++) {
 
-      if (download.packet_buffer.chunk_arr[c].counts[i] > 0)
+      if (download->packet_buffer.chunk_arr[c].counts[i] > 0)
         continue;
 
       log_errorf("[%d:%d] count: %d #distinct: %d total: %d\r\n",
-          c, i, download.packet_buffer.chunk_arr[c].counts[i],
-          download.packet_buffer.num_distinct, download.n_total_packets);
+          c, i, download->packet_buffer.chunk_arr[c].counts[i],
+          download->packet_buffer.num_distinct, download->n_total_packets);
     }
   }
 
@@ -471,7 +465,7 @@ void dongle_download_complete()
   /*
    * XXX: increment global stats, not assignment
    */
-  stats->stat_ints.total_matches = download.n_matches;
+  stats->stat_ints.total_matches = download->n_matches;
   stats->stat_ints.payloads_complete++;
 
   // compute latency
@@ -506,7 +500,7 @@ int dongle_download_complete_status()
 
 void dongle_download_info()
 {
-  log_infof("Total time: %.0f ms\r\n", download.time);
-  log_infof("Packets Received: %lu\r\n", download.n_total_packets);
-  log_infof("Data bytes downloaded: %lu\r\n", download.packet_buffer.received);
+  log_infof("Total time: %.0f ms\r\n", download->time);
+  log_infof("Packets Received: %lu\r\n", download->n_total_packets);
+  log_infof("Data bytes downloaded: %lu\r\n", download->packet_buffer.received);
 }

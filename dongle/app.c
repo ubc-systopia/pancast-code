@@ -31,7 +31,7 @@
 #include "src/common/src/util/log.h"
 #include "src/common/src/util/util.h"
 
-extern download_t download;
+extern download_t *download;
 extern dongle_timer_t dongle_time;
 extern dongle_stats_t *stats;
 extern float payload_start_ticks, payload_end_ticks;
@@ -102,7 +102,8 @@ void sl_timer_on_expire(sl_sleeptimer_timer_handle_t *handle,
         "download complete: %d active: %d synced: %d handle: %d\r\n",
         dongle_time, last_download_start_time,
         stats->stat_ints.last_download_end_time, RETRY_DOWNLOAD_INTERVAL,
-        dongle_download_complete_status(), download.is_active, synced, sync_handle);
+        dongle_download_complete_status(), download->is_active,
+        synced, sync_handle);
 
     if (dongle_download_complete_status() == 1 &&
         dongle_time - stats->stat_ints.last_download_end_time > LED_RESET_INTERVAL) {
@@ -291,7 +292,7 @@ void sl_bt_on_event (sl_bt_msg_t *evt)
           "sc: 0x%0x\r\n",
           dongle_time, last_download_start_time,
           stats->stat_ints.last_download_end_time,
-          dongle_download_complete_status(), download.is_active, synced,
+          dongle_download_complete_status(), download->is_active, synced,
           (int16_t) sync_handle, sc);
       } else {
 #define ERROR_STATUS 0x02

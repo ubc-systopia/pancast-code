@@ -47,9 +47,9 @@ typedef struct enctr_bitmap {
 // Count packet duplication
 #define dongle_download_duplication(s, d) \
   do {  \
-    for (uint32_t c = 0; c < d.packet_buffer.numchunks; c++) { \
+    for (uint32_t c = 0; c < d->packet_buffer.numchunks; c++) { \
       for (int i = 0; i < (int) MAX_NUM_PACKETS_PER_FILTER; i++) { \
-        uint32_t count = d.packet_buffer.chunk_arr[c].counts[i]; \
+        uint32_t count = d->packet_buffer.chunk_arr[c].counts[i]; \
         if (count > 0) { \
           stat_add(count, s.pkt_duplication); \
         } \
@@ -59,10 +59,10 @@ typedef struct enctr_bitmap {
 
 #define dongle_update_download_stats(s, d) \
   do {  \
-    stat_add(d.packet_buffer.received, s.n_bytes); \
-    stat_add(d.n_syncs_lost, s.syncs_lost); \
+    stat_add(d->packet_buffer.received, s.n_bytes); \
+    stat_add(d->n_syncs_lost, s.syncs_lost); \
     dongle_download_duplication(s, d); \
-    float loss_est = dongle_download_estimate_loss(&d); \
+    float loss_est = dongle_download_estimate_loss(d); \
     stat_add(loss_est, s.est_pkt_loss);  \
   } while (0)
 

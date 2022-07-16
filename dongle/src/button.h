@@ -18,7 +18,6 @@ extern dongle_timer_t dongle_time; // main dongle timer
 extern enctr_list_t *enctr_list;
 extern enctr_bitmap_t enctr_bmap;
 extern size_t cur_id_idx;
-extern download_t download;
 extern uint16_t prev_sync_handle;
 
 

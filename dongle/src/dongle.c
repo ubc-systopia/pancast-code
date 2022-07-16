@@ -40,14 +40,15 @@ enctr_list_t *enctr_list;
 enctr_bitmap_t enctr_bmap;
 dongle_stats_t *stats;
 size_t cur_id_idx;
-extern download_t download;
+extern download_t *download;
 
 // 5. Statistics and Telemetry
 // Global high-precision timer, in milliseconds
 float dongle_hp_timer = 0.0;
 
-static void dongle_config_init(dongle_config_t *cfg, enctr_list_t **enctr_list_p,
-    enctr_bitmap_t *enctr_bmap, dongle_stats_t **stats_p)
+static void dongle_config_init(dongle_config_t *cfg,
+    enctr_list_t **enctr_list_p, enctr_bitmap_t *enctr_bmap,
+    dongle_stats_t **stats_p, download_t **download_p)
 {
   if (!cfg)
     return;
@@ -73,6 +74,12 @@ static void dongle_config_init(dongle_config_t *cfg, enctr_list_t **enctr_list_p
     dongle_stats_t *tmp_stats = malloc(sizeof(dongle_stats_t));
     memset(tmp_stats, 0, sizeof(dongle_stats_t));
     *stats_p = tmp_stats;
+  }
+
+  if (download_p) {
+    download_t *download = malloc(sizeof(download_t));
+    dongle_download_init();
+    *download_p = download;
   }
 }
 
@@ -100,12 +107,12 @@ void dongle_init()
   // init flash storage
   dongle_storage_init();
 
-  // reset downloaded space
-  dongle_download_init();
+//  // reset downloaded space
+//  dongle_download_init();
 
   // init configs
-  dongle_config_init(&sto_cfg, NULL, NULL, NULL);
-  dongle_config_init(&config, &enctr_list, &enctr_bmap, &stats);
+  dongle_config_init(&sto_cfg, NULL, NULL, NULL, NULL);
+  dongle_config_init(&config, &enctr_list, &enctr_bmap, &stats, &download);
 
   // load config
   dongle_storage_load_config(&sto_cfg);
@@ -292,8 +299,8 @@ void dongle_hp_timer_add(uint32_t ticks)
 {
   double ms = ((double) ticks * PREC_TIMER_TICK_MS);
   stats->stat_ints.total_periodic_data_time += (ms / 1000.0);
-  if (download.is_active) {
-    download.time += ms;
+  if (download->is_active) {
+    download->time += ms;
   }
   dongle_hp_timer += ms;
 }
@@ -587,8 +594,9 @@ void dongle_info()
     DONGLE_CONFIG_OFFSET);
   log_expf("   OTP offset, stat offset:          0x%0x, 0x%0x\r\n",
     DONGLE_OTPSTORE_OFFSET, DONGLE_STATSTORE_OFFSET);
-  log_expf("   Stat obj size, nvm3 obj size:     %u, %u\r\n",
-    sizeof(dongle_stats_t), NVM3_DEFAULT_MAX_OBJECT_SIZE);
+  log_expf("   Stat size, nvm3 size, dwnld size: %u, %u, %u\r\n",
+    sizeof(dongle_stats_t), NVM3_DEFAULT_MAX_OBJECT_SIZE,
+    sizeof(download_t));
   log_expf("   NVM3 #bitmap keys, #logs/bitmap:  %u, %u\r\n",
       NUM_NVM3_BITMAP_KEYS, NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
 }

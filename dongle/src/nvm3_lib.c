@@ -189,7 +189,7 @@ void nvm3_save_enctr_bmap(enctr_bitmap_t *enctr_bmap)
         sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
     err[i] = nvm3_writeData(NVM3_DEFAULT_HANDLE, NVM3_ENCTR_RISK_MAP[i],
         buf, sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
-    log_expf("[NVM3] bm[%u] key %u off %u len %u err 0x%0x\r\n", i,
+    log_infof("[NVM3] bm[%u] key %u off %u len %u err 0x%0x\r\n", i,
         NVM3_ENCTR_RISK_MAP[i], (i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY),
         sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY, err[i]);
   }
@@ -284,7 +284,7 @@ void nvm3_load_enctr_bmap(enctr_bitmap_t *enctr_bmap)
         buf, sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
     memcpy(&enctr_bmap->match_status[i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY],
         buf, sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY);
-    log_expf("[NVM3] bm[%u] key %u off %u len %u err 0x%0x\r\n", i,
+    log_infof("[NVM3] bm[%u] key %u off %u len %u err 0x%0x\r\n", i,
         NVM3_ENCTR_RISK_MAP[i], (i*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY),
         sizeof(uint8_t)*NUM_LOG_ENTRIES_PER_NVM3_BITMAP_KEY, err[i]);
   }

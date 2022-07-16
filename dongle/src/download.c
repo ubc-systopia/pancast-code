@@ -356,13 +356,16 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
   if (!download->is_active) {
     dongle_download_start();
   }
-  download.packet_buffer.cur_chunkid = rbh->chunkid;
-  download.packet_buffer.buffer.data_len = rbh->chunklen;
-  download.packet_buffer.numchunks = rbh->numchunks;
 
-  download.n_total_packets++;
-  int prev = download.packet_buffer.chunk_arr[rbh->chunkid].counts[rbh->pkt_seq];
-  download.packet_buffer.chunk_arr[rbh->chunkid].counts[rbh->pkt_seq]++;
+  uint32_t num_buckets = 0;
+
+  download->packet_buffer.cur_chunkid = rbh->chunkid;
+  download->packet_buffer.buffer.data_len = rbh->chunklen;
+  download->packet_buffer.numchunks = rbh->numchunks;
+
+  download->n_total_packets++;
+  int prev = download->packet_buffer.chunk_arr[rbh->chunkid].counts[rbh->pkt_seq];
+  download->packet_buffer.chunk_arr[rbh->chunkid].counts[rbh->pkt_seq]++;
 
   // duplicate packet
   if (prev > 0)
@@ -385,8 +388,6 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
       download->packet_buffer.received
       );
 #endif
-
-  uint32_t num_buckets = 0;
 
   if (download_one_chunk_complete(download, rbh->chunkid)) {
     // check the content using cuckoofilter decoder

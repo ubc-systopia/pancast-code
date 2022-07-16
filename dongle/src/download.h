@@ -24,6 +24,12 @@ typedef struct {
     uint32_t cur_chunkid;
     uint32_t numchunks;
 
+#if 0
+    // pkt counts before current chunk download repeats
+    int8_t chunk_prev_counts[MAX_NUM_PACKETS_PER_FILTER];
+    int8_t chunk_complete[MAX_NUM_CHUNKS/BITS_PER_BYTE];
+#endif
+
     // track of seq# recvd in each chunk
     struct {
       // map of sequence number to packet count for that number

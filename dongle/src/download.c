@@ -20,6 +20,8 @@ float payload_start_ticks = 0, payload_end_ticks = 0;
 extern dongle_timer_t last_download_start_time;
 extern enctr_bitmap_t enctr_bmap;
 
+//int32_t prev_chunkid = -1;
+
 download_t *download;
 cf_t cf;
 
@@ -299,6 +301,49 @@ static int download_one_chunk_complete(download_t *download, uint32_t chunkid)
   return 1;
 }
 
+#if 0
+int download_prev_chunk_complete(download_t *download, uint32_t chunkid)
+{
+  if (!download)
+    return -1;
+
+  for (uint32_t j = 0; j < MAX_NUM_PACKETS_PER_FILTER; j++) {
+    if (download->packet_buffer.chunk_arr[chunkid].counts[j] == 0)
+      return 0;
+  }
+
+  return 1;
+}
+
+int download_all_chunks_complete_2(download_t *download)
+{
+  if (!download)
+    return -1;
+
+  int8_t *status = download->packet_buffer.chunk_complete;
+  int nchunks = download->packet_buffer.numchunks;
+  int nbytes = (nchunks-1)/BITS_PER_BYTE + 1;
+  int nbyte_off = nchunks % BITS_PER_BYTE;
+  int i = 0, j = 0;
+
+  for (i = 0; i < nbytes - 1; i++) {
+    if (status[i] != (int8_t) 0xff) {
+      log_infof("%d inc[%d]: 0x%02x\r\n", prev_chunkid, i, status[i]);
+      return 0;
+    }
+  }
+
+  for (j = 0; j < nbyte_off; j++) {
+    if ((status[i] & (1 << j)) != 1) {
+      log_expf("%d inc[%d][%d]: 0x%02x\r\n", prev_chunkid, i, j, status[i]);
+      return 0;
+    }
+  }
+
+  return 1;
+}
+#endif
+
 static int download_all_chunks_complete(download_t *download)
 {
   if (!download)
@@ -308,6 +353,14 @@ static int download_all_chunks_complete(download_t *download)
     if (download_one_chunk_complete(download, i) == 0)
       return 0;
   }
+
+#if 0
+  for (uint32_t i = 0; i < download->packet_buffer.numchunks; i++) {
+    log_expf("[%d] 0x%08lx 0x%08lx\r\n", i,
+        *((uint32_t *) &download->packet_buffer.chunk_arr[i].counts[0]),
+        *((uint32_t *) &download->packet_buffer.chunk_arr[i].counts[3]));
+  }
+#endif
 
   return 1;
 }
@@ -359,6 +412,57 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
 
   uint32_t num_buckets = 0;
 
+#if 0
+  /*
+   * new chunk detected, before downloading it, check if previous
+   * chunk was fully downloaded. if so, run CF lookups.
+   */
+  if (prev_chunkid != -1 && prev_chunkid != (int32_t) rbh->chunkid) {
+    int pb_idx = prev_chunkid / BITS_PER_BYTE;
+    int pb_off = prev_chunkid % BITS_PER_BYTE;
+    int pstatus = (download->packet_buffer.chunk_complete[pb_idx] &
+      (1 << pb_off));
+    for (unsigned int i = 0; i < MAX_NUM_PACKETS_PER_FILTER; i++) {
+      download->packet_buffer.chunk_arr[prev_chunkid].counts[i] +=
+        download->packet_buffer.chunk_prev_counts[i];
+    }
+
+    if (download_prev_chunk_complete(download, prev_chunkid) == 1) {
+      log_expf("pc: %ld %d p#: 0x%08lx 0x%08lx n#: 0x%08lx 0x%08lx\r\n",
+        prev_chunkid, (pstatus != 0),
+        *((int32_t *) &download->packet_buffer.chunk_arr[prev_chunkid].counts[0]),
+        *((int32_t *) &download->packet_buffer.chunk_arr[prev_chunkid].counts[4]),
+        *((int32_t *) &download->packet_buffer.chunk_prev_counts[0]),
+        *((int32_t *) &download->packet_buffer.chunk_prev_counts[3])
+        );
+//      debug_chunkid = rbh->chunkid;
+      num_buckets =
+        cf_gadget_num_buckets(download->packet_buffer.buffer.data_len);
+
+      if (num_buckets == 0) {
+        dongle_download_fail(&stats->stat_ints.cuckoo_fail);
+      } else {
+        // check existing log entries against the new filter
+        dongle_storage_load_encounter(config.en_tail,
+          num_encounters_current(config.en_head, config.en_tail),
+          dongle_download_check_match, num_buckets);
+      }
+
+      int byte_idx = prev_chunkid / BITS_PER_BYTE;
+      int byte_off = prev_chunkid % BITS_PER_BYTE;
+      download->packet_buffer.chunk_complete[byte_idx] |= (1 << byte_off);
+      memset(download->packet_buffer.chunk_prev_counts, 0,
+          sizeof(uint8_t) * MAX_NUM_PACKETS_PER_FILTER);
+
+      memset(download->packet_buffer.buffer.data, 0, CF_SIZE_BYTES);
+      download->packet_buffer.buffer.data_len = 0;
+      memset(&cf, 0, sizeof(cf_t));
+    }
+  }
+
+  prev_chunkid = rbh->chunkid;
+#endif
+
   download->packet_buffer.cur_chunkid = rbh->chunkid;
   download->packet_buffer.buffer.data_len = rbh->chunklen;
   download->packet_buffer.numchunks = rbh->numchunks;
@@ -366,6 +470,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
   download->n_total_packets++;
   int prev = download->packet_buffer.chunk_arr[rbh->chunkid].counts[rbh->pkt_seq];
   download->packet_buffer.chunk_arr[rbh->chunkid].counts[rbh->pkt_seq]++;
+//  download->packet_buffer.chunk_prev_counts[rbh->pkt_seq]++;
 
   // duplicate packet
   if (prev > 0)
@@ -389,6 +494,7 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
       );
 #endif
 
+#if 1
   if (download_one_chunk_complete(download, rbh->chunkid)) {
     // check the content using cuckoofilter decoder
 
@@ -419,7 +525,9 @@ void dongle_on_periodic_data(uint8_t *data, uint8_t data_len, int8_t rssi __attr
     download->packet_buffer.buffer.data_len = 0;
     memset(&cf, 0, sizeof(cf_t));
   }
+#endif
 
+  // TODO: replace with download_all_chunks_complete_2
   if (download_all_chunks_complete(download)) {
 
     dongle_print_bitmap_all(&enctr_bmap);

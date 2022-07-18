@@ -6,8 +6,6 @@
 #include <mbedtls/psa_util.h>
 // #include <mbedtls/sl_crypto/include/trng.h>
 
-#define DONGLE_CRYPTO 0
-
 extern void run_mbedtls_benchmark(void);
 extern void run_psa_benchmark(void);
 

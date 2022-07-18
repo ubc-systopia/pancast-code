@@ -11,6 +11,13 @@
 #define TEST_DONGLE 0
 
 /*
+ * enable crypto code in dongle
+ * 1 - enable
+ * 0 - disable
+ */
+#define DONGLE_CRYPTO 0
+
+/*
  * button to reset dongle state
  * 1 - enable use of button to reset dongle state
  * 0 - disable button

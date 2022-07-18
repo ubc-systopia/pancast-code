@@ -1,6 +1,8 @@
 #ifndef __DONGLE_BUTTON_H__
 #define __DONGLE_BUTTON_H__
 
+#if DONGLE_BUTTON_RESET
+
 #include "sl_simple_button_instances.h"
 #include "sl_bluetooth.h"
 
@@ -36,6 +38,10 @@ float button_time[3] = { 0.0, 0.0 };
  *****************************************************************************/
 void sl_button_on_change(const sl_button_t *handle)
 {
+#if (DONGLE_BUTTON_RESET == 0)
+  return;
+#endif
+
   sl_button_state_t state = sl_button_get_state(handle);
   button_time[state] = now();
 
@@ -51,14 +57,6 @@ void sl_button_on_change(const sl_button_t *handle)
    */
   if (state > SL_SIMPLE_BUTTON_RELEASED)
     return;
-
-#if 0
-//      sl_bt_external_signal(BTN0_IRQ_EVENT);
-
-  if (&sl_button_max86161_int == handle) {
-    sl_bt_external_signal(MAXM86161_IRQ_EVENT);
-  }
-#endif
 
   float button_delay = button_time[SL_SIMPLE_BUTTON_RELEASED] - button_time[SL_SIMPLE_BUTTON_PRESSED];
   button_time[SL_SIMPLE_BUTTON_RELEASED] = button_time[SL_SIMPLE_BUTTON_PRESSED] = 0;
@@ -111,5 +109,6 @@ static inline void configure_button(void)
   int ret2 = sl_button_get_state(&sl_button_btn0);
   log_expf("button init ret: %d state: %d\r\n", ret, ret2);
 }
+#endif /* DONGLE_BUTTON_RESET */
 
 #endif /* __DONGLE_BUTTON_H__ */

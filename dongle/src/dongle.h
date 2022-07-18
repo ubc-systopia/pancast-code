@@ -11,6 +11,13 @@
 #define TEST_DONGLE 0
 
 /*
+ * button to reset dongle state
+ * 1 - enable use of button to reset dongle state
+ * 0 - disable button
+ */
+#define DONGLE_BUTTON_RESET 0
+
+/*
  * stats aggregation
  */
 #define MODE__STAT  1

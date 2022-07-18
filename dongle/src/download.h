@@ -86,9 +86,8 @@ int dongle_download_complete_status();
 void dongle_init_bitmap(enctr_bitmap_t *enctr_bmap);
 void dongle_print_bitmap_all(enctr_bitmap_t *enctr_bmap);
 void dongle_reset_bitmap_all(enctr_bitmap_t *enctr_bmap);
-void dongle_reset_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
-    uint32_t bmap_off);
-void dongle_reset_bitmap_byte(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx);
+void dongle_reset_bitmap_bit_range(enctr_bitmap_t *enctr_bmap,
+    uint32_t startbit, uint32_t endbit);
 void dongle_set_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
     uint32_t bmap_off);
 int dongle_has_bitmap_bit_set(enctr_bitmap_t *enctr_bmap);

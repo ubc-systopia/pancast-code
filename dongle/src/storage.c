@@ -14,6 +14,7 @@
 #define OTP(i) (DONGLE_OTPSTORE_OFFSET + (i * sizeof(dongle_otp_t)))
 
 extern dongle_stats_t stats;
+extern enctr_bitmap_t enctr_bmap;
 
 static inline void dongle_storage_erase(storage_addr_t offset)
 {
@@ -271,6 +272,15 @@ void dongle_storage_log_encounter(dongle_config_t *cfg,
    */
   pre_erase(off, ENCOUNTER_ENTRY_SIZE);
 
+  /*
+   * we might have just erased a page of log entries;
+   * reset risk match bitmap in nvm3 for those entries too
+   */
+  if ((off % FLASH_DEVICE_PAGE_SIZE) == 0) {
+    dongle_reset_bitmap_bit_range(&enctr_bmap, cfg->en_head, ENCOUNTERS_PER_PAGE);
+    dongle_print_bitmap_all(&enctr_bmap);
+    nvm3_save_enctr_bmap(&enctr_bmap);
+  }
 
 #define write(data, size) _flash_write_(off, data, size), off += size
 

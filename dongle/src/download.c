@@ -196,24 +196,63 @@ void dongle_reset_bitmap_all(enctr_bitmap_t *enctr_bmap)
       sizeof(uint8_t) * (MAX_LOG_COUNT/BITS_PER_BYTE));
 }
 
-void dongle_reset_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,
-    uint32_t bmap_off)
+static inline void _dongle_reset_bitmap_byte_range(enctr_bitmap_t *enctr_bmap,
+    int startbyte, int endbyte)
 {
-  if (!enctr_bmap || !enctr_bmap->match_status)
-    return;
-
-  uint8_t val = enctr_bmap->match_status[bmap_idx];
-  uint8_t mask = 0xff ^ (1 << bmap_off);
-  val = val & mask;
-  enctr_bmap->match_status[bmap_idx] = val;
+  for (int i = startbyte; i <= endbyte; i++) {
+    enctr_bmap->match_status[i] = 0;
+  }
+  log_expf("sbyte: %d, ebyte: %d, bm[%d]: %d bm[%d]: %d\r\n",
+      startbyte, endbyte, startbyte, enctr_bmap->match_status[startbyte],
+      endbyte, enctr_bmap->match_status[endbyte]);
 }
 
-void dongle_reset_bitmap_byte(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx)
+/*
+ * reset map[byte_idx] bits: [startbit, endbit]
+ */
+static inline void _dongle_reset_bitmap_byte_bitrange(enctr_bitmap_t *enctr_bmap,
+    int byte_idx, int startbit, int endbit)
+{
+  int8_t mask = 0;
+
+  for (int i = startbit; i <= endbit; i++) {
+    mask |= (1 << i);
+  }
+  mask ^= (int8_t) 0xff;
+  enctr_bmap->match_status[byte_idx] &= (int8_t) mask;
+  log_expf("byte: %ld, sb: %d, eb: %d, mask: %02x\r\n",
+      byte_idx, startbit, endbit, mask);
+}
+
+void dongle_reset_bitmap_bit_range(enctr_bitmap_t *enctr_bmap,
+    uint32_t startbit, uint32_t nbits)
 {
   if (!enctr_bmap || !enctr_bmap->match_status)
     return;
 
-  enctr_bmap->match_status[bmap_idx] = 0;
+  int startbyte = ENCOUNTER_BYTE_IDX(startbit);
+  int startmod = ENCOUNTER_BYTE_OFF(startbit);
+//  int nbytes = nbits / BITS_PER_BYTE;
+//  int nmod = nbits % BITS_PER_BYTE;
+  int endbit = startbit + nbits - 1;
+
+  int abit = startmod;
+  int bbyte = (((startbit - 1) / BITS_PER_BYTE) + 1);
+  int cbyte = endbit / BITS_PER_BYTE;
+  int dbit = endbit % BITS_PER_BYTE;
+
+  // reset [a, bbyte)
+  _dongle_reset_bitmap_byte_bitrange(enctr_bmap, startbyte, abit,
+      (BITS_PER_BYTE-1));
+
+  // reset [bbyte, cbyte)
+  _dongle_reset_bitmap_byte_range(enctr_bmap, bbyte, cbyte-1);
+
+  // reset [cbyte, dbit]
+  _dongle_reset_bitmap_byte_bitrange(enctr_bmap, cbyte, 0, dbit);
+
+  log_expf("s,e: %lu %lu, #bits: %lu, sbyte: %ld, a: %d, b: %d, c: %d, d: %d\r\n",
+      startbit, endbit, nbits, startbyte, abit, bbyte, cbyte, dbit);
 }
 
 void dongle_set_bitmap_bit(enctr_bitmap_t *enctr_bmap, uint32_t bmap_idx,

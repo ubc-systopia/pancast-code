@@ -10,6 +10,8 @@
 #include <log.h>
 #include <settings.h>
 
+#if BEACON_BUTTON_RESET
+
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(sw0), gpios);
 static struct gpio_callback button_gpio_cb;
 
@@ -48,3 +50,4 @@ void button_init(void)
       button.port->name, button.pin);
 }
 
+#endif /* BEACON_BUTTON_RESET */

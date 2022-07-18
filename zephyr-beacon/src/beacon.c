@@ -586,7 +586,9 @@ void _beacon_broadcast_(int err, int reset)
     k_timer_start(&led_timer, K_MSEC(LED_TIMER_MS), K_MSEC(LED_TIMER_MS));
 
     configure_blinky();
+#if BEACON_BUTTON_RESET
     button_init();
+#endif
   }
 }
 

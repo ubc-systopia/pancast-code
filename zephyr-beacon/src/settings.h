@@ -16,6 +16,13 @@
 #define MODE__NRF_BEACON_TEST_CONFIG  0
 
 /*
+ * button to reset beacon state
+ * 1 - enable use of button to reset beacon state
+ * 0 - disable button
+ */
+#define BEACON_BUTTON_RESET 0
+
+/*
  * #time units between statistic reports
  */
 #define BEACON_REPORT_INTERVAL 60

@@ -201,7 +201,10 @@ void dongle_init()
 
   // set up LED
   configure_blinky();
+
+#if DONGLE_BUTTON_RESET
   configure_button();
+#endif
 
 #if DONGLE_CRYPTO
   // run crypto benchmark

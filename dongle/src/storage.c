@@ -296,7 +296,7 @@ void dongle_storage_log_encounter(dongle_config_t *cfg,
    * we delete old logs since newer encounters are preferred.
    */
   if (cfg->en_head == cfg->en_tail) {
-    log_errorf("Encounter storage full; idx=%lu\r\n", cfg->en_head);
+    log_infof("Encounter storage full; idx=%lu\r\n", cfg->en_head);
     cfg->en_tail = inc_idx(cfg->en_tail);
   }
 

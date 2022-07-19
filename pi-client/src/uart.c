@@ -1,9 +1,49 @@
 #include "uart.h"
 #include "common.h"
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+
 int fd;
 
 int data_ready = 0;
+time_t t = 0, t2 = 0;
+struct tm tm;
+struct tm tm1, tm2;
+
+#define YEAR_OFF 1900
+#define MON_OFF 1
+
+static void set_next_update_time(void)
+{
+  t = time(NULL);
+  tm = *localtime(&t);
+
+  tm1.tm_year = tm.tm_year;
+  tm1.tm_mon = tm.tm_mon;
+  tm1.tm_mday = tm.tm_mday;
+  tm1.tm_hour = -1;
+  tm1.tm_min = 0;
+  tm1.tm_sec = 0;
+
+  tm2.tm_year = tm1.tm_year;
+  tm2.tm_mon = tm1.tm_mon;
+  tm2.tm_mday = tm1.tm_mday+1;
+  tm2.tm_hour = tm1.tm_hour;
+  tm2.tm_min = tm1.tm_min;
+  tm2.tm_sec = tm1.tm_sec;
+
+  t2 = mktime(&tm2);
+  dprintf(LVL_EXP, "=== now: [%lu] %d-%02d-%02d %02d:%02d:%02d, "
+      "SOD: [%lu] %d-%02d-%02d %02d:%02d:%02d, "
+      "NxD: [%lu] %d-%02d-%02d %02d:%02d:%02d ===\n",
+      t, tm.tm_year+YEAR_OFF, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
+      mktime(&tm1), tm1.tm_year+YEAR_OFF, tm1.tm_mon+1, tm1.tm_mday, tm1.tm_hour, tm1.tm_min, tm1.tm_sec,
+      t2, tm2.tm_year+YEAR_OFF, tm2.tm_mon+1, tm2.tm_mday, tm2.tm_hour, tm2.tm_min, tm2.tm_sec);
+}
 
 void *receive_log(int fd)
 {
@@ -217,6 +257,12 @@ make_req:
   if (curr_time_sec - rsb->last_req_time_s < REQUEST_INTERVAL)
     return;
 
+  time_t currtime = time(NULL);
+  if (currtime < t2)
+    return;
+
+  set_next_update_time();
+
   // request new risk data from backend after INTERVAL
   make_request(rsb);
   rsb->last_req_time_s = curr_time_sec;
@@ -294,6 +340,8 @@ void *uart_main(void *arg)
 
   gpioSetMode(PIN, PI_INPUT);
   gpioSetAlertFuncEx(PIN, gpio_callback, (void *) &rsb);
+
+  set_next_update_time();
 
   // make request to backend and fill payload_data
   make_request(&rsb);

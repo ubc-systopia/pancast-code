@@ -17,6 +17,7 @@ struct tm tm1, tm2;
 #define YEAR_OFF 1900
 #define MON_OFF 1
 
+#if 0
 static void set_next_update_time(void)
 {
   t = time(NULL);
@@ -44,6 +45,7 @@ static void set_next_update_time(void)
       mktime(&tm1), tm1.tm_year+YEAR_OFF, tm1.tm_mon+1, tm1.tm_mday, tm1.tm_hour, tm1.tm_min, tm1.tm_sec,
       t2, tm2.tm_year+YEAR_OFF, tm2.tm_mon+1, tm2.tm_mday, tm2.tm_hour, tm2.tm_min, tm2.tm_sec);
 }
+#endif
 
 void *receive_log(int fd)
 {
@@ -254,14 +256,14 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
 make_req:
 
   curr_time_sec = ((double) clock()) / CLOCKS_PER_SEC;
-  if (curr_time_sec - rsb->last_req_time_s < REQUEST_INTERVAL)
-    return;
+//  if (curr_time_sec - rsb->last_req_time_s < REQUEST_INTERVAL)
+//    return;
 
-  time_t currtime = time(NULL);
-  if (currtime < t2)
-    return;
-
-  set_next_update_time();
+//  time_t currtime = time(NULL);
+//  if (currtime < t2)
+//    return;
+//
+//  set_next_update_time();
 
   // request new risk data from backend after INTERVAL
   make_request(rsb);
@@ -341,7 +343,7 @@ void *uart_main(void *arg)
   gpioSetMode(PIN, PI_INPUT);
   gpioSetAlertFuncEx(PIN, gpio_callback, (void *) &rsb);
 
-  set_next_update_time();
+//  set_next_update_time();
 
   // make request to backend and fill payload_data
   make_request(&rsb);

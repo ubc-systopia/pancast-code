@@ -32,8 +32,9 @@ size_t write_function(char *data, size_t size, size_t nmemb, void *userdata)
   return realsize;
 }
 
-/* Handle HTTP request to pancast server
-    adapted from https://github.com/CedricFauth/c-client-flask-server-test
+/*
+ * Handle HTTP request to pancast server adapted from
+ * https://github.com/CedricFauth/c-client-flask-server-test
  */
 int handle_request_chunk(struct req_data *data, int chunk)
 {

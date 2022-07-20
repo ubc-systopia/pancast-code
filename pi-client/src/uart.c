@@ -281,8 +281,8 @@ int set_interface_attribs(int fd, int speed)
     return -1;
   }
 
-  cfsetospeed(&tty, (speed_t)speed);
-  cfsetispeed(&tty, (speed_t)speed);
+  cfsetospeed(&tty, (speed_t) speed);
+  cfsetispeed(&tty, (speed_t) speed);
 
   tty.c_cflag |= (CLOCAL | CREAD);    /* ignore modem controls */
   tty.c_cflag &= ~CSIZE;

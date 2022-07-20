@@ -256,8 +256,8 @@ void gpio_callback(int gpio, int level, uint32_t tick, void *rsb_p)
 make_req:
 
   curr_time_sec = ((double) clock()) / CLOCKS_PER_SEC;
-//  if (curr_time_sec - rsb->last_req_time_s < REQUEST_INTERVAL)
-//    return;
+  if (curr_time_sec - rsb->last_req_time_s < REQUEST_INTERVAL)
+    return;
 
 //  time_t currtime = time(NULL);
 //  if (currtime < t2)
